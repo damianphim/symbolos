@@ -51,7 +51,11 @@ export default function Dashboard() {
   const [cardsGeneratedAt, setCardsGeneratedAt] = useState(null)
   const [freeformInput, setFreeformInput] = useState('')
   const [isAsking, setIsAsking] = useState(false)
-  const isLoadingCardsRef = useRef(false)  
+
+  // Two refs to prevent concurrent load/generate calls.
+  // Using refs (not state) so checks are synchronous and don't cause re-renders.
+  const isLoadingCardsRef   = useRef(false)
+  const isGeneratingCardsRef = useRef(false)
 
   // ── Club calendar events (fed up from ClubsTab) ────────
   const [clubCalendarEvents, setClubCalendarEvents] = useState([])
@@ -110,6 +114,33 @@ export default function Dashboard() {
   const isCurrent   = (subject, catalog) => currentCoursesMap.has(`${subject} ${catalog}`)
 
   // ── Advisor card handlers ──────────────────────────────
+
+  // FIX: Wrapped in useCallback so its reference is stable.
+  // Previously a plain async function, which meant loadAdvisorCards (which IS
+  // useCallback) captured a stale closure and could not safely call it.
+  const refreshAdvisorCards = useCallback(async (force = true) => {
+    if (!user?.id) return
+    // FIX: Guard with a ref so concurrent calls (e.g. language switch + auto-
+    // generate on load) don't both fire a generate request simultaneously.
+    if (isGeneratingCardsRef.current) return
+    isGeneratingCardsRef.current = true
+    try {
+      setCardsGenerating(true)
+      const data = await cardsAPI.generateCards(user.id, force)
+      setAdvisorCards(data.cards || [])
+      setCardsGeneratedAt(data.generated_at || null)
+    } catch (error) {
+      console.error('Error generating advisor cards:', error)
+    } finally {
+      setCardsGenerating(false)
+      isGeneratingCardsRef.current = false
+    }
+  }, [user?.id])
+
+  // FIX: loadAdvisorCards now safely calls refreshAdvisorCards because both
+  // are useCallback. The isGeneratingCardsRef check inside refreshAdvisorCards
+  // prevents the language-switch path from double-generating when loadAdvisorCards
+  // is called right after a generation has just completed (cards briefly = []).
   const loadAdvisorCards = useCallback(async () => {
     if (!user?.id) return
     if (isLoadingCardsRef.current) return
@@ -120,7 +151,9 @@ export default function Dashboard() {
       const cards = data.cards || []
       setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
-      if (cards.length === 0) {
+      // Only auto-generate if there are genuinely no cards AND nothing is
+      // already generating (e.g. triggered by the language-switch effect).
+      if (cards.length === 0 && !isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
       }
     } catch (error) {
@@ -129,22 +162,7 @@ export default function Dashboard() {
       setCardsLoading(false)
       isLoadingCardsRef.current = false
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
-
-  const refreshAdvisorCards = async (force = true) => {
-    if (!user?.id) return
-    try {
-      setCardsGenerating(true)
-      const data = await cardsAPI.generateCards(user.id, force)
-      setAdvisorCards(data.cards || [])
-      setCardsGeneratedAt(data.generated_at || null)
-    } catch (error) {
-      console.error('Error generating advisor cards:', error)
-    } finally {
-      setCardsGenerating(false)
-    }
-  }
+  }, [user?.id, refreshAdvisorCards])
 
   const handleCardChipClick = async (cardId, message, cardTitle, cardBody) => {
     if (!user?.id) return ''
@@ -202,7 +220,6 @@ export default function Dashboard() {
   }
 
   // ── Sync right sidebar width as CSS var on body ──────────
-  // (kept for FeedbackModal's right offset — feedback button uses --rsb-width)
   useEffect(() => {
     const visible = rightSidebarOpen && activeTab !== 'chat'
     document.body.style.setProperty('--rsb-width', visible ? '320px' : '0px')
@@ -214,14 +231,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
     if (!user?.id) return
-    // Run both in parallel: AI cards regenerate, user-asked cards retranslate
+    // FIX: Do NOT call loadAdvisorCards() after this completes.
+    // loadAdvisorCards() would see cards.length === 0 mid-write and fire
+    // another refreshAdvisorCards(false), causing a double-generation loop.
+    // refreshAdvisorCards already sets state directly, so the UI updates fine.
     Promise.all([
       refreshAdvisorCards(true),
       cardsAPI.retranslateCards(user.id),
-    ]).then(() => {
-      // Reload cards so retranslated user cards appear
-      loadAdvisorCards()
-    }).catch(e => console.error('Language switch card update failed:', e))
+    ]).catch(e => console.error('Language switch card update failed:', e))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language])
 
@@ -275,7 +292,6 @@ export default function Dashboard() {
       setCompletedCourses([])
       setCompletedCoursesMap(new Set())
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const loadCurrentCourses = useCallback(async () => {
@@ -311,37 +327,7 @@ export default function Dashboard() {
       const data = await coursesAPI.search(searchQuery, null, 50)
       let courses = data.courses || data || []
       if (!Array.isArray(courses)) courses = []
-
-      // Overlay syllabus-uploaded professor name + RMP onto matching results.
-      // current_courses rows written by the syllabus parser carry a `professor`
-      // field that is more accurate than the historical instructor in the courses table.
-      if (currentCourses.length > 0) {
-        const currentMap = {}
-        currentCourses.forEach(c => {
-          if (c.professor) {
-            // key can be "MATH 323" or "MATH323" — normalise
-            const key = (c.course_code || '').replace(/\s+/g, '').toUpperCase()
-            currentMap[key] = c
-          }
-        })
-
-        courses = courses.map(course => {
-          const key = `${course.subject}${course.catalog}`.toUpperCase()
-          const current = currentMap[key]
-          if (!current) return course
-          // Merge: prefer syllabus-sourced professor name; keep existing RMP data
-          return {
-            ...course,
-            instructor: current.professor || course.instructor,
-            // If the historical row has no RMP but we have a name, flag it so
-            // CoursesTab can show a "Find on RMP" link
-            _syllabusProf: current.professor || null,
-          }
-        })
-      }
-
       setSearchResults(courses)
-      if (courses.length === 0) setSearchError('No courses found matching your search.')
     } catch (error) {
       console.error('Error searching courses:', error)
       setSearchError('Failed to search courses. Please try again.')
@@ -353,33 +339,9 @@ export default function Dashboard() {
 
   const handleCourseClick = async (course) => {
     setIsLoadingCourse(true)
-    setSelectedCourse(null)
     try {
       const data = await coursesAPI.getDetails(course.subject, course.catalog)
-      let detail = data.course || data
-
-      // If the student has this course in their current_courses with a professor
-      // from a syllabus upload, inject that name at the front of instructors[]
-      // so the detail panel prioritises their actual prof over historical data.
-      const courseKey = `${course.subject} ${course.catalog}`
-      const currentMatch = currentCourses.find(
-        c => (c.course_code || '').replace(/\s+/g, ' ').toUpperCase() === courseKey.toUpperCase()
-      )
-      if (currentMatch?.professor) {
-        const sylProf = currentMatch.professor
-        const existing = detail.instructors || []
-        // Deduplicate: put sylProf first, keep others that aren't the same name
-        const others = existing.filter(
-          n => n.toLowerCase() !== sylProf.toLowerCase()
-        )
-        detail = {
-          ...detail,
-          instructors: [sylProf, ...others],
-          _syllabusProf: sylProf,
-        }
-      }
-
-      setSelectedCourse(detail)
+      setSelectedCourse(data.course || data)
     } catch (error) {
       console.error('Error loading course details:', error)
       setSearchError('Failed to load course details.')
@@ -428,42 +390,27 @@ export default function Dashboard() {
         setCompletedCourses(prev => prev.filter(c => c.course_code !== courseCode))
         setCompletedCoursesMap(prev => { const s = new Set(prev); s.delete(courseCode); return s })
       } else {
-        const credits = getCourseCredits(course.subject, course.catalog)
-        setCourseToComplete({
-          code: courseCode,
-          title: course.title || course.course_title,
-          subject: course.subject,
-          catalog: course.catalog,
-          defaultCredits: credits,
-        })
+        setCourseToComplete(course)
         setShowCompleteCourseModal(true)
       }
     } catch (error) {
-      console.error('Error toggling completed:', error)
+      console.error('Error toggling completed course:', error)
       alert(error.message || 'Failed to update completed courses')
     }
   }
 
-  const handleConfirmComplete = async (formData) => {
+  const handleConfirmComplete = async (courseData) => {
+    if (!user?.id) return
     try {
-      const courseData = {
-        course_code: courseToComplete.code,
-        course_title: courseToComplete.title,
-        subject: courseToComplete.subject,
-        catalog: courseToComplete.catalog,
-        term: formData.term,
-        year: parseInt(formData.year),
-        grade: formData.grade || null,
-        credits: formData.credits,
-      }
       await completedCoursesAPI.addCompleted(user.id, courseData)
       setCompletedCourses(prev => [courseData, ...prev])
-      setCompletedCoursesMap(prev => new Set([...prev, courseToComplete.code]))
+      setCompletedCoursesMap(prev => new Set([...prev, courseData.course_code]))
+    } catch (error) {
+      console.error('Error adding completed course:', error)
+      alert(error.message || 'Failed to add completed course')
+    } finally {
       setShowCompleteCourseModal(false)
       setCourseToComplete(null)
-    } catch (error) {
-      console.error('Error marking completed:', error)
-      alert(error.message || 'Failed to mark course as completed')
     }
   }
 
@@ -706,6 +653,7 @@ export default function Dashboard() {
           }}
         />
       )}
+
       {showTranscriptUpload && (
         <TranscriptUpload
           userId={user?.id}

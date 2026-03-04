@@ -35,8 +35,9 @@ def _lang_instruction(language: str) -> str:
         )
     return ""
 
+
 # ── Anthropic client singleton ───────────────────────────────────
-# FIX: Create once at module level instead of per-request to avoid
+# Create once at module level instead of per-request to avoid
 # repeated object allocation and connection overhead.
 _anthropic_client: anthropic.Anthropic | None = None
 
@@ -226,6 +227,21 @@ def insert_user_card(user_id: str, card: dict, question: str) -> dict:
     return inserted
 
 
+# ── Prompt helpers ───────────────────────────────────────────────
+
+# Shared description for the "actions" field used in all three card-generating prompts.
+# Written clearly so the model generates clickable student-perspective questions,
+# NOT Socratic questions directed at the student.
+_ACTIONS_PROMPT = (
+    '"actions"  : array of 2–3 questions the STUDENT would want to click to ask '
+    'the advisor to learn more about this card '
+    '(e.g. "Which courses satisfy this requirement?", "When is the deadline for this?", '
+    '"How do I register for this?") — '
+    'write them from the student\'s perspective as if they are asking the advisor, '
+    'NOT questions for the student to answer'
+)
+
+
 # ── Prompt builders ──────────────────────────────────────────────
 
 def build_rich_context(ctx: dict, saved_cards: list = None) -> str:
@@ -233,14 +249,10 @@ def build_rich_context(ctx: dict, saved_cards: list = None) -> str:
     completed, current, favorites, calendar = (
         ctx["completed"], ctx["current"], ctx["favorites"], ctx["calendar"])
 
-    # 1. Protection for completed course credits
     total_credits = sum(c.get("credits") or 3 for c in completed)
-    
-    # 2. FIX: The advanced standing credit calculation
+
     adv = user.get("advanced_standing") or []
-    # Using 'or 0' handles cases where the key "credits" exists but the value is None
     adv_credits = sum((a.get("credits") or 0) for a in adv)
-    
     adv_summary = ", ".join(
         f"{a['course_code']} ({a.get('credits') or 0} cr)" for a in adv
     ) or "None"
@@ -313,7 +325,7 @@ Generate exactly 8 cards as a JSON array. Each card must include:
   "label"    : short ALL-CAPS label (≤ 4 words)
   "title"    : concise headline (≤ 12 words)
   "body"     : 1–3 sentence explanation with specific, actionable detail
-  "actions"  : array of 2–3 short follow-up question strings
+  {_ACTIONS_PROMPT}
   "category" : one of:
 {CATEGORIES_PROMPT_LIST}
   "priority" : integer 1–8 (1 = most important)
@@ -321,7 +333,30 @@ Generate exactly 8 cards as a JSON array. Each card must include:
 Return ONLY the JSON array — no markdown, no commentary."""
 
 
-# ── Routes ───────────────────────────────────────────────────────
+def _build_single_card_prompt(question: str, ctx: dict, language: str) -> str:
+    """Shared prompt for /ask and /retranslate — generates one card from a student question."""
+    return f"""You are a proactive AI academic advisor for McGill University.
+A student has asked: "{question}"
+
+Based on their profile below, generate a single helpful advisor card that directly answers their question.
+
+{build_rich_context(ctx)}
+
+Return a single JSON object (not an array) with these fields:
+  "type"     : one of "urgent" | "warning" | "insight" | "progress"
+  "icon"     : single emoji relevant to the answer
+  "label"    : short ALL-CAPS label (≤ 4 words)
+  "title"    : concise headline answering the question (≤ 12 words)
+  "body"     : 2–4 sentence answer with specific, actionable detail
+  {_ACTIONS_PROMPT}
+  "category" : one of: {", ".join(f'"{c}"' for c in CARD_CATEGORIES)}
+
+Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(language)}"""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ROUTES
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{user_id}", response_model=dict)
 async def get_cards(user_id: str):
@@ -359,8 +394,6 @@ async def generate_cards(user_id: str, request: GenerateRequest):
         saved = fetch_saved_cards(user_id)
         prompt = build_rich_context(ctx, saved_cards=saved) + _lang_instruction(request.language)
 
-        # FIX: Use module-level singleton instead of creating a new client per request.
-        # FIX: Use settings.CLAUDE_MODEL so model is configurable without code changes.
         client = get_anthropic_client()
         message = client.messages.create(
             model=settings.CLAUDE_MODEL,
@@ -403,7 +436,6 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest):
         get_user_by_id(user_id)
         supabase = get_supabase()
 
-        # Fetch all non-saved user-asked cards that have a stored question
         resp = (supabase.table("advisor_cards")
             .select("id, user_question")
             .eq("user_id", user_id)
@@ -423,23 +455,7 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest):
             card_id = card_row["id"]
             question = card_row["user_question"]
 
-            prompt = f"""You are a proactive AI academic advisor for McGill University.
-A student has asked: "{question}"
-
-Based on their profile below, generate a single helpful advisor card that directly answers their question.
-
-{build_rich_context(ctx)}
-
-Return a single JSON object (not an array) with these fields:
-  "type"     : one of "urgent" | "warning" | "insight" | "progress"
-  "icon"     : single emoji relevant to the answer
-  "label"    : short ALL-CAPS label (≤ 4 words)
-  "title"    : concise headline answering the question (≤ 12 words)
-  "body"     : 2–4 sentence answer with specific, actionable detail
-  "actions"  : array of 2–3 follow-up question strings
-  "category" : one of: {", ".join(f'"{c}"' for c in CARD_CATEGORIES)}
-
-Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(request.language)}"""
+            prompt = _build_single_card_prompt(question, ctx, request.language)
 
             try:
                 message = client.messages.create(
@@ -452,7 +468,6 @@ Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(re
                     raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
                 card_data = json.loads(raw)
 
-                # Update the existing card in-place
                 supabase.table("advisor_cards").update({
                     "card_type": card_data.get("type", "insight"),
                     "icon": card_data.get("icon", "💬"),
@@ -484,7 +499,6 @@ async def clear_cards(user_id: str):
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()
-        # Only delete non-saved AI cards
         supabase.table("advisor_cards").delete() \
             .eq("user_id", user_id) \
             .eq("source", "ai") \
@@ -520,25 +534,8 @@ async def ask_card(user_id: str, request: AskRequest):
         get_user_by_id(user_id)
         ctx = fetch_student_context(user_id)
 
-        prompt = f"""You are a proactive AI academic advisor for McGill University.
-A student has asked: "{request.question}"
+        prompt = _build_single_card_prompt(request.question, ctx, request.language)
 
-Based on their profile below, generate a single helpful advisor card that directly answers their question.
-
-{build_rich_context(ctx)}
-
-Return a single JSON object (not an array) with these fields:
-  "type"     : one of "urgent" | "warning" | "insight" | "progress"
-  "icon"     : single emoji relevant to the answer
-  "label"    : short ALL-CAPS label (≤ 4 words)
-  "title"    : concise headline answering the question (≤ 12 words)
-  "body"     : 2–4 sentence answer with specific, actionable detail
-  "actions"  : array of 2–3 follow-up question strings
-  "category" : one of: {", ".join(f'"{c}"' for c in CARD_CATEGORIES)}
-
-Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(request.language)}"""
-
-        # FIX: Use module-level singleton instead of creating a new client per request.
         client = get_anthropic_client()
         message = client.messages.create(
             model=settings.CLAUDE_MODEL,
@@ -568,6 +565,7 @@ Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(re
 async def thread_message(card_id: str, request: ThreadRequest):
     try:
         prompt = f"""You are a helpful AI academic advisor for McGill University.
+
 The student is asking a follow-up question about this advisor card:
 
 Card context: {request.card_context}
@@ -576,7 +574,6 @@ Student's follow-up: {request.message}
 
 Provide a concise, helpful, and specific response (2–4 sentences). Be direct and actionable.{_lang_instruction(request.language)}"""
 
-        # FIX: Use module-level singleton instead of creating a new client per request.
         client = get_anthropic_client()
         message = client.messages.create(
             model=settings.CLAUDE_MODEL,
@@ -615,19 +612,11 @@ async def save_card(card_id: str, request: SaveRequest):
 @router.patch("/{user_id}/reorder", response_model=dict)
 async def reorder_cards(user_id: str, request: ReorderRequest):
     try:
-        # 1. Validation check
         get_user_by_id(user_id)
-        
-        # 2. Get client
         supabase = get_supabase()
-        
-        # 3. Call the RPC function
-        # We pass the 'order' list directly from the request
         supabase.rpc("reorder_advisor_cards", {"payload": request.order}).execute()
-        
         logger.info(f"Successfully reordered {len(request.order)} cards for user {user_id}")
         return {"reordered": len(request.order)}
-        
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
     except Exception as e:
