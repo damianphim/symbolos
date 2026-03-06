@@ -875,14 +875,10 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
 
           {/* Foundation year waived banner */}
           {foundationWaived && (
-            <div style={{
-              background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '8px',
-              padding: '10px 14px', marginBottom: '12px', fontSize: '13px',
-              display: 'flex', alignItems: 'center', gap: '8px', color: '#2e7d32'
-            }}>
+            <div className="drv-foundation-waived-banner">
               <span>✓</span>
               <span>
-                <strong>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
+                <strong style={{ color: 'var(--text-primary)' }}>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
                 {transferCredits < 30 ? t('dp.foundationWaivedNote') : ''}.
               </span>
             </div>

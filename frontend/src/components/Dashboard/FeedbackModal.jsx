@@ -17,6 +17,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { FaFlag, FaCheck, FaTimes, FaCommentAlt, FaSearch } from 'react-icons/fa'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import './FeedbackModal.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -29,6 +30,7 @@ const BASE_URL = normalizeUrl(API_URL)
 
 export default function FeedbackModal() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [open, setOpen]     = useState(false)
   const [mode, setMode]     = useState(null) // null | 'general' | 'missing-course'
   const [text, setText]     = useState('')
@@ -112,9 +114,9 @@ export default function FeedbackModal() {
   return (
     <>
       {/* Trigger button — bottom right corner */}
-      <button className="feedback-trigger-btn" onClick={() => setOpen(true)} title="Send feedback">
+      <button className="feedback-trigger-btn" onClick={() => setOpen(true)} title={t('fb.button')}>
         <FaCommentAlt />
-        <span>Feedback</span>
+        <span>{t('fb.button')}</span>
       </button>
 
       {/* Overlay + Modal */}
@@ -125,7 +127,7 @@ export default function FeedbackModal() {
             {/* Header */}
             <div className="feedback-modal-header">
               <FaFlag className="feedback-modal-flag" />
-              <span>Send Feedback</span>
+              <span>{t('fb.title')}</span>
               <button className="feedback-modal-close" onClick={close}>
                 <FaTimes />
               </button>
@@ -134,19 +136,19 @@ export default function FeedbackModal() {
             {/* Mode selection */}
             {!mode && status === 'idle' && (
               <div className="feedback-mode-select">
-                <p className="feedback-modal-desc">What would you like to tell us?</p>
+                <p className="feedback-modal-desc">{t('fb.modePrompt')}</p>
                 <button className="feedback-mode-btn" onClick={() => setMode('general')}>
                   <FaCommentAlt className="feedback-mode-icon" />
                   <div>
-                    <strong>General Feedback</strong>
-                    <span>Bug reports, suggestions, anything else</span>
+                    <strong>{t('fb.modeGeneral')}</strong>
+                    <span>{t('fb.modeGeneralSub')}</span>
                   </div>
                 </button>
                 <button className="feedback-mode-btn" onClick={() => setMode('missing-course')}>
                   <FaSearch className="feedback-mode-icon" />
                   <div>
-                    <strong>Missing Course</strong>
-                    <span>Can't find a course you're looking for?</span>
+                    <strong>{t('fb.modeMissing')}</strong>
+                    <span>{t('fb.modeMissingSub')}</span>
                   </div>
                 </button>
               </div>
@@ -155,13 +157,11 @@ export default function FeedbackModal() {
             {/* General feedback form */}
             {mode === 'general' && status === 'idle' && (
               <form className="feedback-form" onSubmit={handleSubmit}>
-                <p className="feedback-modal-desc">
-                  Tell us what's working, what's broken, or what you'd like to see.
-                </p>
+                <p className="feedback-modal-desc">{t('fb.generalDesc')}</p>
                 <textarea
                   ref={inputRef}
                   className="feedback-textarea"
-                  placeholder="Your feedback..."
+                  placeholder={t('fb.generalPlaceholder')}
                   value={text}
                   onChange={e => setText(e.target.value)}
                   maxLength={1000}
@@ -169,13 +169,13 @@ export default function FeedbackModal() {
                   disabled={status === 'submitting'}
                 />
                 <div className="feedback-form-actions">
-                  <button type="button" className="feedback-cancel-btn" onClick={() => setMode(null)}>← Back</button>
+                  <button type="button" className="feedback-cancel-btn" onClick={() => setMode(null)}>{t('fb.back')}</button>
                   <button
                     type="submit"
                     className="feedback-submit-btn"
                     disabled={!text.trim() || status === 'submitting'}
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Send'}
+                    {status === 'submitting' ? t('fb.sending') : t('fb.send')}
                   </button>
                 </div>
               </form>
@@ -184,14 +184,12 @@ export default function FeedbackModal() {
             {/* Missing course form */}
             {mode === 'missing-course' && status === 'idle' && (
               <form className="feedback-form" onSubmit={handleSubmit}>
-                <p className="feedback-modal-desc">
-                  Tell us which course you couldn't find and we'll work on adding it.
-                </p>
+                <p className="feedback-modal-desc">{t('fb.missingDesc')}</p>
                 <input
                   ref={inputRef}
                   className="feedback-input"
                   type="text"
-                  placeholder="Course code, e.g. POLS 340"
+                  placeholder={t('fb.missingPlaceholder')}
                   value={course}
                   onChange={e => setCourse(e.target.value)}
                   maxLength={50}
@@ -199,7 +197,7 @@ export default function FeedbackModal() {
                 />
                 <textarea
                   className="feedback-textarea feedback-textarea--short"
-                  placeholder="Any extra context? (optional)"
+                  placeholder={t('fb.missingExtra')}
                   value={text}
                   onChange={e => setText(e.target.value)}
                   maxLength={300}
@@ -207,13 +205,13 @@ export default function FeedbackModal() {
                   disabled={status === 'submitting'}
                 />
                 <div className="feedback-form-actions">
-                  <button type="button" className="feedback-cancel-btn" onClick={() => setMode(null)}>← Back</button>
+                  <button type="button" className="feedback-cancel-btn" onClick={() => setMode(null)}>{t('fb.back')}</button>
                   <button
                     type="submit"
                     className="feedback-submit-btn"
                     disabled={!course.trim() || status === 'submitting'}
                   >
-                    {status === 'submitting' ? 'Sending…' : 'Submit'}
+                    {status === 'submitting' ? t('fb.sending') : t('fb.submit')}
                   </button>
                 </div>
               </form>
@@ -222,15 +220,15 @@ export default function FeedbackModal() {
             {/* Success */}
             {status === 'success' && (
               <div className="feedback-success">
-                <FaCheck /> Thanks! We got your feedback.
+                <FaCheck /> {t('fb.success')}
               </div>
             )}
 
             {/* Duplicate */}
             {status === 'duplicate' && (
               <div className="feedback-duplicate">
-                Looks like you already submitted this recently.
-                <button className="feedback-cancel-btn" onClick={close}>Close</button>
+                {t('fb.duplicate')}
+                <button className="feedback-cancel-btn" onClick={close}>{t('fb.close')}</button>
               </div>
             )}
 

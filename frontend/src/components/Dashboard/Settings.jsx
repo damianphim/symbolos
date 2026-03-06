@@ -3,8 +3,10 @@ import {
   FaCog, FaPalette, FaBell, FaLock, FaBolt,
   FaSun, FaMoon, FaSyncAlt, FaDownload,
   FaEnvelope, FaGraduationCap, FaUsers, FaUser, FaCheck,
+  FaTrash, FaExclamationTriangle,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useTimezone, TIMEZONES } from '../../contexts/TimezoneContext'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
@@ -12,6 +14,7 @@ import './Settings.css'
 
 export default function Settings({ user, profile, onUpdateSettings }) {
   const { language, setLanguage, t } = useLanguage()
+  const { deleteAccount } = useAuth()
   const { theme, setTheme } = useTheme()
   const { timezone, setTimezone } = useTimezone()
 
@@ -28,6 +31,10 @@ export default function Settings({ user, profile, onUpdateSettings }) {
 
   const [showExportModal, setShowExportModal] = useState(false)
   const [autoSaveFlash, setAutoSaveFlash] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const flash = () => {
     setAutoSaveFlash(true)
@@ -76,6 +83,20 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
     setShowExportModal(false)
     alert(t('settings.dataExported'))
+  }
+
+  const confirmWord = t('settings.deleteConfirmPlaceholder').replace('Type ', '').replace('Tapez ', '').trim()
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== confirmWord) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await deleteAccount()
+    } catch (err) {
+      setDeleteError(t('settings.deleteError'))
+      setDeleting(false)
+    }
   }
 
   const METHOD_OPTIONS = [
@@ -279,6 +300,26 @@ export default function Settings({ user, profile, onUpdateSettings }) {
           </div>
         </div>
 
+
+        {/* ── Danger Zone ── */}
+        <div className="settings-section settings-section--danger">
+          <div className="section-header">
+            <span className="section-icon section-icon--danger"><FaExclamationTriangle /></span>
+            <h3 className="section-title section-title--danger">{t('settings.dangerZone')}</h3>
+          </div>
+          <div className="section-content">
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">{t('settings.deleteAccount')}</label>
+                <p className="setting-description">{t('settings.deleteAccountDesc')}</p>
+              </div>
+              <button className="delete-account-btn" onClick={() => { setShowDeleteModal(true); setDeleteConfirm(''); setDeleteError('') }}>
+                <FaTrash size={12} /> {t('settings.deleteAccountBtn')}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Export Modal */}
@@ -290,6 +331,40 @@ export default function Settings({ user, profile, onUpdateSettings }) {
             <div className="modal-actions">
               <button className="modal-btn cancel-btn" onClick={() => setShowExportModal(false)}>{t('common.cancel')}</button>
               <button className="modal-btn confirm-btn" onClick={handleExportData}>{t('settings.downloadJson')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => !deleting && setShowDeleteModal(false)}>
+          <div className="modal-content modal-content--danger" onClick={e => e.stopPropagation()}>
+            <div className="modal-danger-icon"><FaTrash size={22} /></div>
+            <h3 className="modal-title">{t('settings.deleteConfirmTitle')}</h3>
+            <p className="modal-text">{t('settings.deleteConfirmText')}</p>
+            <div className="modal-confirm-field">
+              <label className="modal-confirm-label">{t('settings.deleteConfirmPrompt')}</label>
+              <input
+                className="modal-confirm-input"
+                type="text"
+                placeholder={t('settings.deleteConfirmPlaceholder')}
+                value={deleteConfirm}
+                onChange={e => setDeleteConfirm(e.target.value)}
+                disabled={deleting}
+                autoFocus
+              />
+            </div>
+            {deleteError && <p className="modal-error">{deleteError}</p>}
+            <div className="modal-actions">
+              <button className="modal-btn cancel-btn" onClick={() => setShowDeleteModal(false)} disabled={deleting}>{t('common.cancel')}</button>
+              <button
+                className="modal-btn delete-confirm-btn"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm !== confirmWord || deleting}
+              >
+                {deleting ? t('settings.deleteDeleting') : t('settings.deleteConfirmBtn')}
+              </button>
             </div>
           </div>
         </div>

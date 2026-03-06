@@ -577,3 +577,49 @@
     padding-top: 1.5rem;
   }
 }
+/* ── Corner controls wrapper ── */
+.auth-corner-controls {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 200;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Individual corner button (lang / theme) ── */
+.auth-lang-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-primary, rgba(0,0,0,0.18));
+  background: var(--bg-primary, #fff);
+  color: var(--text-secondary, #374151);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, color 0.15s ease;
+}
+
+.auth-lang-btn:hover {
+  background: var(--bg-secondary, #f3f4f6);
+  border-color: var(--accent-primary, #ed1b2f);
+  color: var(--accent-primary, #ed1b2f);
+  transform: scale(1.05);
+}
+
+[data-theme='dark'] .auth-lang-btn {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+}
+
+[data-theme='dark'] .auth-lang-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.55);
+  color: #fff;
+}

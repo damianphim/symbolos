@@ -2,8 +2,8 @@ import { useState } from 'react'
 import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
   FaUser, FaChartBar, FaFlag, FaChevronLeft, FaChevronRight,
-  FaArrowLeft, FaTrophy, FaLayerGroup
-} from 'react-icons/fa'
+  FaArrowLeft, FaTrophy, FaLayerGroup, FaExternalLinkAlt, FaCalendarAlt
+, FaSearch } from 'react-icons/fa'
 import { GrPowerCycle } from 'react-icons/gr'
 import { MdOutlineRateReview } from 'react-icons/md'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -64,8 +64,12 @@ export default function CoursesTab({
   handleToggleCurrent,
   // Utility
   gpaToLetterGrade,
+  // Fuzzy correction
+  searchCorrection,
+  onSearchWithCorrection,
+  hasSearched,
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const [openFlagCard, setOpenFlagCard] = useState(null)
   const [openFlagDetail, setOpenFlagDetail] = useState(false)
@@ -117,6 +121,43 @@ export default function CoursesTab({
       </form>
 
       {searchError && <div className="error-banner">{searchError}</div>}
+
+      {/* ── Fuzzy correction banner ── */}
+      {searchCorrection && (
+        <div className="search-correction-banner">
+          <span>
+            {language === 'fr' ? 'Vouliez-vous dire' : 'Did you mean'}
+            {' '}
+            <button
+              className="search-correction-link"
+              onClick={() => onSearchWithCorrection(searchCorrection.corrected)}
+            >
+              {searchCorrection.corrected}
+            </button>
+            {'? '}
+            {language === 'fr'
+              ? `Affichage des résultats pour "${searchCorrection.corrected}" (au lieu de "${searchCorrection.original}").`
+              : `Showing results for "${searchCorrection.corrected}" instead of "${searchCorrection.original}".`}
+          </span>
+        </div>
+      )}
+
+      {/* ── VSB Banner ──────────────────────────────────────── */}
+      <a
+        href={`https://vsb.mcgill.ca/criteria.jsp?access=0&lang=${language === 'fr' ? 'fr' : 'en'}&tip=2&page=criteria&scratch=0&advice=0&legend=1&term=202601&sort=none&filters=iiiiiiiiii&bbs=&ds=&cams=OFF-CAMPUS_DISTANCE_DOWNTOWN_MACDONALD&locs=any&isrts=any&ses=any&pl=&pac=1`}
+        target="_blank"
+        rel="noreferrer"
+        className="vsb-banner"
+      >
+        <div className="vsb-banner__left">
+          <FaCalendarAlt className="vsb-banner__icon" />
+          <div>
+            <span className="vsb-banner__title">{t('courses.vsbLabel')}</span>
+            <span className="vsb-banner__desc">{t('courses.vsbDesc')}</span>
+          </div>
+        </div>
+        <FaExternalLinkAlt className="vsb-banner__arrow" />
+      </a>
 
       {/* ── Search Results List ─────────────────────────────── */}
       {searchResults.length > 0 && !selectedCourse && (
@@ -509,8 +550,21 @@ export default function CoursesTab({
         </div>
       )}
 
-      {/* Placeholder */}
-      {!searchResults.length && !selectedCourse && !searchError && !isSearching && (
+      {/* No results */}
+      {!searchResults.length && !selectedCourse && !searchError && !isSearching && hasSearched && (
+        <div className="placeholder-content placeholder-content--empty">
+          <div className="placeholder-icon placeholder-icon--muted"><FaSearch /></div>
+          <h3>{language === 'fr' ? 'Aucun résultat' : 'No results found'}</h3>
+          <p>
+            {language === 'fr'
+              ? `Aucun cours trouvé pour "${searchQuery}". Essayez un code de cours (ex. COMP 202) ou un mot-clé du titre.`
+              : `No courses found for "${searchQuery}". Try a course code (e.g. COMP 202) or a keyword from the title.`}
+          </p>
+        </div>
+      )}
+
+      {/* Initial placeholder */}
+      {!searchResults.length && !selectedCourse && !searchError && !isSearching && !hasSearched && (
         <div className="placeholder-content">
           <div className="placeholder-icon"><FaBook /></div>
           <h3>{t('courses.explorerTitle')}</h3>

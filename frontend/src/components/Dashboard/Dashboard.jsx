@@ -5,6 +5,7 @@ import favoritesAPI from '../../lib/favoritesAPI'
 import completedCoursesAPI from '../../lib/completedCoursesAPI'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
 import { getCourseCredits } from '../../utils/courseCredits'
+import { normalizeQuery, buildCorrectionCandidates } from '../../utils/fuzzySearch'
 import { useLanguage } from '../../contexts/LanguageContext'
 import cardsAPI from '../../lib/cardsAPI'
 import AdvisorCards from './chat/AdvisorCards'
@@ -65,6 +66,8 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchError, setSearchError] = useState(null)
+  const [searchCorrection, setSearchCorrection] = useState(null) // { original, corrected }
+  const [hasSearched, setHasSearched] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [isLoadingCourse, setIsLoadingCourse] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
@@ -313,21 +316,43 @@ export default function Dashboard() {
     setSelectedCourse(null)
     setSearchResults([])
     setSearchError(null)
+    setSearchCorrection(null)
+    setHasSearched(false)
     if (window.innerWidth < 768) setSidebarOpen(false)
   }
 
   // ── Course search ──────────────────────────────────────
-  const handleCourseSearch = async (e) => {
-    e.preventDefault()
-    if (!searchQuery.trim() || isSearching) return
+  const handleCourseSearch = async (e, overrideQuery) => {
+    if (e?.preventDefault) e.preventDefault()
+    const rawQuery = overrideQuery || searchQuery
+    if (!rawQuery.trim() || isSearching) return
     setIsSearching(true)
     setSearchError(null)
+    setSearchCorrection(null)
     setSelectedCourse(null)
+    setHasSearched(true)
     try {
-      const data = await coursesAPI.search(searchQuery, null, 50)
+      const normalized = normalizeQuery(rawQuery)
+      const data = await coursesAPI.search(normalized, null, 50)
       let courses = data.courses || data || []
       if (!Array.isArray(courses)) courses = []
+
+      // Zero results — try fuzzy correction
+      if (courses.length === 0) {
+        const candidates = buildCorrectionCandidates(rawQuery)
+        for (const candidate of candidates) {
+          const retry = await coursesAPI.search(candidate.query, null, 50)
+          const retryList = retry.courses || retry || []
+          if (Array.isArray(retryList) && retryList.length > 0) {
+            setSearchCorrection({ original: rawQuery, corrected: candidate.note })
+            setSearchResults(retryList)
+            return
+          }
+        }
+      }
+
       setSearchResults(courses)
+      if (courses.length === 0) setSearchError(null) // CoursesTab shows its own empty state
     } catch (error) {
       console.error('Error searching courses:', error)
       setSearchError('Failed to search courses. Please try again.')
@@ -572,6 +597,9 @@ export default function Dashboard() {
               setSearchResults={setSearchResults}
               isSearching={isSearching}
               searchError={searchError}
+              searchCorrection={searchCorrection}
+              onSearchWithCorrection={(q) => { setSearchQuery(q); handleCourseSearch(null, q) }}
+              hasSearched={hasSearched}
               selectedCourse={selectedCourse}
               setSelectedCourse={setSelectedCourse}
               isLoadingCourse={isLoadingCourse}

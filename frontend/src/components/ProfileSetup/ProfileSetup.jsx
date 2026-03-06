@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { usersAPI } from '../../lib/api'
 import {
   FaGraduationCap, FaFileUpload, FaCheckCircle,
@@ -14,8 +16,9 @@ const BASE_URL = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '')
 
 export default function ProfileSetup() {
   const { user, completeOnboarding } = useAuth()
+  const { t, language, setLanguage } = useLanguage()
+  const { theme, setTheme, resolvedTheme } = useTheme()
 
-  // 'transcript' | 'syllabus'
   const [step, setStep] = useState('transcript')
 
   // ── Transcript ─────────────────────────────────────────
@@ -27,8 +30,8 @@ export default function ProfileSetup() {
   const fileRef = useRef(null)
 
   // ── Syllabi ────────────────────────────────────────────
-  const [sylStep, setSylStep]         = useState('idle')   // idle | uploading | done | error
-  const [sylFiles, setSylFiles]       = useState([])       // array of File objects
+  const [sylStep, setSylStep]         = useState('idle')
+  const [sylFiles, setSylFiles]       = useState([])
   const [sylDragOver, setSylDragOver] = useState(false)
   const [sylError, setSylError]       = useState('')
   const [sylResults, setSylResults]   = useState(null)
@@ -41,7 +44,6 @@ export default function ProfileSetup() {
     await completeOnboarding()
   }
 
-  // ── Ensure the user row exists (was previously done in profile step) ──
   const ensureUser = async () => {
     try {
       await usersAPI.createUser({ id: user.id, email: user.email })
@@ -55,8 +57,8 @@ export default function ProfileSetup() {
   // ── Transcript helpers ─────────────────────────────────
   const pickFile = (f) => {
     if (!f) return
-    if (!f.name.toLowerCase().endsWith('.pdf')) { setTxError('Please upload a PDF file.'); return }
-    if (f.size > 10 * 1024 * 1024) { setTxError('File must be under 10 MB.'); return }
+    if (!f.name.toLowerCase().endsWith('.pdf')) { setTxError(t('ps.txPdfOnly')); return }
+    if (f.size > 10 * 1024 * 1024) { setTxError(t('ps.txTooLarge')); return }
     setTxError('')
     setFile(f)
   }
@@ -98,7 +100,7 @@ export default function ProfileSetup() {
       if (f.size > 15 * 1024 * 1024) continue
       valid.push(f)
     }
-    if (valid.length === 0) { setSylError('Please upload PDF files only (max 15 MB each).'); return }
+    if (valid.length === 0) { setSylError(t('ps.sylPdfOnly')); return }
     setSylError('')
     setSylFiles(prev => {
       const existing = new Set(prev.map(f => f.name))
@@ -138,44 +140,62 @@ export default function ProfileSetup() {
     }
   }
 
-  // ── Step bar — 2 steps ─────────────────────────────────
+  const cycleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+
   const stepOrder = ['transcript', 'syllabus']
   const stepIdx = stepOrder.indexOf(step)
 
   const StepBar = () => (
     <div className="ps-stepbar">
-      {/* Step 1: Transcript */}
       <div className={`ps-stepbar-item ${stepIdx === 0 ? 'active' : 'done'}`}>
         <div className="ps-stepbar-dot">
           {stepIdx > 0 ? <FaCheck size={10} /> : <span>1</span>}
         </div>
-        <span className="ps-stepbar-label">Transcript</span>
+        <span className="ps-stepbar-label">{t('ps.stepTranscript')}</span>
       </div>
-
       <div className={`ps-stepbar-line ${stepIdx > 0 ? 'filled' : ''}`} />
-
-      {/* Step 2: Syllabi */}
       <div className={`ps-stepbar-item ${stepIdx === 1 ? 'active' : stepIdx > 1 ? 'done' : ''}`}>
         <div className="ps-stepbar-dot">
           {stepIdx > 1 ? <FaCheck size={10} /> : <span>2</span>}
         </div>
-        <span className="ps-stepbar-label">Syllabi</span>
+        <span className="ps-stepbar-label">{t('ps.stepSyllabi')}</span>
       </div>
     </div>
   )
 
-  // ══════════════════════════════════════════════════════════
+  // ── Corner controls (language + theme) ────────────────
+  const CornerControls = () => (
+    <div className="ps-corner-controls">
+      <button
+        className="ps-corner-btn"
+        onClick={() => setLanguage(language === 'en' ? 'fr' : 'en')}
+        title={t('auth.langToggle')}
+      >
+        {language === 'en' ? 'FR' : 'EN'}
+      </button>
+      <button
+        className="ps-corner-btn"
+        onClick={cycleTheme}
+        title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {resolvedTheme === 'dark' ? '☀' : '☽'}
+      </button>
+    </div>
+  )
+
+  // ══════════════════════════════════════════════════════
   // Step 1: Transcript
-  // ══════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════
   if (step === 'transcript') {
     return (
       <div className="ps-page">
+        <CornerControls />
         <div className="ps-container">
           <div className="ps-header">
             <div className="ps-header-icon ps-header-icon--green"><FaGraduationCap /></div>
             <div>
-              <h1 className="ps-title">Import your transcript</h1>
-              <p className="ps-subtitle">We'll automatically pull your courses, grades, GPA, and program info.</p>
+              <h1 className="ps-title">{t('ps.txTitle')}</h1>
+              <p className="ps-subtitle">{t('ps.txSubtitle')}</p>
             </div>
           </div>
           <StepBar />
@@ -205,8 +225,8 @@ export default function ProfileSetup() {
                 ) : (
                   <div className="ps-dropzone-empty">
                     <FaCloudUploadAlt className="ps-dropzone-icon" />
-                    <p className="ps-dropzone-main">Drop your unofficial transcript here</p>
-                    <p className="ps-dropzone-sub">or click to browse · PDF only · max 10 MB</p>
+                    <p className="ps-dropzone-main">{t('ps.dropTranscript')}</p>
+                    <p className="ps-dropzone-sub">{t('ps.dropBrowse')}</p>
                   </div>
                 )}
               </div>
@@ -220,15 +240,15 @@ export default function ProfileSetup() {
 
               <div className="ps-actions">
                 <button className="ps-btn ps-btn--primary" onClick={handleUpload} disabled={!file}>
-                  Import Transcript <FaArrowRight />
+                  {t('ps.importTranscript')} <FaArrowRight />
                 </button>
                 <button className="ps-btn ps-btn--ghost" onClick={async () => { await ensureUser(); setStep('syllabus') }}>
-                  Skip for now
+                  {t('ps.skipForNow')}
                 </button>
               </div>
               <div className="ps-hint">
                 <FaLightbulb className="ps-hint-icon" />
-                <p>You can also do this later from the <strong>Profile tab</strong> — find <strong>Import Transcript</strong> in the Degree Progress card.</p>
+                <p dangerouslySetInnerHTML={{ __html: t('ps.hintTranscript') }} />
               </div>
             </>
           )}
@@ -236,38 +256,38 @@ export default function ProfileSetup() {
           {txStep === 'uploading' && (
             <div className="ps-status">
               <div className="ps-status-icon ps-status-icon--spin"><FaSpinner /></div>
-              <h3 className="ps-status-title">Importing your transcript…</h3>
-              <p className="ps-status-sub">Claude is reading your courses, grades, and program info.</p>
+              <h3 className="ps-status-title">{t('ps.txUploading')}</h3>
+              <p className="ps-status-sub">{t('ps.txUploadingSub')}</p>
             </div>
           )}
 
           {txStep === 'done' && txResults && (
             <div className="ps-status">
               <div className="ps-status-icon ps-status-icon--success"><FaCheckCircle /></div>
-              <h3 className="ps-status-title">Transcript imported!</h3>
-              <p className="ps-status-sub">Your academic history is ready. Next, upload your syllabi.</p>
+              <h3 className="ps-status-title">{t('ps.txDone')}</h3>
+              <p className="ps-status-sub">{t('ps.txDoneSub')}</p>
               <div className="ps-chips">
                 {txResults.completed_added > 0 && (
                   <div className="ps-chip">
                     <span className="ps-chip-num">{txResults.completed_added}</span>
-                    <span className="ps-chip-label">completed courses</span>
+                    <span className="ps-chip-label">{t('ps.txCompletedLabel')}</span>
                   </div>
                 )}
                 {txResults.current_added > 0 && (
                   <div className="ps-chip">
                     <span className="ps-chip-num">{txResults.current_added}</span>
-                    <span className="ps-chip-label">current courses</span>
+                    <span className="ps-chip-label">{t('ps.txCurrentLabel')}</span>
                   </div>
                 )}
                 {txResults.profile_updated && (
                   <div className="ps-chip ps-chip--success">
                     <FaCheck className="ps-chip-check" />
-                    <span className="ps-chip-label">profile updated</span>
+                    <span className="ps-chip-label">{t('ps.txProfileUpdated')}</span>
                   </div>
                 )}
               </div>
               <button className="ps-btn ps-btn--primary" onClick={() => setStep('syllabus')}>
-                Continue to Syllabi <FaArrowRight />
+                {t('ps.continueSyllabi')} <FaArrowRight />
               </button>
             </div>
           )}
@@ -275,12 +295,12 @@ export default function ProfileSetup() {
           {txStep === 'error' && (
             <div className="ps-status">
               <div className="ps-status-icon ps-status-icon--warning"><FaExclamationTriangle /></div>
-              <h3 className="ps-status-title">Import failed</h3>
+              <h3 className="ps-status-title">{t('ps.txError')}</h3>
               <p className="ps-status-sub">{txError}</p>
               <div className="ps-actions ps-actions--center">
-                <button className="ps-btn ps-btn--secondary" onClick={() => { setTxStep('idle'); setTxError('') }}>Try Again</button>
+                <button className="ps-btn ps-btn--secondary" onClick={() => { setTxStep('idle'); setTxError('') }}>{t('ps.tryAgain')}</button>
                 <button className="ps-btn ps-btn--ghost" onClick={() => setStep('syllabus')}>
-                  Skip to Syllabi
+                  {t('ps.skipSyllabi')}
                 </button>
               </div>
             </div>
@@ -290,40 +310,39 @@ export default function ProfileSetup() {
     )
   }
 
-  // ══════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════
   // Step 2: Syllabi
-  // ══════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════
   return (
     <div className="ps-page">
+      <CornerControls />
       <div className="ps-container">
         <div className="ps-header">
           <div className="ps-header-icon ps-header-icon--blue"><FaBook /></div>
           <div>
-            <h1 className="ps-title">Upload your syllabi</h1>
-            <p className="ps-subtitle">We'll extract schedules, exams, and professor info — and fill in your calendar automatically.</p>
+            <h1 className="ps-title">{t('ps.sylTitle')}</h1>
+            <p className="ps-subtitle">{t('ps.sylSubtitle')}</p>
           </div>
         </div>
         <StepBar />
 
         {sylStep === 'idle' && (
           <>
-            {/* What we extract — info chips */}
             <div className="ps-syl-info">
               <div className="ps-syl-info-item">
                 <FaCalendarAlt className="ps-syl-info-icon" />
-                <span>Lecture times &amp; rooms added to your calendar</span>
+                <span>{t('ps.sylInfo1')}</span>
               </div>
               <div className="ps-syl-info-item">
                 <FaChalkboardTeacher className="ps-syl-info-icon" />
-                <span>Professor, office hours &amp; contact info</span>
+                <span>{t('ps.sylInfo2')}</span>
               </div>
               <div className="ps-syl-info-item">
                 <FaCheck className="ps-syl-info-icon ps-syl-info-icon--green" />
-                <span>Exams &amp; assignment deadlines with reminders</span>
+                <span>{t('ps.sylInfo3')}</span>
               </div>
             </div>
 
-            {/* Drop zone */}
             <div
               className={`ps-dropzone ps-dropzone--multi ${sylDragOver ? 'ps-dropzone--over' : ''}`}
               onDragOver={e => { e.preventDefault(); setSylDragOver(true) }}
@@ -331,17 +350,13 @@ export default function ProfileSetup() {
               onDrop={handleSylDrop}
               onClick={() => sylFileRef.current?.click()}
             >
-              <input
-                ref={sylFileRef} type="file" accept=".pdf" multiple
-                style={{ display: 'none' }}
-                onChange={e => pickSylFiles(Array.from(e.target.files))}
-              />
+              <input ref={sylFileRef} type="file" accept=".pdf" multiple style={{ display: 'none' }}
+                onChange={e => pickSylFiles(Array.from(e.target.files))} />
               <FaCloudUploadAlt className="ps-dropzone-icon" />
-              <p className="ps-dropzone-main">Drop syllabus PDFs here</p>
-              <p className="ps-dropzone-sub">Upload all at once · PDF only · max 15 MB each</p>
+              <p className="ps-dropzone-main">{t('ps.dropSyllabi')}</p>
+              <p className="ps-dropzone-sub">{t('ps.dropSyllabiSub')}</p>
             </div>
 
-            {/* File list */}
             {sylFiles.length > 0 && (
               <div className="ps-syl-filelist">
                 {sylFiles.map(f => (
@@ -355,7 +370,7 @@ export default function ProfileSetup() {
                   </div>
                 ))}
                 <button className="ps-syl-add-more" onClick={() => sylFileRef.current?.click()}>
-                  <FaPlus /> Add more
+                  <FaPlus /> {t('ps.addMore')}
                 </button>
               </div>
             )}
@@ -368,21 +383,21 @@ export default function ProfileSetup() {
             )}
 
             <div className="ps-actions">
-              <button
-                className="ps-btn ps-btn--primary"
-                onClick={handleSylUpload}
-                disabled={sylFiles.length === 0}
-              >
-                Import {sylFiles.length > 0 ? `${sylFiles.length} Syllab${sylFiles.length > 1 ? 'i' : 'us'}` : 'Syllabi'} <FaArrowRight />
+              <button className="ps-btn ps-btn--primary" onClick={handleSylUpload} disabled={sylFiles.length === 0}>
+                {sylFiles.length > 1
+                  ? t('ps.importSyllabiCount').replace('{count}', sylFiles.length)
+                  : sylFiles.length === 1
+                  ? t('ps.importSyllabusCount').replace('{count}', 1)
+                  : t('ps.importSyllabi')} <FaArrowRight />
               </button>
               <button className="ps-btn ps-btn--ghost" onClick={finish} disabled={finishing}>
-                {finishing ? <><FaSpinner className="ps-spin" /> Loading…</> : 'Skip for now'}
+                {finishing ? <><FaSpinner className="ps-spin" /> {t('ps.loading')}</> : t('ps.skipForNow')}
               </button>
             </div>
 
             <div className="ps-hint">
               <FaLightbulb className="ps-hint-icon" />
-              <p>You can upload syllabi anytime from the <strong>Calendar</strong> or <strong>Profile</strong> tab.</p>
+              <p dangerouslySetInnerHTML={{ __html: t('ps.hintSyllabi') }} />
             </div>
           </>
         )}
@@ -390,27 +405,31 @@ export default function ProfileSetup() {
         {sylStep === 'uploading' && (
           <div className="ps-status">
             <div className="ps-status-icon ps-status-icon--spin"><FaSpinner /></div>
-            <h3 className="ps-status-title">Processing your syllabi…</h3>
-            <p className="ps-status-sub">Claude is reading course schedules, exams, and professor info from {sylFiles.length} file{sylFiles.length > 1 ? 's' : ''}.</p>
+            <h3 className="ps-status-title">{t('ps.sylUploading')}</h3>
+            <p className="ps-status-sub">
+              {(sylFiles.length > 1 ? t('ps.sylUploadingSubPlural') : t('ps.sylUploadingSub')).replace('{count}', sylFiles.length)}
+            </p>
           </div>
         )}
 
         {sylStep === 'done' && sylResults && (
           <div className="ps-status">
             <div className="ps-status-icon ps-status-icon--success"><FaCheckCircle /></div>
-            <h3 className="ps-status-title">Syllabi imported!</h3>
-            <p className="ps-status-sub">Your calendar and course profiles have been updated.</p>
+            <h3 className="ps-status-title">{t('ps.sylDone')}</h3>
+            <p className="ps-status-sub">{t('ps.sylDoneSub')}</p>
             <div className="ps-chips">
               {sylResults.total_events_added > 0 && (
                 <div className="ps-chip">
                   <span className="ps-chip-num">{sylResults.total_events_added}</span>
-                  <span className="ps-chip-label">calendar events added</span>
+                  <span className="ps-chip-label">{t('ps.sylEventsLabel')}</span>
                 </div>
               )}
               {sylResults.total_courses_updated > 0 && (
                 <div className="ps-chip ps-chip--success">
                   <FaCheck className="ps-chip-check" />
-                  <span className="ps-chip-label">{sylResults.total_courses_updated} course{sylResults.total_courses_updated > 1 ? 's' : ''} enriched</span>
+                  <span className="ps-chip-label">
+                    {(sylResults.total_courses_updated > 1 ? t('ps.sylCoursesLabelPlural') : t('ps.sylCoursesLabel')).replace('{count}', sylResults.total_courses_updated)}
+                  </span>
                 </div>
               )}
               {sylResults.results?.filter(r => r.success).map(r => (
@@ -429,7 +448,7 @@ export default function ProfileSetup() {
               </div>
             )}
             <button className="ps-btn ps-btn--primary" onClick={finish} disabled={finishing}>
-              {finishing ? <><FaSpinner className="ps-spin" /> Loading…</> : <>Go to Dashboard <FaArrowRight /></>}
+              {finishing ? <><FaSpinner className="ps-spin" /> {t('ps.loading')}</> : <>{t('ps.toDashboard')} <FaArrowRight /></>}
             </button>
           </div>
         )}
@@ -437,12 +456,12 @@ export default function ProfileSetup() {
         {sylStep === 'error' && (
           <div className="ps-status">
             <div className="ps-status-icon ps-status-icon--warning"><FaExclamationTriangle /></div>
-            <h3 className="ps-status-title">Import failed</h3>
+            <h3 className="ps-status-title">{t('ps.sylError')}</h3>
             <p className="ps-status-sub">{sylError}</p>
             <div className="ps-actions ps-actions--center">
-              <button className="ps-btn ps-btn--secondary" onClick={() => { setSylStep('idle'); setSylError('') }}>Try Again</button>
+              <button className="ps-btn ps-btn--secondary" onClick={() => { setSylStep('idle'); setSylError('') }}>{t('ps.tryAgain')}</button>
               <button className="ps-btn ps-btn--ghost" onClick={finish} disabled={finishing}>
-                {finishing ? <><FaSpinner className="ps-spin" /> Loading…</> : 'Skip to Dashboard'}
+                {finishing ? <><FaSpinner className="ps-spin" /> {t('ps.loading')}</> : t('ps.skipDashboard')}
               </button>
             </div>
           </div>

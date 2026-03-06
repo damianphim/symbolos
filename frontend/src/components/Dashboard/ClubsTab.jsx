@@ -27,17 +27,35 @@ const CATEGORY_META = {
   'Default':                 { color: 'var(--text-secondary)', bg: 'var(--bg-tertiary)', border: 'var(--border-secondary)', icon: <FaGraduationCap /> },
 }
 
+// Map English category keys to translation keys
+const CATEGORY_I18N_KEY = {
+  'Academic':                'clubs.catAcademic',
+  'Engineering & Technology':'clubs.catEngineering',
+  'Professional':            'clubs.catProfessional',
+  'Debate & Politics':       'clubs.catDebate',
+  'Athletics & Recreation':  'clubs.catAthletics',
+  'Arts & Culture':          'clubs.catArts',
+  'Environment':             'clubs.catEnvironment',
+  'Health & Wellness':       'clubs.catHealth',
+  'Community Service':       'clubs.catCommunity',
+  'International':           'clubs.catInternational',
+  'Science':                 'clubs.catScience',
+  'Social':                  'clubs.catSocial',
+  'Spiritual & Religious':   'clubs.catSpiritual',
+}
+
 function getCat(category) {
   return CATEGORY_META[category] || CATEGORY_META.Default
 }
 
-function CategoryBadge({ category, size = 'sm' }) {
+function CategoryBadge({ category, size = 'sm', t }) {
   if (!category) return null
   const meta = getCat(category)
+  const label = t ? (t(CATEGORY_I18N_KEY[category] || category) || category) : category
   return (
     <span className={`club-category-badge club-category-badge--${size}`}
       style={{ background: meta.bg, color: meta.color, borderColor: meta.border }}>
-      <span className="club-category-badge__icon">{meta.icon}</span> {category}
+      <span className="club-category-badge__icon">{meta.icon}</span> {label}
     </span>
   )
 }
@@ -51,7 +69,7 @@ function ClubAvatar({ name, category, size = 'md' }) {
   )
 }
 
-function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, onToggleCalendar, onClose, clubLoading }) {
+function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t }) {
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
   const meta = getCat(display.category)
@@ -65,23 +83,23 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
           borderBottom: `3px solid ${meta.color}`
         }}>
           <button className="club-drawer__back" onClick={onClose}>
-            <FaChevronLeft size={13} /> Back
+            <FaChevronLeft size={13} /> {t('clubs.back')}
           </button>
           <div className="club-drawer__strip-main">
             <ClubAvatar name={display.name} category={display.category} size="lg" />
             <div className="club-drawer__strip-text">
               <h2 className="club-drawer__name">{display.name}</h2>
-              <CategoryBadge category={display.category} size="md" />
+              <CategoryBadge category={display.category} size="md" t={t} />
             </div>
           </div>
           <div className="club-drawer__strip-actions">
             {joined ? (
               <button className="club-action-btn club-action-btn--leave" onClick={() => onLeave(club.id)} disabled={isLoading}>
-                <FaTimes size={12} /> Leave Club
+                <FaTimes size={12} /> {t('clubs.leaveClub')}
               </button>
             ) : (
               <button className="club-action-btn club-action-btn--join" onClick={() => onJoin(club.id)} disabled={isLoading}>
-                <FaPlus size={12} /> Join Club
+                <FaPlus size={12} /> {t('clubs.joinClub')}
               </button>
             )}
           </div>
@@ -93,38 +111,38 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
               <div className="club-drawer__stat">
                 <FaUsers size={22} style={{ color: meta.color }} />
                 <span className="club-drawer__stat-value">{display.member_count}</span>
-                <span className="club-drawer__stat-label">Members</span>
+                <span className="club-drawer__stat-label">{t('clubs.members')}</span>
               </div>
             )}
             {display.meeting_schedule && (
               <div className="club-drawer__stat">
                 <FaCalendarAlt size={18} style={{ color: meta.color }} />
                 <span className="club-drawer__stat-value" style={{ fontSize: '0.78rem', textAlign: 'center' }}>{display.meeting_schedule}</span>
-                <span className="club-drawer__stat-label">Meets</span>
+                <span className="club-drawer__stat-label">{t('clubs.meets')}</span>
               </div>
             )}
             {display.location && (
               <div className="club-drawer__stat">
                 <FaStar size={18} style={{ color: meta.color }} />
                 <span className="club-drawer__stat-value" style={{ fontSize: '0.78rem', textAlign: 'center' }}>{display.location}</span>
-                <span className="club-drawer__stat-label">Location</span>
+                <span className="club-drawer__stat-label">{t('clubs.location')}</span>
               </div>
             )}
           </div>
 
           {display.description && (
             <section className="club-drawer__section">
-              <h3 className="club-drawer__section-title"><FaCheck size={12} /> About</h3>
+              <h3 className="club-drawer__section-title"><FaCheck size={12} /> {t('clubs.about')}</h3>
               <p className="club-drawer__desc">{display.description}</p>
             </section>
           )}
 
           {joined && (
             <section className="club-drawer__section">
-              <h3 className="club-drawer__section-title"><FaCalendarAlt size={12} /> Calendar Sync</h3>
+              <h3 className="club-drawer__section-title"><FaCalendarAlt size={12} /> {t('clubs.calendarSync')}</h3>
               <div className="club-drawer__cal-row">
                 <div className="club-drawer__cal-info">
-                  <p>Sync this club's meetings to your Calendar tab.</p>
+                  <p>{t('clubs.calSyncDesc')}</p>
                   {display.meeting_schedule && (
                     <span className="club-drawer__cal-schedule"><FaCalendarAlt size={11} /> {display.meeting_schedule}</span>
                   )}
@@ -134,7 +152,9 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
                   onClick={() => onToggleCalendar(club.id, !calSynced)}
                   style={calSynced ? { borderColor: meta.color, color: meta.color, background: meta.bg } : {}}
                 >
-                  {calSynced ? <><FaBell size={12} /> Synced</> : <><FaBell size={12} /> Not synced</>}
+                  {calSynced
+                    ? <><FaBell size={12} /> {t('clubs.synced')}</>
+                    : <><FaBell size={12} /> {t('clubs.notSynced')}</>}
                 </button>
               </div>
             </section>
@@ -142,11 +162,11 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
 
           {(display.website_url || display.contact_email) && (
             <section className="club-drawer__section">
-              <h3 className="club-drawer__section-title"><FaExternalLinkAlt size={11} /> Links & Contact</h3>
+              <h3 className="club-drawer__section-title"><FaExternalLinkAlt size={11} /> {t('clubs.linksContact')}</h3>
               <div className="club-drawer__links">
                 {display.website_url && (
                   <a className="club-drawer__link-btn" href={display.website_url} target="_blank" rel="noopener noreferrer">
-                    <FaExternalLinkAlt size={10} /> Visit Website
+                    <FaExternalLinkAlt size={10} /> {t('clubs.visitWebsite')}
                   </a>
                 )}
                 {display.contact_email && (
@@ -163,7 +183,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
   )
 }
 
-function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, onOpen, clubLoading }) {
+function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, onOpen, clubLoading, t }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
@@ -180,7 +200,7 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
       <div className="club-card__accent" style={{ background: meta.color }} />
       {joined && (
         <div className="club-card__joined-badge" style={{ background: meta.color }}>
-          <FaCheck size={8} /> Joined
+          <FaCheck size={8} /> {t('clubs.joinedBadge')}
         </div>
       )}
       <div className="club-card__body">
@@ -188,12 +208,12 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
           <ClubAvatar name={club.name} category={club.category} size="md" />
           <div className="club-card__info">
             <h3 className="club-card__name">{club.name}</h3>
-            <CategoryBadge category={club.category} />
+            <CategoryBadge category={club.category} t={t} />
           </div>
         </div>
         {club.description && (
           <p className="club-card__desc">
-            {club.description.length > 105 ? club.description.slice(0, 105) + '…' : club.description}
+            {club.description.length > 105 ? club.description.slice(0, 105) + '\u2026' : club.description}
           </p>
         )}
         <div className="club-card__meta-row">
@@ -201,7 +221,7 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
             <span className="club-meta-chip"><FaUsers size={10} /> {club.member_count}</span>
           )}
           {club.meeting_schedule && (
-            <span className="club-meta-chip"><FaCalendarAlt size={10} /> {club.meeting_schedule.length > 20 ? club.meeting_schedule.slice(0,20)+'…' : club.meeting_schedule}</span>
+            <span className="club-meta-chip"><FaCalendarAlt size={10} /> {club.meeting_schedule.length > 20 ? club.meeting_schedule.slice(0,20)+'\u2026' : club.meeting_schedule}</span>
           )}
           {club.location && (
             <span className="club-meta-chip"><FaStar size={10} /> {club.location}</span>
@@ -215,12 +235,12 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
               className={`club-cal-chip ${calSynced ? 'active' : ''}`}
               onClick={() => onToggleCalendar(club.id, !calSynced)}
               style={calSynced ? { borderColor: meta.color, color: meta.color, background: meta.bg } : {}}
-              title={calSynced ? 'Remove from calendar' : 'Add to calendar'}
+              title={calSynced ? t('clubs.calOn') : t('clubs.calOff')}
             >
-              <FaCalendarAlt size={10} /> {calSynced ? 'Calendar On' : 'Calendar Off'}
+              <FaCalendarAlt size={10} /> {calSynced ? t('clubs.calOn') : t('clubs.calOff')}
             </button>
             <button className="club-leave-chip" onClick={() => onLeave(club.id)} disabled={isLoading}>
-              <FaTimes size={10} /> Leave
+              <FaTimes size={10} /> {t('clubs.leave')}
             </button>
           </div>
         ) : (
@@ -230,7 +250,9 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
             disabled={isLoading}
             style={justJoined ? { background: meta.color, borderColor: meta.color } : {}}
           >
-            {justJoined ? <><FaCheck size={10} /> Joined!</> : <><FaPlus size={10} /> Join</>}
+            {justJoined
+              ? <><FaCheck size={10} /> {t('clubs.joinedBtn')}</>
+              : <><FaPlus size={10} /> {t('clubs.joinBtn')}</>}
           </button>
         )}
         <button className="club-card__open-btn" onClick={() => onOpen(club)} title="View details">
@@ -241,7 +263,7 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
   )
 }
 
-function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, clubLoading }) {
+function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, clubLoading, t }) {
   const meta = getCat(club.category)
   const isLoading = clubLoading[club.id] ?? false
   return (
@@ -249,7 +271,7 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, clubLoa
       <ClubAvatar name={club.name} category={club.category} size="sm" />
       <div className="my-club-row__info">
         <span className="my-club-row__name">{club.name}</span>
-        <CategoryBadge category={club.category} />
+        <CategoryBadge category={club.category} t={t} />
       </div>
       <div className="my-club-row__right" onClick={e => e.stopPropagation()}>
         {club.meeting_schedule && (
@@ -259,11 +281,11 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, clubLoa
           className={`club-cal-chip ${calSynced ? 'active' : ''}`}
           style={calSynced ? { borderColor: meta.color, color: meta.color, background: meta.bg } : {}}
           onClick={() => onToggleCalendar(club.id, !calSynced)}
-          title={calSynced ? 'Disable calendar sync' : 'Sync to calendar'}
+          title={calSynced ? t('clubs.synced') : t('clubs.syncBtn')}
         >
-          <FaCalendarAlt size={10} /> {calSynced ? 'Synced' : 'Sync'}
+          <FaCalendarAlt size={10} /> {calSynced ? t('clubs.synced') : t('clubs.syncBtn')}
         </button>
-        <button className="club-leave-chip small" onClick={() => onLeave(club.id)} disabled={isLoading} title="Leave club">
+        <button className="club-leave-chip small" onClick={() => onLeave(club.id)} disabled={isLoading} title={t('clubs.leave')}>
           <FaTimes size={10} />
         </button>
         <button className="club-card__open-btn" onClick={() => onOpen(club)}>
@@ -274,7 +296,7 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, clubLoa
   )
 }
 
-function SubmitClubModal({ onClose, onSubmit }) {
+function SubmitClubModal({ onClose, onSubmit, t }) {
   const [form, setForm] = useState({ name: '', category: '', description: '', meeting_schedule: '', website_url: '', contact_email: '', location: '' })
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -283,8 +305,8 @@ function SubmitClubModal({ onClose, onSubmit }) {
 
   const validate = () => {
     const e = {}
-    if (!form.name.trim()) e.name = 'Required'
-    if (!form.description.trim()) e.description = 'Required'
+    if (!form.name.trim()) e.name = t('clubs.required')
+    if (!form.description.trim()) e.description = t('clubs.required')
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -305,8 +327,8 @@ function SubmitClubModal({ onClose, onSubmit }) {
           <div className="clubs-modal__header-left">
             <span className="clubs-modal__icon"><FaGraduationCap size={22} /></span>
             <div>
-              <h2>Submit a Club</h2>
-              <p>Help grow McGill's club directory</p>
+              <h2>{t('clubs.submitModalTitle')}</h2>
+              <p>{t('clubs.submitModalSub')}</p>
             </div>
           </div>
           <button className="clubs-modal__close" onClick={onClose}><FaTimes /></button>
@@ -314,55 +336,57 @@ function SubmitClubModal({ onClose, onSubmit }) {
         {done ? (
           <div className="clubs-modal__success">
             <span className="clubs-modal__success-icon"><FaCheck size={28} /></span>
-            <h3>Submitted!</h3>
-            <p>Your club has been queued for review and will be added soon.</p>
-            <button className="club-action-btn club-action-btn--join" onClick={onClose}>Done</button>
+            <h3>{t('clubs.submitSuccess')}</h3>
+            <p>{t('clubs.submitSuccessDesc')}</p>
+            <button className="club-action-btn club-action-btn--join" onClick={onClose}>{t('clubs.done')}</button>
           </div>
         ) : (
           <form className="clubs-modal__body" onSubmit={handleSubmit} noValidate>
             <div className={`clubs-field ${errors.name ? 'error' : ''}`}>
-              <label>Club Name <span className="req">*</span></label>
-              <input value={form.name} onChange={e => set('name')(e.target.value)} placeholder="e.g. McGill Chess Club" />
+              <label>{t('clubs.fieldName')} <span className="req">*</span></label>
+              <input value={form.name} onChange={e => set('name')(e.target.value)} placeholder={t('clubs.fieldNamePlaceholder')} />
               {errors.name && <span className="clubs-field-error">{errors.name}</span>}
             </div>
             <div className="clubs-field-row">
               <div className="clubs-field">
-                <label>Category</label>
+                <label>{t('clubs.fieldCategory')}</label>
                 <select value={form.category} onChange={e => set('category')(e.target.value)}>
-                  <option value="">Select…</option>
+                  <option value="">{t('clubs.fieldCategoryDefault')}</option>
                   {Object.keys(CATEGORY_META).filter(k => k !== 'Default').map(c => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{t(CATEGORY_I18N_KEY[c] || c) || c}</option>
                   ))}
                 </select>
               </div>
               <div className="clubs-field">
-                <label>Location</label>
-                <input value={form.location} onChange={e => set('location')(e.target.value)} placeholder="e.g. Burnside 105" />
+                <label>{t('clubs.fieldLocation')}</label>
+                <input value={form.location} onChange={e => set('location')(e.target.value)} placeholder={t('clubs.fieldLocationPlaceholder')} />
               </div>
             </div>
             <div className={`clubs-field ${errors.description ? 'error' : ''}`}>
-              <label>Description <span className="req">*</span></label>
-              <textarea value={form.description} onChange={e => set('description')(e.target.value)} rows={3} placeholder="What does this club do?" />
+              <label>{t('clubs.fieldDesc')} <span className="req">*</span></label>
+              <textarea value={form.description} onChange={e => set('description')(e.target.value)} rows={3} placeholder={t('clubs.fieldDescPlaceholder')} />
               {errors.description && <span className="clubs-field-error">{errors.description}</span>}
             </div>
             <div className="clubs-field-row">
               <div className="clubs-field">
-                <label>Meeting Schedule</label>
-                <input value={form.meeting_schedule} onChange={e => set('meeting_schedule')(e.target.value)} placeholder="Tuesdays 5–7pm" />
+                <label>{t('clubs.fieldSchedule')}</label>
+                <input value={form.meeting_schedule} onChange={e => set('meeting_schedule')(e.target.value)} placeholder={t('clubs.fieldSchedulePlaceholder')} />
               </div>
               <div className="clubs-field">
-                <label>Contact Email</label>
+                <label>{t('clubs.fieldEmail')}</label>
                 <input type="email" value={form.contact_email} onChange={e => set('contact_email')(e.target.value)} placeholder="club@mail.mcgill.ca" />
               </div>
             </div>
             <div className="clubs-field">
-              <label>Website URL</label>
-              <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://…" />
+              <label>{t('clubs.fieldUrl')}</label>
+              <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://\u2026" />
             </div>
             <div className="clubs-modal__footer">
-              <button type="button" className="club-action-btn club-action-btn--ghost" onClick={onClose}>Cancel</button>
+              <button type="button" className="club-action-btn club-action-btn--ghost" onClick={onClose}>{t('clubs.cancel')}</button>
               <button type="submit" className="club-action-btn club-action-btn--join" disabled={submitting}>
-                {submitting ? <><span className="btn-spinner" /> Submitting…</> : <><FaChevronRight size={12} /> Submit Club</>}
+                {submitting
+                  ? <><span className="btn-spinner" /> {t('clubs.submitting')}</>
+                  : <><FaChevronRight size={12} /> {t('clubs.submitClub')}</>}
               </button>
             </div>
           </form>
@@ -470,7 +494,10 @@ export default function ClubsTab({ user, onClubEventsChange }) {
       setClubs(prev => prev.map(c => c.id === clubId ? { ...c, member_count: (c.member_count ?? 0) + 1 } : c))
       if (openClub?.id === clubId) setOpenClub(prev => prev ? { ...prev, member_count: (prev.member_count ?? 0) + 1 } : prev)
       const club = clubs.find(c => c.id === clubId)
-      if (club) { setJoinToast(`Joined ${club.name}!`); setTimeout(() => { if (isMounted.current) setJoinToast(null) }, 3000) }
+      if (club) {
+        setJoinToast(t('clubs.joinedToast').replace('{name}', club.name))
+        setTimeout(() => { if (isMounted.current) setJoinToast(null) }, 3000)
+      }
     } catch (e) { setError(e.message) }
     finally { setClubBusy(clubId, false) }
   }
@@ -526,21 +553,21 @@ export default function ClubsTab({ user, onClubEventsChange }) {
         <div className="clubs-header__left">
           <div className="clubs-header__icon-wrap"><FaUsers size={26} /></div>
           <div>
-            <h1 className="clubs-header__title">Student Clubs</h1>
-            <p className="clubs-header__sub">Discover, join, and sync McGill clubs to your calendar</p>
+            <h1 className="clubs-header__title">{t('clubs.title')}</h1>
+            <p className="clubs-header__sub">{t('clubs.subtitle')}</p>
           </div>
         </div>
         <button className="clubs-submit-btn" onClick={() => setShowSubmitModal(true)}>
-          <FaPlus size={11} /> Submit a Club
+          <FaPlus size={11} /> {t('clubs.submitBtn')}
         </button>
       </div>
 
       <div className="clubs-tabs">
         <button className={`clubs-tab-btn ${activeView === 'explore' ? 'active' : ''}`} onClick={() => setActiveView('explore')}>
-          <FaSearch size={15} /> Explore
+          <FaSearch size={15} /> {t('clubs.tabExplore')}
         </button>
         <button className={`clubs-tab-btn ${activeView === 'my-clubs' ? 'active' : ''}`} onClick={() => setActiveView('my-clubs')}>
-          <FaHeart size={12} /> My Clubs
+          <FaHeart size={12} /> {t('clubs.tabMine')}
           {resolvedMyClubs.length > 0 && <span className="clubs-tab-count">{resolvedMyClubs.length}</span>}
         </button>
       </div>
@@ -553,7 +580,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
               <input
                 className="clubs-search-input"
                 type="text"
-                placeholder="Search clubs by name, keyword, or category…"
+                placeholder={t('clubs.searchPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -562,9 +589,9 @@ export default function ClubsTab({ user, onClubEventsChange }) {
             <div className="clubs-sort-wrap">
               <FaChevronDown size={11} />
               <select className="clubs-sort-select" value={sortMode} onChange={e => setSortMode(e.target.value)}>
-                <option value="default">Default order</option>
-                <option value="members">Most members</option>
-                <option value="name">Name A→Z</option>
+                <option value="default">{t('clubs.sortDefault')}</option>
+                <option value="members">{t('clubs.sortMembers')}</option>
+                <option value="name">{t('clubs.sortName')}</option>
               </select>
             </div>
           </div>
@@ -575,10 +602,11 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                 <button
                   className={`clubs-chip ${!selectedCategory ? 'clubs-chip--all-active' : 'clubs-chip--all'}`}
                   onClick={() => setSelectedCategory('')}
-                >All</button>
+                >{t('clubs.filterAll')}</button>
                 {categories.map(cat => {
                   const meta = getCat(cat)
                   const active = selectedCategory === cat
+                  const label = t(CATEGORY_I18N_KEY[cat] || cat) || cat
                   return (
                     <button
                       key={cat}
@@ -586,7 +614,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                       style={{ background: meta.bg, color: meta.color, borderColor: active ? meta.color : meta.border, fontWeight: active ? 700 : 500, opacity: active ? 1 : 0.75 }}
                       onClick={() => setSelectedCategory(p => p === cat ? '' : cat)}
                     >
-                      <span className="clubs-chip__icon">{meta.icon}</span> {cat}
+                      <span className="clubs-chip__icon">{meta.icon}</span> {label}
                     </button>
                   )
                 })}
@@ -597,20 +625,20 @@ export default function ClubsTab({ user, onClubEventsChange }) {
           {error && <div className="clubs-error">{error}<button onClick={() => setError(null)}><FaTimes size={11} /></button></div>}
 
           {loading ? (
-            <div className="clubs-loading"><div className="clubs-spinner" /><p>Loading clubs…</p></div>
+            <div className="clubs-loading"><div className="clubs-spinner" /><p>{t('clubs.loading')}</p></div>
           ) : displayClubs.length === 0 ? (
             <div className="clubs-empty">
               <div className="clubs-empty__visual"><FaSearch size={52} /></div>
-              <h3>No clubs found</h3>
-              <p>Try different keywords or <button className="clubs-empty__link" onClick={() => setShowSubmitModal(true)}>submit a new club</button>.</p>
+              <h3>{t('clubs.noResults')}</h3>
+              <p>{t('clubs.noResultsHint')} <button className="clubs-empty__link" onClick={() => setShowSubmitModal(true)}>{t('clubs.noResultsSubmit')}</button>.</p>
             </div>
           ) : (
             <>
               <p className="clubs-results-label">
-                <strong>{displayClubs.length}</strong> club{displayClubs.length !== 1 ? 's' : ''}
-                {selectedCategory && <> in <em>{selectedCategory}</em></>}
-                {debouncedSearch && <> matching "<em>{debouncedSearch}</em>"</>}
-                {hasMore && <> — showing first {displayClubs.length}</>}
+                <strong>{displayClubs.length}</strong> {displayClubs.length !== 1 ? t('clubs.results').replace('{count}','').trim() : t('clubs.result').replace('{count}','').trim()}
+                {selectedCategory && <> {t('clubs.inCategory')} <em>{t(CATEGORY_I18N_KEY[selectedCategory] || selectedCategory) || selectedCategory}</em></>}
+                {debouncedSearch && <> {t('clubs.matching')} "<em>{debouncedSearch}</em>"</>}
+                {hasMore && <> {t('clubs.showingFirst').replace('{count}', displayClubs.length)}</>}
               </p>
               <div className="clubs-grid">
                 {displayClubs.map(club => (
@@ -624,6 +652,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                     onToggleCalendar={handleToggleCalendar}
                     onOpen={setOpenClub}
                     clubLoading={clubLoading}
+                    t={t}
                   />
                 ))}
               </div>
@@ -631,8 +660,8 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                 <div className="clubs-load-more">
                   <button className="clubs-load-more__btn" onClick={() => fetchClubs(page + 1)} disabled={loadingMore}>
                     {loadingMore
-                      ? <><span className="btn-spinner" style={{ borderTopColor: 'var(--accent-primary)' }} /> Loading…</>
-                      : <><FaChevronDown size={11} /> Load more clubs</>}
+                      ? <><span className="btn-spinner" style={{ borderTopColor: 'var(--accent-primary)' }} /> {t('clubs.loadingMore')}</>
+                      : <><FaChevronDown size={11} /> {t('clubs.loadMore')}</>}
                   </button>
                 </div>
               )}
@@ -644,14 +673,14 @@ export default function ClubsTab({ user, onClubEventsChange }) {
       {activeView === 'my-clubs' && (
         <div className="clubs-mine">
           {myClubsLoading ? (
-            <div className="clubs-loading"><div className="clubs-spinner" /><p>Loading your clubs…</p></div>
+            <div className="clubs-loading"><div className="clubs-spinner" /><p>{t('clubs.loadingMine')}</p></div>
           ) : resolvedMyClubs.length === 0 ? (
             <div className="clubs-empty">
               <div className="clubs-empty__visual" style={{ opacity: 0.2 }}><FaHeart size={52} /></div>
-              <h3>No clubs joined yet</h3>
-              <p>Find something you're passionate about in the Explore tab.</p>
+              <h3>{t('clubs.noJoined')}</h3>
+              <p>{t('clubs.noJoinedHint')}</p>
               <button className="club-action-btn club-action-btn--join" onClick={() => setActiveView('explore')}>
-                <FaSearch size={13} /> Browse Clubs
+                <FaSearch size={13} /> {t('clubs.browseBtn')}
               </button>
             </div>
           ) : (
@@ -665,6 +694,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                   onToggleCalendar={handleToggleCalendar}
                   onOpen={setOpenClub}
                   clubLoading={clubLoading}
+                  t={t}
                 />
               ))}
             </div>
@@ -683,11 +713,12 @@ export default function ClubsTab({ user, onClubEventsChange }) {
           onToggleCalendar={handleToggleCalendar}
           onClose={() => setOpenClub(null)}
           clubLoading={clubLoading}
+          t={t}
         />
       )}
 
       {showSubmitModal && (
-        <SubmitClubModal onClose={() => setShowSubmitModal(false)} onSubmit={handleSubmitClub} />
+        <SubmitClubModal onClose={() => setShowSubmitModal(false)} onSubmit={handleSubmitClub} t={t} />
       )}
     </div>
   )

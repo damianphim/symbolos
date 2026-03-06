@@ -162,11 +162,20 @@ export default function Sidebar({
               ))}
               <div className="mini-capsule-divider" />
               <button
+                className="mini-pill mini-pill--lang"
+                onClick={handleLanguageToggle}
+                title={language === 'en' ? 'Passer en français' : 'Switch to English'}
+              >
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '-0.5px' }}>
+                  {language === 'en' ? 'FR' : 'EN'}
+                </span>
+              </button>
+              <button
                 className="mini-pill mini-pill--expand"
                 onClick={() => setSidebarOpen(true)}
                 title="Expand sidebar"
               >
-                <FaExpandAlt size={11} />
+                <FaExpandAlt size={13} />
               </button>
             </div>
           </div>

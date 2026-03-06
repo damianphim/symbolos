@@ -34,16 +34,15 @@
   right: 0;
   /* top is set inline via JS */
   transform: translateY(-50%);
-  background: var(--bg-primary, #fff);
-  border: 1px solid var(--border-primary, #e5e7eb);
-  border-right: none;
-  color: var(--text-secondary);
+  background: var(--accent-primary, #ED1B2F);
+  border: none;
+  color: #fff;
   cursor: grab;
-  width: 18px;
-  height: 44px;
-  border-radius: 6px 0 0 6px;
-  box-shadow: -1px 0 6px rgba(0,0,0,0.07);
-  transition: background 0.15s, color 0.15s, width 0.15s;
+  width: 28px;
+  height: 64px;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 0 12px rgba(237, 27, 47, 0.35);
+  transition: background 0.15s, width 0.15s, box-shadow 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,10 +51,10 @@
 }
 
 .rsb-toggle:hover {
-  background: var(--accent-primary, #ED1B2F);
-  border-color: var(--accent-primary, #ED1B2F);
-  color: white;
-  width: 22px;
+  background: #c0152a;
+  color: #fff;
+  width: 34px;
+  box-shadow: -3px 0 16px rgba(237, 27, 47, 0.5);
 }
 
 .rsb-toggle--dragging {

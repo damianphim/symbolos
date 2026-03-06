@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import {
   validateEmail,
   validatePassword,
@@ -19,14 +21,14 @@ function Login() {
   const [animating, setAnimating] = useState(false)
 
   const { signIn, signUp, error: authError, clearError } = useAuth()
+  const { t, language, setLanguage } = useLanguage()
+  const { resolvedTheme, setTheme } = useTheme()
+  const cycleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
 
   const isLogin = mode === 'login'
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
 
-  // Clear stale errors when the user switches between Sign In / Sign Up / Forgot.
-  // clearError is now stable (useCallback in AuthContext), so this effect only
-  // fires when `mode` genuinely changes — not on every render.
   useEffect(() => {
     clearError()
     setErrors({})
@@ -44,58 +46,41 @@ function Login() {
 
   const validateForm = () => {
     const newErrors = {}
-
     const emailError = validateEmail(email)
     if (emailError) newErrors.email = emailError
-
     if (!isForgot) {
       const passwordError = validatePassword(password, isSignup)
       if (passwordError) newErrors.password = passwordError
     }
-
     if (isSignup) {
       const usernameError = validateUsername(username)
       if (usernameError) newErrors.username = usernameError
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    // Clear previous submission errors (but not clearError — we don't want to
-    // wipe the context error that might still be rendering while we validate).
     setMessage('')
     setErrors({})
-
     if (!validateForm()) return
-
     setLoading(true)
-
     try {
       if (isForgot) {
-        // TODO: wire up supabase.auth.resetPasswordForEmail
-        setMessage('If an account exists with this email, a reset link has been sent.')
+        setMessage(t('auth.resetSent'))
         return
       }
-
       if (isLogin) {
         const { error } = await signIn(email, password)
-        if (error) {
-          setErrors({ form: error.message })
-        }
+        if (error) setErrors({ form: error.message })
       } else {
         const { error } = await signUp(email, password, username.trim())
-        if (error) {
-          setErrors({ form: error.message })
-        } else {
-          setMessage('Account created! Redirecting...')
-        }
+        if (error) setErrors({ form: error.message })
+        else setMessage(t('auth.accountCreated'))
       }
     } catch (err) {
-      setErrors({ form: err.message || 'Something went wrong. Please try again.' })
+      setErrors({ form: err.message || t('auth.genericError') })
     } finally {
       setLoading(false)
     }
@@ -109,20 +94,35 @@ function Login() {
     if (/[a-z]/.test(pw)) score++
     if (/\d/.test(pw)) score++
     if (/[^A-Za-z0-9]/.test(pw)) score++
-    if (score <= 2) return { level: score, label: 'Weak', color: 'var(--error-primary)' }
-    if (score <= 3) return { level: score, label: 'Fair', color: 'var(--warning-primary)' }
-    if (score <= 4) return { level: score, label: 'Good', color: 'var(--success-primary)' }
-    return { level: score, label: 'Strong', color: 'var(--success-hover)' }
+    if (score <= 2) return { level: score, label: t('auth.strengthWeak'), color: 'var(--error-primary)' }
+    if (score <= 3) return { level: score, label: t('auth.strengthFair'), color: 'var(--warning-primary)' }
+    if (score <= 4) return { level: score, label: t('auth.strengthGood'), color: 'var(--success-primary)' }
+    return { level: score, label: t('auth.strengthStrong'), color: 'var(--success-hover)' }
   }
 
   const strength = isSignup ? passwordStrength(password) : null
-
-  // The form-level error: prefer the inline error set during submission,
-  // fall back to the context error (e.g. set by a background auth event).
   const formError = errors.form || authError?.message
 
   return (
     <div className="auth-page">
+      {/* ── Corner controls ── */}
+      <div className="auth-corner-controls">
+        <button
+          className="auth-lang-btn"
+          onClick={() => setLanguage(language === 'en' ? 'fr' : 'en')}
+          title={t('auth.langToggle')}
+        >
+          {language === 'en' ? 'FR' : 'EN'}
+        </button>
+        <button
+          className="auth-lang-btn"
+          onClick={cycleTheme}
+          title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {resolvedTheme === 'dark' ? '☀' : '☽'}
+        </button>
+      </div>
+
       {/* ── Left branding panel ── */}
       <aside className="auth-branding">
         <div className="auth-branding-inner">
@@ -139,19 +139,19 @@ function Login() {
 
           <div className="auth-branding-copy">
             <h1 className="auth-branding-headline">
-              Your AI academic advisor.
+              {t('auth.brandHeadline')}
             </h1>
             <p className="auth-branding-sub">
-              Personalized course planning, historical grade data, and intelligent guidance — all in one place.
+              {t('auth.brandSub')}
             </p>
           </div>
 
           <ul className="auth-feature-list">
             {[
-              'AI-powered course recommendations',
-              'Historical grade data across 10,000+ sections',
-              'Degree planning tailored to your major & goals',
-              '24/7 academic support via chat',
+              t('auth.feature1'),
+              t('auth.feature2'),
+              t('auth.feature3'),
+              t('auth.feature4'),
             ].map((text) => (
               <li key={text} className="auth-feature-item">
                 <span className="auth-feature-dot" />
@@ -166,7 +166,6 @@ function Login() {
       <main className="auth-form-panel">
         <div className={`auth-card ${animating ? 'auth-card--out' : 'auth-card--in'}`}>
 
-          {/* Mode tabs */}
           {!isForgot && (
             <div className="auth-tabs" role="tablist">
               <button
@@ -176,7 +175,7 @@ function Login() {
                 onClick={() => switchMode('login')}
                 disabled={loading}
               >
-                Sign In
+                {t('auth.tabSignIn')}
               </button>
               <button
                 role="tab"
@@ -185,27 +184,21 @@ function Login() {
                 onClick={() => switchMode('signup')}
                 disabled={loading}
               >
-                Create Account
+                {t('auth.tabCreate')}
               </button>
               <div className={`auth-tab-slider ${isSignup ? 'auth-tab-slider--right' : ''}`} />
             </div>
           )}
 
-          {/* Heading */}
           <div className="auth-card-header">
             <h2 className="auth-card-title">
-              {isForgot ? 'Reset password' : isLogin ? 'Welcome back' : 'Get started'}
+              {isForgot ? t('auth.titleForgot') : isLogin ? t('auth.titleLogin') : t('auth.titleSignup')}
             </h2>
             <p className="auth-card-subtitle">
-              {isForgot
-                ? "We'll send a reset link to your email."
-                : isLogin
-                ? 'Sign in to continue your academic journey.'
-                : 'Create your free Symboulos account.'}
+              {isForgot ? t('auth.subForgot') : isLogin ? t('auth.subLogin') : t('auth.subSignup')}
             </p>
           </div>
 
-          {/* Error alert */}
           {formError && (
             <div className="auth-alert auth-alert--error" role="alert">
               <span className="auth-alert-icon">!</span>
@@ -213,7 +206,6 @@ function Login() {
             </div>
           )}
 
-          {/* Success alert */}
           {message && (
             <div className="auth-alert auth-alert--success" role="alert">
               <span className="auth-alert-icon">✓</span>
@@ -221,12 +213,11 @@ function Login() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="auth-form" noValidate>
 
             {isSignup && (
               <div className="auth-field">
-                <label className="auth-label" htmlFor="username">Username</label>
+                <label className="auth-label" htmlFor="username">{t('auth.labelUsername')}</label>
                 <input
                   id="username"
                   type="text"
@@ -242,7 +233,7 @@ function Login() {
             )}
 
             <div className="auth-field">
-              <label className="auth-label" htmlFor="email">Email Address</label>
+              <label className="auth-label" htmlFor="email">{t('auth.labelEmail')}</label>
               <input
                 id="email"
                 type="email"
@@ -259,7 +250,7 @@ function Login() {
             {!isForgot && (
               <div className="auth-field">
                 <div className="auth-label-row">
-                  <label className="auth-label" htmlFor="password">Password</label>
+                  <label className="auth-label" htmlFor="password">{t('auth.labelPassword')}</label>
                   {isLogin && (
                     <button
                       type="button"
@@ -267,7 +258,7 @@ function Login() {
                       onClick={() => switchMode('forgot')}
                       disabled={loading}
                     >
-                      Forgot password?
+                      {t('auth.forgotLink')}
                     </button>
                   )}
                 </div>
@@ -286,7 +277,7 @@ function Login() {
                     type="button"
                     className="auth-pw-toggle"
                     onClick={() => setShowPassword(v => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -302,7 +293,7 @@ function Login() {
                 </div>
                 {errors.password && <p className="auth-error-msg">{errors.password}</p>}
                 {isSignup && !errors.password && (
-                  <p className="auth-hint">At least 8 characters with uppercase, lowercase, and numbers</p>
+                  <p className="auth-hint">{t('auth.passwordHint')}</p>
                 )}
 
                 {isSignup && password && (
@@ -328,23 +319,22 @@ function Login() {
               {loading ? (
                 <span className="btn-loading">
                   <span className="spinner" />
-                  {isForgot ? 'Sending...' : isLogin ? 'Signing in...' : 'Creating account...'}
+                  {isForgot ? t('auth.loadingForgot') : isLogin ? t('auth.loadingLogin') : t('auth.loadingSignup')}
                 </span>
               ) : (
-                isForgot ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Create Account'
+                isForgot ? t('auth.btnForgot') : isLogin ? t('auth.btnLogin') : t('auth.btnSignup')
               )}
             </button>
           </form>
 
-          {/* Footer */}
           <div className="auth-footer">
             {isForgot ? (
               <button className="auth-back-btn" onClick={() => switchMode('login')}>
-                ← Back to Sign In
+                {t('auth.backToLogin')}
               </button>
             ) : (
               <p className="auth-toggle">
-                {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
                 {' '}
                 <button
                   type="button"
@@ -352,7 +342,7 @@ function Login() {
                   onClick={() => switchMode(isLogin ? 'signup' : 'login')}
                   disabled={loading}
                 >
-                  {isLogin ? 'Sign Up' : 'Sign In'}
+                  {isLogin ? t('auth.signUpLink') : t('auth.signInLink')}
                 </button>
               </p>
             )}

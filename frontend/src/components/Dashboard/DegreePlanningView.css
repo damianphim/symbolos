@@ -1133,3 +1133,23 @@
   box-shadow: none;
   transform: translateY(-1px);
 }
+
+/* ── Foundation waived banner ── */
+.drv-foundation-waived-banner {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2e7d32;
+}
+
+[data-theme="dark"] .drv-foundation-waived-banner {
+  background: #1b5e20;
+  border-color: #2e7d32;
+  color: #ffffff;
+}

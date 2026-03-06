@@ -196,7 +196,7 @@ export default function RightSidebar({
           title="Open assistant"
           aria-label="Open assistant"
         >
-          <FaChevronRight size={9} />
+          <FaChevronRight size={13} />
         </button>
       )}
 

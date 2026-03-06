@@ -1216,3 +1216,244 @@
   }
   .cal-day-drawer__item-title { max-width: 140px; }
 }
+
+/* ── Export button & dropdown ─────────────────────────── */
+.cal-export-wrap {
+  position: relative;
+}
+
+.cal-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.48rem 0.9rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.cal-export-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-lighter, #fff5f5);
+}
+
+.cal-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 300;
+  min-width: 220px;
+  background: var(--bg-primary);
+  border: 1.5px solid var(--border-primary);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+  animation: calMenuIn 0.12s ease;
+}
+
+@keyframes calMenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cal-export-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.cal-export-item:last-child { border-bottom: none; }
+.cal-export-item:hover { background: var(--bg-secondary); }
+
+.cal-export-item--google {
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.cal-export-item--google:hover { background: #e8f0fe; }
+
+/* ── Add to Google Calendar link in event popup ──────── */
+.cal-event-popup-gcal {
+  padding: 0 14px 6px;
+}
+
+.cal-event-popup-gcal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.cal-event-popup-gcal-btn:hover { background: #d2e3fc; }
+
+[data-theme='dark'] .cal-export-item--google:hover { background: rgba(26,115,232,0.15); }
+[data-theme='dark'] .cal-event-popup-gcal-btn { background: rgba(26,115,232,0.18); }
+[data-theme='dark'] .cal-event-popup-gcal-btn:hover { background: rgba(26,115,232,0.28); }
+
+/* ── Google Calendar import guide modal ──────────────── */
+.cal-gcal-overlay { align-items: center; }
+
+.cal-gcal-modal {
+  background: var(--bg-primary);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  animation: calModalIn 0.18s ease;
+}
+
+@keyframes calModalIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cal-gcal-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.cal-gcal-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #1a73e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cal-gcal-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.cal-gcal-modal__subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.cal-gcal-modal__close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.12s;
+}
+.cal-gcal-modal__close:hover { background: var(--bg-secondary); }
+
+.cal-gcal-steps {
+  list-style: none;
+  padding: 16px 18px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: step;
+}
+
+.cal-gcal-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.cal-gcal-steps a {
+  color: #1a73e8;
+  font-weight: 600;
+  text-decoration: none;
+}
+.cal-gcal-steps a:hover { text-decoration: underline; }
+
+.cal-gcal-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cal-gcal-modal__actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px 18px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.cal-gcal-modal__open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.cal-gcal-modal__open-btn:hover { background: #1557b0; }
+
+.cal-gcal-modal__done-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-primary);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.cal-gcal-modal__done-btn:hover { background: var(--bg-secondary); }
+
+[data-theme='dark'] .cal-gcal-step-num { background: rgba(26,115,232,0.2); }

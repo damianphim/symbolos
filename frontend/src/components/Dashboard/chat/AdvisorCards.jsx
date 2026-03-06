@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLanguage } from '../../../contexts/LanguageContext'
 import {
-  FaRobot, FaSync, FaChevronDown, FaChevronUp,
+  FaSync, FaChevronDown, FaChevronUp,
   FaBolt, FaArrowRight, FaGraduationCap,
   FaClipboardList, FaComments, FaCalendarAlt,
   FaChartBar, FaMapMarkedAlt, FaLightbulb,
@@ -640,7 +640,6 @@ export default function AdvisorCards({
       {/* ── Header ── */}
       <header className="advisor-cards-header">
         <div className="advisor-cards-header__left">
-          <FaRobot className="header-robot-icon" />
           <h2 className="advisor-cards-header__title">{t('brief.title')}</h2>
           {generatedAt && !showSkeletons && (
             <span className="advisor-cards-header__timestamp">{t('brief.updated').replace('{time}', timeAgo)}</span>

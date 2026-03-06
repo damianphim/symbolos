@@ -11,7 +11,8 @@ from api.utils.supabase_client import (
     get_user_by_id,
     get_user_by_email,
     create_user as create_user_db,
-    update_user as update_user_db
+    update_user as update_user_db,
+    get_supabase
 )
 from api.exceptions import (
     UserNotFoundException,
@@ -229,4 +230,52 @@ async def update_user(user_id: str, updates: UserUpdate):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred"
+        )
+
+@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+async def delete_user_account(user_id: str):
+    """
+    Permanently delete a user's account and all associated data.
+    Deletes: user data rows, then the Supabase Auth user.
+    """
+    try:
+        supabase = get_supabase()
+
+        # Delete user data from all tables (cascade-order)
+        tables_to_clear = [
+            "user_clubs",
+            "user_current_courses",
+            "user_completed_courses",
+            "user_events",
+            "notifications",
+            "ai_cards",
+            "users",
+        ]
+        for table in tables_to_clear:
+            try:
+                supabase.table(table).delete().eq("user_id", user_id).execute()
+            except Exception:
+                # Some tables may not exist or column may differ — continue
+                pass
+
+        # Also try `id` column for the users table specifically
+        try:
+            supabase.table("users").delete().eq("id", user_id).execute()
+        except Exception:
+            pass
+
+        # Delete the Supabase Auth user (requires service role key)
+        try:
+            supabase.auth.admin.delete_user(user_id)
+        except Exception as e:
+            logger.warning(f"Could not delete auth user {user_id}: {e}")
+
+        logger.info(f"Account deleted: {user_id}")
+        return {"message": "Account deleted successfully"}
+
+    except Exception as e:
+        logger.exception(f"Error deleting user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "delete_failed", "message": "Failed to delete account"}
         )

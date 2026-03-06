@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
-  FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser,
+  FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers,
   FaChevronDown, FaChevronUp
 } from 'react-icons/fa'
@@ -263,6 +263,16 @@ function EventPopup({ event, onClose, onEdit, canEdit, t, language, formatDate, 
           </div>
         )}
       </div>
+      <div className="cal-event-popup-gcal">
+        <a
+          className="cal-event-popup-gcal-btn"
+          href={googleCalendarUrl(event)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <FaExternalLinkAlt size={10} /> {t('calendar.addToGoogle')}
+        </a>
+      </div>
       {canEdit && (
         <button className="cal-event-popup-edit" onClick={onEdit}>
           <FaEdit /> {t('calendar.editEvent')}
@@ -350,6 +360,102 @@ function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEve
 }
 
 // ── Main ──────────────────────────────────────────────────────────
+
+// ── Google Calendar / ICS utilities ──────────────────────────────
+
+function toICSDate(dateStr, timeStr) {
+  // dateStr: "2026-03-15", timeStr: "14:30" (optional)
+  const [y, m, d] = dateStr.split('-')
+  if (timeStr) {
+    const [h, min] = timeStr.split(':')
+    return `${y}${m.padStart(2,'0')}${d.padStart(2,'0')}T${h.padStart(2,'0')}${(min||'00').padStart(2,'0')}00`
+  }
+  return `${y}${m.padStart(2,'0')}${d.padStart(2,'0')}`
+}
+
+function toICSDateUTC(dateStr, timeStr) {
+  const local = toICSDate(dateStr, timeStr)
+  return timeStr ? local + 'Z' : local
+}
+
+function escapeICS(str) {
+  return (str || '').replace(/[\\,;]/g, c => '\\' + c).replace(/\n/g, '\\n')
+}
+
+function generateICS(events) {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Symbolos//McGill Advisor//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:McGill Academic Calendar',
+  ]
+
+  events.forEach((ev, i) => {
+    const dtstart = toICSDateUTC(ev.date, ev.time)
+    const dtend = ev.end_time
+      ? toICSDateUTC(ev.date, ev.end_time)
+      : ev.time
+        ? toICSDateUTC(ev.date, ev.time)  // same time = 1hr block handled below
+        : dtstart
+
+    lines.push('BEGIN:VEVENT')
+    lines.push(`UID:symbolos-${ev.id || i}-${ev.date}@mcgill.symbolos.ca`)
+    lines.push(`DTSTAMP:${toICSDateUTC(new Date().toISOString().split('T')[0], new Date().toTimeString().slice(0,5))}`)
+
+    if (ev.time) {
+      lines.push(`DTSTART:${dtstart}`)
+      // If no end time, default to 1 hour later
+      if (!ev.end_time) {
+        const [h, min] = ev.time.split(':').map(Number)
+        const endHour = String(h + 1).padStart(2,'0')
+        lines.push(`DTEND:${toICSDateUTC(ev.date, endHour + ':' + String(min).padStart(2,'0'))}`)
+      } else {
+        lines.push(`DTEND:${toICSDateUTC(ev.date, ev.end_time)}`)
+      }
+    } else {
+      // All-day event
+      lines.push(`DTSTART;VALUE=DATE:${dtstart}`)
+      lines.push(`DTEND;VALUE=DATE:${dtstart}`)
+    }
+
+    lines.push(`SUMMARY:${escapeICS(ev.title)}`)
+    if (ev.description) lines.push(`DESCRIPTION:${escapeICS(ev.description)}`)
+    if (ev.location)    lines.push(`LOCATION:${escapeICS(ev.location)}`)
+    if (ev.category)    lines.push(`CATEGORIES:${escapeICS(ev.category)}`)
+    lines.push('END:VEVENT')
+  })
+
+  lines.push('END:VCALENDAR')
+  return lines.join('\r\n')
+}
+
+function downloadICS(events, filename = 'mcgill-calendar.ics') {
+  const content = generateICS(events)
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename })
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
+}
+
+function googleCalendarUrl(event) {
+  const fmt = (s) => encodeURIComponent(s || '')
+  const dtstart = toICSDate(event.date, event.time)
+  let dates
+  if (event.time) {
+    const [h, min] = event.time.split(':').map(Number)
+    const endHour = event.end_time
+      ? event.end_time.split(':').map(Number)
+      : [h + 1, min]
+    const dtend = toICSDate(event.date, endHour[0] + ':' + String(endHour[1] || 0).padStart(2,'0'))
+    dates = `${dtstart}/${dtend}`
+  } else {
+    dates = `${dtstart}/${dtstart}`
+  }
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${fmt(event.title)}&dates=${dates}&details=${fmt(event.description)}&location=${fmt(event.location)}`
+}
+
 export default function CalendarTab({ user, clubEvents = [] }) {
   const { t, language } = useLanguage()
   const { getTodayStr, getNow } = useTimezone()
@@ -458,6 +564,8 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   const [dayDrawer, setDayDrawer]     = useState(null)
   const [popupEvent, setPopupEvent]   = useState(null)
   const [notifSaved, setNotifSaved]   = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showGCalGuide, setShowGCalGuide] = useState(false)
 
   // FIX #19: tEvent defined inside useMemo so it always captures the current
   // translation function. language is a real dependency — no eslint-disable needed.
@@ -628,6 +736,22 @@ export default function CalendarTab({ user, clubEvents = [] }) {
               {urgentEvents.length > 0 && <span className="cal-badge">{urgentEvents.length}</span>}
             </button>
           </div>
+          <div className="cal-export-wrap">
+            <button className="cal-export-btn" onClick={() => setShowExportMenu(p => !p)}>
+              <FaDownload size={13} /> {t('calendar.exportBtn')}
+            </button>
+            {showExportMenu && (
+              <div className="cal-export-menu">
+                <button className="cal-export-item" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setShowExportMenu(false) }}>
+                  <FaDownload size={11} /> {t('calendar.exportICS')}
+                </button>
+                <button className="cal-export-item cal-export-item--google" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setShowGCalGuide(true); setShowExportMenu(false) }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                  {t('calendar.exportGoogleHelp')}
+                </button>
+              </div>
+            )}
+          </div>
           <button className="cal-add-btn" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
             <FaPlus /> {t('calendar.addEventBtn')}
           </button>
@@ -691,7 +815,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
                       )
                     })}
                     {eventsOnDay.length > 3 && (
-                      <div className="cal-event-more">+{eventsOnDay.length - 3} {t('calendar.moreDots')}</div>
+                      <div className="cal-event-more">+{eventsOnDay.length - 3} {t('cal.moreDots')}</div>
                     )}
                   </div>
                 </div>
@@ -795,6 +919,39 @@ export default function CalendarTab({ user, clubEvents = [] }) {
           onClose={() => { setShowModal(false); setEditEvent(null); setPreselectedDate(null) }}
           t={t} notifPrefs={notifPrefs} user={user}
         />
+      )}
+
+      {/* Google Calendar Import Guide */}
+      {showGCalGuide && (
+        <div className="modal-overlay cal-gcal-overlay" onClick={() => setShowGCalGuide(false)}>
+          <div className="cal-gcal-modal" onClick={e => e.stopPropagation()}>
+            <div className="cal-gcal-modal__header">
+              <div className="cal-gcal-modal__icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div>
+                <h3 className="cal-gcal-modal__title">{t('calendar.exportGoogleHelp')}</h3>
+                <p className="cal-gcal-modal__subtitle">{language === 'fr' ? 'Votre fichier .ics a été téléchargé' : 'Your .ics file has been downloaded'}</p>
+              </div>
+              <button className="cal-gcal-modal__close" onClick={() => setShowGCalGuide(false)}><FaTimes /></button>
+            </div>
+            <ol className="cal-gcal-steps">
+              <li><span className="cal-gcal-step-num">1</span>{language === 'fr' ? 'Ouvrez' : 'Open'} <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">calendar.google.com</a></li>
+              <li><span className="cal-gcal-step-num">2</span>{language === 'fr' ? "Cliquez sur l'icône ⚙️ (Paramètres) → Paramètres" : 'Click the ⚙️ (Settings) icon → Settings'}</li>
+              <li><span className="cal-gcal-step-num">3</span>{language === 'fr' ? 'Sélectionnez "Importer et exporter" dans la barre latérale' : 'Select "Import & export" from the sidebar'}</li>
+              <li><span className="cal-gcal-step-num">4</span>{language === 'fr' ? "Cliquez sur \"Importer\" et choisissez le fichier .ics téléchargé" : 'Click "Import" and choose the downloaded .ics file'}</li>
+              <li><span className="cal-gcal-step-num">5</span>{language === 'fr' ? "Sélectionnez votre calendrier et cliquez sur \"Importer\"" : 'Select your calendar and click "Import"'}</li>
+            </ol>
+            <div className="cal-gcal-modal__actions">
+              <a className="cal-gcal-modal__open-btn" href="https://calendar.google.com/calendar/r/settings/export" target="_blank" rel="noopener noreferrer">
+                <FaExternalLinkAlt size={12} /> {language === 'fr' ? 'Ouvrir Google Agenda' : 'Open Google Calendar'}
+              </a>
+              <button className="cal-gcal-modal__done-btn" onClick={() => setShowGCalGuide(false)}>
+                {language === 'fr' ? 'Terminé' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

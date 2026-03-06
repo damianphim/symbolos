@@ -3,8 +3,9 @@
    ============================================ */
 
 .courses-container {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
+  padding-left: 48px;
 }
 
 /* ── Search ──────────────────────────────────────────────── */
@@ -77,6 +78,46 @@
   border-color: #7f1d1d;
   color: #fca5a5;
 }
+/* ── Fuzzy correction banner ─────────────────────────── */
+.search-correction-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fefce8;
+  border: 1.5px solid #fde68a;
+  color: #92400e;
+  padding: 0.75rem 1.1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.search-correction-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.search-correction-link:hover { color: #1e40af; }
+
+[data-theme='dark'] .search-correction-banner {
+  background: #1c1810;
+  border-color: #78350f;
+  color: #fcd34d;
+}
+
+[data-theme='dark'] .search-correction-link { color: #93c5fd; }
+[data-theme='dark'] .search-correction-link:hover { color: #bfdbfe; }
+
+
 
 /* ── Sort Controls ───────────────────────────────────────── */
 
@@ -1067,3 +1108,79 @@
   .btn-search, .search-input { min-height: 44px; }
   .prof-flag-btn { opacity: 1; }
 }
+/* ─── Visual Schedule Builder Banner ──────────────────────── */
+.vsb-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  margin: 8px 0 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  cursor: pointer;
+}
+
+.vsb-banner:hover {
+  background: var(--bg-hover, var(--bg-tertiary));
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.vsb-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vsb-banner__icon {
+  font-size: 18px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.vsb-banner__left > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vsb-banner__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vsb-banner__desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vsb-banner__arrow {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.vsb-banner:hover .vsb-banner__arrow {
+  color: var(--accent-primary);
+}
+
+
+/* ── No results state ───────────────────────────────── */
+.placeholder-icon--muted svg,
+.placeholder-icon--muted { color: var(--text-muted, #9ca3af); }
+
+.placeholder-content--empty h3 { color: var(--text-secondary); }

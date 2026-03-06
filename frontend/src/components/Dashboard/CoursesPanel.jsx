@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { normalizeQuery, buildCorrectionCandidates } from '../../utils/fuzzySearch'
 import coursesAPI           from '../../lib/professorsAPI'
 import ProfessorRating     from '../ProfessorRating/ProfessorRating'
 import { gpaToLetterGrade } from '../../utils/gpaUtils'
@@ -12,41 +13,38 @@ export default function CoursesPanel() {
   const [searchError,    setSearchError]    = useState(null)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [isLoadingCourse,setIsLoadingCourse]= useState(false)
+  const [correction, setCorrection] = useState(null)
 
   // ── search ────────────────────────────────────────────────────────
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
-
+  const doSearch = async (rawQuery) => {
     setIsSearching(true)
     setSearchError(null)
+    setCorrection(null)
     setSelectedCourse(null)
-
     try {
-      const data = await coursesAPI.search(searchQuery, null, 100)
+      const normalized = normalizeQuery(rawQuery)
+      const data = await coursesAPI.search(normalized, null, 100)
+      const courses = data.courses || data || []
 
-      // Group sections by course code
-      const map = new Map()
-      data.courses?.forEach(section => {
-        const key = `${section.subject}-${section.catalog}`
-        if (!map.has(key)) {
-          map.set(key, {
-            id: section.id, subject: section.subject, catalog: section.catalog,
-            title: section.course_name, average: section.average,
-            sections: [section]
-          })
-        } else {
-          const course = map.get(key)
-          course.sections.push(section)
-          if (section.average && (!course.average || section.average > course.average)) {
-            course.average = section.average
-          }
+      if (Array.isArray(courses) && courses.length > 0) {
+        setSearchResults(courses)
+        return
+      }
+
+      // Zero results — try fuzzy correction
+      const candidates = buildCorrectionCandidates(rawQuery)
+      for (const candidate of candidates) {
+        const retry = await coursesAPI.search(candidate.query, null, 100)
+        const list = retry.courses || retry || []
+        if (Array.isArray(list) && list.length > 0) {
+          setCorrection({ original: rawQuery, corrected: candidate.note })
+          setSearchResults(list)
+          return
         }
-      })
+      }
 
-      const courses = Array.from(map.values())
-      setSearchResults(courses)
-      if (!courses.length) setSearchError('No courses found matching your search.')
+      setSearchResults([])
+      setSearchError('No courses found matching your search.')
     } catch (err) {
       console.error('Course search error:', err)
       setSearchError('Failed to search courses. Please try again.')
@@ -54,6 +52,12 @@ export default function CoursesPanel() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    doSearch(searchQuery)
   }
 
   // ── detail ────────────────────────────────────────────────────────
@@ -88,6 +92,15 @@ export default function CoursesPanel() {
       </form>
 
       {searchError && <div className="error-banner">{searchError}</div>}
+      {correction && (
+        <div className="search-correction-banner">
+          Did you mean{' '}
+          <button className="search-correction-link" onClick={() => { setSearchQuery(correction.corrected); doSearch(correction.corrected) }}>
+            {correction.corrected}
+          </button>?
+          {' '}Showing results for "{correction.corrected}".
+        </div>
+      )}
 
       {/* Result list */}
       {searchResults.length > 0 && !selectedCourse && (

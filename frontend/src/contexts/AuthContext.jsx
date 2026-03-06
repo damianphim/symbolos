@@ -201,6 +201,22 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+
+  // ── deleteAccount ────────────────────────────────────────────────────────
+  const deleteAccount = async () => {
+    if (!user?.id) throw new Error('No user logged in')
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const BASE_URL = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '')
+    const res = await fetch(`${BASE_URL}/api/users/${user.id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.detail?.message || 'Failed to delete account')
+    }
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+  }
+
   // ── signOut ─────────────────────────────────────────────────────────────
   const signOut = async () => {
     try {
@@ -250,7 +266,7 @@ export const AuthProvider = ({ children }) => {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const value = { user, profile, loading, error, needsOnboarding, signUp, signIn, signOut, updateProfile, completeOnboarding, clearError }
+  const value = { user, profile, loading, error, needsOnboarding, signUp, signIn, signOut, deleteAccount, updateProfile, completeOnboarding, clearError }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

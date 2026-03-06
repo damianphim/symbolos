@@ -97,6 +97,7 @@ function matchTransfer(req, advancedStanding = [], { requireMajorCredit = false 
 }
 
 export default function DegreeRequirementsView({ completedCourses = [], currentCourses = [], profile = {} }) {
+  const { t, language } = useLanguage()
   const [programs, setPrograms]           = useState([])
   const [selectedKey, setSelectedKey]     = useState(null)
   const [programDetail, setProgramDetail] = useState(null)
@@ -447,14 +448,18 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
         {!selectedKey && !loading && (
           <div className="drv-welcome">
             <div className="drv-welcome-icon-wrap"><FaGraduationCap /></div>
-            <h2>Degree Requirements</h2>
-            <p>Select a program from the sidebar to see its full requirements, your progress, and recommended courses.</p>
+            <h2>{t('dp.welcomeTitle')}</h2>
+            <p>{t('dp.welcomeDesc')}</p>
             {programs.length > 0 && (
-              <p className="drv-welcome-count">{programs.length} program{programs.length !== 1 ? 's' : ''} available</p>
+              <p className="drv-welcome-count">
+                {programs.length === 1
+                  ? t('dp.programAvailable').replace('{count}', programs.length)
+                  : t('dp.programsAvailable').replace('{count}', programs.length)}
+              </p>
             )}
             {programs.length === 0 && (
               <button className="drv-seed-btn" onClick={handleSeed} disabled={seeding}>
-                {seeding ? 'Loading…' : 'Load Requirements'}
+                {seeding ? t('dp.loading') : t('dp.loadBtn')}
               </button>
             )}
           </div>
@@ -463,42 +468,36 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
         {loading && (
           <div className="drv-loading">
             <div className="drv-spinner" />
-            <span>Loading requirements…</span>
+            <span>{t('dp.loadingSpinner')}</span>
           </div>
         )}
 
         {!loading && selectedKey && detailError === 'not_found' && !programDetail && (
           <div className="drv-welcome">
             <div className="drv-welcome-icon-wrap" style={{ opacity: 0.5 }}><FaGraduationCap /></div>
-            <h2>Program Not Yet Available</h2>
+            <h2>{t('dp.notFoundTitle')}</h2>
             <p style={{ color: 'var(--text-secondary, #6b7280)' }}>
-              Detailed requirements for this program haven't been added yet.
-              We're working on expanding our coverage!
+              {t('dp.notFoundDesc')}
             </p>
             <p style={{ color: 'var(--text-tertiary, #9ca3af)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              Try selecting a different program from the sidebar, or check back later.
+              {t('dp.notFoundHint')}
             </p>
           </div>
         )}
 
         {!loading && selectedKey && detailError === 'error' && !programDetail && (
           <div className="drv-error">
-            Could not load program details. Please try again.
+            {t('dp.loadError')}
           </div>
         )}
 
         {/* Foundation year waived banner */}
         {foundationWaived && selectedKey && (
-          <div style={{
-            background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '8px',
-            padding: '10px 14px', margin: '0 0 12px 0', fontSize: '13px',
-            display: 'flex', alignItems: 'center', gap: '8px', color: '#2e7d32'
-          }}>
+          <div className="drv-foundation-waived-banner">
             <span>✓</span>
             <span>
-              <strong>Foundation Year Waived</strong> — Your {transferCredits} transfer credits
-              exempt you from U0 Foundation requirements
-              {transferCredits < 30 ? ' (note: 30 cr for full exemption)' : ''}.
+              <strong style={{ color: 'var(--text-primary)' }}>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
+              {transferCredits < 30 ? ` ${t('dp.foundationWaivedNote')}` : ''}.
             </span>
           </div>
         )}
@@ -524,18 +523,25 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               </div>
               <div className="drv-detail-meta">
                 <div className="drv-meta-card">
-                  <span className="drv-meta-label">Credits:</span>
+                  <span className="drv-meta-label">{language === 'fr' ? 'Crédits :' : 'Credits:'}</span>
                   <span className="drv-meta-val">{programDetail.total_credits}</span>
                 </div>
                 {progress && progress.required > 0 && (
                   <div className="drv-meta-card drv-meta-card--green">
-                    <span className="drv-meta-label">Required done:</span>
+                    <span className="drv-meta-label">{language === 'fr' ? 'Requis complété :' : 'Required done:'}</span>
                     <span className="drv-meta-val">{progress.pct}%</span>
                   </div>
                 )}
                 {programDetail.ecalendar_url && (
-                  <a href={programDetail.ecalendar_url} target="_blank" rel="noreferrer" className="drv-ecal-link">
-                    eCalendar <FaExternalLinkAlt />
+                  <a
+                    href={language === 'fr'
+                      ? programDetail.ecalendar_url.replace('/en/', '/fr/')
+                      : programDetail.ecalendar_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="drv-ecal-link"
+                  >
+                    {language === 'fr' ? 'eCalendrier' : 'eCalendar'} <FaExternalLinkAlt />
                   </a>
                 )}
               </div>

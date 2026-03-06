@@ -39,6 +39,9 @@ export default function CoursesView({
   handleToggleCompleted,
   handleToggleCurrent,
   gpaToLetterGrade,
+  searchCorrection,
+  onSearchWithCorrection,
+  hasSearched,
   defaultSubTab = 'course_search',
 }) {
   const [subTab, setSubTab] = useState(defaultSubTab)
@@ -111,6 +114,9 @@ export default function CoursesView({
           isCurrent={isCurrent}
           handleCourseSearch={handleCourseSearch}
           handleCourseClick={handleCourseClick}
+          searchCorrection={searchCorrection}
+          onSearchWithCorrection={onSearchWithCorrection}
+          hasSearched={hasSearched}
           handleToggleFavorite={handleToggleFavorite}
           handleToggleCompleted={handleToggleCompleted}
           handleToggleCurrent={handleToggleCurrent}

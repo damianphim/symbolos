@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook } from 'react-icons/fa'
+import { FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './SavedCoursesView.css'
 
@@ -15,7 +15,7 @@ export default function SavedCoursesView({
   onToggleCurrent,
   onCourseClick,
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [activeView, setActiveView] = useState('saved')
 
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
@@ -53,6 +53,23 @@ export default function SavedCoursesView({
           {completedCourses.length > 0 && <span className="tab-count">{completedCourses.length}</span>}
         </button>
       </div>
+
+      {/* ── VSB Banner ──────────────────────────────────────── */}
+      <a
+        href={`https://vsb.mcgill.ca/criteria.jsp?access=0&lang=${language === 'fr' ? 'fr' : 'en'}&tip=2&page=criteria&scratch=0&advice=0&legend=1&term=202601&sort=none&filters=iiiiiiiiii&bbs=&ds=&cams=OFF-CAMPUS_DISTANCE_DOWNTOWN_MACDONALD&locs=any&isrts=any&ses=any&pl=&pac=1`}
+        target="_blank"
+        rel="noreferrer"
+        className="vsb-banner"
+      >
+        <div className="vsb-banner__left">
+          <FaCalendarAlt className="vsb-banner__icon" />
+          <div>
+            <span className="vsb-banner__title">{t('courses.vsbLabel')}</span>
+            <span className="vsb-banner__desc">{t('courses.vsbDesc')}</span>
+          </div>
+        </div>
+        <FaExternalLinkAlt className="vsb-banner__arrow" />
+      </a>
 
       {/* Saved Courses */}
       {activeView === 'saved' && (
