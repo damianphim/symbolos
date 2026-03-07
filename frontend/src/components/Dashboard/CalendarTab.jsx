@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
-  FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup,
+  FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
   FaChevronDown, FaChevronUp
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -366,11 +366,97 @@ function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEve
 
 
 // ── Bulk Delete Modal ─────────────────────────────────────────────
-function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onClose, language }) {
+const DAY_OPTIONS = [
+  { value: 'weekly_monday',    label: 'Monday' },
+  { value: 'weekly_tuesday',   label: 'Tuesday' },
+  { value: 'weekly_wednesday', label: 'Wednesday' },
+  { value: 'weekly_thursday',  label: 'Thursday' },
+  { value: 'weekly_friday',    label: 'Friday' },
+]
+const DAY_LABELS = {
+  weekly_monday:'Mon', weekly_tuesday:'Tue', weekly_wednesday:'Wed',
+  weekly_thursday:'Thu', weekly_friday:'Fri', weekly_saturday:'Sat', weekly_sunday:'Sun'
+}
+
+function SlotRow({ ev, isHidden, isSelected, onToggle, onSave, language }) {
+  const [editing, setEditing] = React.useState(false)
+  const [day,      setDay]      = React.useState(ev.recurrence || '')
+  const [timeStart,setTimeStart]= React.useState(ev.time || '')
+  const [timeEnd,  setTimeEnd]  = React.useState(ev.end_time || '')
+  const [saving,   setSaving]   = React.useState(false)
+
+  const missingTime = !ev.time
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(ev, { recurrence: day, time: timeStart, end_time: timeEnd })
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const slotLabel = ev.title.replace(ev.course_code || '', '').trim() || 'Slot'
+  const dayLabel  = DAY_LABELS[ev.recurrence] || ev.recurrence?.replace('weekly_','') || '?'
+  const hasEnd = ev.end_time && String(ev.end_time).trim()
+  const timeLabel = ev.time ? (hasEnd ? ` ${ev.time}–${ev.end_time}` : ` ${ev.time}`) : ''
+
+  if (editing) {
+    return (
+      <div className="cal-bulk-slot cal-bulk-slot--editing" onClick={e => e.stopPropagation()}>
+        <select className="cal-bulk-edit-select" value={day} onChange={e => setDay(e.target.value)}>
+          {DAY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+        </select>
+        <input
+          className="cal-bulk-edit-time"
+          type="time"
+          value={timeStart}
+          onChange={e => setTimeStart(e.target.value)}
+          placeholder="HH:MM"
+        />
+        <span className="cal-bulk-edit-sep">–</span>
+        <input
+          className="cal-bulk-edit-time"
+          type="time"
+          value={timeEnd}
+          onChange={e => setTimeEnd(e.target.value)}
+          placeholder="HH:MM"
+        />
+        <button className="cal-bulk-edit-save" onClick={handleSave} disabled={saving}>
+          {saving ? '…' : <FaCheck size={11}/>}
+        </button>
+        <button className="cal-bulk-edit-cancel" onClick={() => setEditing(false)}>
+          <FaTimes size={11}/>
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`cal-bulk-slot${isHidden ? ' cal-bulk-slot--hidden' : ''}${missingTime ? ' cal-bulk-slot--missing' : ''}`}
+      onClick={onToggle}
+    >
+      <input type="checkbox" readOnly checked={isSelected} className="cal-bulk-check" onClick={e => e.stopPropagation()} onChange={() => {}} />
+      <span className="cal-bulk-slot__day">{dayLabel}</span>
+      <span className="cal-bulk-slot__label">{slotLabel}{timeLabel}</span>
+      {missingTime && <span className="cal-bulk-slot__badge cal-bulk-slot__badge--warn"><FaClock size={9}/> {language === 'fr' ? 'heure manquante' : 'no time'}</span>}
+      {isHidden && !missingTime && <span className="cal-bulk-slot__badge">{language === 'fr' ? 'masqué' : 'hidden'}</span>}
+      <button
+        className="cal-bulk-slot__edit-btn"
+        title={language === 'fr' ? 'Modifier' : 'Edit'}
+        onClick={e => { e.stopPropagation(); setEditing(true) }}
+      >
+        <FaEdit size={10}/> {language === 'fr' ? 'Modifier' : 'Edit'}
+      </button>
+    </div>
+  )
+}
+
+function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onClose, language, onEditSlot }) {
   const [selected, setSelected] = React.useState(new Set())
 
-  // Group anchor events by course_code then by recurrence day
-  // Key = "courseCode::recurrence" — used for hiding
   const groups = React.useMemo(() => {
     const anchors = userEvents.filter(e => e.recurrence && e.course_code && !e._isRecurringOccurrence)
     const map = {}
@@ -384,15 +470,10 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
     return map
   }, [userEvents])
 
-  const DAY_LABELS = { weekly_monday:'Mon', weekly_tuesday:'Tue', weekly_wednesday:'Wed',
-    weekly_thursday:'Thu', weekly_friday:'Fri', weekly_saturday:'Sat', weekly_sunday:'Sun' }
-
   const slotKey = (ev) => `${ev.course_code}::${ev.recurrence}`
 
   const toggleKey = (key) => setSelected(prev => {
-    const s = new Set(prev)
-    s.has(key) ? s.delete(key) : s.add(key)
-    return s
+    const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s
   })
   const toggleGroup = (keys) => {
     const allOn = keys.every(k => selected.has(k))
@@ -409,7 +490,7 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
     <div className="modal-overlay cal-bulk-overlay" onClick={onClose}>
       <div className="cal-bulk-modal" onClick={e => e.stopPropagation()}>
         <div className="cal-bulk-modal__header">
-          <h3>{language === 'fr' ? 'Supprimer des cours du calendrier' : 'Remove Classes from Calendar'}</h3>
+          <h3>{language === 'fr' ? 'Gérer les cours du calendrier' : 'Manage Calendar Classes'}</h3>
           <button className="cal-bulk-modal__close" onClick={onClose}><FaTimes /></button>
         </div>
 
@@ -418,34 +499,32 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
         ) : (
           <div className="cal-bulk-list">
             {Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([courseCode, days]) => {
-              const allKeys = Object.values(days).flat().map(slotKey)
+              const allEvs  = Object.values(days).flat()
+              const allKeys = allEvs.map(slotKey)
               const allSelected = allKeys.every(k => selected.has(k))
+              const hasMissing = allEvs.some(e => !e.time)
               return (
                 <div key={courseCode} className="cal-bulk-course">
                   <div className="cal-bulk-course__header" onClick={() => toggleGroup(allKeys)}>
-                    <input type="checkbox" readOnly checked={allSelected} className="cal-bulk-check" />
+                    <input type="checkbox" readOnly checked={allSelected} className="cal-bulk-check" onChange={() => {}} />
                     <span className="cal-bulk-course__name">{courseCode}</span>
+                    {hasMissing && <span className="cal-bulk-course__warn"><FaExclamationTriangle size={10}/></span>}
                     <span className="cal-bulk-course__count">{allKeys.length} slot{allKeys.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="cal-bulk-slots">
-                    {Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([rec, evs]) => {
-                      // For same-course same-day slots (e.g. two MATH 323 Tuesday entries), show time
-                      return evs.map(ev => {
-                        const dayLabel = DAY_LABELS[rec] || rec.replace('weekly_','')
-                        const timeLabel = ev.time ? ` ${ev.time}–${ev.end_time || ''}` : ''
-                        const slotLabel = ev.title.replace(courseCode, '').trim() || 'Slot'
-                        const key = slotKey(ev)
-                        const isHidden = hiddenSlotKeys?.has(key)
-                        return (
-                          <div key={key} className={`cal-bulk-slot${isHidden ? ' cal-bulk-slot--hidden' : ''}`} onClick={() => toggleKey(key)}>
-                            <input type="checkbox" readOnly checked={selected.has(key)} className="cal-bulk-check" />
-                            <span className="cal-bulk-slot__day">{dayLabel}</span>
-                            <span className="cal-bulk-slot__label">{slotLabel}{timeLabel}</span>
-                            {isHidden && <span className="cal-bulk-slot__badge">{language === 'fr' ? 'masqué' : 'hidden'}</span>}
-                          </div>
-                        )
-                      })
-                    })}
+                    {Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([rec, evs]) =>
+                      evs.map(ev => (
+                        <SlotRow
+                          key={`${slotKey(ev)}-${ev.time}-${ev.recurrence}`}
+                          ev={ev}
+                          isHidden={hiddenSlotKeys?.has(slotKey(ev))}
+                          isSelected={selected.has(slotKey(ev))}
+                          onToggle={() => toggleKey(slotKey(ev))}
+                          onSave={onEditSlot}
+                          language={language}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
               )
@@ -462,7 +541,7 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
             )}
           </span>
           <button className="cal-bulk-cancel-btn" onClick={onClose}>
-            {language === 'fr' ? 'Annuler' : 'Cancel'}
+            {language === 'fr' ? 'Fermer' : 'Close'}
           </button>
           <button
             className="cal-bulk-delete-confirm-btn"
@@ -474,7 +553,6 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
           </button>
         </div>
       </div>
-
     </div>
   )
 }
@@ -816,6 +894,40 @@ export default function CalendarTab({ user, clubEvents = [] }) {
     setHiddenSlotKeys(new Set())
   }
 
+  // Edit a slot's day/time — updates anchor + all occurrences in state + Supabase
+  const handleEditSlot = async (anchorEv, { recurrence, time, end_time }) => {
+    const oldKey = `${anchorEv.course_code}::${anchorEv.recurrence}`
+    const newKey = `${anchorEv.course_code}::${recurrence}`
+
+    // Strip _isRecurringOccurrence/_anchorId so expandRecurringEvents treats it as a fresh anchor
+    const updatedAnchor = {
+      ...anchorEv,
+      recurrence,
+      time,
+      end_time,
+      _isRecurringOccurrence: false,
+      _anchorId: undefined,
+    }
+
+    // Re-expand the updated anchor into full weekly occurrences
+    const reexpanded = expandRecurringEvents([updatedAnchor])
+
+    setUserEvents(prev => {
+      // Remove old anchor + all its occurrences
+      const rest = prev.filter(e => e.id !== anchorEv.id && e._anchorId !== anchorEv.id)
+      return [...rest, ...reexpanded]
+    })
+
+    if (hiddenSlotKeys.has(oldKey)) {
+      setHiddenSlotKeys(prev => {
+        const s = new Set(prev); s.delete(oldKey); s.add(newKey); return s
+      })
+    }
+
+    try { await saveEvent(updatedAnchor, user.id) }
+    catch (err) { console.error('Failed to save slot edit:', err) }
+  }
+
   const handleDayClick = (day) => {
     if (!day) return
     const dateStr = toDateStr(currentYear, currentMonth, day)
@@ -857,6 +969,21 @@ export default function CalendarTab({ user, clubEvents = [] }) {
 
   return (
     <div className="cal-container">
+      {/* Missing-time banner */}
+      {userEvents.some(e => e.recurrence && e.course_code && !e._isRecurringOccurrence && !e.time) && (
+        <div className="cal-missing-time-banner">
+          <FaExclamationTriangle className="cal-missing-icon" />
+          <span>
+            {language === 'fr'
+              ? "Certains cours n'ont pas d'heure. Cliquez sur \u00abAfficher/masquer des cours\u00bb pour les corriger."
+              : 'Some classes are missing their time. Click "Show/Hide Classes" to fix them.'}
+          </span>
+          <button className="cal-missing-fix-btn" onClick={() => setShowBulkDelete(true)}>
+            {language === 'fr' ? 'Corriger' : 'Fix now'}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="cal-header">
         <div className="cal-header-left">
@@ -896,7 +1023,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
             )}
           </div>
           <button className="cal-bulk-toggle-btn" onClick={() => setShowBulkDelete(true)} title={language === 'fr' ? 'Supprimer des cours en masse' : 'Bulk delete classes'}>
-            <FaLayerGroup size={12} /> {language === 'fr' ? 'Afficher/masquer des cours' : 'Show/Hide Classes'}
+            <FaLayerGroup size={12} /> {language === 'fr' ? 'Modifier les cours' : 'Edit Classes'}
           </button>
           <button className="cal-add-btn" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
             <FaPlus /> {t('calendar.addEventBtn')}
@@ -956,7 +1083,17 @@ export default function CalendarTab({ user, clubEvents = [] }) {
                       const style = getEventStyle(e, typeConfig)
                       return (
                         <div key={e.id} className="cal-event-dot" style={{ background: style.color, color: '#fff' }} title={e.title}>
-                          {e.title.length > 14 ? e.title.slice(0, 13) + '…' : e.title}
+                          {(() => {
+                            const t = e.title
+                            // "COMP 251 Lecture" → "COMP251 Lec"  "Winter Reading Break" → "Winter Rdg…"
+                            const courseMatch = t.match(/^([A-Z]{2,6})\s*(\d{3}[A-Z]?)\s+(.+)$/)
+                            if (courseMatch) {
+                              const type = courseMatch[3]
+                              const abbr = type.startsWith('Lecture') ? 'Lec' : type.startsWith('Tutorial') ? 'Tut' : type.startsWith('Lab') ? 'Lab' : type.slice(0,3)
+                              return `${courseMatch[1]}${courseMatch[2]} ${abbr}`
+                            }
+                            return t.length > 13 ? t.slice(0, 12) + '…' : t
+                          })()}
                         </div>
                       )
                     })}
@@ -1109,6 +1246,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
           onUnhideAll={handleBulkUnhideAll}
           onClose={() => setShowBulkDelete(false)}
           language={language}
+          onEditSlot={handleEditSlot}
         />
       )}
     </div>
