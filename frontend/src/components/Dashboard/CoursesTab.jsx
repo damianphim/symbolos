@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
   FaUser, FaChartBar, FaFlag, FaChevronLeft, FaChevronRight,
-  FaArrowLeft, FaTrophy, FaLayerGroup
+  FaArrowLeft, FaTrophy, FaLayerGroup, FaCalendarAlt, FaExternalLinkAlt
 } from 'react-icons/fa'
 import { MdOutlineRateReview } from 'react-icons/md'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -52,7 +52,7 @@ export default function CoursesTab({
   handleToggleFavorite, handleToggleCompleted, handleToggleCurrent,
   gpaToLetterGrade,
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [openFlagCard,   setOpenFlagCard]   = useState(null)
   const [openFlagDetail, setOpenFlagDetail] = useState(false)
   const [currentPage,    setCurrentPage]    = useState(1)
@@ -89,6 +89,23 @@ export default function CoursesTab({
       </form>
 
       {searchError && <div className="error-banner">{searchError}</div>}
+
+      {/* ── VSB Banner ──────────────────────────────────────── */}
+      <a
+        href={`https://vsb.mcgill.ca/criteria.jsp?access=0&lang=${language === 'fr' ? 'fr' : 'en'}&tip=2&page=criteria&scratch=0&advice=0&legend=1&term=202601&sort=none&filters=iiiiiiiiii&bbs=&ds=&cams=OFF-CAMPUS_DISTANCE_DOWNTOWN_MACDONALD&locs=any&isrts=any&ses=any&pl=&pac=1`}
+        target="_blank"
+        rel="noreferrer"
+        className="vsb-banner"
+      >
+        <div className="vsb-banner__left">
+          <FaCalendarAlt className="vsb-banner__icon" />
+          <div>
+            <span className="vsb-banner__title">{t('courses.vsbLabel')}</span>
+            <span className="vsb-banner__desc">{t('courses.vsbDesc')}</span>
+          </div>
+        </div>
+        <FaExternalLinkAlt className="vsb-banner__arrow" />
+      </a>
 
       {/* ── Results list ────────────────────────────────────── */}
       {searchResults.length > 0 && !selectedCourse && (
