@@ -366,13 +366,13 @@ function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEve
 
 
 // ── Bulk Delete Modal ─────────────────────────────────────────────
-function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onClose, language }) {
+function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onClose, language }) {
   const [selected, setSelected] = React.useState(new Set())
 
   // Group anchor events by course_code then by recurrence day
+  // Key = "courseCode::recurrence" — used for hiding
   const groups = React.useMemo(() => {
     const anchors = userEvents.filter(e => e.recurrence && e.course_code && !e._isRecurringOccurrence)
-    // Group: { [course_code]: { [recurrence]: [events] } }
     const map = {}
     for (const ev of anchors) {
       const cc = ev.course_code || ev.category || 'Other'
@@ -387,23 +387,23 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
   const DAY_LABELS = { weekly_monday:'Mon', weekly_tuesday:'Tue', weekly_wednesday:'Wed',
     weekly_thursday:'Thu', weekly_friday:'Fri', weekly_saturday:'Sat', weekly_sunday:'Sun' }
 
-  const toggleId = (id) => setSelected(prev => {
+  const slotKey = (ev) => `${ev.course_code}::${ev.recurrence}`
+
+  const toggleKey = (key) => setSelected(prev => {
     const s = new Set(prev)
-    s.has(id) ? s.delete(id) : s.add(id)
+    s.has(key) ? s.delete(key) : s.add(key)
     return s
   })
-  const toggleGroup = (ids) => {
-    const allOn = ids.every(id => selected.has(id))
+  const toggleGroup = (keys) => {
+    const allOn = keys.every(k => selected.has(k))
     setSelected(prev => {
       const s = new Set(prev)
-      allOn ? ids.forEach(id => s.delete(id)) : ids.forEach(id => s.add(id))
+      allOn ? keys.forEach(k => s.delete(k)) : keys.forEach(k => s.add(k))
       return s
     })
   }
 
   const hasAnything = Object.keys(groups).length > 0
-
-  const hiddenCount = [...(hiddenAnchorIds || [])].length
 
   return (
     <div className="modal-overlay cal-bulk-overlay" onClick={onClose}>
@@ -418,14 +418,14 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
         ) : (
           <div className="cal-bulk-list">
             {Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([courseCode, days]) => {
-              const allIds = Object.values(days).flat().map(e => e.id)
-              const allSelected = allIds.every(id => selected.has(id))
+              const allKeys = Object.values(days).flat().map(slotKey)
+              const allSelected = allKeys.every(k => selected.has(k))
               return (
                 <div key={courseCode} className="cal-bulk-course">
-                  <div className="cal-bulk-course__header" onClick={() => toggleGroup(allIds)}>
+                  <div className="cal-bulk-course__header" onClick={() => toggleGroup(allKeys)}>
                     <input type="checkbox" readOnly checked={allSelected} className="cal-bulk-check" />
                     <span className="cal-bulk-course__name">{courseCode}</span>
-                    <span className="cal-bulk-course__count">{allIds.length} slot{allIds.length !== 1 ? 's' : ''}</span>
+                    <span className="cal-bulk-course__count">{allKeys.length} slot{allKeys.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="cal-bulk-slots">
                     {Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([rec, evs]) => {
@@ -434,10 +434,11 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
                         const dayLabel = DAY_LABELS[rec] || rec.replace('weekly_','')
                         const timeLabel = ev.time ? ` ${ev.time}–${ev.end_time || ''}` : ''
                         const slotLabel = ev.title.replace(courseCode, '').trim() || 'Slot'
-                        const isHidden = hiddenAnchorIds?.has(ev.id)
+                        const key = slotKey(ev)
+                        const isHidden = hiddenSlotKeys?.has(key)
                         return (
-                          <div key={ev.id} className={`cal-bulk-slot${isHidden ? ' cal-bulk-slot--hidden' : ''}`} onClick={() => toggleId(ev.id)}>
-                            <input type="checkbox" readOnly checked={selected.has(ev.id)} className="cal-bulk-check" />
+                          <div key={key} className={`cal-bulk-slot${isHidden ? ' cal-bulk-slot--hidden' : ''}`} onClick={() => toggleKey(key)}>
+                            <input type="checkbox" readOnly checked={selected.has(key)} className="cal-bulk-check" />
                             <span className="cal-bulk-slot__day">{dayLabel}</span>
                             <span className="cal-bulk-slot__label">{slotLabel}{timeLabel}</span>
                             {isHidden && <span className="cal-bulk-slot__badge">{language === 'fr' ? 'masqué' : 'hidden'}</span>}
@@ -454,9 +455,9 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
 
         <div className="cal-bulk-modal__footer">
           <span className="cal-bulk-count">
-            {hiddenCount > 0 && (
+            {(hiddenSlotKeys?.size || 0) > 0 && (
               <button className="cal-bulk-unhide-btn" onClick={onUnhideAll}>
-                {language === 'fr' ? `Afficher tout (${hiddenCount} masqué)` : `Show all (${hiddenCount} hidden)`}
+                {language === 'fr' ? `Afficher tout (${hiddenSlotKeys?.size || 0} masqué)` : `Show all (${hiddenSlotKeys?.size || 0} hidden)`}
               </button>
             )}
           </span>
@@ -685,7 +686,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showGCalGuide, setShowGCalGuide] = useState(false)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
-  const [hiddenAnchorIds, setHiddenAnchorIds] = useState(new Set())
+  const [hiddenSlotKeys, setHiddenSlotKeys] = useState(new Set())
 
   // FIX #19: tEvent defined inside useMemo so it always captures the current
   // translation function. language is a real dependency — no eslint-disable needed.
@@ -709,8 +710,15 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   }, [userEvents, examEvents, clubEvents, language, t])
 
   const filteredEvents = useMemo(() =>
-    allEvents.filter(e => filter[e.type] !== false && !hiddenAnchorIds.has(e._anchorId || e.id)),
-    [allEvents, filter, hiddenAnchorIds]
+    allEvents.filter(e => {
+      if (filter[e.type] === false) return false
+      if (e.course_code && e.recurrence) {
+        const key = `${e.course_code}::${e.recurrence}`
+        if (hiddenSlotKeys.has(key)) return false
+      }
+      return true
+    }),
+    [allEvents, filter, hiddenSlotKeys]
   )
 
   const eventsByDate = useMemo(() => {
@@ -799,13 +807,13 @@ export default function CalendarTab({ user, clubEvents = [] }) {
 
 
   // ── Bulk delete: remove all recurring slots for a given anchor event ──
-  const handleBulkHide = (anchorIds) => {
-    setHiddenAnchorIds(prev => new Set([...prev, ...anchorIds]))
+  const handleBulkHide = (slotKeys) => {
+    setHiddenSlotKeys(prev => new Set([...prev, ...slotKeys]))
     setShowBulkDelete(false)
   }
 
   const handleBulkUnhideAll = () => {
-    setHiddenAnchorIds(new Set())
+    setHiddenSlotKeys(new Set())
   }
 
   const handleDayClick = (day) => {
@@ -1097,7 +1105,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
         <BulkDeleteModal
           userEvents={userEvents}
           onHide={handleBulkHide}
-          hiddenAnchorIds={hiddenAnchorIds}
+          hiddenSlotKeys={hiddenSlotKeys}
           onUnhideAll={handleBulkUnhideAll}
           onClose={() => setShowBulkDelete(false)}
           language={language}
