@@ -390,7 +390,6 @@ export default function CoursesTab({
                     <div className="course-detail-section-header">
                       <FaStar />
                       <h3 className="course-detail-section-title">{t('courses.professorRating')}</h3>
-                      {totalReviews && <span className="course-detail-section-count">{totalReviews.toLocaleString()} reviews</span>}
                     </div>
                     {selectedCourse.instructors?.[0] && (
                       <div className="rmp-instructor-label">
@@ -406,12 +405,6 @@ export default function CoursesTab({
                         <div className="rmp-grid-card">
                           <div className={`rmp-grid-value ${selectedCourse.rmp_difficulty <= 2.5 ? 'good' : selectedCourse.rmp_difficulty <= 3.5 ? 'ok' : 'bad'}`}>{selectedCourse.rmp_difficulty.toFixed(1)}</div>
                           <div className="rmp-grid-label">{t('courses.difficulty')}</div>
-                        </div>
-                      )}
-                      {totalReviews && (
-                        <div className="rmp-grid-card">
-                          <div className="rmp-grid-value">{totalReviews.toLocaleString()}</div>
-                          <div className="rmp-grid-label">{t('courses.reviews')}</div>
                         </div>
                       )}
                       {selectedCourse.rmp_would_take_again != null && (

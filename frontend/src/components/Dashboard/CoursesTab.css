@@ -426,7 +426,7 @@
 [data-theme="dark"] .course-detail-section-header { border-color: #2d3f55; }
 .course-detail-section-header svg { color: #ED1B2F; font-size: 15px; flex-shrink: 0; }
 .course-detail-section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-.course-detail-section-count { margin-left: auto; background: rgba(237,27,47,0.1); color: #ED1B2F; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.course-detail-section-count { margin-left: auto; background: rgba(237,27,47,0.1); color: #ED1B2F; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; line-height: 1.4; display: inline-flex; align-items: center; flex-shrink: 0; }
 
 /* ── RMP grid ────────────────────────────────────────────── */
 
@@ -461,16 +461,20 @@
   border: 1.5px solid #d1d5db;
   border-radius: 10px;
   font-size: 0.875rem; color: var(--text-primary); font-weight: 500;
+  line-height: 1;
 }
 [data-theme="dark"] .instructor-chip { background: #040d1a; border-color: #2d3f55; }
 
-.instructor-chip-icon { font-size: 0.72rem; color: var(--text-tertiary); flex-shrink: 0; }
+.instructor-chip-icon { font-size: 0.72rem; color: var(--text-tertiary); flex-shrink: 0; position: relative; top: 0; }
 
 .instructor-recent-badge {
   margin-left: auto;
+  flex-shrink: 0;
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
   color: #7c3aed; background: rgba(124,58,237,0.1);
-  padding: 2px 8px; border-radius: 20px;
+  padding: 3px 8px; border-radius: 20px;
+  line-height: 1.4;
+  display: inline-flex; align-items: center;
 }
 [data-theme="dark"] .instructor-recent-badge { color: #a78bfa; background: rgba(139,92,246,0.15); }
 
