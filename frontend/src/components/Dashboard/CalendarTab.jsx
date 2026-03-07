@@ -460,7 +460,7 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
               </button>
             )}
           </span>
-          <button className="cal-bulk-cancel-btn" onClick={onClose} disabled={busy}>
+          <button className="cal-bulk-cancel-btn" onClick={onClose}>
             {language === 'fr' ? 'Annuler' : 'Cancel'}
           </button>
           <button
@@ -468,10 +468,8 @@ function BulkDeleteModal({ userEvents, onHide, hiddenAnchorIds, onUnhideAll, onC
             disabled={selected.size === 0}
             onClick={() => onHide([...selected])}
           >
-            <FaTrash size={11} />
-            {busy
-              ? (language === 'fr' ? 'Suppression…' : 'Deleting…')
-              : (language === 'fr' ? `Supprimer ${selected.size || ''}` : `Delete ${selected.size || ''}`)}
+            <FaLayerGroup size={11} />
+            {language === 'fr' ? `Masquer (${selected.size || 0})` : `Hide (${selected.size || 0})`}
           </button>
         </div>
       </div>
