@@ -3,7 +3,7 @@ import {
   FaCog, FaPalette, FaBell, FaLock, FaBolt,
   FaSun, FaMoon, FaSyncAlt, FaDownload,
   FaEnvelope, FaGraduationCap, FaUsers, FaUser, FaCheck,
-  FaTrash, FaExclamationTriangle,
+  FaTrash, FaExclamationTriangle, FaClipboardList,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -105,8 +105,8 @@ export default function Settings({ user, profile, onUpdateSettings }) {
   ]
 
   const EVENT_TYPE_CFG = {
-    academic: { icon: <FaGraduationCap />, color: '#ed1b2f', bg: '#fef2f2', label: t('calendar.academicDates') },
-    union:    { icon: <FaUsers />,         color: '#7c3aed', bg: '#f5f3ff', label: t('calendar.unionEvents') },
+    exam:     { icon: <FaClipboardList />, color: '#7c3aed', bg: '#f5f3ff', label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
+    academic: { icon: <FaGraduationCap />, color: '#1d4ed8', bg: '#eff6ff', label: t('calendar.academicDates') },
     club:     { icon: <FaUsers />,         color: '#0891b2', bg: '#ecfeff', label: t('calendar.clubEvents') },
     personal: { icon: <FaUser />,          color: '#059669', bg: '#ecfdf5', label: t('calendar.personalEvents') },
   }
@@ -211,7 +211,11 @@ export default function Settings({ user, profile, onUpdateSettings }) {
             <div className="setting-item setting-item--block">
               <div className="setting-info">
                 <label className="setting-label">{t('settings.notifEventTypes')}</label>
-                <p className="setting-description">{t('settings.notifEventTypesDesc')}</p>
+                <p className="setting-description">
+                  {language === 'fr'
+                    ? 'Les examens finaux sont automatiquement programmés. Décochez pour désactiver.'
+                    : 'Final exams are automatically scheduled. Uncheck any type to opt out.'}
+                </p>
               </div>
               <div className="notif-type-grid">
                 {Object.entries(EVENT_TYPE_CFG).map(([key, cfg]) => (

@@ -25,9 +25,10 @@ const DEFAULT_PREFS = {
     oneWeek: true,
   },
   eventTypes: {
+    exam:     true,          // final exams — auto-queued, opt-out here
     academic: true,
-    union: true,
-    club: true,
+    union:    true,
+    club:     true,
     personal: true,
   },
 }

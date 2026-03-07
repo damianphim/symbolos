@@ -40,8 +40,7 @@ const DAY_INDEX = {
 // ── Column mapping ─────────────────────────────────────────────────────────────
 
 function toDb(event, userId) {
-  return {
-    id:              event.id,
+  const row = {
     user_id:         userId,
     title:           event.title,
     date:            event.date,
@@ -55,9 +54,16 @@ function toDb(event, userId) {
     recurrence:      event.recurrence  || null,
     notify_enabled:  event.notifyEnabled  ?? false,
     notify_same_day: event.notifySameDay  ?? false,
-    notify_1_day:    event.notify1Day     ?? false,
-    notify_7_days:   event.notify7Days    ?? false,
+    notify_1day:     event.notify1Day     ?? false,
+    notify_7days:    event.notify7Days    ?? false,
   }
+  // Only include id if it's already a real UUID (existing row).
+  // New events get id like "user-1234567890" which is not a valid UUID —
+  // omitting it lets Supabase generate one, avoiding a type-mismatch failure.
+  if (event.id && !event.id.startsWith('user-')) {
+    row.id = event.id
+  }
+  return row
 }
 
 function fromDb(row) {
@@ -75,8 +81,8 @@ function fromDb(row) {
     recurrence:    row.recurrence  || null,
     notifyEnabled: row.notify_enabled,
     notifySameDay: row.notify_same_day,
-    notify1Day:    row.notify_1_day,
-    notify7Days:   row.notify_7_days,
+    notify1Day:    row.notify_1day,
+    notify7Days:   row.notify_7days,
   }
 }
 

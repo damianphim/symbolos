@@ -8,7 +8,7 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTimezone } from '../../contexts/TimezoneContext'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
-import { scheduleNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
+import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
 import { lookupExam, formatExamTime } from '../../utils/examSchedule2026'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
 // FIX #16: Import Supabase calendar API instead of reading/writing localStorage
@@ -688,7 +688,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    currentCoursesAPI.getCurrent(user.id).then(data => {
+    currentCoursesAPI.getCurrent(user.id).then(async data => {
       if (cancelled) return
       const courses = data?.current_courses || []
       const events = []
@@ -709,12 +709,40 @@ export default function CalendarTab({ user, clubEvents = [] }) {
           category: 'Winter 2026 Finals',
           description: [course.course_title || exam.title, timeStr && endStr ? `${timeStr} – ${endStr}` : timeStr, formatLabel].filter(Boolean).join(' · '),
           readOnly: true,
+          // notification fields
+          notifyEnabled: true,
+          notifySameDay: notifPrefs.timing.sameDay,
+          notify1Day:    notifPrefs.timing.oneDay,
+          notify7Days:   notifPrefs.timing.oneWeek,
         })
       })
       setExamEvents(events)
+
+      // ── Auto-queue exam notifications (opt-out via Settings) ────
+      // Skip entirely if user disabled notifications or turned off exam type
+      if (
+        !cancelled &&
+        notifPrefs.method !== 'none' &&
+        notifPrefs.eventTypes?.exam !== false &&
+        user?.email &&
+        events.length > 0
+      ) {
+        const today = new Date().toISOString().split('T')[0]
+        for (const ev of events) {
+          if (cancelled) break
+          // Only queue future exams
+          if (ev.date < today) continue
+          try {
+            await queueExamNotification(ev, user.id, user.email)
+          } catch (err) {
+            // Non-fatal — exam still shows on calendar
+            console.warn(`Could not queue notification for ${ev.title}:`, err)
+          }
+        }
+      }
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [user?.id])
+  }, [user?.id, notifPrefs.method, notifPrefs.eventTypes?.exam, notifPrefs.timing.sameDay, notifPrefs.timing.oneDay, notifPrefs.timing.oneWeek])
 
   // ── FIX #16: Load user events from Supabase on mount ───────────
   useEffect(() => {
@@ -830,10 +858,11 @@ export default function CalendarTab({ user, clubEvents = [] }) {
     const isEdit = event.id && userEvents.some(e => e.id === event.id)
 
     // Optimistic update — patch local state immediately so UI feels instant
+    const tempId = event.id || `user-${Date.now()}`
     if (isEdit) {
       setUserEvents(prev => prev.map(e => e.id === event.id ? event : e))
     } else {
-      const newEvent = { ...event, id: event.id || `user-${Date.now()}` }
+      const newEvent = { ...event, id: tempId }
       setUserEvents(prev => [...prev, newEvent])
       event = newEvent
     }
@@ -842,15 +871,21 @@ export default function CalendarTab({ user, clubEvents = [] }) {
 
     // Persist to Supabase in the background
     try {
-      await saveEvent(event, user.id)
+      const saved = await saveEvent(event, user.id)
+      // Replace the temp id with the real UUID Supabase assigned
+      if (!isEdit && saved.id && saved.id !== tempId) {
+        setUserEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: saved.id } : e))
+        event = { ...event, id: saved.id }
+      }
     } catch (err) {
       console.error('Failed to save event to Supabase:', err)
       // Revert optimistic update on failure
       if (isEdit) {
         setUserEvents(prev => prev.map(e => e.id === event.id ? editEvent : e))
       } else {
-        setUserEvents(prev => prev.filter(e => e.id !== event.id))
+        setUserEvents(prev => prev.filter(e => e.id !== tempId))
       }
+      return  // Don't try to schedule notifications if save failed
     }
 
     // Schedule notification if requested

@@ -6,7 +6,7 @@
 
 import { supabase } from '../lib/supabase'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/api\/?$/, '')
 
 /** Get the current user's Bearer token from Supabase session. */
 async function _authHeader() {
@@ -48,6 +48,44 @@ export async function scheduleNotification(event, userId, userEmail) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || 'Failed to schedule notification')
+  }
+
+  return res.json()
+}
+
+/**
+ * Idempotently queue notifications for a read-only exam event.
+ * Does NOT create a calendar_events row — safe to call on every load.
+ */
+export async function queueExamNotification(event, userId, userEmail) {
+  const payload = {
+    client_id:        event.id,           // e.g. "exam-COMP251-0" — used for dedup
+    user_id:          userId,
+    title:            event.title,
+    date:             event.date,
+    time:             event.time        || null,
+    type:             'exam',
+    category:         event.category    || null,
+    description:      event.description || null,
+    notify_enabled:   true,
+    notify_email:     true,
+    notify_sms:       false,
+    notify_email_addr: userEmail,
+    notify_phone:     null,
+    notify_same_day:  event.notifySameDay ?? false,
+    notify_1day:      event.notify1Day   ?? true,
+    notify_7days:     event.notify7Days  ?? true,
+  }
+
+  const res = await fetch(`${BASE}/api/notifications/queue-exam`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await _authHeader()) },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || 'Failed to queue exam notification')
   }
 
   return res.json()
