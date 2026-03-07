@@ -18,7 +18,16 @@ export default function MarkCompleteModal({
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onConfirm(formData)
+    onConfirm({
+      course_code:  `${course.subject} ${course.catalog}`,
+      course_title: course.title || course.course_title || '',
+      subject:      course.subject,
+      catalog:      course.catalog,
+      term:         formData.term.toLowerCase(),  // backend requires lowercase
+      year:         parseInt(formData.year, 10),  // backend requires integer
+      grade:        formData.grade || null,
+      credits:      formData.credits,
+    })
   }
 
   return (

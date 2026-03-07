@@ -110,7 +110,7 @@ export default function Dashboard() {
     }
   }
 
-  const isFavorited = (subject, catalog) => favoritesMap.has(`${subject} ${catalog}`)
+  const isFavorited = (subject, catalog) => favoritesMap.has(`${subject}${catalog}`)
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
   const isCurrent   = (subject, catalog) => currentCoursesMap.has(`${subject} ${catalog}`)
 
