@@ -18,6 +18,7 @@ from datetime import date, timedelta
 import resend
 from ..config import settings
 from ..utils.supabase_client import get_supabase
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -46,28 +47,6 @@ class CalendarEventIn(BaseModel):
     notify_same_day: bool = False
     notify_1day: bool = True
     notify_7days: bool = True
-
-
-# ── Auth helper ──────────────────────────────────────────────────────────────
-
-def _verify_token_matches_user(request: Request, user_id: str) -> None:
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-
-    token = auth_header.split(" ", 1)[1]
-    try:
-        supabase = get_supabase()
-        result = supabase.auth.get_user(token)
-        if not result or not result.user:
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
-        if result.user.id != user_id:
-            raise HTTPException(status_code=403, detail="Token does not match requested user")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Token verification error: {e}")
-        raise HTTPException(status_code=401, detail="Token verification failed")
 
 
 # ── Email templates ──────────────────────────────────────────────────────────
@@ -301,9 +280,9 @@ def _send_sms(to: str, event_title: str, event_date: str, event_type: str, days_
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @router.post("/schedule")
-async def schedule_event(event: CalendarEventIn, request: Request):
+async def schedule_event(event: CalendarEventIn, request: Request, current_user_id: str = Depends(get_current_user_id)):
     """Save a calendar event and queue its notifications."""
-    _verify_token_matches_user(request, event.user_id)
+    require_self(current_user_id, event.user_id)
 
     try:
         supabase = get_supabase()
@@ -351,13 +330,13 @@ async def schedule_event(event: CalendarEventIn, request: Request):
 
 
 @router.post("/queue-exam")
-async def queue_exam_notification(event: CalendarEventIn, request: Request):
+async def queue_exam_notification(event: CalendarEventIn, request: Request, current_user_id: str = Depends(get_current_user_id)):
     """
     Idempotent: queue notifications for a read-only exam event.
     Does NOT create a calendar_events row.
     Uses client_id to deduplicate — safe to call on every page load.
     """
-    _verify_token_matches_user(request, event.user_id)
+    require_self(current_user_id, event.user_id)
 
     if not event.notify_enabled or not event.notify_email_addr:
         return {"success": True, "queued": 0, "skipped": True}
@@ -378,9 +357,9 @@ async def queue_exam_notification(event: CalendarEventIn, request: Request):
             logger.debug(f"Exam notification already queued: {idempotency_key}")
             return {"success": True, "queued": 0, "already_queued": True}
 
-        # Build rows (no calendar_events row needed)
-        synthetic_id = f"exam:{idempotency_key}"
-        notif_rows = _build_notification_rows(synthetic_id, event.user_id, event)
+        # Build rows (no calendar_events row — pass None for event_id since the
+        # column is UUID-typed and exam events have no calendar_events record)
+        notif_rows = _build_notification_rows(None, event.user_id, event)
         for row in notif_rows:
             row["idempotency_key"] = idempotency_key
 
@@ -398,9 +377,9 @@ async def queue_exam_notification(event: CalendarEventIn, request: Request):
 
 
 @router.get("/events/{user_id}")
-async def get_user_events(user_id: str, request: Request):
+async def get_user_events(user_id: str, request: Request, current_user_id: str = Depends(get_current_user_id)):
     """Return all calendar events for a user."""
-    _verify_token_matches_user(request, user_id)
+    require_self(current_user_id, user_id)
 
     try:
         supabase = get_supabase()
@@ -418,9 +397,9 @@ async def get_user_events(user_id: str, request: Request):
 
 
 @router.delete("/events/{event_id}")
-async def delete_event(event_id: str, user_id: str, request: Request):
+async def delete_event(event_id: str, user_id: str, request: Request, current_user_id: str = Depends(get_current_user_id)):
     """Delete a calendar event and its queued notifications."""
-    _verify_token_matches_user(request, user_id)
+    require_self(current_user_id, user_id)
 
     try:
         supabase = get_supabase()

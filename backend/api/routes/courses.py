@@ -80,6 +80,10 @@ async def search(
     """
     Course search via the `search_courses` Postgres RPC.
 
+    Intentionally public (no auth required) — the course catalogue is read-only
+    public data. IP-based rate limiting is enforced by the global rate_limit_middleware
+    in main.py (RATE_LIMIT_PER_MINUTE, default 100 req/min/IP).
+
     All grouping, averaging, and filtering now happen inside Postgres.
     The network payload is exactly `limit` pre-aggregated rows regardless
     of how many raw sections exist in the database.
@@ -169,6 +173,9 @@ async def get_subjects():
     """
     Return all unique subject codes via the `unique_subjects` Postgres VIEW.
     Cached in memory for 1 hour.
+
+    Intentionally public — subject codes are read-only catalogue metadata.
+    IP-based rate limiting applies via the global middleware in main.py.
     MUST be declared before /{subject}/{catalog} to avoid route shadowing.
     """
     cached = subjects_cache.get(_SUBJECTS_CACHE_KEY)

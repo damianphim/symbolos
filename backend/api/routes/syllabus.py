@@ -377,6 +377,21 @@ async def parse_syllabuses(
             })
             continue
 
+        # F-06: Check Content-Length header before reading to avoid allocating
+        # memory for oversized uploads (header is advisory, full read still authoritative).
+        cl = upload.headers.get("content-length") if hasattr(upload, "headers") else None
+        if cl:
+            try:
+                if int(cl) > 15 * 1024 * 1024:
+                    all_results.append({
+                        "filename": upload.filename,
+                        "success": False,
+                        "error": "File too large (max 15MB)",
+                    })
+                    continue
+            except (ValueError, TypeError):
+                pass  # malformed header — let the authoritative size check below decide
+
         pdf_bytes = await upload.read()
         if len(pdf_bytes) > 15 * 1024 * 1024:
             all_results.append({
@@ -410,7 +425,7 @@ async def parse_syllabuses(
             all_results.append({
                 "filename": upload.filename,
                 "success": False,
-                "error": f"Extraction failed: {str(e)}",
+                "error": "Extraction failed. Please try again.",
             })
             continue
 

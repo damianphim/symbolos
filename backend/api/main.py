@@ -19,6 +19,7 @@ import time
 import logging
 from datetime import datetime, timezone, timedelta
 
+
 from .config import settings
 from .logging_config import setup_logging
 from .exceptions import (
@@ -92,6 +93,7 @@ class SupabaseRateLimiter:
     def __init__(self, default_rpm: int = 100):
         self.default_rpm = default_rpm
         self._call_count = 0
+        self._fallback_counts: dict = {}  # F-04: in-memory fallback for DB outages
 
     @staticmethod
     def _window_start() -> str:
@@ -105,11 +107,29 @@ class SupabaseRateLimiter:
         from .utils.supabase_client import get_supabase
         return get_supabase()
 
+    # ── In-memory fallback (used when Supabase is unavailable) ───────────────
+    # Conservative limit applied during DB outages to prevent unbounded AI usage.
+    # Key → list of request timestamps within the current window.
+    _FALLBACK_RPM = 10  # conservative limit per IP:path per minute during outages
+
+    def _fallback_is_allowed(self, key: str) -> bool:
+        """Sliding-window in-memory check used when Supabase is unavailable."""
+        now = time.time()
+        window_start = now - self._WINDOW_SECONDS
+        timestamps = self._fallback_counts.get(key, [])
+        # Prune old entries
+        timestamps = [t for t in timestamps if t > window_start]
+        if len(timestamps) >= self._FALLBACK_RPM:
+            return False
+        timestamps.append(now)
+        self._fallback_counts[key] = timestamps
+        return True
+
     def is_allowed(self, key: str, rpm: int | None = None) -> bool:
         """
         Returns True if the request is within the rate limit.
-        Returns True on any database error (fail open) so a Supabase outage
-        does not take down the entire API.
+        On Supabase error, applies a conservative in-memory fallback limit
+        (10 req/min) so a DB outage does not silently disable all rate limiting.
         """
         limit = rpm or self.default_rpm
         window = self._window_start()
@@ -117,24 +137,7 @@ class SupabaseRateLimiter:
         try:
             supabase = self._get_supabase()
 
-            # Atomic upsert: insert a new row or increment the existing count.
-            # Supabase/PostgREST exposes this via on_conflict + count arithmetic.
-            # We use a raw RPC to do the upsert cleanly:
-            #   INSERT INTO rate_limits(key, window_start, count, updated_at)
-            #   VALUES ($1, $2, 1, now())
-            #   ON CONFLICT (key, window_start)
-            #   DO UPDATE SET count = rate_limits.count + 1, updated_at = now()
-            #   RETURNING count;
-            #
-            # Supabase Python client doesn't expose ON CONFLICT natively through
-            # the table API, so we use upsert with the merge-duplicate strategy.
-            # The trick: upsert a row with count=1; if it conflicts, PostgREST
-            # merges by taking the higher value — but that would just keep 1.
-            # Instead we do two steps atomically via an RPC function, OR we use
-            # the simpler approach: read then write (safe enough at these scales,
-            # and fails open on conflict rather than blocking).
-            #
-            # For true atomicity we call a small Postgres function defined below.
+            # For true atomicity we call a small Postgres function.
             # If that function doesn't exist yet (not yet deployed), fall back
             # to the two-step approach.
             try:
@@ -177,9 +180,10 @@ class SupabaseRateLimiter:
             return new_count < limit
 
         except Exception as e:
-            # Fail open: if Supabase is unavailable, don't block the request.
-            logger.warning(f"Rate limiter DB error (failing open): {e}")
-            return True
+            # F-04 FIX: Do NOT fail fully open. Apply conservative in-memory fallback
+            # so a Supabase outage degrades gracefully without disabling rate limiting.
+            logger.warning(f"Rate limiter DB error, applying in-memory fallback: {e}")
+            return self._fallback_is_allowed(key)
 
     def _prune(self, supabase) -> None:
         """Delete rate_limit rows older than _PRUNE_AFTER. Best-effort."""

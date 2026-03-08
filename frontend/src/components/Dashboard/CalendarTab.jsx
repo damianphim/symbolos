@@ -911,7 +911,23 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showGCalGuide, setShowGCalGuide] = useState(false)
   const [showBulkDelete, setShowBulkDelete] = useState(false)
-  const [hiddenSlotKeys, setHiddenSlotKeys] = useState(new Set())
+  const [hiddenSlotKeys, setHiddenSlotKeys] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`hiddenSlots_${user?.id}`)
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
+
+  // Persist hiddenSlotKeys to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(`hiddenSlots_${user?.id}`, JSON.stringify([...hiddenSlotKeys]))
+    } catch {
+      // localStorage quota exceeded or unavailable — silently ignore
+    }
+  }, [hiddenSlotKeys, user?.id])
 
   // FIX #19: tEvent defined inside useMemo so it always captures the current
   // translation function. language is a real dependency — no eslint-disable needed.

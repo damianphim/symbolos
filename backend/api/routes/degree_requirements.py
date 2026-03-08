@@ -60,9 +60,9 @@ def list_programs(
 
     try:
         return with_retry("list_programs", _run)
-    except Exception as e:
+    except Exception:
         logger.error(f"list_programs error:\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/programs/{program_key}")
@@ -131,9 +131,9 @@ def get_program(program_key: str):
         return with_retry("get_program", _run)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.error(f"get_program({program_key}) error:\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/programs/{program_key}/recommended")
@@ -180,9 +180,9 @@ def get_recommended_courses(program_key: str):
         return with_retry("get_recommended_courses", _run)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.error(f"get_recommended_courses({program_key}) error:\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.post("/seed")
@@ -299,6 +299,6 @@ def seed_requirements(
         return with_retry("seed_requirements", _run)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.error(f"seed_requirements error:\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

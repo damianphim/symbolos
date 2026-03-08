@@ -228,7 +228,7 @@ async def parse_transcript(
         raise HTTPException(status_code=500, detail="Failed to parse transcript — Claude returned invalid data. Please try again.")
     except Exception as e:
         logger.exception(f"Transcript extraction failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Transcript extraction failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Transcript extraction failed. Please try again.")
 
     # Normalize course codes
     for course in extracted.get("completed_courses", []):

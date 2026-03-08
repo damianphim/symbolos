@@ -1,7 +1,5 @@
-# ============================================================================
-# Root .gitignore
-# Covers both backend (Python) and frontend (Node/React) in one place.
-# ============================================================================
+
+
 
 # ── Python ───────────────────────────────────────────────────────────────
 __pycache__/
@@ -36,7 +34,13 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 *.key
+
+# ── Backup files — must not be in version control ────────────────────────────
+*.bak
+*.backup
 
 # ── IDE / Editor ─────────────────────────────────────────────────────────
 .vscode/
