@@ -22,6 +22,7 @@ import MarkCompleteModal from './MarkCompleteModal'
 import CalendarTab from './CalendarTab'
 import TranscriptUpload from './TranscriptUpload'
 
+import OnboardingTutorial from './OnboardingTutorial'
 import './Dashboard.css'
 
 export default function Dashboard() {
@@ -31,6 +32,10 @@ export default function Dashboard() {
   // ── Layout ─────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('chat')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const tourKey = `symbolos_tour_done_${user?.id}`
+  const [showTutorial, setShowTutorial] = useState(
+    () => !!user?.id && !localStorage.getItem(`symbolos_tour_done_${user?.id}`)
+  )
   const [profileImage, setProfileImage] = useState(profile?.profile_image || null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const fileInputRef = useRef(null)
@@ -736,6 +741,15 @@ export default function Dashboard() {
       />
 
       <FeedbackModal userId={user?.id} userEmail={user?.email} />
+
+      {showTutorial && (
+        <OnboardingTutorial
+          onComplete={() => {
+            localStorage.setItem(tourKey, '1')
+            setShowTutorial(false)
+          }}
+        />
+      )}
     </div>
   )
 }
