@@ -1,11 +1,12 @@
 """
 User management endpoints with improved error handling
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 # FIX #20/#26: Import field_validator and ConfigDict; remove old `validator`
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from typing import Optional, List
 import logging
+from urllib.parse import urlparse
 
 from api.utils.supabase_client import (
     get_user_by_id,
@@ -20,9 +21,27 @@ from api.exceptions import (
     DatabaseException
 )
 from ..config import settings
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+# FIX F-11: Typed sub-models replace raw dict fields
+class AdvancedStandingItem(BaseModel):
+    """A single AP/IB/transfer credit item."""
+    course_code: str = Field(..., max_length=20)
+    course_title: Optional[str] = Field(None, max_length=200)
+    credits: float = Field(..., ge=0, le=20)
+
+
+class NotificationPrefs(BaseModel):
+    """User notification preferences."""
+    email_enabled: bool = True
+    sms_enabled: bool = False
+    notify_1day: bool = True
+    notify_7days: bool = True
+    notify_same_day: bool = False
 
 
 class UserCreate(BaseModel):
@@ -38,7 +57,7 @@ class UserCreate(BaseModel):
     year: Optional[int] = Field(None, ge=1, le=10)
     interests: Optional[str] = Field(None, max_length=500)
     current_gpa: Optional[float] = Field(None, ge=0.0, le=4.0)
-    advanced_standing: Optional[List[dict]] = Field(default_factory=list)
+    advanced_standing: Optional[List[AdvancedStandingItem]] = Field(default_factory=list)
 
     # FIX #20: Replace deprecated Pydantic v1 @validator with Pydantic v2
     # @field_validator. The @classmethod decorator is required in v2.
@@ -85,9 +104,23 @@ class UserUpdate(BaseModel):
     year: Optional[int] = Field(None, ge=0, le=10)
     interests: Optional[str] = Field(None, max_length=500)
     current_gpa: Optional[float] = Field(None, ge=0.0, le=4.0)
-    advanced_standing: Optional[List[dict]] = None
-    notification_prefs: Optional[dict] = None
+    advanced_standing: Optional[List[AdvancedStandingItem]] = None
+    notification_prefs: Optional[NotificationPrefs] = None
     profile_image: Optional[str] = None
+
+    # FIX F-06: Validate profile_image must be a valid https:// URL
+    @field_validator('profile_image', mode='before')
+    @classmethod
+    def validate_profile_image(cls, v):
+        if v is None:
+            return v
+        v = str(v).strip()
+        if not v.startswith('https://'):
+            raise ValueError('profile_image must be a valid https:// URL')
+        parsed = urlparse(v)
+        if not parsed.netloc or '.' not in parsed.netloc:
+            raise ValueError('profile_image must be a valid https:// URL')
+        return v
 
     @field_validator('username', mode='before')
     @classmethod
@@ -111,13 +144,15 @@ class UserResponse(BaseModel):
     year: Optional[int] = None
     interests: Optional[str] = None
     current_gpa: Optional[float] = None
-    advanced_standing: Optional[List[dict]] = None
+    advanced_standing: Optional[List[AdvancedStandingItem]] = None
     created_at: Optional[str] = None
 
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_new_user(user: UserCreate):
-    """Create a new user profile"""
+async def create_new_user(user: UserCreate, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    """Create a new user profile — the authenticated user can only create their own profile."""
+    # FIX F-03: prevent creating a profile for a different user's ID
+    require_self(current_user_id, user.id)
     try:
         logger.info(f"=== CREATE USER REQUEST ===")
         logger.info(f"User ID: {user.id}")
@@ -163,7 +198,8 @@ async def create_new_user(user: UserCreate):
 
 
 @router.get("/{user_id}", response_model=dict)
-async def get_user(user_id: str):
+async def get_user(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Get user profile by ID
 
@@ -190,7 +226,8 @@ async def get_user(user_id: str):
 
 
 @router.patch("/{user_id}", response_model=dict)
-async def update_user(user_id: str, updates: UserUpdate):
+async def update_user(user_id: str, updates: UserUpdate, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Update user profile
 
@@ -233,11 +270,9 @@ async def update_user(user_id: str, updates: UserUpdate):
         )
 
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
-async def delete_user_account(user_id: str):
-    """
-    Permanently delete a user's account and all associated data.
-    Deletes: user data rows, then the Supabase Auth user.
-    """
+async def delete_user_account(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    """Permanently delete a user's account. Users may only delete their own account."""
+    require_self(current_user_id, user_id)
     try:
         supabase = get_supabase()
 

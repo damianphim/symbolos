@@ -15,7 +15,7 @@ FIX: Cards no longer regenerate on every server restart.
      The generate endpoint itself also guards with cards_are_fresh().
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 import anthropic
 import logging
@@ -26,6 +26,7 @@ from typing import List
 from api.utils.supabase_client import get_supabase, get_user_by_id
 from api.config import settings
 from api.exceptions import UserNotFoundException
+from api.auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -362,7 +363,8 @@ Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(la
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{user_id}", response_model=dict)
-async def get_cards(user_id: str):
+async def get_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Fetch stored cards — instant, no AI call.
     Frontend should call this first. Only call /generate if fresh=False AND count=0.
@@ -396,7 +398,8 @@ async def get_cards(user_id: str):
 
 
 @router.post("/generate/{user_id}", response_model=dict)
-async def generate_cards(user_id: str, request: GenerateRequest):
+async def generate_cards(user_id: str, request: GenerateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Generate AI cards.
     - If force=False and cards are fresh (< 12h old), returns existing cards immediately.
@@ -451,7 +454,8 @@ async def generate_cards(user_id: str, request: GenerateRequest):
 
 
 @router.post("/retranslate/{user_id}", response_model=dict)
-async def retranslate_cards(user_id: str, request: RetranslateRequest):
+async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """Re-generate all non-saved user-asked cards in the new language."""
     try:
         get_user_by_id(user_id)
@@ -515,7 +519,8 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest):
 
 
 @router.delete("/{user_id}", status_code=204)
-async def clear_cards(user_id: str):
+async def clear_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()
@@ -532,7 +537,8 @@ async def clear_cards(user_id: str):
 
 
 @router.delete("/{user_id}/{card_id}", status_code=204)
-async def delete_card(user_id: str, card_id: str):
+async def delete_card(user_id: str, card_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()
@@ -548,7 +554,8 @@ async def delete_card(user_id: str, card_id: str):
 
 
 @router.post("/ask/{user_id}", response_model=dict)
-async def ask_card(user_id: str, request: AskRequest):
+async def ask_card(user_id: str, request: AskRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
         ctx = fetch_student_context(user_id)
@@ -627,7 +634,8 @@ async def save_card(card_id: str, request: SaveRequest):
 
 
 @router.patch("/{user_id}/reorder", response_model=dict)
-async def reorder_cards(user_id: str, request: ReorderRequest):
+async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()

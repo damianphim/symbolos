@@ -17,7 +17,7 @@ Endpoints (unchanged URLs for backwards compatibility):
   POST /professors/rmp-bulk
 """
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from typing import Optional, List
 from pydantic import BaseModel
 import logging
@@ -26,6 +26,7 @@ from difflib import SequenceMatcher
 
 from ..utils.supabase_client import get_supabase
 from ..utils.cache import search_cache
+from ..auth import get_current_user_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -166,6 +167,7 @@ def _format_professor(row: dict | None) -> dict | None:
 async def get_rmp_by_name(
     name: str = Query(..., min_length=2, max_length=100),
     subject: Optional[str] = Query(None, min_length=2, max_length=6),
+    req: Request = None, _: str = Depends(get_current_user_id),
 ):
     """
     Look up combined RMP + mcgill.courses rating for a professor by name.
@@ -230,6 +232,7 @@ async def get_rmp_by_name(
 async def get_rmp_by_course(
     subject: str = Query(..., min_length=2, max_length=6),
     catalog: str = Query(..., min_length=1, max_length=10),
+    _: str = Depends(get_current_user_id),
 ):
     """
     Return all instructors (with blended RMP + mcgill.courses ratings)
@@ -297,6 +300,7 @@ async def search_professors(
     q: str = Query(..., min_length=2, max_length=80),
     subject: Optional[str] = Query(None, min_length=2, max_length=6),
     limit: int = Query(default=10, ge=1, le=50),
+    _: str = Depends(get_current_user_id),
 ):
     """Search for professors by name. Returns blended ratings."""
     clean_q   = q.strip()
@@ -344,13 +348,13 @@ class BulkRmpRequest(BaseModel):
 
 
 @router.get("/rmp-bulk", response_model=dict)
-async def get_rmp_bulk(courses: str = Query(...)):
+async def get_rmp_bulk(courses: str = Query(...), _: str = Depends(get_current_user_id)):
     """Bulk blended rating lookup by course codes (GET version)."""
     return await _bulk_lookup(courses.split(','))
 
 
 @router.post("/rmp-bulk", response_model=dict)
-async def get_rmp_bulk_post(body: BulkRmpRequest):
+async def get_rmp_bulk_post(body: BulkRmpRequest, _: str = Depends(get_current_user_id)):
     """Bulk blended rating lookup by course codes (POST version)."""
     return await _bulk_lookup(body.codes)
 

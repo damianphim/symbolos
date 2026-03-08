@@ -78,6 +78,6 @@ Respond ONLY with valid JSON, no markdown, no explanation:
         return {"success": True, "data": parsed}
 
     except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to parse AI response. Please try again.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")

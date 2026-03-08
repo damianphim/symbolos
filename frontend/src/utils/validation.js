@@ -116,13 +116,37 @@ export const getErrorMessage = (error) => {
 }
 
 /**
- * Sanitize user input (basic XSS prevention)
+ * Sanitize user input to prevent XSS.
+ * FIX F-10: Replaces the previous angle-bracket-only approach which was
+ * trivially bypassed via HTML entities, Unicode, and javascript: URLs.
+ *
+ * Uses a multi-pass approach:
+ *  1. Reject dangerous URI schemes (javascript:, data:, vbscript:)
+ *  2. Encode all HTML special characters into safe entities
+ *  3. Strip event-handler attribute patterns
+ *  4. Enforce length limit
  */
 export const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input
-  
-  return input
-    .trim()
-    .replace(/[<>]/g, '') // Remove angle brackets
-    .slice(0, 1000) // Limit length
+
+  let s = input.trim()
+
+  // 1. Block dangerous URI schemes (case-insensitive, ignoring whitespace/encoding)
+  const dangerousScheme = /^\s*(javascript|data|vbscript)\s*:/i
+  if (dangerousScheme.test(s)) return ''
+
+  // 2. HTML-encode special characters to prevent injection
+  s = s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+
+  // 3. Strip any remaining on* event handler patterns
+  s = s.replace(/on\w+\s*=/gi, '')
+
+  // 4. Enforce length
+  return s.slice(0, 1000)
 }

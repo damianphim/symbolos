@@ -7,6 +7,18 @@ const normalizeUrl = (url) => {
 }
 const BASE_URL = normalizeUrl(API_URL)
 
+import { supabase } from './supabase'
+
+async function authHeaders(json = true) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+  if (!token) throw new Error('Not authenticated')
+  const h = { Authorization: `Bearer ${token}` }
+  if (json) h['Content-Type'] = 'application/json'
+  return h
+}
+
+
 const STATIC_CLUBS = [
   { id: 's1',  name: 'McGill AI Society',                      category: 'Engineering & Technology', description: 'Exploring artificial intelligence through workshops, hackathons, and research projects. Open to all faculties.',                 member_count: 420, is_verified: true, website_url: 'https://mcgillai.com',          meeting_schedule: 'Weekly — Thursdays 6 PM',           contact_email: 'info@mcgillai.com' },
   { id: 's2',  name: 'HackMcGill',                             category: 'Engineering & Technology', description: "McGill's official hackathon club, organizing McHacks — one of Canada's largest student hackathons.",                            member_count: 380, is_verified: true, website_url: 'https://hackmcgill.com',        meeting_schedule: 'Bi-weekly — Tuesdays 5 PM',          contact_email: 'hello@hackmcgill.com' },
@@ -83,7 +95,7 @@ const clubsAPI = {
 
   async getUserClubs(userId) {
     try {
-      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}`)
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}`, { headers: await authHeaders() })
       if (res.ok) return res.json()
     } catch (_) {}
     return { clubs: [], count: 0 }
@@ -92,6 +104,7 @@ const clubsAPI = {
   async joinClub(userId, clubId) {
     try {
       const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/join`, {
+      headers: await authHeaders(),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ club_id: clubId }),
@@ -109,7 +122,7 @@ const clubsAPI = {
 
   async leaveClub(userId, clubId) {
     try {
-      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/leave/${clubId}`, { method: 'DELETE' })
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/leave/${clubId}`, { method: 'DELETE', headers: await authHeaders() })
       if (res.ok) return res.json()
     } catch (_) {}
     return { success: true }
@@ -117,7 +130,7 @@ const clubsAPI = {
 
   async toggleCalendarSync(userId, clubId, synced) {
     try {
-      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/calendar/${clubId}?synced=${synced}`, { method: 'PATCH' })
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/calendar/${clubId}?synced=${synced}`, { method: 'PATCH', headers: await authHeaders() })
       if (res.ok) return res.json()
     } catch (_) {}
     return { success: true, calendar_synced: synced }

@@ -1,7 +1,7 @@
 """
 Favorites endpoints for managing user's favorited courses
 """
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from typing import List
 from pydantic import BaseModel
 import logging
@@ -13,6 +13,7 @@ from ..utils.supabase_client import (
     is_favorited
 )
 from ..exceptions import DatabaseException
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -37,7 +38,8 @@ class FavoriteResponse(BaseModel):
 
 
 @router.get("/{user_id}", response_model=dict)
-async def get_user_favorites(user_id: str):
+async def get_user_favorites(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Get all favorited courses for a user
     
@@ -69,7 +71,8 @@ async def get_user_favorites(user_id: str):
 
 
 @router.post("/{user_id}", response_model=dict)
-async def add_user_favorite(user_id: str, favorite: FavoriteRequest):
+async def add_user_favorite(user_id: str, favorite: FavoriteRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Add a course to user's favorites
     
@@ -115,7 +118,8 @@ async def add_user_favorite(user_id: str, favorite: FavoriteRequest):
 
 
 @router.delete("/{user_id}/{course_code}", response_model=dict)
-async def remove_user_favorite(user_id: str, course_code: str):
+async def remove_user_favorite(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Remove a course from user's favorites
     
@@ -148,7 +152,8 @@ async def remove_user_favorite(user_id: str, course_code: str):
 
 
 @router.get("/{user_id}/check/{course_code}", response_model=dict)
-async def check_favorite_status(user_id: str, course_code: str):
+async def check_favorite_status(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """
     Check if a course is favorited by user
     

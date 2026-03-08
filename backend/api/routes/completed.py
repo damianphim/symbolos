@@ -2,7 +2,7 @@
 backend/api/routes/completed.py
 
 """
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from typing import Optional, List
 from pydantic import BaseModel, Field
 import logging
@@ -12,6 +12,7 @@ from datetime import datetime
 from ..config import settings
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -126,24 +127,12 @@ async def _check_duplicate(user_id: str, course_code: str) -> bool:
 @router.get("/{user_id}", response_model=dict)
 async def get_completed_courses(
     user_id: str,
-    limit: int = Query(
-        default=50,
-        ge=1,
-        le=200,
-        description="Maximum number of completed courses to return",
-    ),
-    cursor: Optional[str] = Query(
-        None,
-        description="Cursor for pagination (created_at timestamp of last item)",
-    ),
+    req: Request,
+    current_user_id: str = Depends(get_current_user_id),
+    limit: int = Query(default=50, ge=1, le=200),
+    cursor: Optional[str] = Query(None),
 ):
-    """
-    Get all completed courses for a user.
-
-    - **user_id**: UUID of the user
-    - **limit**: Maximum number of results
-    - **cursor**: ISO timestamp cursor for pagination
-    """
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
 
     try:
@@ -180,8 +169,8 @@ async def get_completed_courses(
 
 
 @router.post("/{user_id}", response_model=dict)
-async def add_completed_course(user_id: str, course: CompletedCourse):
-    """Add a completed course for a user."""
+async def add_completed_course(user_id: str, course: CompletedCourse, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course = _validate_course_data(course)
 
@@ -233,9 +222,10 @@ async def add_completed_course(user_id: str, course: CompletedCourse):
 
 @router.patch("/{user_id}/{course_code}", response_model=dict)
 async def update_completed_course(
-    user_id: str, course_code: str, updates: CompletedCourseUpdate
+    user_id: str, course_code: str, updates: CompletedCourseUpdate,
+    req: Request, current_user_id: str = Depends(get_current_user_id)
 ):
-    """Update a completed course entry."""
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course_code = normalize_course_code(course_code)
 
@@ -292,8 +282,8 @@ async def update_completed_course(
 
 
 @router.delete("/{user_id}/{course_code}", response_model=dict)
-async def remove_completed_course(user_id: str, course_code: str):
-    """Remove a completed course."""
+async def remove_completed_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course_code = normalize_course_code(course_code)
 

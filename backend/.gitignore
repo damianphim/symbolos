@@ -1,2 +1,28 @@
-.vercel
-.env*.local
+# Environment files — NEVER commit these
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# Build output
+dist/
+dist-ssr/
+
+# Dependencies
+node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

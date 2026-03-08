@@ -2,7 +2,7 @@
 backend/api/routes/current.py
 Current (in-progress) courses for a user.
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from typing import Optional
 from pydantic import BaseModel, Field
 import logging
@@ -10,6 +10,7 @@ import re
 
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ class CurrentCourse(BaseModel):
 
 
 @router.get("/{user_id}")
-async def get_current_courses(user_id: str):
+async def get_current_courses(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     try:
         supabase = get_supabase()
@@ -60,7 +62,8 @@ async def get_current_courses(user_id: str):
 
 
 @router.post("/{user_id}")
-async def add_current_course(user_id: str, course: CurrentCourse):
+async def add_current_course(user_id: str, course: CurrentCourse, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course.course_code = normalize_course_code(course.course_code)
 
@@ -101,7 +104,8 @@ async def add_current_course(user_id: str, course: CurrentCourse):
 
 
 @router.delete("/{user_id}/{course_code}")
-async def remove_current_course(user_id: str, course_code: str):
+async def remove_current_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course_code = normalize_course_code(course_code)
     try:
@@ -111,4 +115,3 @@ async def remove_current_course(user_id: str, course_code: str):
     except Exception as e:
         logger.exception(f"Error removing current course: {e}")
         raise HTTPException(status_code=500, detail="Failed to remove current course")
-

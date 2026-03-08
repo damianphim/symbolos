@@ -1,43 +1,36 @@
 import { BASE_URL } from './apiConfig'
+import { supabase } from './supabase'
+
+async function authHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+  if (!token) throw new Error('Not authenticated')
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+}
 
 export const CARD_CATEGORIES = [
-  'deadlines',
-  'degree',
-  'courses',
-  'grades',
-  'planning',
-  'opportunities',
-  'other',
+  'deadlines', 'degree', 'courses', 'grades', 'planning', 'opportunities', 'other',
 ]
 
 export const CATEGORY_LABELS = {
-  deadlines:     'Deadlines',
-  degree:        'Degree',
-  courses:       'Courses',
-  grades:        'Grades',
-  planning:      'Planning',
-  opportunities: 'Opportunities',
-  other:         'Other',
+  deadlines: 'Deadlines', degree: 'Degree', courses: 'Courses',
+  grades: 'Grades', planning: 'Planning', opportunities: 'Opportunities', other: 'Other',
 }
 
 export const CATEGORY_ICONS = {
-  deadlines:     '📅',
-  degree:        '🎓',
-  courses:       '📚',
-  grades:        '📊',
-  planning:      '🗺️',
-  opportunities: '✨',
-  other:         '💬',
+  deadlines: '📅', degree: '🎓', courses: '📚',
+  grades: '📊', planning: '🗺️', opportunities: '✨', other: '💬',
 }
 
-/** Always read language directly from localStorage so every request is current. */
 function getLang() {
   return localStorage.getItem('language') === 'fr' ? 'fr' : 'en'
 }
 
 const cardsAPI = {
   async getCards(userId) {
-    const response = await fetch(`${BASE_URL}/api/cards/${userId}`)
+    const response = await fetch(`${BASE_URL}/api/cards/${userId}`, {
+      headers: await authHeaders(),
+    })
     if (!response.ok) throw new Error('Failed to fetch advisor cards')
     return response.json()
   },
@@ -45,18 +38,17 @@ const cardsAPI = {
   async generateCards(userId, force = false) {
     const response = await fetch(`${BASE_URL}/api/cards/generate/${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ force, language: getLang() }),
     })
     if (!response.ok) throw new Error('Failed to generate advisor cards')
     return response.json()
   },
 
-  /** Re-generate all non-saved user-asked cards in the current language. */
   async retranslateCards(userId) {
     const response = await fetch(`${BASE_URL}/api/cards/retranslate/${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ language: getLang() }),
     })
     if (!response.ok) throw new Error('Failed to retranslate cards')
@@ -66,7 +58,7 @@ const cardsAPI = {
   async askCard(userId, question) {
     const response = await fetch(`${BASE_URL}/api/cards/ask/${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ user_id: userId, question, language: getLang() }),
     })
     if (!response.ok) throw new Error('Failed to generate card from question')
@@ -76,7 +68,7 @@ const cardsAPI = {
   async sendThreadMessage(cardId, userId, message, cardContext) {
     const response = await fetch(`${BASE_URL}/api/cards/${cardId}/thread`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ user_id: userId, message, card_context: cardContext, language: getLang() }),
     })
     if (!response.ok) throw new Error('Failed to send thread message')
@@ -84,37 +76,28 @@ const cardsAPI = {
     return data.response
   },
 
-  /** Clear AI-generated, non-saved cards */
   async clearCards(userId) {
     const response = await fetch(`${BASE_URL}/api/cards/${userId}`, {
       method: 'DELETE',
+      headers: await authHeaders(),
     })
     if (!response.ok) throw new Error('Failed to clear advisor cards')
   },
 
-  /**
-   * Pin or unpin a card so it survives the nightly 3am regeneration.
-   * Returns the updated card object.
-   */
   async saveCard(cardId, isSaved) {
     const response = await fetch(`${BASE_URL}/api/cards/${cardId}/save`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ is_saved: isSaved }),
     })
     if (!response.ok) throw new Error('Failed to update card saved state')
     return response.json()
   },
 
-  /**
-   * Persist a new drag-and-drop order.
-   * @param {string} userId
-   * @param {Array<{id: string, sort_order: number}>} order
-   */
   async reorderCards(userId, order) {
     const response = await fetch(`${BASE_URL}/api/cards/${userId}/reorder`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ order }),
     })
     if (!response.ok) throw new Error('Failed to reorder cards')

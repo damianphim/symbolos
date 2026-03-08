@@ -22,9 +22,10 @@ import logging
 import traceback
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from ..utils.supabase_client import get_supabase, with_retry
+from ..config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -185,6 +186,7 @@ def get_recommended_courses(program_key: str):
 
 @router.post("/seed")
 def seed_requirements(
+    request: Request,
     faculty: Optional[str] = Query(
         None,
         description=(
@@ -195,8 +197,15 @@ def seed_requirements(
 ):
     """
     Seed degree requirement programs into the database.
-    Delegates to each faculty seed file which handles the correct schema.
+    FIX F-05: Protected by CRON_SECRET — only authorised callers may trigger a re-seed.
     """
+    # FIX F-05: Require CRON_SECRET to prevent public re-seeding
+    if not settings.CRON_SECRET:
+        raise HTTPException(status_code=500, detail="CRON_SECRET not configured")
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token or token != settings.CRON_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     def _run():
         supabase = get_supabase()

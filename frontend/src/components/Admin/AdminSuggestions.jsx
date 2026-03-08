@@ -3,24 +3,42 @@ import { FaCheck, FaTimes, FaFlag, FaClock } from 'react-icons/fa'
 import { BASE_URL } from '../../lib/apiConfig'
 import './AdminSuggestions.css'
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'changeme'
+// FIX F-04: Admin authentication is now performed server-side.
+// The VITE_ADMIN_PASSWORD env var has been removed — the password is
+// verified by the backend and never embedded in the JS bundle.
 
 export default function AdminSuggestions() {
   const [authed, setAuthed] = useState(false)
   const [password, setPassword] = useState('')
-  const [adminSecret, setAdminSecret] = useState('')
+  const [adminToken, setAdminToken] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [filter, setFilter] = useState('pending') // pending | all
   const [actionLoading, setActionLoading] = useState(null)
   const [error, setError] = useState(null)
+  const [loginLoading, setLoginLoading] = useState(false)
 
-  const login = (e) => {
+  const login = async (e) => {
     e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
+    setLoginLoading(true)
+    setError(null)
+    try {
+      // FIX F-04: Verify password server-side; never compare client-side
+      const res = await fetch(`${BASE_URL}/api/admin/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: password }),
+      })
+      if (!res.ok) {
+        setError('Incorrect password')
+        return
+      }
+      const data = await res.json()
+      setAdminToken(data.token)
       setAuthed(true)
-      setAdminSecret(password) // Use the password as the cron secret for API calls
-    } else {
-      setError('Incorrect password')
+    } catch {
+      setError('Could not connect to server')
+    } finally {
+      setLoginLoading(false)
     }
   }
 
@@ -28,7 +46,7 @@ export default function AdminSuggestions() {
     try {
       const endpoint = filter === 'pending' ? '/api/suggestions/admin/pending' : '/api/suggestions/admin/all'
       const res = await fetch(`${BASE_URL}${endpoint}`, {
-        headers: { 'X-Cron-Secret': adminSecret },
+        headers: { 'X-Cron-Secret': adminToken },
       })
       if (!res.ok) {
         if (res.status === 401) {
@@ -55,7 +73,7 @@ export default function AdminSuggestions() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'X-Cron-Secret': adminSecret,
+          'X-Cron-Secret': adminToken,
         },
         body: JSON.stringify({ status }),
       })
@@ -86,7 +104,9 @@ export default function AdminSuggestions() {
             className="admin-input"
           />
           {error && <p className="admin-error">{error}</p>}
-          <button type="submit" className="admin-btn-primary">Enter</button>
+          <button type="submit" className="admin-btn-primary" disabled={loginLoading}>
+            {loginLoading ? 'Verifying...' : 'Enter'}
+          </button>
         </form>
       </div>
     )

@@ -3,7 +3,7 @@ backend/api/routes/transcript.py
 Parse a McGill unofficial transcript PDF using Claude,
 then bulk-import completed + current courses and update the user profile.
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Request
 from typing import Optional
 import anthropic
 import asyncio
@@ -15,6 +15,10 @@ import json
 from ..utils.supabase_client import get_supabase, get_user_by_id, update_user
 from ..exceptions import UserNotFoundException
 from ..config import settings
+from ..auth import get_current_user_id, require_self
+
+# FIX F-07: PDF magic bytes — must appear at offset 0
+PDF_MAGIC = b'%PDF'
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -191,9 +195,13 @@ async def extract_transcript_data(pdf_bytes: bytes) -> dict:
 @router.post("/parse/{user_id}")
 async def parse_transcript(
     user_id: str,
+    req: Request,
+    current_user_id: str = Depends(get_current_user_id),
     file: UploadFile = File(...),
     dry_run: str = Form(default="false"),
 ):
+    # FIX F-03: Ownership check
+    require_self(current_user_id, user_id)
     is_dry_run = dry_run.lower() in ("true", "1", "yes")
 
     try:
@@ -201,12 +209,17 @@ async def parse_transcript(
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # FIX F-07: Reject non-.pdf filenames
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")
 
     pdf_bytes = await file.read()
     if len(pdf_bytes) > 10 * 1024 * 1024:
         raise HTTPException(status_code=422, detail="File too large (max 10MB)")
+
+    # FIX F-07: Validate PDF magic bytes — reject any file disguised as a PDF
+    if len(pdf_bytes) < 4 or pdf_bytes[:4] != PDF_MAGIC:
+        raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
 
     try:
         extracted = await extract_transcript_data(pdf_bytes)

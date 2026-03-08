@@ -341,7 +341,7 @@ async def schedule_event(event: CalendarEventIn, request: Request):
         raise
     except Exception as e:
         logger.error(f"schedule_event error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.post("/queue-exam")
@@ -388,7 +388,7 @@ async def queue_exam_notification(event: CalendarEventIn, request: Request):
         raise
     except Exception as e:
         logger.error(f"queue_exam error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.get("/events/{user_id}")
@@ -408,7 +408,7 @@ async def get_user_events(user_id: str, request: Request):
         raise
     except Exception as e:
         logger.error(f"get_user_events error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.delete("/events/{event_id}")
@@ -426,7 +426,7 @@ async def delete_event(event_id: str, user_id: str, request: Request):
         raise
     except Exception as e:
         logger.error(f"delete_event error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again.")
 
 
 @router.post("/cron")

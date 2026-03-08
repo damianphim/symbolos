@@ -6,7 +6,7 @@ Extracts course metadata, schedule, assessments, and instructor info,
 then populates calendar_events and enriches current_courses.
 
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Request
 from typing import List, Optional
 import anthropic
 import base64
@@ -18,6 +18,12 @@ from datetime import date, datetime, timedelta  # FIX #2: import timedelta direc
 from difflib import SequenceMatcher
 
 from ..utils.supabase_client import get_supabase, get_user_by_id
+from ..exceptions import UserNotFoundException
+from ..config import settings
+from ..auth import get_current_user_id, require_self
+
+# FIX F-07: PDF magic bytes
+PDF_MAGIC = b'%PDF'
 from ..exceptions import UserNotFoundException
 from ..config import settings
 
@@ -335,17 +341,13 @@ def _next_weekday_date(day_name: str, term: str, year: int) -> Optional[str]:
 @router.post("/parse/{user_id}")
 async def parse_syllabuses(
     user_id: str,
+    req: Request,
+    current_user_id: str = Depends(get_current_user_id),
     files: List[UploadFile] = File(...),
     dry_run: str = Form(default="false"),
 ):
-    """
-    Accept one or more syllabus PDFs.
-    For each: extract data with Claude, then:
-      - Save recurring lecture/lab slots as calendar_events (type='academic')
-      - Save assessments (exams, assignments) as calendar_events
-      - Enrich matching current_courses row with professor, room, schedule string
-    Returns per-file results.
-    """
+    # FIX F-03: Ownership check
+    require_self(current_user_id, user_id)
     is_dry_run = dry_run.lower() in ("true", "1", "yes")
 
     try:
@@ -374,6 +376,15 @@ async def parse_syllabuses(
                 "filename": upload.filename,
                 "success": False,
                 "error": "File too large (max 15MB)",
+            })
+            continue
+
+        # FIX F-07: Validate magic bytes before sending to Claude
+        if len(pdf_bytes) < 4 or pdf_bytes[:4] != PDF_MAGIC:
+            all_results.append({
+                "filename": upload.filename,
+                "success": False,
+                "error": "File does not appear to be a valid PDF",
             })
             continue
 

@@ -4,7 +4,7 @@ Professor name suggestion/correction system.
 Users can flag incorrect professor names; submissions go to a pending queue
 for admin review before any data is updated.
 """
-from fastapi import APIRouter, HTTPException, Header, status
+from fastapi import APIRouter, HTTPException, Header, status, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import logging
@@ -12,6 +12,7 @@ import logging
 from ..config import settings
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -39,11 +40,13 @@ def _verify_admin_secret(x_cron_secret: Optional[str]) -> None:
 
 # ── Submit a suggestion ────────────────────────────────────────
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def submit_suggestion(suggestion: ProfSuggestion):
-    """
-    Submit a professor name correction suggestion.
-    Goes into pending queue — not applied until admin approves.
-    """
+async def submit_suggestion(
+    suggestion: ProfSuggestion,
+    req: Request,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Submit a professor name correction. Auth required; user can only submit for themselves."""
+    require_self(current_user_id, suggestion.user_id)
     try:
         # Verify user exists
         try:

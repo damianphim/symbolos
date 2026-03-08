@@ -4,13 +4,14 @@ backend/api/routes/clubs.py
 Clubs endpoints — browse verified McGill clubs, get starter suggestions
 based on user major/year, join/leave clubs, and submit new clubs for review.
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 import logging
 
 from ..utils.supabase_client import get_supabase
 from ..exceptions import DatabaseException
+from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -148,7 +149,8 @@ async def get_categories():
 
 
 @router.get("/user/{user_id}")
-async def get_user_clubs(user_id: str):
+async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """Return all clubs a user has joined."""
     try:
         supabase = get_supabase()
@@ -172,7 +174,8 @@ async def get_user_clubs(user_id: str):
 
 
 @router.post("/user/{user_id}/join")
-async def join_club(user_id: str, body: JoinClubRequest):
+async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """Add a club to the user's joined list."""
     try:
         supabase = get_supabase()
@@ -199,7 +202,8 @@ async def join_club(user_id: str, body: JoinClubRequest):
 
 
 @router.delete("/user/{user_id}/leave/{club_id}")
-async def leave_club(user_id: str, club_id: str):
+async def leave_club(user_id: str, club_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """Remove a club from the user's joined list."""
     try:
         supabase = get_supabase()
@@ -211,7 +215,8 @@ async def leave_club(user_id: str, club_id: str):
 
 
 @router.patch("/user/{user_id}/calendar/{club_id}")
-async def toggle_calendar_sync(user_id: str, club_id: str, synced: bool):
+async def toggle_calendar_sync(user_id: str, club_id: str, synced: bool, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    require_self(current_user_id, user_id)
     """Toggle calendar sync for a club."""
     try:
         supabase = get_supabase()
