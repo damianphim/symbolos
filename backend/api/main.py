@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import time
+import uuid
 import logging
 from datetime import datetime, timezone, timedelta
 
@@ -231,6 +232,16 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "connect-src 'self' https://*.supabase.co https://ai-advisor-backend-seven.vercel.app; "
+        "img-src 'self' data: blob:; "
+        "object-src 'none'; "
+        "base-uri 'self';"
+    )
     return response
 
 
@@ -270,7 +281,7 @@ async def rate_limit_middleware(request: Request, call_next):
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
-    request_id = f"{int(start_time * 1000)}"
+    request_id = str(uuid.uuid4())
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
@@ -317,5 +328,4 @@ async def health_check():
     return {
         "status": "healthy",
         "version": settings.API_VERSION,
-        "environment": settings.ENVIRONMENT,
     }

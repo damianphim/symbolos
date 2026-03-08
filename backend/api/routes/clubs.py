@@ -4,7 +4,7 @@ backend/api/routes/clubs.py
 Clubs endpoints — browse verified McGill clubs, get starter suggestions
 based on user major/year, join/leave clubs, and submit new clubs for review.
 """
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from pydantic import BaseModel, EmailStr, Field, AnyHttpUrl
 from typing import Optional, List
 import logging
@@ -85,7 +85,7 @@ def _get_starter_names(major: Optional[str]) -> List[str]:
 async def list_clubs(
     search: Optional[str] = None,
     category: Optional[str] = None,
-    limit: int = 50,
+    limit: int = Query(default=50, ge=1, le=200),
 ):
     """
     Return all verified clubs, optionally filtered by search term or category.
@@ -105,7 +105,9 @@ async def list_clubs(
         if category:
             query = query.eq("category", category)
         if search:
-            query = query.ilike("name", f"%{search}%")
+            # Escape LIKE wildcards to prevent pattern injection
+            safe_search = search.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
+            query = query.ilike("name", f"%{safe_search}%")
         result = query.execute()
         return {"clubs": result.data or [], "count": len(result.data or [])}
     except Exception as e:

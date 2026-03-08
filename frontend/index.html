@@ -23,9 +23,10 @@
     <link rel="canonical" href="https://ai-advisor-pi.vercel.app" />
 
     <!-- ── Robots ──────────────────────────────────────────────────────── -->
-    <!-- The app is behind auth so we don't want search engines indexing   -->
-    <!-- user-specific pages. The landing/login page is fine to index.     -->
-    <meta name="robots" content="index, follow" />
+    <!-- The app is behind auth — prevent search engines from indexing     -->
+    <!-- user-specific pages. Only the login/landing page is publicly      -->
+    <!-- accessible, but noindex keeps the full app out of search results. -->
+    <meta name="robots" content="noindex, nofollow" />
 
     <!-- ── Open Graph (Facebook / LinkedIn / Discord previews) ─────────── -->
     <meta property="og:type" content="website" />
