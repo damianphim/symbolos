@@ -110,6 +110,7 @@ export default function Dashboard() {
     }
   }
 
+  // FIX: all three maps use the same key format: "SUBJECT CATALOG" (with space)
   const isFavorited = (subject, catalog) => favoritesMap.has(`${subject} ${catalog}`)
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
   const isCurrent   = (subject, catalog) => currentCoursesMap.has(`${subject} ${catalog}`)
@@ -268,7 +269,12 @@ export default function Dashboard() {
     try {
       const data = await favoritesAPI.getFavorites(user.id)
       setFavorites(data.favorites || [])
-      setFavoritesMap(new Set((data.favorites || []).map(f => f.course_code)))
+      // FIX: normalize stored course_code to "SUBJ CAT" format for consistent lookup
+      setFavoritesMap(new Set((data.favorites || []).map(f => {
+        const code = f.course_code || ''
+        // If stored without space (e.g. "COMP202"), insert it
+        return code.replace(/^([A-Za-z]+)(\d)/, '$1 $2')
+      })))
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
@@ -382,7 +388,8 @@ export default function Dashboard() {
   // ── Toggle favorite ────────────────────────────────────
   const handleToggleFavorite = async (course) => {
     if (!user?.id) return
-    const courseCode = `${course.subject}${course.catalog}`
+    // FIX: use space-separated key to match isFavorited and favoritesMap
+    const courseCode = `${course.subject} ${course.catalog}`
     const isFav = favoritesMap.has(courseCode)
     try {
       if (isFav) {
@@ -434,6 +441,17 @@ export default function Dashboard() {
       await completedCoursesAPI.addCompleted(user.id, courseData)
       setCompletedCourses(prev => [courseData, ...prev])
       setCompletedCoursesMap(prev => new Set([...prev, courseData.course_code]))
+
+      // Auto-remove from current if enrolled
+      if (currentCoursesMap.has(courseData.course_code)) {
+        try {
+          await currentCoursesAPI.removeCurrent(user.id, courseData.course_code)
+          setCurrentCourses(prev => prev.filter(c => c.course_code !== courseData.course_code))
+          setCurrentCoursesMap(prev => { const s = new Set(prev); s.delete(courseData.course_code); return s })
+        } catch (e) {
+          console.warn('Could not auto-remove from current:', e)
+        }
+      }
     } catch (error) {
       console.error('Error adding completed course:', error)
       alert(error.message || 'Failed to add completed course')
@@ -464,6 +482,17 @@ export default function Dashboard() {
         await currentCoursesAPI.addCurrent(user.id, courseData)
         setCurrentCourses(prev => [courseData, ...prev])
         setCurrentCoursesMap(prev => new Set([...prev, courseCode]))
+
+        // Auto-remove from completed if previously marked done
+        if (completedCoursesMap.has(courseCode)) {
+          try {
+            await completedCoursesAPI.removeCompleted(user.id, courseCode)
+            setCompletedCourses(prev => prev.filter(c => c.course_code !== courseCode))
+            setCompletedCoursesMap(prev => { const s = new Set(prev); s.delete(courseCode); return s })
+          } catch (e) {
+            console.warn('Could not auto-remove from completed:', e)
+          }
+        }
       }
     } catch (error) {
       console.error('Error toggling current course:', error)
