@@ -1,7 +1,9 @@
+# Backup files — never commit these
+*.bak
+*.orig
+*.tmp
 
 
-
-# ── Python ───────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyc

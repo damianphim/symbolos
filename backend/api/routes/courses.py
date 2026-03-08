@@ -25,7 +25,7 @@ declared before /{subject}/{catalog}, otherwise FastAPI matches "search" and
 "subjects" as the {subject} path parameter and returns 404.
 """
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from typing import Optional
 import logging
 import re
@@ -34,6 +34,7 @@ from ..config import settings
 from ..utils.supabase_client import get_supabase
 from ..exceptions import DatabaseException
 from ..utils.cache import search_cache, subjects_cache
+from ..auth import get_current_user_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ async def search(
         le=settings.MAX_SEARCH_LIMIT,
     ),
     include_ratings: bool = Query(default=True),
+    _: str = Depends(get_current_user_id),
 ):
     """
     Course search via the `search_courses` Postgres RPC.
@@ -169,7 +171,7 @@ async def search(
 
 
 @router.get("/subjects", response_model=dict)
-async def get_subjects():
+async def get_subjects(_: str = Depends(get_current_user_id)):
     """
     Return all unique subject codes via the `unique_subjects` Postgres VIEW.
     Cached in memory for 1 hour.
@@ -209,6 +211,7 @@ async def get_course_details(
     subject: str,
     catalog: str,
     include_ratings: bool = Query(default=True),
+    _: str = Depends(get_current_user_id),
 ):
     """
     Detailed info for a specific course — all sections, grade history, RMP + MC data.

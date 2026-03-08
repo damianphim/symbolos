@@ -168,11 +168,13 @@ async def verify_admin(request: AdminLoginRequest, req: Request):
       across all serverless instances (falls back to in-memory if DB is down).
     """
     forwarded_for = req.headers.get("x-forwarded-for")
-    client_ip = (
-        forwarded_for.split(",")[0].strip()
-        if forwarded_for
-        else (req.client.host if req.client else "unknown")
-    )
+    if forwarded_for:
+        # Use the rightmost entry — appended by Vercel's infrastructure,
+        # not spoofable by the client (see main.py _get_client_ip for details).
+        parts = [p.strip() for p in forwarded_for.split(",") if p.strip()]
+        client_ip = parts[-1] if parts else "unknown"
+    else:
+        client_ip = req.client.host if req.client else "unknown"
     _check_admin_rate_limit(client_ip)
 
     admin_secret = settings.ADMIN_SECRET

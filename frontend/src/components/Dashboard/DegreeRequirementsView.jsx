@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { supabase } from '../../lib/supabase'
 import {
   FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight,
   FaCheckCircle, FaCircle, FaStar, FaSearch,
@@ -10,6 +11,13 @@ import './DegreeRequirementsView.css'
 // Fix double /api/api bug — strip trailing /api from env var
 const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_BASE = rawBase.replace(/\/api\/?$/, '')
+
+/** Returns Authorization header object with the current Supabase Bearer token. */
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
 
 const TYPE_LABELS = {
   major:         'Major',
@@ -137,11 +145,13 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     const isBaScFilter = facultyFilter === 'Faculty of Arts & Science'
     if (isBaScFilter) {
       // B.A. & Sc.: fetch interfaculty + all Arts + all Science programs
-      Promise.all([
-        fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Arts & Science')}`).then(r => r.json()),
-        fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Arts')}`).then(r => r.json()),
-        fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Science')}`).then(r => r.json()),
-      ])
+      getAuthHeaders().then(headers =>
+        Promise.all([
+          fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Arts & Science')}`, { headers }).then(r => r.json()),
+          fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Arts')}`, { headers }).then(r => r.json()),
+          fetch(`${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent('Faculty of Science')}`, { headers }).then(r => r.json()),
+        ])
+      )
         .then(([basc, arts, sci]) => {
           const all = [
             ...(Array.isArray(basc) ? basc : []),
@@ -153,13 +163,15 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
         .catch(() => setError('Could not load programs. Try loading requirements first.'))
     } else {
       const fParam = facultyFilter ? `?faculty=${encodeURIComponent(facultyFilter)}` : ''
-      fetch(`${API_BASE}/api/degree-requirements/programs${fParam}`)
-        .then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`)
-          return r.json()
-        })
-        .then(data => { if (Array.isArray(data)) setPrograms(data) })
-        .catch(() => setError('Could not load programs. Try loading requirements first.'))
+      getAuthHeaders().then(headers =>
+        fetch(`${API_BASE}/api/degree-requirements/programs${fParam}`, { headers })
+          .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`)
+            return r.json()
+          })
+          .then(data => { if (Array.isArray(data)) setPrograms(data) })
+          .catch(() => setError('Could not load programs. Try loading requirements first.'))
+      )
     }
   }, [seedDone, facultyFilter])
 
@@ -170,28 +182,30 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     setOpenBlocks({})
     setShowAllCourses({})
     setDetailError(null)
-    fetch(`${API_BASE}/api/degree-requirements/programs/${selectedKey}`)
-      .then(r => {
-        if (r.status === 404) {
-          setDetailError('not_found')
-          return null
-        }
-        if (!r.ok) {
-          setDetailError('error')
-          return null
-        }
-        return r.json()
-      })
-      .then(data => {
-        if (data) {
-          setProgramDetail(data)
-          const initial = {}
-          data.blocks?.forEach((b, i) => { if (i < 2) initial[b.id] = true })
-          setOpenBlocks(initial)
-        }
-      })
-      .catch(() => setDetailError('error'))
-      .finally(() => setLoading(false))
+    getAuthHeaders().then(headers =>
+      fetch(`${API_BASE}/api/degree-requirements/programs/${selectedKey}`, { headers })
+        .then(r => {
+          if (r.status === 404) {
+            setDetailError('not_found')
+            return null
+          }
+          if (!r.ok) {
+            setDetailError('error')
+            return null
+          }
+          return r.json()
+        })
+        .then(data => {
+          if (data) {
+            setProgramDetail(data)
+            const initial = {}
+            data.blocks?.forEach((b, i) => { if (i < 2) initial[b.id] = true })
+            setOpenBlocks(initial)
+          }
+        })
+        .catch(() => setDetailError('error'))
+        .finally(() => setLoading(false))
+    )
   }, [selectedKey])
 
   const handleSeed = async () => {
@@ -218,7 +232,8 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       const checkUrl = facultyFilter
         ? `${API_BASE}/api/degree-requirements/programs?faculty=${encodeURIComponent(facultyFilter)}`
         : `${API_BASE}/api/degree-requirements/programs`
-      const checkRes = await fetch(checkUrl)
+      const headers = await getAuthHeaders()
+      const checkRes = await fetch(checkUrl, { headers })
       if (checkRes.ok) {
         const existing = await checkRes.json()
         if (Array.isArray(existing) && existing.length > 0) {
@@ -231,7 +246,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       const seedUrl = seedParam
         ? `${API_BASE}/api/degree-requirements/seed?faculty=${seedParam}`
         : `${API_BASE}/api/degree-requirements/seed`
-      const res = await fetch(seedUrl, { method: 'POST' })
+      const res = await fetch(seedUrl, { method: 'POST', headers })
       const data = await res.json()
       if (data.success) setSeedDone(v => !v)
       else setError('Load failed: ' + JSON.stringify(data.detail || data))

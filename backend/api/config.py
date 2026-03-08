@@ -36,6 +36,34 @@ class Settings(BaseSettings):
     CRON_SECRET: str = ""
     ADMIN_SECRET: str = ""  # Separate from CRON_SECRET — used only for admin panel login
 
+    @field_validator("ADMIN_SECRET")
+    @classmethod
+    def validate_admin_secret(cls, v: str) -> str:
+        if not v:
+            raise ValueError(
+                "ADMIN_SECRET is required. Set it to a random string of at least 32 characters."
+            )
+        if len(v) < 32:
+            raise ValueError(
+                f"ADMIN_SECRET must be at least 32 characters (got {len(v)}). "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        return v
+
+    @field_validator("CRON_SECRET")
+    @classmethod
+    def validate_cron_secret(cls, v: str) -> str:
+        if not v:
+            raise ValueError(
+                "CRON_SECRET is required. Set it to a random string of at least 32 characters."
+            )
+        if len(v) < 32:
+            raise ValueError(
+                f"CRON_SECRET must be at least 32 characters (got {len(v)}). "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        return v
+
     # ── AI ───────────────────────────────────────────────────────────────
     ANTHROPIC_API_KEY: str
     CLAUDE_MODEL: str = "claude-haiku-4-5-20251001"

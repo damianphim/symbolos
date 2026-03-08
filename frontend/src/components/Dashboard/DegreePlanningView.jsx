@@ -16,6 +16,13 @@ import './DegreePlanningView.css'
 const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_BASE = rawBase.replace(/\/api\/?$/, '')
 
+/** Returns Authorization header with the current Supabase Bearer token. */
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
+
 // Map profile major/minor names to program_keys
 function toProgramKey(name, type = 'major', faculty = '') {
   if (!name) return null
@@ -571,8 +578,10 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const fetchProgram = async (key, setter) => {
     if (!key) return 'skip'
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/api/degree-requirements/programs/${key}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        headers,
       })
       if (res.status === 404) {
         return 'not_found'
@@ -629,7 +638,8 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const handleSeed = async () => {
     setSeeding(true)
     try {
-      const res = await fetch(`${API_BASE}/api/degree-requirements/seed`, { method: 'POST' })
+      const headers = await getAuthHeaders()
+      const res = await fetch(`${API_BASE}/api/degree-requirements/seed`, { method: 'POST', headers })
       const data = await res.json()
       if (data.success) {
         const [majorResult, minorResult, , coreResult, concResult] = await Promise.all([

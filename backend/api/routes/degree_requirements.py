@@ -23,10 +23,11 @@ import traceback
 from typing import Optional
 
 import hmac
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 
 from ..utils.supabase_client import get_supabase, with_retry
 from ..config import settings
+from ..auth import get_current_user_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -37,10 +38,8 @@ logger = logging.getLogger(__name__)
 @router.get("/programs")
 def list_programs(
     faculty: Optional[str] = Query(None),
-    # Real program_type values from seed data:
-    # major | minor | honours | joint_honours | beng | bge | bscarch |
-    # concentration | core | required | diploma
     program_type: Optional[str] = Query(None),
+    _: str = Depends(get_current_user_id),
 ):
     """List all degree programs, optionally filtered.
 
@@ -66,7 +65,7 @@ def list_programs(
 
 
 @router.get("/programs/{program_key}")
-def get_program(program_key: str):
+def get_program(program_key: str, _: str = Depends(get_current_user_id)):
     """Get full program details including all requirement blocks and courses.
 
     All three DB calls are wrapped in a single with_retry closure so that
@@ -137,7 +136,7 @@ def get_program(program_key: str):
 
 
 @router.get("/programs/{program_key}/recommended")
-def get_recommended_courses(program_key: str):
+def get_recommended_courses(program_key: str, _: str = Depends(get_current_user_id)):
     """Return only recommended courses for a program with reasons."""
 
     def _run():

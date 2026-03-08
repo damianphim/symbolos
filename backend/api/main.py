@@ -256,16 +256,32 @@ async def add_security_headers(request: Request, call_next):
 _limiter = SupabaseRateLimiter(default_rpm=settings.RATE_LIMIT_PER_MINUTE)
 
 
-@app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    # FIX: Parse only the first IP from x-forwarded-for to prevent spoofing.
-    # A malicious client can append extra IPs to the header; the first one is
-    # set by the edge/load balancer and can be trusted.
+def _get_client_ip(request: Request) -> str:
+    """
+    Extract the real client IP from the request.
+
+    Vercel (and most reverse proxies) append the connecting IP to the
+    X-Forwarded-For header, making it the LAST entry.  The earlier entries
+    are supplied by the client and therefore untrusted — using the first
+    entry allows an attacker to bypass IP-based rate limits by injecting a
+    fake IP at the front of the header (e.g. X-Forwarded-For: 1.2.3.4,
+    real-ip).
+
+    Strategy:
+      1. Use the LAST value in X-Forwarded-For (appended by the edge).
+      2. Fall back to the WSGI/ASGI remote address if the header is absent.
+    """
     forwarded_for = request.headers.get("x-forwarded-for")
     if forwarded_for:
-        client_ip = forwarded_for.split(",")[0].strip()
-    else:
-        client_ip = request.client.host if request.client else "unknown"
+        # The rightmost IP is the one appended by the trusted infrastructure
+        parts = [p.strip() for p in forwarded_for.split(",") if p.strip()]
+        return parts[-1] if parts else "unknown"
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = _get_client_ip(request)
 
     path = request.url.path
 
