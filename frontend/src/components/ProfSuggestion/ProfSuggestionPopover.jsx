@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { FaFlag, FaCheck, FaTimes } from 'react-icons/fa'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import './ProfSuggestionPopover.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -47,9 +48,13 @@ export default function ProfSuggestionPopover({ courseCode, currentInstructor, o
 
     setStatus('submitting')
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const authHeader = session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}
       const response = await fetch(`${BASE_URL}/api/suggestions/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           user_id: user.id,
           course_code: courseCode,

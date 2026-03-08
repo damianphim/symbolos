@@ -3,6 +3,14 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { usersAPI } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
+
+/** Returns { Authorization: 'Bearer <token>' } for the current session. */
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
 import {
   FaGraduationCap, FaFileUpload, FaCheckCircle,
   FaExclamationTriangle, FaArrowRight, FaLightbulb, FaSpinner,
@@ -78,7 +86,7 @@ export default function ProfileSetup() {
       const form = new FormData()
       form.append('file', file)
       form.append('dry_run', 'false')
-      const res = await fetch(`${BASE_URL}/api/transcript/parse/${user.id}`, { method: 'POST', body: form })
+      const res = await fetch(`${BASE_URL}/api/transcript/parse/${user.id}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.detail || `Upload failed (${res.status})`)
@@ -126,7 +134,7 @@ export default function ProfileSetup() {
       const form = new FormData()
       sylFiles.forEach(f => form.append('files', f))
       form.append('dry_run', 'false')
-      const res = await fetch(`${BASE_URL}/api/syllabus/parse/${user.id}`, { method: 'POST', body: form })
+      const res = await fetch(`${BASE_URL}/api/syllabus/parse/${user.id}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.detail || `Upload failed (${res.status})`)

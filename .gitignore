@@ -3,6 +3,10 @@
 *.orig
 *.tmp
 
+# Large data files — keep out of version control
+ClassAverageCrowdSourcing.csv
+*.csv
+
 
 __pycache__/
 *.py[cod]

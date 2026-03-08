@@ -5,7 +5,15 @@ import {
   FaCloudUploadAlt, FaFilePdf, FaTrash, FaCalendarAlt
 } from 'react-icons/fa'
 import { BASE_URL } from '../../lib/apiConfig'
+import { supabase } from '../../lib/supabase'
 import './TranscriptUpload.css'
+
+/** Returns { Authorization: 'Bearer <token>' } for the current session. */
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
 
 export default function TranscriptUpload({ userId, onImportComplete, onClose, defaultTab = 'transcript' }) {
   const [activeTab, setActiveTab] = useState(defaultTab)
@@ -34,7 +42,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       const form = new FormData()
       form.append('file', file)
       form.append('dry_run', 'true')
-      const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', body: form })
+      const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Parsing failed') }
       const data = await res.json()
       setParsed(data.parsed)
@@ -49,7 +57,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       const form = new FormData()
       form.append('file', file)
       form.append('dry_run', 'false')
-      const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', body: form })
+      const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Import failed') }
       const data = await res.json()
       setResults(data.results)
@@ -92,7 +100,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       const form = new FormData()
       sylFiles.forEach(f => form.append('files', f))
       form.append('dry_run', 'false')
-      const res = await fetch(`${BASE_URL}/api/syllabus/parse/${userId}`, { method: 'POST', body: form })
+      const res = await fetch(`${BASE_URL}/api/syllabus/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Upload failed') }
       const data = await res.json()
       setSylResults(data); setSylStep('done'); onImportComplete?.()

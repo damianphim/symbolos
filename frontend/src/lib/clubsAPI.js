@@ -83,7 +83,7 @@ const clubsAPI = {
     try {
       const params = new URLSearchParams({ user_id: userId })
       if (major) params.set('major', major)
-      const res = await fetch(`${BASE_URL}/api/clubs/starter?${params}`)
+      const res = await fetch(`${BASE_URL}/api/clubs/starter?${params}`, { headers: await authHeaders() })
       if (res.ok) {
         const data = await res.json()
         if (data.starter_clubs && data.starter_clubs.length > 0) return data
@@ -104,9 +104,8 @@ const clubsAPI = {
   async joinClub(userId, clubId) {
     try {
       const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/join`, {
-      headers: await authHeaders(),
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),   // includes Authorization + Content-Type
         body: JSON.stringify({ club_id: clubId }),
       })
       if (!res.ok) {
@@ -139,7 +138,7 @@ const clubsAPI = {
   async submitClub(data) {
     const res = await fetch(`${BASE_URL}/api/clubs/submit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),   // includes Authorization + Content-Type
       body: JSON.stringify(data),
     })
     if (!res.ok) {
