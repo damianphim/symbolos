@@ -647,7 +647,7 @@
   box-shadow: var(--shadow-2xl);
   width: 100%;
   max-width: 500px;
-  max-height: 100%;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   animation: popIn 0.2s ease;
@@ -1884,12 +1884,11 @@
 .cal-modal-v2 {
   position: relative;
   width: min(520px, 96vw);
-  max-height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  height: calc(100vh - 40px);
+  max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border-radius: 16px;
   background: var(--bg-primary);
   box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
@@ -1897,7 +1896,10 @@
 }
 
 .cal-modal-body-v2 {
-  overflow-y: visible;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 1.1rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -2132,6 +2134,16 @@
 .cal-v2-chip.active { font-weight: 600; }
 
 /* Actions */
+.cal-v2-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+
 .cal-v2-actions {
   display: flex;
   align-items: center;

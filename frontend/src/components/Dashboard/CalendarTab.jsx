@@ -153,7 +153,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
           <button className="cal-modal-close" onClick={onClose}><FaTimes /></button>
         </div>
 
-        <form className="cal-modal-body-v2" onSubmit={handleSubmit}>
+        <form id="event-modal-form" className="cal-modal-body-v2" onSubmit={handleSubmit}>
 
           {/* Type selector */}
           <div className="cal-v2-type-row">
@@ -254,23 +254,24 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
             )}
           </div>
 
-          {/* Actions */}
-          <div className="cal-v2-actions">
-            {isEdit && (
-              <button type="button" className="cal-v2-btn-danger" onClick={() => onDelete(event.id)}>
-                <FaTrash size={12} /> {language === 'fr' ? 'Supprimer' : 'Delete'}
-              </button>
-            )}
-            <div className="cal-v2-actions-right">
-              <button type="button" className="cal-v2-btn-ghost" onClick={onClose}>
-                {language === 'fr' ? 'Annuler' : 'Cancel'}
-              </button>
-              <button type="submit" className="cal-v2-btn-primary" style={{ background: selectedType.color }}>
-                <FaCheck size={11} /> {isEdit ? (language === 'fr' ? 'Enregistrer' : 'Save') : (language === 'fr' ? 'Ajouter' : 'Add Event')}
-              </button>
-            </div>
-          </div>
         </form>
+
+        {/* Sticky footer — outside scroll area */}
+        <div className="cal-v2-footer">
+          {isEdit && (
+            <button type="button" className="cal-v2-btn-danger" onClick={() => onDelete(event.id)}>
+              <FaTrash size={12} /> {language === 'fr' ? 'Supprimer' : 'Delete'}
+            </button>
+          )}
+          <div className="cal-v2-actions-right">
+            <button type="button" className="cal-v2-btn-ghost" onClick={onClose}>
+              {language === 'fr' ? 'Annuler' : 'Cancel'}
+            </button>
+            <button type="submit" form="event-modal-form" className="cal-v2-btn-primary" style={{ background: selectedType.color }}>
+              <FaCheck size={11} /> {isEdit ? (language === 'fr' ? 'Enregistrer' : 'Save') : (language === 'fr' ? 'Ajouter' : 'Add Event')}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
