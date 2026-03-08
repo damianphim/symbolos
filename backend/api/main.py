@@ -2,13 +2,9 @@
 backend/api/main.py
 
 FIX #13: Replaced InMemoryRateLimiter with SupabaseRateLimiter.
-The old in-memory implementation reset on every Vercel cold start, giving
-zero real protection on serverless. The new implementation stores a
-(key, window_start, count) row in the `rate_limits` Supabase table and
-atomically increments it with an upsert — so the counter survives across
-all function instances and cold starts.
-
-Each 60-second window gets one row. Stale rows are pruned lazily.
+SEC-006: Tightened in-memory fallback limit from 10 to 3 rpm (per-instance on serverless).
+SEC-009: Removed 'unsafe-inline' from script-src CSP; added frame-ancestors 'none'.
+SEC-010: Normalise rate limit path key to prevent bypass via trailing slash/case.
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -109,9 +105,11 @@ class SupabaseRateLimiter:
         return get_supabase()
 
     # ── In-memory fallback (used when Supabase is unavailable) ───────────────
-    # Conservative limit applied during DB outages to prevent unbounded AI usage.
-    # Key → list of request timestamps within the current window.
-    _FALLBACK_RPM = 10  # conservative limit per IP:path per minute during outages
+    # SEC-006: Reduced from 10 to 3 rpm. Each Vercel instance gets its own
+    # in-memory counter during DB outages. With 10 rpm × 20 instances = 200
+    # effective rpm. At 3 rpm × 20 instances = 60 rpm — still usable but much
+    # safer for Claude API cost protection.
+    _FALLBACK_RPM = 3
 
     def _fallback_is_allowed(self, key: str) -> bool:
         """Sliding-window in-memory check used when Supabase is unavailable."""
@@ -130,7 +128,7 @@ class SupabaseRateLimiter:
         """
         Returns True if the request is within the rate limit.
         On Supabase error, applies a conservative in-memory fallback limit
-        (10 req/min) so a DB outage does not silently disable all rate limiting.
+        so a DB outage does not silently disable all rate limiting.
         """
         limit = rpm or self.default_rpm
         window = self._window_start()
@@ -181,15 +179,10 @@ class SupabaseRateLimiter:
             return new_count < limit
 
         except Exception as e:
-            # F-04 FIX: Do NOT fail fully open. Apply conservative in-memory fallback
-            # so a Supabase outage degrades gracefully without disabling rate limiting.
-            # SEC-08: Elevated to ERROR so this surfaces in Vercel logs / alerting.
-            # In a multi-instance serverless environment each instance will have its
-            # own in-memory counter during the outage — treat this as a degraded state.
             logger.error(
                 f"[SECURITY] Rate limiter DB unavailable — falling back to in-memory "
                 f"(limit={self._FALLBACK_RPM} rpm). Multi-instance protection is "
-                f"degraded until Supabase recovers. Error: {e}"
+                f"degraded until Supabase recovers. Error: {type(e).__name__}"
             )
             return self._fallback_is_allowed(key)
 
@@ -239,15 +232,21 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # SEC-009: Removed 'unsafe-inline' from script-src. The React/Vite frontend
+    # doesn't need inline scripts. Added frame-ancestors 'none' for clickjacking
+    # protection (stronger than X-Frame-Options in modern browsers).
+    # NOTE: If the Vite build injects inline <script> tags and this breaks,
+    # revert to "'self' 'unsafe-inline'" and implement nonce-based CSP next sprint.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "connect-src 'self' https://*.supabase.co https://ai-advisor-backend-seven.vercel.app; "
         "img-src 'self' data: blob:; "
         "object-src 'none'; "
-        "base-uri 'self';"
+        "base-uri 'self'; "
+        "frame-ancestors 'none';"
     )
     return response
 
@@ -283,12 +282,16 @@ def _get_client_ip(request: Request) -> str:
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = _get_client_ip(request)
 
-    path = request.url.path
+    # SEC-010: Normalise path to prevent bypass via trailing slash or case variation.
+    # Without this, /api/chat/send and /api/chat/send/ and /api/Chat/send
+    # would each get separate rate limit buckets.
+    raw_path = request.url.path
+    normalised_path = raw_path.rstrip("/").lower()
 
     # Stricter limit for chat (AI calls are expensive)
-    rpm = settings.CHAT_RATE_LIMIT_PER_MINUTE if "/chat" in path else settings.RATE_LIMIT_PER_MINUTE
+    rpm = settings.CHAT_RATE_LIMIT_PER_MINUTE if "/chat" in normalised_path else settings.RATE_LIMIT_PER_MINUTE
 
-    if not _limiter.is_allowed(f"{client_ip}:{path}", rpm):
+    if not _limiter.is_allowed(f"{client_ip}:{normalised_path}", rpm):
         return JSONResponse(
             status_code=429,
             content={

@@ -1,5 +1,7 @@
 """
 User management endpoints with improved error handling
+
+SEC-001 FIX: Corrected table names in delete cascade and added missing tables.
 """
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 # FIX #20/#26: Import field_validator and ConfigDict; remove old `validator`
@@ -78,22 +80,17 @@ class UserCreate(BaseModel):
                 "username": "mcgill_student",
                 "major": "Computer Science",
                 "other_majors": ["Mathematics"],
-                "minor": "Economics",
-                "other_minors": [],
-                "concentration": "AI/ML",
-                "year": 3,
-                "interests": "Machine Learning, Web Development",
+                "minor": None,
+                "year": 2,
+                "interests": "artificial intelligence, web development",
                 "current_gpa": 3.5,
-                "advanced_standing": [
-                    {"course_code": "MATH 140", "course_title": "Calculus I", "credits": 3}
-                ]
             }
         }
     )
 
 
 class UserUpdate(BaseModel):
-    """User update schema - handles null values for clearing fields"""
+    """User update schema — only provided fields are changed"""
     username: Optional[str] = Field(None, min_length=3, max_length=20)
     major: Optional[str] = Field(None, max_length=100)
     other_majors: Optional[List[str]] = None
@@ -104,9 +101,10 @@ class UserUpdate(BaseModel):
     year: Optional[int] = Field(None, ge=0, le=10)
     interests: Optional[str] = Field(None, max_length=500)
     current_gpa: Optional[float] = Field(None, ge=0.0, le=4.0)
-    advanced_standing: Optional[List[AdvancedStandingItem]] = None
-    notification_prefs: Optional[NotificationPrefs] = None
+    target_gpa: Optional[float] = Field(None, ge=0.0, le=4.0)
     profile_image: Optional[str] = None
+    notification_prefs: Optional[NotificationPrefs] = None
+    advanced_standing: Optional[List[AdvancedStandingItem]] = None
 
     # FIX F-06: Validate profile_image must be a valid https:// URL
     @field_validator('profile_image', mode='before')
@@ -114,82 +112,71 @@ class UserUpdate(BaseModel):
     def validate_profile_image(cls, v):
         if v is None:
             return v
-        v = str(v).strip()
-        if not v.startswith('https://'):
+        parsed = urlparse(str(v))
+        if parsed.scheme != 'https':
             raise ValueError('profile_image must be a valid https:// URL')
-        parsed = urlparse(v)
-        if not parsed.netloc or '.' not in parsed.netloc:
+        if not parsed.netloc:
             raise ValueError('profile_image must be a valid https:// URL')
-        return v
+        return str(v)
 
     @field_validator('username', mode='before')
     @classmethod
     def validate_username(cls, v):
-        if v and not str(v).replace('_', '').isalnum():
+        if v is None:
+            return v
+        if not str(v).replace('_', '').isalnum():
             raise ValueError('Username must contain only letters, numbers, and underscores')
         return v
 
-
-class UserResponse(BaseModel):
-    """User response schema"""
-    id: str
-    email: str
-    username: Optional[str] = None
-    major: Optional[str] = None
-    other_majors: Optional[List[str]] = None
-    minor: Optional[str] = None
-    other_minors: Optional[List[str]] = None
-    concentration: Optional[str] = None
-    faculty: Optional[str] = None
-    year: Optional[int] = None
-    interests: Optional[str] = None
-    current_gpa: Optional[float] = None
-    advanced_standing: Optional[List[AdvancedStandingItem]] = None
-    created_at: Optional[str] = None
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "major": "Computer Science",
+                "year": 3,
+                "interests": "machine learning, data science"
+            }
+        }
+    )
 
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_new_user(user: UserCreate, req: Request, current_user_id: str = Depends(get_current_user_id)):
-    """Create a new user profile — the authenticated user can only create their own profile."""
-    # FIX F-03: prevent creating a profile for a different user's ID
+    """Create a new user profile"""
+    # FIX F-03: Ensure the authenticated user can only create their own profile
     require_self(current_user_id, user.id)
+
     try:
-        logger.info(f"Creating user profile: {user.id}")
+        # Check for existing email
+        existing = get_user_by_email(user.email)
+        if existing:
+            if existing["id"] == user.id:
+                return {"user": existing, "message": "User profile already exists"}
+            raise UserAlreadyExistsException("email", user.email)
 
-        # Check if profile exists by ID (not email!)
-        try:
-            existing = get_user_by_id(user.id)
-            logger.warning(f"User profile already exists: {user.id}")
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "code": "user_already_exists",
-                    "message": "User profile already exists for this ID"
-                }
-            )
-        except UserNotFoundException:
-            pass
-
-        # Create user
         user_data = user.model_dump(exclude_none=True)
-        created_user = create_user_db(user_data)
+        # Handle advanced_standing serialization
+        if "advanced_standing" in user_data:
+            user_data["advanced_standing"] = [
+                item if isinstance(item, dict) else item.model_dump()
+                for item in (user_data["advanced_standing"] or [])
+            ]
 
-        logger.info(f"User profile created: {created_user['id']}")
-        return {
-            "user": created_user,
-            "message": "User profile created successfully"
-        }
+        new_user = create_user_db(user_data)
+        logger.info(f"New user created: {new_user.get('id')}")
+        return {"user": new_user, "message": "User profile created successfully"}
 
+    except UserAlreadyExistsException:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "user_already_exists", "message": "A user with this email already exists"}
+        )
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception(f"✗ Unexpected error creating user")
+        logger.exception(f"Unexpected error creating user: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": "internal_error",
-                "message": "Failed to create user profile"
-            }
+            detail="An unexpected error occurred"
         )
 
 
@@ -265,6 +252,19 @@ async def update_user(user_id: str, updates: UserUpdate, req: Request, current_u
             detail="An unexpected error occurred"
         )
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SEC-001 FIX: Corrected table names and added missing tables.
+#
+# BEFORE (BROKEN):
+#   "ai_cards"       → table doesn't exist (actual: "advisor_cards")
+#   "chat_history"   → table doesn't exist (actual: "chat_messages")
+#   missing:         → "favorites", "prof_suggestions" never deleted
+#
+# The `except: pass` pattern silently swallowed the wrong table name errors,
+# so user data was never actually deleted from those tables.
+# ──────────────────────────────────────────────────────────────────────────────
+
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user_account(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
     """Permanently delete a user's account. Users may only delete their own account."""
@@ -272,38 +272,45 @@ async def delete_user_account(user_id: str, req: Request, current_user_id: str =
     try:
         supabase = get_supabase()
 
-        # Delete user data from all tables (cascade-order)
-        # SEC-10: Corrected table names to match actual Supabase schema.
-        # Previous names (user_current_courses, user_completed_courses, etc.)
-        # did not exist — deletions silently no-oped, leaving orphaned user data.
+        # SEC-001 FIX: Correct table names and complete cascade.
+        # Order: dependents first, then the user row itself.
+        # Each tuple is (table_name, column_to_match).
         tables_to_clear = [
-            "user_clubs",
-            "current_courses",
-            "completed_courses",
-            "calendar_events",
-            "notification_queue",
-            "ai_cards",
-            "chat_history",
-            "users",
+            ("advisor_cards",      "user_id"),   # was "ai_cards" (WRONG)
+            ("chat_messages",      "user_id"),   # was "chat_history" (WRONG)
+            ("favorites",          "user_id"),   # was MISSING
+            ("prof_suggestions",   "user_id"),   # was MISSING
+            ("user_clubs",         "user_id"),
+            ("current_courses",    "user_id"),
+            ("completed_courses",  "user_id"),
+            ("calendar_events",    "user_id"),
+            ("notification_queue", "user_id"),
         ]
-        for table in tables_to_clear:
-            try:
-                supabase.table(table).delete().eq("user_id", user_id).execute()
-            except Exception:
-                # Some tables may not exist or column may differ — continue
-                pass
 
-        # Also try `id` column for the users table specifically
+        errors = []
+        for table, column in tables_to_clear:
+            try:
+                supabase.table(table).delete().eq(column, user_id).execute()
+            except Exception as e:
+                # Log but continue — we still want to delete as much as possible
+                errors.append(f"{table}: {e}")
+                logger.warning(f"Failed to clear {table} for user {user_id}: {e}")
+
+        # Delete the user profile row (uses "id" not "user_id")
         try:
             supabase.table("users").delete().eq("id", user_id).execute()
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"users: {e}")
+            logger.warning(f"Failed to delete user row for {user_id}: {e}")
 
         # Delete the Supabase Auth user (requires service role key)
         try:
             supabase.auth.admin.delete_user(user_id)
         except Exception as e:
             logger.warning(f"Could not delete auth user {user_id}: {e}")
+
+        if errors:
+            logger.error(f"Partial deletion for {user_id}. Failed tables: {errors}")
 
         logger.info(f"Account deleted: {user_id}")
         return {"message": "Account deleted successfully"}

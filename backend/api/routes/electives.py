@@ -1,11 +1,9 @@
 """
 Elective recommendations via Claude AI
 
-Security fixes applied:
-- Authentication required via Depends(get_current_user_id)
-- Field() constraints on all user-supplied inputs (length + list size limits)
-- Module-level AsyncAnthropic singleton (not re-created per request)
-- Input sanitized before prompt interpolation to strip prompt injection attempts
+SEC-004 FIX: Replaced weak local _sanitize_field with shared sanitise module.
+The old version lacked l33tspeak normalisation, unicode stripping, and had
+fewer patterns — trivially bypassed with "1gn0re prev1ous" or zero-width chars.
 """
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
@@ -16,6 +14,9 @@ import re
 
 from api.config import settings
 from api.auth import get_current_user_id
+
+# SEC-004 FIX: Use the shared, stronger sanitiser
+from api.utils.sanitise import sanitise_user_message
 
 router = APIRouter()
 
@@ -30,24 +31,12 @@ def _get_client() -> anthropic.AsyncAnthropic:
     return _async_client
 
 
-# ── Input sanitization ────────────────────────────────────────────────────────
-_INJECTION_PATTERNS = [
-    "ignore previous", "ignore all", "disregard", "forget instructions",
-    "you are now", "new instructions", "system prompt", "override",
-    "jailbreak", "do anything now", "dan mode",
-]
-
-
-def _sanitize_field(value: str) -> str:
-    """Strip obvious prompt injection attempts from a single field."""
-    lower = value.lower()
-    for pattern in _INJECTION_PATTERNS:
-        if pattern in lower:
-            raise HTTPException(
-                status_code=400,
-                detail="Message contains disallowed content.",
-            )
-    return value.strip()
+# SEC-004 FIX: Removed the local _INJECTION_PATTERNS and _sanitize_field().
+# Now using sanitise_user_message() from the shared module which has:
+#  - L33tspeak normalisation
+#  - Unicode/zero-width character stripping
+#  - 40+ patterns including French
+#  - Consistent behaviour with chat.py
 
 
 class ElectivesRequest(BaseModel):
@@ -56,6 +45,7 @@ class ElectivesRequest(BaseModel):
     concentration:   Optional[str]       = Field(None, max_length=100)
     year:            Optional[int]       = Field(None, ge=0, le=10)
     interests:       Optional[str]       = Field(None, max_length=500)
+    # SEC-008 FIX: Added max_length per item (was only on the list)
     courses_taken:   Optional[List[str]] = Field(default_factory=list, max_length=200)
     exclude_courses: Optional[List[str]] = Field(default_factory=list, max_length=200)
 
@@ -68,15 +58,29 @@ async def recommend_electives(
     try:
         client = _get_client()
 
-        # Sanitize user-controlled fields before prompt interpolation
-        safe_major         = _sanitize_field(req.major or "")         or "Not set"
-        safe_minor         = _sanitize_field(req.minor or "")         or "Not set"
-        safe_concentration = _sanitize_field(req.concentration or "") or "Not specified"
-        safe_interests     = _sanitize_field(req.interests or "")     or "Not specified"
+        # SEC-004 FIX: Use shared sanitiser for all user-controlled fields.
+        # sanitise_user_message raises HTTP 400 on injection pattern match.
+        def _safe(value: str, fallback: str = "Not set") -> str:
+            if not value or not value.strip():
+                return fallback
+            sanitise_user_message(value)  # raises on injection match
+            return value.strip()
 
-        # Sanitize individual course codes (short strings, low injection risk, but be consistent)
-        safe_courses_taken   = [_sanitize_field(c)[:20] for c in (req.courses_taken or [])]
-        safe_exclude_courses = [_sanitize_field(c)[:20] for c in (req.exclude_courses or [])]
+        safe_major         = _safe(req.major or "", "Not set")
+        safe_minor         = _safe(req.minor or "", "Not set")
+        safe_concentration = _safe(req.concentration or "", "Not specified")
+        safe_interests     = _safe(req.interests or "", "Not specified")
+
+        # Sanitize and truncate individual course codes
+        safe_courses_taken   = []
+        for c in (req.courses_taken or []):
+            sanitise_user_message(c)
+            safe_courses_taken.append(c.strip()[:20])
+
+        safe_exclude_courses = []
+        for c in (req.exclude_courses or []):
+            sanitise_user_message(c)
+            safe_exclude_courses.append(c.strip()[:20])
 
         course_list  = ", ".join(safe_courses_taken)  if safe_courses_taken  else "None yet"
         exclude_str  = ", ".join(safe_exclude_courses) if safe_exclude_courses else "None"

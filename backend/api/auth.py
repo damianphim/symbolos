@@ -8,6 +8,9 @@ FIX F-02: Provides get_current_user_id() — a Depends() callable that
 
 FIX F-03: Provides require_self() — enforces that the authenticated user
           can only operate on their own data (prevents IDOR).
+
+SEC-012: Log only exception type, not full message, to avoid leaking
+         internal URLs or partial tokens into Vercel function logs.
 """
 import logging
 from fastapi import HTTPException, Request, status
@@ -56,7 +59,10 @@ async def get_current_user_id(request: Request) -> str:
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"Token verification error: {e}")
+        # SEC-012: Log only the exception type, not the full message.
+        # Supabase SDK exceptions may contain internal URLs, partial tokens,
+        # or connection strings that would be visible in Vercel function logs.
+        logger.warning(f"Token verification error: {type(e).__name__}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token verification failed",

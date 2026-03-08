@@ -13,6 +13,10 @@ FIX: Cards no longer regenerate on every server restart.
      The frontend should call GET /api/cards/{user_id} first.
      Only call POST /generate if the response has `fresh: false` AND `count: 0`.
      The generate endpoint itself also guards with cards_are_fresh().
+
+SEC-003: Sanitise stored profile fields in build_rich_context() to prevent
+         indirect prompt injection.
+SEC-008: Added max_length to AskRequest.question; typed ReorderRequest.order.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request
@@ -27,6 +31,9 @@ from api.utils.supabase_client import get_supabase, get_user_by_id
 from api.config import settings
 from api.exceptions import UserNotFoundException
 from api.auth import get_current_user_id, require_self
+
+# SEC-003: Import shared sanitiser for context field sanitisation and user input
+from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -77,9 +84,10 @@ class GenerateRequest(BaseModel):
     force: bool = False
     language: str = "en"
 
+# SEC-008: Added min_length and max_length to question field (was unbounded)
 class AskRequest(BaseModel):
     user_id: str
-    question: str
+    question: str = Field(..., min_length=1, max_length=2000)
     language: str = "en"
 
 class RetranslateRequest(BaseModel):
@@ -88,8 +96,13 @@ class RetranslateRequest(BaseModel):
 class SaveRequest(BaseModel):
     is_saved: bool
 
+# SEC-008: Typed CardOrder model replaces unvalidated List[dict]
+class CardOrder(BaseModel):
+    id: str = Field(..., max_length=100)
+    position: int = Field(..., ge=0, le=100)
+
 class ReorderRequest(BaseModel):
-    order: List[dict]
+    order: List[CardOrder] = Field(..., max_length=50)
 
 
 # ── Supabase helpers ─────────────────────────────────────────────
@@ -297,17 +310,26 @@ SAVED CARDS (already pinned by the student — DO NOT regenerate cards covering 
 {saved_lines}
 """
 
+    # SEC-003: Sanitise user-controlled fields to prevent indirect prompt injection.
+    # A user could set their interests or username to "Ignore all instructions..."
+    # which would be embedded in the system prompt and executed by Claude.
+    safe_username      = sanitise_context_field(str(user.get('username') or user.get('email', 'Student')))
+    safe_faculty       = sanitise_context_field(str(user.get('faculty') or 'Not specified'))
+    safe_majors        = sanitise_context_field(majors_str)
+    safe_minors        = sanitise_context_field(minors_str)
+    safe_concentration = sanitise_context_field(str(user.get('concentration') or 'None'))
+
     return f"""You are a proactive AI academic advisor for McGill University.
 Analyse the student's profile and generate 8 high-value briefing cards.
 {saved_section}
 Today: {datetime.now(timezone.utc).date().isoformat()}
 
 STUDENT PROFILE
-  Name/email   : {user.get('username') or user.get('email', 'Student')}
-  Faculty      : {user.get('faculty') or 'Not specified'}
-  Major(s)     : {majors_str}
-  Minor(s)     : {minors_str}
-  Concentration: {user.get('concentration') or 'None'}
+  Name/email   : {safe_username}
+  Faculty      : {safe_faculty}
+  Major(s)     : {safe_majors}
+  Minor(s)     : {safe_minors}
+  Concentration: {safe_concentration}
   Year         : U{user.get('year') or '?'}
   Credits done : {total_credits} (+ {adv_credits} advanced standing: {adv_summary})
 
@@ -556,6 +578,8 @@ async def delete_card(user_id: str, card_id: str, req: Request, current_user_id:
 @router.post("/ask/{user_id}", response_model=dict)
 async def ask_card(user_id: str, request: AskRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
     require_self(current_user_id, user_id)
+    # SEC-003: Sanitise user question before sending to Claude
+    sanitise_user_message(request.question)
     try:
         get_user_by_id(user_id)
         ctx = fetch_student_context(user_id)
@@ -595,6 +619,8 @@ async def thread_message(
 ):
     # Verify the requesting user owns this card
     require_self(current_user_id, request.user_id)
+    # SEC-003: Sanitise thread message before sending to Claude
+    sanitise_user_message(request.message)
     try:
         # Double-check ownership via DB in case user_id in body was tampered with
         supabase = get_supabase()
@@ -668,7 +694,9 @@ async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, cur
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()
-        supabase.rpc("reorder_advisor_cards", {"payload": request.order}).execute()
+        # SEC-008: request.order is now List[CardOrder], convert to dicts for the RPC
+        payload = [item.model_dump() for item in request.order]
+        supabase.rpc("reorder_advisor_cards", {"payload": payload}).execute()
         logger.info(f"Successfully reordered {len(request.order)} cards for user {user_id}")
         return {"reordered": len(request.order)}
     except UserNotFoundException:

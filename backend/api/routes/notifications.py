@@ -6,6 +6,8 @@ Handles:
   DELETE /api/notifications/{event_id} – remove event + queue
   GET  /api/notifications/events    – list user's calendar events
   POST /api/notifications/cron      – daily cron: send due notifications (service key protected)
+
+SEC-007: Added E.164 pattern validation to notify_phone field.
 """
 
 import hmac
@@ -44,10 +46,24 @@ class CalendarEventIn(BaseModel):
     notify_email: bool = True
     notify_sms: bool = False
     notify_email_addr: Optional[EmailStr] = None   # was Optional[str] — now validated
-    notify_phone: Optional[str]  = Field(None, max_length=20)
+    # SEC-007: E.164 phone validation (moved to field_validator below to
+    # handle null/empty strings cleanly — Field(pattern=) fires even on None
+    # in some Pydantic v2 JSON deserialization paths).
+    notify_phone: Optional[str] = Field(None, max_length=20)
     notify_same_day: bool = False
     notify_1day: bool = True
     notify_7days: bool = True
+
+    @field_validator("notify_phone", mode="before")
+    @classmethod
+    def validate_phone(cls, v):
+        """SEC-007: Validate E.164 format, but allow null (most callers don't use SMS)."""
+        if v is None or v == "":
+            return None
+        import re
+        if not re.match(r"^\+[1-9]\d{6,14}$", str(v)):
+            raise ValueError("notify_phone must be in E.164 format (e.g. +15145551234)")
+        return str(v)
 
     @field_validator("date", mode="before")
     @classmethod
