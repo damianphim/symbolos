@@ -2644,3 +2644,13 @@
   .mgr-modal { width: 100%; border-radius: 16px 16px 0 0; height: 92vh; max-height: 92vh; }
   .mgr-legend-hint { display: none; }
 }
+
+.cal-v2-type-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}

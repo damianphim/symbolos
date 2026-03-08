@@ -3,6 +3,7 @@ import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
+  FaStar, FaBullseye,
   FaChevronDown, FaChevronUp
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -88,10 +89,10 @@ function daysUntil(dateStr) {
 
 // ── Event Modal ───────────────────────────────────────────────────
 const EVENT_TYPE_OPTIONS = [
-  { key: 'personal', color: '#059669', bg: '#ecfdf5', darkBg: '#064e3b22', icon: '⭐', labelEn: 'Personal',  labelFr: 'Personnel' },
-  { key: 'academic', color: '#1d4ed8', bg: '#eff6ff', darkBg: '#1e3a8a22', icon: '🎓', labelEn: 'Academic',  labelFr: 'Académique' },
-  { key: 'club',     color: '#d97706', bg: '#fffbeb', darkBg: '#92400e22', icon: '🎯', labelEn: 'Club',      labelFr: 'Club' },
-  { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', icon: '📝', labelEn: 'Exam',      labelFr: 'Examen' },
+  { key: 'personal', color: '#059669', bg: '#ecfdf5', darkBg: '#064e3b22', icon: <FaStar />,           labelEn: 'Personal',  labelFr: 'Personnel' },
+  { key: 'academic', color: '#1d4ed8', bg: '#eff6ff', darkBg: '#1e3a8a22', icon: <FaGraduationCap />,  labelEn: 'Academic',  labelFr: 'Académique' },
+  { key: 'club',     color: '#d97706', bg: '#fffbeb', darkBg: '#92400e22', icon: <FaBullseye />,        labelEn: 'Club',      labelFr: 'Club' },
+  { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', icon: <FaClipboardList />,   labelEn: 'Exam',      labelFr: 'Examen' },
 ]
 
 function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, language }) {
@@ -161,7 +162,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
                 className={`cal-v2-type-card ${form.type === opt.key ? 'selected' : ''}`}
                 style={form.type === opt.key ? { borderColor: opt.color, background: opt.bg, color: opt.color } : {}}
                 onClick={() => f('type')(opt.key)}>
-                <span className="cal-v2-type-emoji">{opt.icon}</span>
+                <span className="cal-v2-type-icon" style={form.type === opt.key ? { color: opt.color } : {}}>{opt.icon}</span>
                 <span className="cal-v2-type-label">{language === 'fr' ? opt.labelFr : opt.labelEn}</span>
                 {form.type === opt.key && <span className="cal-v2-type-check" style={{ color: opt.color }}><FaCheck size={8} /></span>}
               </button>
