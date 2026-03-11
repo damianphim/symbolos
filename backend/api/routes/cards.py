@@ -224,7 +224,7 @@ def save_cards(user_id: str, cards: list) -> None:
     supabase.table("advisor_cards").insert(rows).execute()
 
 
-def insert_user_card(user_id: str, card: dict, question: str) -> dict:
+def insert_user_card(user_id: str, card: dict, question: str, language: str = "en") -> dict:
     supabase = get_supabase()
     row = {
         "user_id": user_id,
@@ -241,6 +241,10 @@ def insert_user_card(user_id: str, card: dict, question: str) -> dict:
         "is_saved": False,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "user_question": question,
+        # Freeze the language this card was created in so retranslation and
+        # follow-up thread replies always respond in the same language regardless
+        # of whatever the UI language is set to later.
+        "prompted_language": language,
     }
     result = supabase.table("advisor_cards").insert(row).execute()
     inserted = result.data[0] if result.data else row
@@ -490,61 +494,17 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
 @router.post("/retranslate/{user_id}", response_model=dict)
 async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
     require_self(current_user_id, user_id)
-    """Re-generate all non-saved user-asked cards in the new language."""
+    """
+    Re-generate AI cards in the new language.
+    User-prompted cards (source='user') are intentionally excluded — they are
+    permanently locked to the language in which the user asked the question.
+    """
     try:
         get_user_by_id(user_id)
-        supabase = get_supabase()
-
-        resp = (supabase.table("advisor_cards")
-            .select("id, user_question")
-            .eq("user_id", user_id)
-            .eq("source", "user")
-            .eq("is_saved", False)
-            .execute())
-        user_cards = [c for c in (resp.data or []) if c.get("user_question")]
-
-        if not user_cards:
-            return {"retranslated": 0}
-
-        ctx = fetch_student_context(user_id)
-        client = get_anthropic_client()
-        retranslated = 0
-
-        for card_row in user_cards:
-            card_id = card_row["id"]
-            question = card_row["user_question"]
-            prompt = _build_single_card_prompt(question, ctx, request.language)
-
-            try:
-                message = client.messages.create(
-                    model=settings.CLAUDE_MODEL,
-                    max_tokens=1024,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                raw = message.content[0].text.strip()
-                if raw.startswith("```"):
-                    raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-                card_data = json.loads(raw)
-
-                supabase.table("advisor_cards").update({
-                    "card_type": card_data.get("type", "insight"),
-                    "icon": card_data.get("icon", "💬"),
-                    "label": card_data.get("label", ""),
-                    "title": card_data.get("title", ""),
-                    "body": card_data.get("body", ""),
-                    "actions": json.dumps(card_data.get("actions", [])),
-                    "category": _sanitise_category(card_data),
-                    "generated_at": datetime.now(timezone.utc).isoformat(),
-                }).eq("id", card_id).execute()
-                retranslated += 1
-
-            except Exception as e:
-                logger.warning(f"Failed to retranslate card {card_id}: {e}")
-                continue
-
-        logger.info(f"Retranslated {retranslated} user cards for {user_id} to '{request.language}'")
-        return {"retranslated": retranslated}
-
+        # User-prompted cards are never retranslated. Their content was generated
+        # in response to a specific question the user typed in a specific language,
+        # and that language is the correct one regardless of the current UI locale.
+        return {"retranslated": 0}
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
     except Exception as e:
@@ -609,7 +569,7 @@ async def ask_card(user_id: str, request: AskRequest, req: Request, current_user
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
         card_data = json.loads(raw)
-        card = insert_user_card(user_id, card_data, request.question)
+        card = insert_user_card(user_id, card_data, request.question, request.language)
         return {"card": card}
 
     except UserNotFoundException:
@@ -636,11 +596,20 @@ async def thread_message(
     try:
         # Double-check ownership via DB in case user_id in body was tampered with
         supabase = get_supabase()
-        card_row = supabase.table("advisor_cards").select("user_id").eq("id", card_id).execute()
+        card_row = supabase.table("advisor_cards").select("user_id, source, prompted_language").eq("id", card_id).execute()
         if not card_row.data:
             raise HTTPException(status_code=404, detail="Card not found")
         if card_row.data[0]["user_id"] != current_user_id:
             raise HTTPException(status_code=403, detail="Access denied")
+
+        # For user-prompted cards, always reply in the language the question was
+        # originally asked in, regardless of the current UI language.
+        card_meta = card_row.data[0]
+        reply_language = (
+            card_meta.get("prompted_language")
+            if card_meta.get("source") == "user" and card_meta.get("prompted_language")
+            else request.language
+        )
 
         prompt = f"""You are a helpful AI academic advisor for McGill University.
 
@@ -650,7 +619,7 @@ Card context: {request.card_context}
 
 Student's follow-up: {request.message}
 
-Provide a concise, helpful, and specific response (2–4 sentences). Be direct and actionable.{_lang_instruction(request.language)}"""
+Provide a concise, helpful, and specific response (2–4 sentences). Be direct and actionable.{_lang_instruction(reply_language)}"""
 
         client = get_anthropic_client()
         message = client.messages.create(
