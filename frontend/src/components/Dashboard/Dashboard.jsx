@@ -135,9 +135,12 @@ export default function Dashboard() {
     try {
       setCardsGenerating(true)
       // Pass language explicitly so it doesn't rely on localStorage timing
-      const data = await cardsAPI.generateCards(user.id, force, lang || languageRef.current)
+      const usedLang = lang || languageRef.current
+      const data = await cardsAPI.generateCards(user.id, force, usedLang)
       setAdvisorCards(data.cards || [])
       setCardsGeneratedAt(data.generated_at || null)
+      // Persist the language these AI cards were generated in
+      try { localStorage.setItem(`cards_language_${user.id}`, usedLang) } catch {}
     } catch (error) {
       console.error('Error generating advisor cards:', error)
     } finally {
@@ -156,8 +159,15 @@ export default function Dashboard() {
       const cards = data.cards || []
       setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
-      // Only auto-generate if there are genuinely no cards at all
-      if (cards.length === 0 && !isGeneratingCardsRef.current) {
+
+      // If cards exist but were generated in a different language, regenerate now
+      const storedLang = (() => { try { return localStorage.getItem(`cards_language_${user.id}`) } catch { return null } })()
+      const aiCards = cards.filter(c => c.source === 'ai')
+      const langMismatch = aiCards.length > 0 && storedLang && storedLang !== languageRef.current
+
+      if (langMismatch && !isGeneratingCardsRef.current) {
+        await refreshAdvisorCards(true, languageRef.current)
+      } else if (cards.length === 0 && !isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
       }
     } catch (error) {
@@ -171,7 +181,7 @@ export default function Dashboard() {
   const handleCardChipClick = async (cardId, message, cardTitle, cardBody) => {
     if (!user?.id) return ''
     try {
-      return await cardsAPI.sendThreadMessage(cardId, user.id, message, `${cardTitle}: ${cardBody}`)
+      return await cardsAPI.sendThreadMessage(cardId, user.id, message, `${cardTitle}: ${cardBody}`, languageRef.current)
     } catch (error) {
       console.error('Error in card thread:', error)
       return 'Something went wrong. Please try again.'
@@ -212,7 +222,7 @@ export default function Dashboard() {
     setFreeformInput('')
     setIsAsking(true)
     try {
-      const data = await cardsAPI.askCard(user.id, question)
+      const data = await cardsAPI.askCard(user.id, question, languageRef.current)
       if (data.card) {
         setAdvisorCards(prev => [data.card, ...prev])
       }
@@ -230,23 +240,19 @@ export default function Dashboard() {
     return () => document.body.style.setProperty('--rsb-width', '0px')
   }, [rightSidebarOpen, activeTab])
 
-  // ── Language switch: regenerate + retranslate cards ──────
-  // FIX: prevLanguageRef starts as null to distinguish mount from switch.
-  // On mount: regenerate only if language is non-default (fr) — cards in DB
-  //           are likely English from a previous session.
-  // On switch: always regenerate in the new language.
-  // Language is passed explicitly to avoid racing with localStorage writes.
+  // ── Language switch: regenerate cards in the new language ────
+  // On mount: loadAdvisorCards already handles language mismatch via localStorage key.
+  // On actual switch: force-regenerate AI cards + retranslate, and update the key.
   const prevLanguageRef = useRef(null)
   useEffect(() => {
     const isMount = prevLanguageRef.current === null
     const switched = !isMount && prevLanguageRef.current !== language
     prevLanguageRef.current = language
 
-    // On mount with English (default) — cards from DB are fine, skip
-    if (isMount && language === 'en') return
-    // Not a mount and language didn't actually change — skip
-    if (!isMount && !switched) return
-    if (!user?.id) return
+    if (isMount || !switched || !user?.id) return
+
+    // Update stored language key immediately so loadAdvisorCards won't re-trigger
+    try { localStorage.setItem(`cards_language_${user.id}`, language) } catch {}
 
     Promise.all([
       refreshAdvisorCards(true, language),

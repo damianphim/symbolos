@@ -7,6 +7,7 @@ import {
   FaCalendarAlt,
   FaUserCog,
   FaRocket,
+  FaCommentDots,
 } from 'react-icons/fa'
 
 const STEPS = [
@@ -377,6 +378,27 @@ export default function OnboardingTutorial({ onComplete }) {
           transform: translateY(-1px);
           box-shadow: 0 6px 28px rgba(237, 27, 47, 0.52);
         }
+        .ot-feedback-callout {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          margin-top: 14px;
+          padding: 10px 13px;
+          border-radius: 8px;
+          background: var(--bg-tertiary, #f0f4ff);
+          border: 1px solid var(--border-color, #dde3f0);
+          font-size: 12.5px;
+          color: var(--text-secondary, #555e7a);
+          line-height: 1.5;
+        }
+        .ot-feedback-callout strong {
+          color: var(--text-primary, #1a1f2e);
+        }
+        .ot-feedback-icon {
+          flex-shrink: 0;
+          margin-top: 2px;
+          color: var(--accent, #6366f1);
+        }
       `}</style>
 
       <div className={`ot-overlay${visible ? ' ot-visible' : ''}`}>
@@ -436,6 +458,15 @@ export default function OnboardingTutorial({ onComplete }) {
                 </div>
               )}
             </div>
+
+            {isLast && (
+              <div className="ot-feedback-callout">
+                <FaCommentDots size={14} className="ot-feedback-icon" />
+                <span>
+                  Got feedback? Hit the <strong>Feedback</strong> button anytime — your suggestions help us keep improving.
+                </span>
+              </div>
+            )}
 
             <div className="ot-actions">
               {!isLast ? (

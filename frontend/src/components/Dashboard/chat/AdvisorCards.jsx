@@ -39,7 +39,14 @@ function ThreadMessages({ thread, isThinking }) {
   return (
     <div className="thread-messages" ref={scrollRef}>
       {thread.map((msg, i) => (
-        <div key={i} className={`thread-message thread-message--${msg.role}`}>
+        <div
+          key={i}
+          className={`thread-message thread-message--${msg.role}`}
+          // Preserve the language the user typed in, even if the UI language switches.
+          // For assistant messages, lang is not stored (the AI responds in whatever
+          // language was active at the time, which is already correct as rendered).
+          lang={msg.role === 'user' && msg.lang ? msg.lang : undefined}
+        >
           <p className="thread-text">{msg.content}</p>
         </div>
       ))}
@@ -522,7 +529,7 @@ export default function AdvisorCards({
   setFreeformInput,
   onFreeformSubmit,
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [activeCategory, setActiveCategory] = useState('all')
   const [timeAgo, setTimeAgo] = useState('')
 
@@ -589,7 +596,7 @@ export default function AdvisorCards({
     setExpanded(prev => new Set([...prev, cardId]))
     setThreadMap(prev => ({
       ...prev,
-      [cardId]: [...(prev[cardId] || []), { role: 'user', content: message }],
+      [cardId]: [...(prev[cardId] || []), { role: 'user', content: message, lang: language }],
     }))
     setThinking(prev => new Set([...prev, cardId]))
 
@@ -607,7 +614,7 @@ export default function AdvisorCards({
     } finally {
       setThinking(prev => { const n = new Set(prev); n.delete(cardId); return n })
     }
-  }, [onChipClick, t])
+  }, [onChipClick, t, language])
 
   const handleExpand   = useCallback((id) => setExpanded(prev => new Set([...prev, id])), [])
   const handleCollapse = useCallback((id) => setExpanded(prev => { const n = new Set(prev); n.delete(id); return n }), [])

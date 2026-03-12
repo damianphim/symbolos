@@ -265,30 +265,56 @@ function CourseRow({ course, onClick, actions }) {
 
 
 // ── Electives Panel ────────────────────────────────────────────────────────────
-function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData }) {
+function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData, allProgramData }) {
   const { t } = useLanguage()
-  const [recs, setRecs]       = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState(null)
-  const hasLoaded             = useRef(false)
+  const [recs, setRecs]           = useState(null)
+  const [recsLoading, setRecsLoading] = useState(false)
+  const [recsError, setRecsError] = useState(null)
+  const [showRecs, setShowRecs]   = useState(false)
+  const hasLoaded                 = useRef(false)
 
-  const allCourses = useMemo(
-    () => [...completedCourses, ...currentCourses],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [completedCourses.length, currentCourses.length]
-  )
-  const courseList = useMemo(
-    () => allCourses.map(c => `${c.subject} ${c.catalog} ${c.course_title || ''}`).join(', '),
-    [allCourses]
-  )
+  // Build a set of ALL course codes that count toward ANY major or minor
+  const requiredCodes = useMemo(() => {
+    const codes = new Set()
+    allProgramData.forEach(prog => {
+      prog?.blocks?.forEach(b => b.courses?.forEach(c => {
+        if (c.catalog) codes.add(`${c.subject} ${c.catalog}`.toUpperCase())
+      }))
+    })
+    return codes
+  }, [allProgramData])
+
+  // Find courses the user has taken that don't go toward any major/minor
+  const electiveCourses = useMemo(() => {
+    const advancedStanding = profile?.advanced_standing || []
+    const allTaken = [
+      ...completedCourses.map(c => ({ ...c, _source: 'completed' })),
+      ...currentCourses.map(c => ({ ...c, _source: 'current' })),
+      ...advancedStanding.filter(t => t.course_code).map(t => {
+        const parts = t.course_code.trim().split(/\s+/)
+        return {
+          subject: parts[0] || '',
+          catalog: parts.slice(1).join(' ') || '',
+          course_title: t.course_title || t.title || '',
+          credits: t.credits || 3,
+          _source: 'transfer',
+          _raw: t,
+        }
+      }),
+    ]
+    return allTaken.filter(c => {
+      if (!c.subject || !c.catalog) return false
+      const key = `${c.subject} ${c.catalog}`.toUpperCase()
+      return !requiredCodes.has(key)
+    })
+  }, [completedCourses, currentCourses, profile, requiredCodes])
 
   const generateRecs = async () => {
-    setLoading(true)
-    setError(null)
+    setRecsLoading(true)
+    setRecsError(null)
     try {
       const advancedStanding = profile?.advanced_standing || []
       const allCourses = [...completedCourses, ...currentCourses]
-      // Send only subject+catalog (no title) to keep payload lean and avoid null items
       const coursesTaken = [
         ...allCourses
           .filter(c => c.subject && c.catalog)
@@ -298,13 +324,6 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
           .map(t => t.course_code.trim()),
       ].filter(Boolean)
 
-      // Build list of required major/minor courses to exclude from electives
-      const requiredCodes = new Set()
-      ;[programData, minorData].forEach(prog => {
-        prog?.blocks?.forEach(b => b.courses?.forEach(c => {
-          if (c.catalog) requiredCodes.add(`${c.subject} ${c.catalog}`.toUpperCase())
-        }))
-      })
       const excludeCourses = Array.from(requiredCodes)
 
       const { data: { session } } = await supabase.auth.getSession()
@@ -318,12 +337,12 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          major:          profile?.major        || null,
-          minor:          profile?.minor        || null,
-          concentration:  profile?.concentration|| null,
-          year:           (profile?.year >= 0 && profile?.year <= 10) ? profile.year : null,
-          interests:      profile?.interests    || null,
-          courses_taken:  coursesTaken,
+          major:           profile?.major        || null,
+          minor:           profile?.minor        || null,
+          concentration:   profile?.concentration|| null,
+          year:            (profile?.year >= 0 && profile?.year <= 10) ? profile.year : null,
+          interests:       profile?.interests    || null,
+          courses_taken:   coursesTaken,
           exclude_courses: excludeCourses,
         })
       })
@@ -332,21 +351,20 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
       if (!data.success) throw new Error(data.detail || 'Failed')
       setRecs(data.data)
     } catch(e) {
-      setError('Could not generate recommendations. Try again.')
+      setRecsError('Could not generate recommendations. Try again.')
     } finally {
-      setLoading(false)
+      setRecsLoading(false)
     }
   }
 
-  // Auto-generate once on first mount; re-generate only when major/minor/interests change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (hasLoaded.current) return
-    hasLoaded.current = true
-    generateRecs()
-  }, [])
+  const handleShowRecs = () => {
+    setShowRecs(true)
+    if (!hasLoaded.current) {
+      hasLoaded.current = true
+      generateRecs()
+    }
+  }
 
-  // Re-generate when profile identity changes (not on every course list tweak)
   const profileKey = `${profile?.major}|${profile?.minor}|${profile?.interests}`
   const prevProfileKey = useRef(profileKey)
   useEffect(() => {
@@ -358,74 +376,140 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
   }, [profileKey])
 
   const CATEGORY_COLORS = {
-    'Breadth':         { bg: '#eff6ff', color: '#1d4ed8' },
-    'Career':          { bg: '#f0fdf4', color: '#15803d' },
-    'Advanced':        { bg: '#faf5ff', color: '#7c3aed' },
+    'Breadth':           { bg: '#eff6ff', color: '#1d4ed8' },
+    'Career':            { bg: '#f0fdf4', color: '#15803d' },
+    'Advanced':          { bg: '#faf5ff', color: '#7c3aed' },
     'Interdisciplinary': { bg: '#fff7ed', color: '#c2410c' },
-    'Interest':        { bg: '#fef9c3', color: '#92400e' },
+    'Interest':          { bg: '#fef9c3', color: '#92400e' },
+  }
+
+  const SOURCE_LABELS = { completed: 'Done', current: 'Taking', transfer: 'Transfer' }
+  const SOURCE_COLORS = {
+    completed: { bg: '#f0fdf4', color: '#15803d' },
+    current:   { bg: '#eff6ff', color: '#1d4ed8' },
+    transfer:  { bg: '#fef9c3', color: '#92400e' },
   }
 
   return (
     <div className="dp-electives">
+      {/* ── Taken Electives ─────────────────────────────── */}
       <div className="dp-electives-header">
         <div className="dp-electives-title-row">
+          <span className="dp-electives-spark">📚</span>
+          <div>
+            <h3 className="dp-electives-title">My Elective Courses</h3>
+            <p className="dp-electives-sub">
+              Courses you've taken that don't count toward{' '}
+              {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
+            </p>
+          </div>
+        </div>
+        <span className="dp-electives-badge">{electiveCourses.length}</span>
+      </div>
+
+      {electiveCourses.length === 0 ? (
+        <div className="dp-electives-empty">
+          <span style={{ fontSize: '2rem', opacity: 0.3 }}>🎓</span>
+          <p>No elective courses found yet.</p>
+          <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+            Courses you complete outside your major &amp; minor requirements will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="dp-electives-grid">
+          {electiveCourses.map((c, i) => {
+            const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
+            return (
+              <div key={i} className="dp-elective-card dp-elective-card--taken">
+                <div className="dp-elective-top">
+                  <span className="dp-elective-code">{c.subject} {c.catalog}</span>
+                  <span
+                    className="dp-elective-cat"
+                    style={{ background: srcStyle.bg, color: srcStyle.color }}
+                  >
+                    {SOURCE_LABELS[c._source] || 'Done'}
+                  </span>
+                </div>
+                <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
+                {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── AI Recommendations ──────────────────────────── */}
+      <div className="dp-electives-recs-section">
+        <div className="dp-electives-recs-header">
           <span className="dp-electives-spark">✦</span>
           <div>
             <h3 className="dp-electives-title">Recommended Electives</h3>
             <p className="dp-electives-sub">
-              Personalized for {[profile?.major, profile?.minor].filter(Boolean).join(' + ')}
+              AI picks for {[profile?.major, profile?.minor].filter(Boolean).join(' + ')}
               {profile?.interests ? ` · ${profile.interests}` : ''}
             </p>
           </div>
-        </div>
-        <button className="dp-electives-refresh" onClick={generateRecs} disabled={loading}>
-          {loading ? '...' : '↻'}
-        </button>
-      </div>
-
-      {loading && (
-        <div className="dp-electives-loading">
-          <div className="dp-req-spinner" />
-          <span>{t('dp.generatingRecs')}</span>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="dp-electives-error">
-          {error}
-          <button onClick={generateRecs}>{t('dp.retry')}</button>
-        </div>
-      )}
-
-      {recs && !loading && (
-        <>
-          {recs.theme && (
-            <p className="dp-electives-theme">💡 {recs.theme}</p>
+          {showRecs ? (
+            <button className="dp-electives-refresh" onClick={generateRecs} disabled={recsLoading}>
+              {recsLoading ? '...' : '↻'}
+            </button>
+          ) : (
+            <button className="dp-electives-refresh dp-electives-refresh--generate" onClick={handleShowRecs}>
+              Generate ✦
+            </button>
           )}
-          <div className="dp-electives-grid">
-            {recs.recommendations?.map((c, i) => {
-              const alreadyTaken = [...completedCourses, ...currentCourses].some(uc =>
-                `${uc.subject} ${uc.catalog}`.toUpperCase() === `${c.subject} ${c.catalog}`.toUpperCase()
-              )
-              const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
-              return (
-                <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`}>
-                  <div className="dp-elective-top">
-                    <span className="dp-elective-code">{c.subject} {c.catalog}</span>
-                    <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>
-                      {c.category}
-                    </span>
-                    {alreadyTaken && <span className="dp-elective-taken">✓ {t('dp.statusTaking')}</span>}
-                  </div>
-                  <p className="dp-elective-title">{c.title}</p>
-                  <p className="dp-elective-why">{c.why}</p>
-                  <span className="dp-elective-credits">{c.credits} cr</span>
-                </div>
-              )
-            })}
+        </div>
+
+        {showRecs && recsLoading && (
+          <div className="dp-electives-loading">
+            <div className="dp-req-spinner" />
+            <span>{t('dp.generatingRecs')}</span>
           </div>
-        </>
-      )}
+        )}
+
+        {showRecs && recsError && !recsLoading && (
+          <div className="dp-electives-error">
+            {recsError}
+            <button onClick={generateRecs}>{t('dp.retry')}</button>
+          </div>
+        )}
+
+        {showRecs && recs && !recsLoading && (
+          <>
+            {recs.theme && (
+              <p className="dp-electives-theme">💡 {recs.theme}</p>
+            )}
+            <div className="dp-electives-grid">
+              {recs.recommendations?.map((c, i) => {
+                const alreadyTaken = [...completedCourses, ...currentCourses].some(uc =>
+                  `${uc.subject} ${uc.catalog}`.toUpperCase() === `${c.subject} ${c.catalog}`.toUpperCase()
+                )
+                const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
+                return (
+                  <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`}>
+                    <div className="dp-elective-top">
+                      <span className="dp-elective-code">{c.subject} {c.catalog}</span>
+                      <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>
+                        {c.category}
+                      </span>
+                      {alreadyTaken && <span className="dp-elective-taken">✓ {t('dp.statusTaking')}</span>}
+                    </div>
+                    <p className="dp-elective-title">{c.title}</p>
+                    <p className="dp-elective-why">{c.why}</p>
+                    <span className="dp-elective-credits">{c.credits} cr</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {!showRecs && (
+          <div className="dp-electives-recs-prompt">
+            <p>Get personalized elective suggestions based on your program and interests.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -536,6 +620,9 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const [sciData, setSciData]                 = useState(null)
   const [coreData, setCoreData]               = useState(null)
   const [concentrationData, setConcentrationData] = useState(null)
+  // Additional majors/minors: keyed maps  { programKey → data }
+  const [extraMajorsData, setExtraMajorsData] = useState({})
+  const [extraMinorsData, setExtraMinorsData] = useState({})
   const [loading, setLoading]                 = useState(false)
   const [seeding, setSeeding]                 = useState(false)
   const [openBlocks, setOpenBlocks]           = useState({})
@@ -575,6 +662,32 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
     ? toProgramKey(profile.concentration, 'concentration', profile?.faculty || '')
     : null
 
+  // Extra majors: other_majors[] excluding the BASC science slot (already handled by sciKey)
+  const extraMajorsList = useMemo(() => {
+    if (!profile?.other_majors?.length) return []
+    return profile.other_majors
+      .filter(m => m && !(isBasc && bascIsMultiTrack)) // BASC multi-track already uses sciKey
+      .map(name => ({
+        name,
+        key: toProgramKey(name, 'major', profile?.faculty || ''),
+      }))
+      .filter(({ key }) => key && key !== majorKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.other_majors?.join(','), majorKey, isBasc, bascIsMultiTrack])
+
+  // Extra minors: other_minors[] excluding the primary minor
+  const extraMinorsList = useMemo(() => {
+    if (!profile?.other_minors?.length) return []
+    return profile.other_minors
+      .filter(m => m)
+      .map(name => ({
+        name,
+        key: toProgramKey(name, 'minor', profile?.faculty || ''),
+      }))
+      .filter(({ key }) => key && key !== minorKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.other_minors?.join(','), minorKey])
+
   const fetchProgram = async (key, setter) => {
     if (!key) return 'skip'
     try {
@@ -604,14 +717,27 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
 
   useEffect(() => {
     if (!profile) return
-    if (!majorKey && !minorKey && !sciKey) return
+    if (!majorKey && !minorKey && !sciKey && extraMajorsList.length === 0 && extraMinorsList.length === 0) return
     setLoading(true)
     setLoadFailed(false)
     setProgramData(null)
     setMinorData(null)
     setSciData(null)
+    setExtraMajorsData({})
+    setExtraMinorsData({})
     setUnavailable({ major: false, minor: false })
     fetchedRef.current = true
+
+    // Fetch extra majors
+    const extraMajorFetches = extraMajorsList.map(({ name, key }) =>
+      fetchProgram(key, data => setExtraMajorsData(prev => ({ ...prev, [key]: data })))
+        .then(result => ({ key, name, result }))
+    )
+    // Fetch extra minors
+    const extraMinorFetches = extraMinorsList.map(({ name, key }) =>
+      fetchProgram(key, data => setExtraMinorsData(prev => ({ ...prev, [key]: data })))
+        .then(result => ({ key, name, result }))
+    )
 
     Promise.all([
       fetchProgram(majorKey, setProgramData),
@@ -619,6 +745,8 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
       fetchProgram(sciKey, setSciData),
       fetchProgram(coreKey, setCoreData),
       fetchProgram(concentrationKey, setConcentrationData),
+      ...extraMajorFetches,
+      ...extraMinorFetches,
     ]).then(([majorResult, minorResult, , coreResult, concResult]) => {
       setUnavailable({
         major:         majorResult === 'not_found',
@@ -628,7 +756,10 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
       })
     }).finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [majorKey, minorKey, sciKey, coreKey, concentrationKey, !!profile, profile?.concentration])
+  }, [majorKey, minorKey, sciKey, coreKey, concentrationKey,
+      extraMajorsList.map(x=>x.key).join(','),
+      extraMinorsList.map(x=>x.key).join(','),
+      !!profile, profile?.concentration])
 
   const allCourseKeys = useMemo(
     () => [...completedCourses, ...currentCourses].map(c => `${c.subject} ${c.catalog}`).join(','),
@@ -642,12 +773,20 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
       const res = await fetch(`${API_BASE}/api/degree-requirements/seed`, { method: 'POST', headers })
       const data = await res.json()
       if (data.success) {
+        const extraMajorFetches = extraMajorsList.map(({ name, key }) =>
+          fetchProgram(key, d => setExtraMajorsData(prev => ({ ...prev, [key]: d })))
+        )
+        const extraMinorFetches = extraMinorsList.map(({ name, key }) =>
+          fetchProgram(key, d => setExtraMinorsData(prev => ({ ...prev, [key]: d })))
+        )
         const [majorResult, minorResult, , coreResult, concResult] = await Promise.all([
           fetchProgram(majorKey, setProgramData),
           fetchProgram(minorKey, setMinorData),
           fetchProgram(sciKey, setSciData),
           fetchProgram(coreKey, setCoreData),
           fetchProgram(concentrationKey, setConcentrationData),
+          ...extraMajorFetches,
+          ...extraMinorFetches,
         ])
         setUnavailable({
           major:         majorResult === 'not_found',
@@ -661,15 +800,18 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   }
 
   const hasSomething = profile?.major || profile?.minor ||
+    profile?.other_majors?.length > 0 || profile?.other_minors?.length > 0 ||
     (isBasc && profile?.other_majors?.length > 0) ||
     isMgmt
   if (!hasSomething) return null
 
-  const hasMajor        = !!programData
-  const hasMinor        = !!minorData
-  const hasCore         = !!coreData
+  const hasMajor         = !!programData
+  const hasMinor         = !!minorData
+  const hasCore          = !!coreData
   const hasConcentration = !!concentrationData
-  const hasAny          = hasMajor || hasMinor || hasCore || hasConcentration
+  const hasExtraMajors   = Object.keys(extraMajorsData).length > 0
+  const hasExtraMinors   = Object.keys(extraMinorsData).length > 0
+  const hasAny           = hasMajor || hasMinor || hasCore || hasConcentration || hasExtraMajors || hasExtraMinors
 
   const tabs = []
   if (isMgmt) {
@@ -687,7 +829,18 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
     if (isBasc && bascIsMultiTrack && profile?.other_majors?.[0]) {
       tabs.push({ id: 'sci', label: `${profile.other_majors[0]} (Science)`, data: sciData, unavailable: false })
     }
+    // Additional majors (non-BASC)
+    if (!isBasc || !bascIsMultiTrack) {
+      extraMajorsList.forEach(({ name, key }) => {
+        tabs.push({ id: `extra_major_${key}`, label: name, data: extraMajorsData[key] || null, unavailable: !extraMajorsData[key], type: 'major' })
+      })
+    }
+    // Primary minor
     if (profile?.minor) tabs.push({ id: 'minor', label: profile.minor, data: minorData, unavailable: unavailable.minor })
+    // Additional minors
+    extraMinorsList.forEach(({ name, key }) => {
+      tabs.push({ id: `extra_minor_${key}`, label: name, data: extraMinorsData[key] || null, unavailable: !extraMinorsData[key], type: 'minor' })
+    })
   }
   const currentTab = tabs.find(t => t.id === activeTab) || tabs[0]
   const currentTabData = currentTab?.data
@@ -711,9 +864,9 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
     return { pct: Math.min(100, Math.round((earned / total) * 100)), earned, total }
   }
 
-  const majorRing        = calcRingProgress(programData)
-  const minorRing        = calcRingProgress(minorData)
-  const coreRing         = calcRingProgress(coreData)
+  const majorRing         = calcRingProgress(programData)
+  const minorRing         = calcRingProgress(minorData)
+  const coreRing          = calcRingProgress(coreData)
   const concentrationRing = calcRingProgress(concentrationData)
 
   return (
@@ -724,8 +877,13 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
           <h2 className="dp-req-card-title">{t('dp.myProgramRequirements')}</h2>
           <p className="dp-req-card-sub">
             {isMgmt
-              ? ['BCom Core', profile?.major, profile?.concentration].filter(Boolean).join(' · ')
-              : [profile?.major, profile?.minor].filter(Boolean).join(' · ')
+              ? ['BCom Core', profile?.major, profile?.concentration, ...(profile?.other_majors || []), ...(profile?.other_minors || [])].filter(Boolean).join(' · ')
+              : [
+                  profile?.major,
+                  ...((!isBasc || !bascIsMultiTrack) ? (profile?.other_majors || []) : []),
+                  profile?.minor,
+                  ...(profile?.other_minors || []),
+                ].filter(Boolean).join(' · ')
             }
           </p>
         </div>
@@ -841,11 +999,36 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
                       <span className="dp-req-ring-label">{majorRing.pct}%</span>
                     </div>
                     <div className="dp-req-prog-text">
-                      <span className="dp-req-prog-name">{t('dp.ringMajor')}</span>
+                      <span className="dp-req-prog-name">{profile?.major || t('dp.ringMajor')}</span>
                       <span className="dp-req-prog-detail">{majorRing.earned}/{majorRing.total} {t('dp.credits')}</span>
                     </div>
                   </div>
                 )}
+                {/* Extra majors rings */}
+                {extraMajorsList.map(({ name, key }) => {
+                  const data = extraMajorsData[key]
+                  if (!data) return null
+                  const ring = calcRingProgress(data)
+                  return (
+                    <div key={key} className="dp-req-progress-item">
+                      <div className="dp-req-ring">
+                        <svg viewBox="0 0 36 36" className="dp-req-ring-svg">
+                          <circle cx="18" cy="18" r="15.9" className="dp-req-ring-bg" />
+                          <circle cx="18" cy="18" r="15.9"
+                            className="dp-req-ring-fill dp-req-ring-fill--major"
+                            strokeDasharray={`${ring.pct} ${100 - ring.pct}`}
+                            strokeDashoffset="25"
+                          />
+                        </svg>
+                        <span className="dp-req-ring-label">{ring.pct}%</span>
+                      </div>
+                      <div className="dp-req-prog-text">
+                        <span className="dp-req-prog-name">{name}</span>
+                        <span className="dp-req-prog-detail">{ring.earned}/{ring.total} {t('dp.credits')}</span>
+                      </div>
+                    </div>
+                  )
+                })}
                 {hasMinor && (
                   <div className="dp-req-progress-item">
                     <div className="dp-req-ring">
@@ -860,11 +1043,36 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
                       <span className="dp-req-ring-label">{minorRing.pct}%</span>
                     </div>
                     <div className="dp-req-prog-text">
-                      <span className="dp-req-prog-name">{t('dp.ringMinor')}</span>
+                      <span className="dp-req-prog-name">{profile?.minor || t('dp.ringMinor')}</span>
                       <span className="dp-req-prog-detail">{minorRing.earned}/{minorRing.total} {t('dp.credits')}</span>
                     </div>
                   </div>
                 )}
+                {/* Extra minors rings */}
+                {extraMinorsList.map(({ name, key }) => {
+                  const data = extraMinorsData[key]
+                  if (!data) return null
+                  const ring = calcRingProgress(data)
+                  return (
+                    <div key={key} className="dp-req-progress-item">
+                      <div className="dp-req-ring">
+                        <svg viewBox="0 0 36 36" className="dp-req-ring-svg">
+                          <circle cx="18" cy="18" r="15.9" className="dp-req-ring-bg" />
+                          <circle cx="18" cy="18" r="15.9"
+                            className="dp-req-ring-fill dp-req-ring-fill--minor"
+                            strokeDasharray={`${ring.pct} ${100 - ring.pct}`}
+                            strokeDashoffset="25"
+                          />
+                        </svg>
+                        <span className="dp-req-ring-label">{ring.pct}%</span>
+                      </div>
+                      <div className="dp-req-prog-text">
+                        <span className="dp-req-prog-name">{name}</span>
+                        <span className="dp-req-prog-detail">{ring.earned}/{ring.total} {t('dp.credits')}</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </>
             )}
           </div>
@@ -877,10 +1085,14 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
                 className={`dp-prog-tab ${activeTab === tab.id ? 'dp-prog-tab--active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
               >
-                {tab.id === 'core'          ? t('dp.tabCore').replace('{label}', tab.label)
-                  : tab.id === 'concentration' ? t('dp.tabConcentration').replace('{label}', tab.label)
-                  : tab.id === 'sci'           ? t('dp.tabScience').replace('{label}', tab.label)
-                  : tab.id === 'minor'         ? t('dp.tabMinor').replace('{label}', tab.label)
+                {tab.id === 'core'
+                  ? t('dp.tabCore').replace('{label}', tab.label)
+                  : tab.id === 'concentration'
+                  ? t('dp.tabConcentration').replace('{label}', tab.label)
+                  : tab.id === 'sci'
+                  ? t('dp.tabScience').replace('{label}', tab.label)
+                  : tab.id === 'minor' || tab.id.startsWith('extra_minor_')
+                  ? t('dp.tabMinor').replace('{label}', tab.label)
                   : t('dp.tabMajor').replace('{label}', tab.label)
                 }
                 {tab.unavailable && !tab.data && (
@@ -939,6 +1151,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
               currentCourses={currentCourses}
               programData={programData}
               minorData={minorData}
+              allProgramData={[programData, minorData, sciData, coreData, concentrationData, ...Object.values(extraMajorsData), ...Object.values(extraMinorsData)].filter(Boolean)}
             />
           </div>
         </div>
