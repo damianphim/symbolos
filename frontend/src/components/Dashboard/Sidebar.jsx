@@ -69,7 +69,8 @@ export default function Sidebar({
   }
 
   const handleLanguageToggle = () => {
-    setLanguage(language === 'en' ? 'fr' : 'en')
+    const next = language === 'en' ? 'fr' : language === 'fr' ? 'zh' : 'en'
+    setLanguage(next)
     setPopupOpen(false)
   }
 
@@ -118,7 +119,7 @@ export default function Sidebar({
                   </button>
                   <button className="sidebar-popup-item" onClick={handleLanguageToggle}>
                     <span className="sidebar-popup-icon"><MdLanguage /></span>
-                    <span className="sidebar-popup-label">{language === 'en' ? 'Français' : 'English'}</span>
+                    <span className="sidebar-popup-label">{language === 'en' ? 'Français' : language === 'fr' ? '中文' : 'English'}</span>
                   </button>
                   <button className="sidebar-popup-item" onClick={cycleTheme}>
                     <span className="sidebar-popup-icon"><FaPalette /></span>
@@ -164,10 +165,10 @@ export default function Sidebar({
               <button
                 className="mini-pill mini-pill--lang"
                 onClick={handleLanguageToggle}
-                title={language === 'en' ? 'Passer en français' : 'Switch to English'}
+                title={language === 'en' ? 'Passer en français' : language === 'fr' ? '切换到中文' : 'Switch to English'}
               >
                 <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '-0.5px' }}>
-                  {language === 'en' ? 'FR' : 'EN'}
+                  {language === 'en' ? 'FR' : language === 'fr' ? '中' : 'EN'}
                 </span>
               </button>
               <button

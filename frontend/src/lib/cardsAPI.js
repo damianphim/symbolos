@@ -26,7 +26,8 @@ export const CATEGORY_ICONS = {
 // `language` parameter so the caller (Dashboard) can pass the React context
 // value directly, avoiding any race with localStorage writes.
 function getLang() {
-  return localStorage.getItem('language') === 'fr' ? 'fr' : 'en'
+  const stored = localStorage.getItem('language')
+  return ['en', 'fr', 'zh'].includes(stored) ? stored : 'en'
 }
 
 const cardsAPI = {

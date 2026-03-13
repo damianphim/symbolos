@@ -59,7 +59,7 @@ class ChatRequest(BaseModel):
     # SEC-023: Constrain session_id to prevent storage abuse with huge arbitrary strings
     session_id: Optional[str] = Field(None, max_length=100)
     current_tab: Optional[str] = Field(None, max_length=30)
-    language: Optional[str] = Field("en", pattern="^(en|fr)$")
+    language: Optional[str] = Field("en", pattern="^(en|fr|zh)$")
 
     # FIX: Use Pydantic v2 field_validator instead of deprecated @validator
     @field_validator('message', mode='before')
@@ -150,7 +150,10 @@ This is the main chat interface. Help them with any academic questions.
     tab_context = TAB_GUIDANCE.get(current_tab or "", "")
     lang_instruction = (
         "\n\nCRITICAL: You MUST respond entirely in French. Do not use any English."
-        if language == "fr" else ""
+        if language == "fr"
+        else "\n\nCRITICAL: You MUST respond entirely in Simplified Chinese (Mandarin). Do not use English except for proper nouns like course codes (e.g. COMP 202) and names."
+        if language == "zh"
+        else ""
     )
 
     try:

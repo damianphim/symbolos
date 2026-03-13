@@ -109,10 +109,10 @@ function Login() {
       <div className="auth-corner-controls">
         <button
           className="auth-lang-btn"
-          onClick={() => setLanguage(language === 'en' ? 'fr' : 'en')}
+          onClick={() => setLanguage(language === 'en' ? 'fr' : language === 'fr' ? 'zh' : 'en')}
           title={t('auth.langToggle')}
         >
-          {language === 'en' ? 'FR' : 'EN'}
+          {language === 'en' ? 'FR' : language === 'fr' ? '中' : 'EN'}
         </button>
         <button
           className="auth-lang-btn"

@@ -288,6 +288,7 @@ export default function Settings({ user, profile, onUpdateSettings }) {
               <select className="setting-select" value={settings.language} onChange={e => handleLanguageChange(e.target.value)}>
                 <option value="en">{t('common.english')}</option>
                 <option value="fr">{t('common.french')}</option>
+                <option value="zh">{t('common.mandarin')}</option>
               </select>
             </div>
             <div className="setting-item">

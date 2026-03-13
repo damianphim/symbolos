@@ -46,6 +46,12 @@ def _lang_instruction(language: str) -> str:
             "Every text field — title, body, actions, label — must be in French. "
             "Do not use any English words."
         )
+    if language == "zh":
+        return (
+            "\n\nCRITICAL: You MUST respond entirely in Simplified Chinese (Mandarin). "
+            "Every text field — title, body, actions, label — must be in Chinese. "
+            "Do not use any English words except for proper nouns like course codes (e.g. COMP 202) and names."
+        )
     return ""
 
 

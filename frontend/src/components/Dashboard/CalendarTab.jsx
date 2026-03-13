@@ -74,8 +74,13 @@ function getClubEventStyle(event) {
 
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const MONTHS_ZH = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']
 const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
+const DAYS_ZH = ['日','一','二','三','四','五','六']
+
+// Tri-language inline helper — avoids adding dozens of LanguageContext keys for calendar-only strings
+function L(lang, en, fr, zh) { return lang === 'zh' ? zh : lang === 'fr' ? fr : en }
 
 function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
 function getFirstDayOfMonth(year, month) { return new Date(year, month, 1).getDay() }
@@ -89,10 +94,10 @@ function daysUntil(dateStr) {
 
 // ── Event Modal ───────────────────────────────────────────────────
 const EVENT_TYPE_OPTIONS = [
-  { key: 'personal', color: '#059669', bg: '#ecfdf5', darkBg: '#064e3b22', icon: <FaStar />,           labelEn: 'Personal',  labelFr: 'Personnel' },
-  { key: 'academic', color: '#1d4ed8', bg: '#eff6ff', darkBg: '#1e3a8a22', icon: <FaGraduationCap />,  labelEn: 'Academic',  labelFr: 'Académique' },
-  { key: 'club',     color: '#d97706', bg: '#fffbeb', darkBg: '#92400e22', icon: <FaBullseye />,        labelEn: 'Club',      labelFr: 'Club' },
-  { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', icon: <FaClipboardList />,   labelEn: 'Exam',      labelFr: 'Examen' },
+  { key: 'personal', color: '#059669', bg: '#ecfdf5', darkBg: '#064e3b22', icon: <FaStar />,           labelEn: 'Personal',  labelFr: 'Personnel',  labelZh: '个人' },
+  { key: 'academic', color: '#1d4ed8', bg: '#eff6ff', darkBg: '#1e3a8a22', icon: <FaGraduationCap />,  labelEn: 'Academic',  labelFr: 'Académique', labelZh: '学术' },
+  { key: 'club',     color: '#d97706', bg: '#fffbeb', darkBg: '#92400e22', icon: <FaBullseye />,        labelEn: 'Club',      labelFr: 'Club',       labelZh: '社团' },
+  { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', icon: <FaClipboardList />,   labelEn: 'Exam',      labelFr: 'Examen',     labelZh: '考试' },
 ]
 
 function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, language }) {
@@ -148,7 +153,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
         <div className="cal-modal-header-v2">
           <div className="cal-modal-header-left">
             <span className="cal-modal-type-icon">{selectedType.icon}</span>
-            <h3>{isEdit ? (language === 'fr' ? 'Modifier l\'événement' : 'Edit Event') : (language === 'fr' ? 'Nouvel événement' : 'New Event')}</h3>
+            <h3>{isEdit ? L(language, 'Edit Event', 'Modifier l\'événement', '编辑事件') : L(language, 'New Event', 'Nouvel événement', '新事件')}</h3>
           </div>
           <button className="cal-modal-close" onClick={onClose}><FaTimes /></button>
         </div>
@@ -163,7 +168,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
                 style={form.type === opt.key ? { borderColor: opt.color, background: opt.bg, color: opt.color } : {}}
                 onClick={() => f('type')(opt.key)}>
                 <span className="cal-v2-type-icon" style={form.type === opt.key ? { color: opt.color } : {}}>{opt.icon}</span>
-                <span className="cal-v2-type-label">{language === 'fr' ? opt.labelFr : opt.labelEn}</span>
+                <span className="cal-v2-type-label">{L(language, opt.labelEn, opt.labelFr, opt.labelZh)}</span>
                 {form.type === opt.key && <span className="cal-v2-type-check" style={{ color: opt.color }}><FaCheck size={8} /></span>}
               </button>
             ))}
@@ -171,13 +176,13 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
 
           {/* Title */}
           <div className="cal-v2-field">
-            <label className="cal-v2-label">{language === 'fr' ? 'Titre' : 'Title'} <span className="cal-v2-required">*</span></label>
+            <label className="cal-v2-label">{L(language, 'Title', 'Titre', '标题')} <span className="cal-v2-required">*</span></label>
             <input
               className="cal-v2-input"
               type="text"
               value={form.title}
               onChange={e => f('title')(e.target.value)}
-              placeholder={language === 'fr' ? 'Nom de l\'événement…' : 'Event name…'}
+              placeholder={L(language, 'Event name…', 'Nom de l\'événement…', '事件名称…')}
               required
               autoFocus
             />
@@ -186,40 +191,40 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
           {/* Date + Time row */}
           <div className="cal-v2-row">
             <div className="cal-v2-field cal-v2-field--date">
-              <label className="cal-v2-label">{language === 'fr' ? 'Date' : 'Date'} <span className="cal-v2-required">*</span></label>
+              <label className="cal-v2-label">{L(language, 'Date', 'Date', '日期')} <span className="cal-v2-required">*</span></label>
               <input className="cal-v2-input" type="date" value={form.date} onChange={e => f('date')(e.target.value)} required />
             </div>
             <div className="cal-v2-field cal-v2-field--time">
-              <label className="cal-v2-label">{language === 'fr' ? 'Début' : 'Start'}</label>
+              <label className="cal-v2-label">{L(language, 'Start', 'Début', '开始')}</label>
               <input className="cal-v2-input" type="time" value={form.time} onChange={e => f('time')(e.target.value)} />
             </div>
             <div className="cal-v2-field cal-v2-field--time">
-              <label className="cal-v2-label">{language === 'fr' ? 'Fin' : 'End'}</label>
+              <label className="cal-v2-label">{L(language, 'End', 'Fin', '结束')}</label>
               <input className="cal-v2-input" type="time" value={form.end_time} onChange={e => f('end_time')(e.target.value)} />
             </div>
           </div>
 
           {/* Location */}
           <div className="cal-v2-field">
-            <label className="cal-v2-label">{language === 'fr' ? 'Lieu' : 'Location'}</label>
+            <label className="cal-v2-label">{L(language, 'Location', 'Lieu', '地点')}</label>
             <input
               className="cal-v2-input"
               type="text"
               value={form.location}
               onChange={e => f('location')(e.target.value)}
-              placeholder={language === 'fr' ? 'Salle, bâtiment…' : 'Room, building…'}
+              placeholder={L(language, 'Room, building…', 'Salle, bâtiment…', '教室、建筑…')}
             />
           </div>
 
           {/* Description */}
           <div className="cal-v2-field">
-            <label className="cal-v2-label">{language === 'fr' ? 'Notes' : 'Notes'}</label>
+            <label className="cal-v2-label">{L(language, 'Notes', 'Notes', '备注')}</label>
             <textarea
               className="cal-v2-input cal-v2-textarea"
               value={form.description}
               onChange={e => f('description')(e.target.value)}
               rows={2}
-              placeholder={language === 'fr' ? 'Détails optionnels…' : 'Optional details…'}
+              placeholder={L(language, 'Optional details…', 'Détails optionnels…', '可选详情…')}
             />
           </div>
 
@@ -227,7 +232,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
           <div className="cal-v2-notif-section">
             <div className="cal-v2-notif-header">
               <FaBell size={12} style={{ color: form.notifyEnabled ? '#ed1b2f' : 'var(--text-muted)' }} />
-              <span>{language === 'fr' ? 'Rappels' : 'Reminders'}</span>
+              <span>{L(language, 'Reminders', 'Rappels', '提醒')}</span>
               <button
                 type="button"
                 className={`cal-v2-notif-toggle ${form.notifyEnabled ? 'on' : 'off'}`}
@@ -239,15 +244,15 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
             {form.notifyEnabled && (
               <div className="cal-v2-timing-chips">
                 {[
-                  { key: 'notifySameDay', labelEn: 'Same day',  labelFr: 'Jour même' },
-                  { key: 'notify1Day',    labelEn: '1 day before', labelFr: '1 jour avant' },
-                  { key: 'notify7Days',   labelEn: '1 week before', labelFr: '1 semaine avant' },
+                  { key: 'notifySameDay', labelEn: 'Same day',  labelFr: 'Jour même',  labelZh: '当天' },
+                  { key: 'notify1Day',    labelEn: '1 day before', labelFr: '1 jour avant', labelZh: '1天前' },
+                  { key: 'notify7Days',   labelEn: '1 week before', labelFr: '1 semaine avant', labelZh: '1周前' },
                 ].map(({ key, labelEn, labelFr }) => (
                   <label key={key} className={`cal-v2-chip ${form[key] ? 'active' : ''}`}
                     style={form[key] ? { borderColor: selectedType.color, background: selectedType.bg, color: selectedType.color } : {}}>
                     <input type="checkbox" checked={form[key]} onChange={() => toggle(key)} />
                     {form[key] && <FaCheck size={8} />}
-                    {language === 'fr' ? labelFr : labelEn}
+                    {L(language, labelEn, labelFr, labelZh)}
                   </label>
                 ))}
               </div>
@@ -260,15 +265,15 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
         <div className="cal-v2-footer">
           {isEdit && (
             <button type="button" className="cal-v2-btn-danger" onClick={() => onDelete(event.id)}>
-              <FaTrash size={12} /> {language === 'fr' ? 'Supprimer' : 'Delete'}
+              <FaTrash size={12} /> {L(language, 'Delete', 'Supprimer', '删除')}
             </button>
           )}
           <div className="cal-v2-actions-right">
             <button type="button" className="cal-v2-btn-ghost" onClick={onClose}>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {L(language, 'Cancel', 'Annuler', '取消')}
             </button>
             <button type="submit" form="event-modal-form" className="cal-v2-btn-primary" style={{ background: selectedType.color }}>
-              <FaCheck size={11} /> {isEdit ? (language === 'fr' ? 'Enregistrer' : 'Save') : (language === 'fr' ? 'Ajouter' : 'Add Event')}
+              <FaCheck size={11} /> {isEdit ? L(language, 'Save', 'Enregistrer', '保存') : L(language, 'Add Event', 'Ajouter', '添加事件')}
             </button>
           </div>
         </div>
@@ -300,7 +305,7 @@ function EventPopup({ event, onClose, onEdit, canEdit, t, language, formatDate, 
         <div className="cal-event-popup-date">
           <FaCalendarAlt />
           {formatDate(event.date)}
-          {event.time && ` ${language === 'fr' ? 'à' : 'at'} ${event.time}${event.end_time ? `–${event.end_time}` : ''}`}
+          {event.time && ` ${L(language, 'at', 'à', '于')} ${event.time}${event.end_time ? `–${event.end_time}` : ''}`}
           <span className="cal-event-popup-countdown" style={{ color: days < 0 ? '#9ca3af' : days <= 7 ? '#f59e0b' : style.color }}>
             {countdownText}
           </span>
@@ -473,7 +478,7 @@ function SlotRow({ ev, isHidden, onToggleHide, onSave, language }) {
         </div>
         <div className="slot-row-edit-actions">
           <button className="slot-edit-save" onClick={handleSave} disabled={saving}>
-            {saving ? '…' : <><FaCheck size={10}/> {language === 'fr' ? 'OK' : 'Save'}</>}
+            {saving ? '…' : <><FaCheck size={10}/> {L(language, 'Save', 'OK', '保存')}</>}
           </button>
           <button className="slot-edit-cancel" onClick={() => setEditing(false)}>
             <FaTimes size={10}/>
@@ -491,21 +496,21 @@ function SlotRow({ ev, isHidden, onToggleHide, onSave, language }) {
           <span className="slot-label">{slotLabel}</span>
           {timeLabel
             ? <span className="slot-time">{timeLabel}</span>
-            : <span className="slot-time slot-time--missing"><FaClock size={9}/> {language === 'fr' ? 'heure manquante' : 'no time set'}</span>
+            : <span className="slot-time slot-time--missing"><FaClock size={9}/> {L(language, 'no time set', 'heure manquante', '未设时间')}</span>
           }
         </div>
       </div>
       <div className="slot-row-actions">
         <button
           className="slot-action-btn slot-edit-btn"
-          title={language === 'fr' ? 'Modifier' : 'Edit time'}
+          title={L(language, 'Edit time', 'Modifier', '编辑时间')}
           onClick={e => { e.stopPropagation(); setEditing(true) }}
         >
           <FaEdit size={11}/>
         </button>
         <button
           className={`slot-action-btn slot-eye-btn ${isHidden ? 'slot-eye-btn--hidden' : ''}`}
-          title={isHidden ? (language === 'fr' ? 'Afficher' : 'Show on calendar') : (language === 'fr' ? 'Masquer' : 'Hide from calendar')}
+          title={isHidden ? L(language, 'Show on calendar', 'Afficher', '在日历上显示') : L(language, 'Hide from calendar', 'Masquer', '从日历隐藏')}
           onClick={e => { e.stopPropagation(); onToggleHide() }}
         >
           {isHidden ? <EyeOffIcon /> : <EyeIcon />}
@@ -580,10 +585,10 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
           <div className="mgr-header-left">
             <FaLayerGroup size={15} style={{ color: '#ed1b2f' }} />
             <div>
-              <h3 className="mgr-title">{language === 'fr' ? 'Gérer les cours' : 'Manage Classes'}</h3>
+              <h3 className="mgr-title">{L(language, 'Manage Classes', 'Gérer les cours', '管理课程')}</h3>
               {hiddenCount > 0 && (
                 <p className="mgr-subtitle">
-                  {language === 'fr' ? `${hiddenCount} cours masqué${hiddenCount !== 1 ? 's' : ''}` : `${hiddenCount} slot${hiddenCount !== 1 ? 's' : ''} hidden`}
+                  {L(language, `${hiddenCount} slot${hiddenCount !== 1 ? 's' : ''} hidden`, `${hiddenCount} cours masqué${hiddenCount !== 1 ? 's' : ''}`, `${hiddenCount}个课程已隐藏`)}
                 </p>
               )}
             </div>
@@ -591,7 +596,7 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
           <div className="mgr-header-right">
             {hiddenCount > 0 && (
               <button className="mgr-show-all-btn" onClick={onUnhideAll}>
-                <EyeIcon /> {language === 'fr' ? 'Tout afficher' : 'Show all'}
+                <EyeIcon /> {L(language, 'Show all', 'Tout afficher', '全部显示')}
               </button>
             )}
             <button className="mgr-close" onClick={onClose}><FaTimes /></button>
@@ -600,18 +605,18 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
 
         {/* Legend */}
         <div className="mgr-legend">
-          <span className="mgr-legend-item mgr-legend-visible"><EyeIcon /> {language === 'fr' ? 'Visible' : 'Visible'}</span>
-          <span className="mgr-legend-item mgr-legend-hidden"><EyeOffIcon /> {language === 'fr' ? 'Masqué' : 'Hidden'}</span>
+          <span className="mgr-legend-item mgr-legend-visible"><EyeIcon /> {L(language, 'Visible', 'Visible', '可见')}</span>
+          <span className="mgr-legend-item mgr-legend-hidden"><EyeOffIcon /> {L(language, 'Hidden', 'Masqué', '已隐藏')}</span>
           <span className="mgr-legend-sep" />
-          <span className="mgr-legend-hint">{language === 'fr' ? 'Cliquez 👁 pour basculer' : 'Click 👁 to toggle visibility'}</span>
+          <span className="mgr-legend-hint">{L(language, 'Click 👁 to toggle visibility', 'Cliquez 👁 pour basculer', '点击👁切换可见性')}</span>
         </div>
 
         {/* Content */}
         {!hasAnything ? (
           <div className="mgr-empty">
             <span style={{ fontSize: '2rem' }}>📅</span>
-            <p>{language === 'fr' ? 'Aucun cours récurrent trouvé.' : 'No recurring class slots found.'}</p>
-            <p className="mgr-empty-hint">{language === 'fr' ? 'Ajoutez des cours depuis l\'onglet Cours.' : 'Add courses from the Courses tab.'}</p>
+            <p>{L(language, 'No recurring class slots found.', 'Aucun cours récurrent trouvé.', '未找到循环课程。')}</p>
+            <p className="mgr-empty-hint">{L(language, 'Add courses from the Courses tab.', 'Ajoutez des cours depuis l\'onglet Cours.', '从课程标签添加课程。')}</p>
           </div>
         ) : (
           <div className="mgr-list">
@@ -627,18 +632,18 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
                       <span className="mgr-course-code">{courseCode}</span>
                       <span className="mgr-course-stats">
                         {stats.hidden > 0
-                          ? <span className="mgr-course-stats--partial">{stats.visible}/{stats.total} {language === 'fr' ? 'visible' : 'visible'}</span>
-                          : <span className="mgr-course-stats--all">{language === 'fr' ? 'Tout visible' : 'All visible'}</span>
+                          ? <span className="mgr-course-stats--partial">{stats.visible}/{stats.total} {L(language, 'visible', 'visible', '可见')}</span>
+                          : <span className="mgr-course-stats--all">{L(language, 'All visible', 'Tout visible', '全部可见')}</span>
                         }
                       </span>
                     </div>
                     <button
                       className={`mgr-course-toggle ${allHidden ? 'mgr-course-toggle--hidden' : ''}`}
                       onClick={() => hideAllForCourse(allEvs)}
-                      title={allHidden ? (language === 'fr' ? 'Afficher tous les cours' : 'Show all slots') : (language === 'fr' ? 'Masquer tous les cours' : 'Hide all slots')}
+                      title={allHidden ? L(language, 'Show all slots', 'Afficher tous les cours', '显示所有课程') : L(language, 'Hide all slots', 'Masquer tous les cours', '隐藏所有课程')}
                     >
                       {allHidden ? <EyeOffIcon /> : <EyeIcon />}
-                      <span>{allHidden ? (language === 'fr' ? 'Afficher tout' : 'Show all') : (language === 'fr' ? 'Masquer tout' : 'Hide all')}</span>
+                      <span>{allHidden ? L(language, 'Show all', 'Afficher tout', '全部显示') : L(language, 'Hide all', 'Masquer tout', '全部隐藏')}</span>
                     </button>
                   </div>
 
@@ -668,7 +673,7 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
         {/* Footer */}
         <div className="mgr-footer">
           <button className="mgr-done-btn" onClick={onClose}>
-            {language === 'fr' ? 'Terminé' : 'Done'}
+            {L(language, 'Done', 'Terminé', '完成')}
           </button>
         </div>
       </div>
@@ -777,21 +782,21 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   const [notifPrefs] = useNotificationPrefs(user?.id, user?.email)
 
   const today = getNow()
-  const MONTHS = language === 'fr' ? MONTHS_FR : MONTHS_EN
-  const DAYS   = language === 'fr' ? DAYS_FR   : DAYS_EN
+  const MONTHS = language === 'zh' ? MONTHS_ZH : language === 'fr' ? MONTHS_FR : MONTHS_EN
+  const DAYS   = language === 'zh' ? DAYS_ZH : language === 'fr' ? DAYS_FR   : DAYS_EN
 
   const typeConfig = {
     course:   { color: '#ed1b2f', bg: '#fef2f2', icon: <FaBook />,          label: t('calendar.classEvents') },
     academic: { color: '#1d4ed8', bg: '#eff6ff', icon: <FaGraduationCap />, label: t('calendar.academicDates') },
-    exam:     { color: '#7c3aed', bg: '#f5f3ff', icon: <FaClipboardList />, label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
+    exam:     { color: '#7c3aed', bg: '#f5f3ff', icon: <FaClipboardList />, label: L(language, 'Final Exams', 'Examens finaux', '期末考试') },
     personal: { color: '#059669', bg: '#ecfdf5', icon: <FaUser />,          label: t('calendar.personalEvents') },
-    club:     { color: '#d97706', bg: '#fef3c7', icon: <FaUsers />,         label: language === 'fr' ? 'Réunion de club' : 'Club Meeting' },
+    club:     { color: '#d97706', bg: '#fef3c7', icon: <FaUsers />,         label: L(language, 'Club Meeting', 'Réunion de club', '社团会议') },
   }
 
   const getEventStyle = useCallback((event, cfg) => {
     if (event.type === 'club') {
       const clubStyle = getClubEventStyle(event)
-      return { ...clubStyle, icon: <FaUsers />, label: language === 'fr' ? 'Réunion de club' : 'Club Meeting' }
+      return { ...clubStyle, icon: <FaUsers />, label: L(language, 'Club Meeting', 'Réunion de club', '社团会议') }
     }
     return cfg[event.type] || cfg.personal
   }, [language])
@@ -1139,7 +1144,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   const urgentEvents = upcomingEvents.filter(e => daysUntil(e.date) <= 7)
 
   const countdownLabel = (days) => {
-    if (days === 0) return language === 'fr' ? "🔴 Aujourd'hui!" : '🔴 Today!'
+    if (days === 0) return L(language, '🔴 Today!', "🔴 Aujourd'hui!", '🔴 今天！')
     if (days === 1) return `⚠️ ${t('calendar.tomorrow')}`
     if (days <= 7)  return `⚠️ ${t('calendar.inXDays').replace('{n}', days)}`
     return t('calendar.inXDays').replace('{n}', days)
@@ -1152,12 +1157,14 @@ export default function CalendarTab({ user, clubEvents = [] }) {
         <div className="cal-missing-time-banner">
           <FaExclamationTriangle className="cal-missing-icon" />
           <span>
-            {language === 'fr'
+            {language === 'zh'
+              ? '⚠️ 部分课程缺少时间信息'
+              : language === 'fr'
               ? "Certains cours n'ont pas d'heure. Cliquez sur \u00abAfficher/masquer des cours\u00bb pour les corriger."
               : 'Some classes are missing their time. Click "Show/Hide Classes" to fix them.'}
           </span>
           <button className="cal-missing-fix-btn" onClick={() => setShowBulkDelete(true)}>
-            {language === 'fr' ? 'Corriger' : 'Fix now'}
+            {L(language, 'Fix now', 'Corriger', '立即修复')}
           </button>
         </div>
       )}
@@ -1200,8 +1207,8 @@ export default function CalendarTab({ user, clubEvents = [] }) {
               </div>
             )}
           </div>
-          <button className="cal-bulk-toggle-btn" onClick={() => setShowBulkDelete(true)} title={language === 'fr' ? 'Supprimer des cours en masse' : 'Bulk delete classes'}>
-            <FaLayerGroup size={12} /> {language === 'fr' ? 'Modifier les cours' : 'Edit Classes'}
+          <button className="cal-bulk-toggle-btn" onClick={() => setShowBulkDelete(true)} title={L(language, 'Bulk delete classes', 'Supprimer des cours en masse', '批量删除课程')}>
+            <FaLayerGroup size={12} /> {L(language, 'Edit Classes', 'Modifier les cours', '编辑课程')}
           </button>
           <button className="cal-add-btn" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
             <FaPlus /> {t('calendar.addEventBtn')}
@@ -1392,23 +1399,23 @@ export default function CalendarTab({ user, clubEvents = [] }) {
               </div>
               <div>
                 <h3 className="cal-gcal-modal__title">{t('calendar.exportGoogleHelp')}</h3>
-                <p className="cal-gcal-modal__subtitle">{language === 'fr' ? 'Votre fichier .ics a été téléchargé' : 'Your .ics file has been downloaded'}</p>
+                <p className="cal-gcal-modal__subtitle">{L(language, 'Your .ics file has been downloaded', 'Votre fichier .ics a été téléchargé', '您的.ics文件已下载')}</p>
               </div>
               <button className="cal-gcal-modal__close" onClick={() => setShowGCalGuide(false)}><FaTimes /></button>
             </div>
             <ol className="cal-gcal-steps">
-              <li><span className="cal-gcal-step-num">1</span>{language === 'fr' ? 'Ouvrez' : 'Open'} <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">calendar.google.com</a></li>
-              <li><span className="cal-gcal-step-num">2</span>{language === 'fr' ? "Cliquez sur l'icône ⚙️ (Paramètres) → Paramètres" : 'Click the ⚙️ (Settings) icon → Settings'}</li>
-              <li><span className="cal-gcal-step-num">3</span>{language === 'fr' ? 'Sélectionnez "Importer et exporter" dans la barre latérale' : 'Select "Import & export" from the sidebar'}</li>
-              <li><span className="cal-gcal-step-num">4</span>{language === 'fr' ? "Cliquez sur \"Importer\" et choisissez le fichier .ics téléchargé" : 'Click "Import" and choose the downloaded .ics file'}</li>
-              <li><span className="cal-gcal-step-num">5</span>{language === 'fr' ? "Sélectionnez votre calendrier et cliquez sur \"Importer\"" : 'Select your calendar and click "Import"'}</li>
+              <li><span className="cal-gcal-step-num">1</span>{L(language, 'Open', 'Ouvrez', '打开')} <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">calendar.google.com</a></li>
+              <li><span className="cal-gcal-step-num">2</span>{L(language, 'Click the ⚙️ (Settings) icon → Settings', "Cliquez sur l'icône ⚙️ (Paramètres) → Paramètres", '点击⚙️（设置）图标 → 设置')}</li>
+              <li><span className="cal-gcal-step-num">3</span>{L(language, 'Select "Import & export" from the sidebar', 'Sélectionnez "Importer et exporter" dans la barre latérale', '从侧边栏选择"导入与导出"')}</li>
+              <li><span className="cal-gcal-step-num">4</span>{L(language, 'Click "Import" and choose the downloaded .ics file', "Cliquez sur \"Importer\" et choisissez le fichier .ics téléchargé", '点击"导入"并选择已下载的.ics文件')}</li>
+              <li><span className="cal-gcal-step-num">5</span>{L(language, 'Select your calendar and click "Import"', "Sélectionnez votre calendrier et cliquez sur \"Importer\"", '选择您的日历并点击"导入"')}</li>
             </ol>
             <div className="cal-gcal-modal__actions">
               <a className="cal-gcal-modal__open-btn" href="https://calendar.google.com/calendar/r/settings/export" target="_blank" rel="noopener noreferrer">
-                <FaExternalLinkAlt size={12} /> {language === 'fr' ? 'Ouvrir Google Agenda' : 'Open Google Calendar'}
+                <FaExternalLinkAlt size={12} /> {L(language, 'Open Google Calendar', 'Ouvrir Google Agenda', '打开Google日历')}
               </a>
               <button className="cal-gcal-modal__done-btn" onClick={() => setShowGCalGuide(false)}>
-                {language === 'fr' ? 'Terminé' : 'Done'}
+                {L(language, 'Done', 'Terminé', '完成')}
               </button>
             </div>
           </div>

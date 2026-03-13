@@ -538,12 +538,12 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               </div>
               <div className="drv-detail-meta">
                 <div className="drv-meta-card">
-                  <span className="drv-meta-label">{language === 'fr' ? 'Crédits :' : 'Credits:'}</span>
+                  <span className="drv-meta-label">{language === 'zh' ? '学分：' : language === 'fr' ? 'Crédits :' : 'Credits:'}</span>
                   <span className="drv-meta-val">{programDetail.total_credits}</span>
                 </div>
                 {progress && progress.required > 0 && (
                   <div className="drv-meta-card drv-meta-card--green">
-                    <span className="drv-meta-label">{language === 'fr' ? 'Requis complété :' : 'Required done:'}</span>
+                    <span className="drv-meta-label">{language === 'zh' ? '已完成必修：' : language === 'fr' ? 'Requis complété :' : 'Required done:'}</span>
                     <span className="drv-meta-val">{progress.pct}%</span>
                   </div>
                 )}
@@ -556,7 +556,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                     rel="noreferrer"
                     className="drv-ecal-link"
                   >
-                    {language === 'fr' ? 'eCalendrier' : 'eCalendar'} <FaExternalLinkAlt />
+                    {language === 'zh' ? 'eCalendar' : language === 'fr' ? 'eCalendrier' : 'eCalendar'} <FaExternalLinkAlt />
                   </a>
                 )}
               </div>
