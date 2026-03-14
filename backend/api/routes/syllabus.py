@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta  # FIX #2: import timedelta direc
 
 from difflib import SequenceMatcher
 
+from ..routes.professors import _escape_like
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import UserNotFoundException
 from ..config import settings
@@ -46,12 +47,12 @@ def _lookup_rmp(supabase, instructor_name: str, course_code: str | None) -> dict
         qb = (
             supabase.from_("courses")
             .select("instructor, rmp_rating, rmp_difficulty, rmp_num_ratings, rmp_would_take_again, rmp_url, Course")
-            .ilike("instructor", f"%{last_name}%")
+            .ilike("instructor", f"%{_escape_like(last_name)}%")
             .not_.is_("rmp_rating", "null")
         )
         if course_code:
             subject = course_code.split()[0].upper() if " " in course_code else course_code[:4].upper()
-            qb = qb.like("Course", f"{subject}%")
+            qb = qb.like("Course", f"{_escape_like(subject)}%")
 
         rows = qb.limit(100).execute().data or []
 
@@ -410,10 +411,20 @@ async def parse_syllabuses(
             })
             continue
 
+        # SEC-025: Structural PDF validation — verify trailer markers
+        tail = pdf_bytes[-1024:] if len(pdf_bytes) > 1024 else pdf_bytes
+        if b"%%EOF" not in tail or (b"startxref" not in tail and b"xref" not in pdf_bytes):
+            all_results.append({
+                "filename": upload.filename,
+                "success": False,
+                "error": "File does not appear to be a valid PDF",
+            })
+            continue
+
         try:
             extracted = await _extract_syllabus_data(pdf_bytes)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from Claude for {upload.filename}: {e}")
+            logger.error(f"Invalid JSON from Claude for {upload.filename}: {type(e).__name__}")
             all_results.append({
                 "filename": upload.filename,
                 "success": False,
@@ -487,9 +498,9 @@ async def parse_syllabuses(
 
                 rmp_qb = supabase.from_("courses").select(
                     'instructor, rmp_rating, rmp_difficulty, rmp_num_ratings, rmp_would_take_again, rmp_url'
-                ).ilike("instructor", f"%{last_name}%").not_.is_("rmp_rating", "null")
+                ).ilike("instructor", f"%{_escape_like(last_name)}%").not_.is_("rmp_rating", "null")
                 if subject_hint:
-                    rmp_qb = rmp_qb.like("Course", f"{subject_hint}%")
+                    rmp_qb = rmp_qb.like("Course", f"{_escape_like(subject_hint)}%")
                 rmp_rows = (rmp_qb.limit(100).execute().data) or []
 
                 best_row, best_score = None, 0.0
@@ -734,11 +745,11 @@ async def parse_syllabuses(
                 rmp_query = (
                     supabase.from_("courses")
                     .select("instructor, rmp_rating, rmp_difficulty, rmp_num_ratings, rmp_would_take_again, rmp_url")
-                    .ilike("instructor", f"%{last_name}%")
+                    .ilike("instructor", f"%{_escape_like(last_name)}%")
                     .not_.is_("rmp_rating", "null")
                 )
                 if subject_code:
-                    rmp_query = rmp_query.like("Course", f"{subject_code}%")
+                    rmp_query = rmp_query.like("Course", f"{_escape_like(subject_code)}%")
                 rmp_query = rmp_query.limit(20)
                 rmp_rows = rmp_query.execute().data or []
 

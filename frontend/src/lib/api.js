@@ -1,7 +1,11 @@
 import axios from 'axios'
 import { supabase } from './supabase'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.PROD
+    ? (() => { throw new Error('VITE_API_URL must be set in production') })()
+    : 'http://localhost:8000/api'
+)
 
 // Create axios instance with configuration
 const api = axios.create({

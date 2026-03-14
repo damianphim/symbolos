@@ -4,7 +4,7 @@ backend/api/routes/admin.py
 Backend admin authentication endpoint.
 - Uses constant-time comparison (hmac.compare_digest) to prevent timing attacks.
 - Separate ADMIN_SECRET from CRON_SECRET — login no longer leaks CRON_SECRET (F-03).
-  Instead, a short-lived signed admin session token is issued (1-hour expiry).
+  Instead, a short-lived signed admin session token is issued (15-minute expiry).
 - Brute-force protection is now Supabase-backed (F-05) so the 5-attempt limit
   is shared across all serverless instances. Falls back to in-memory on DB error.
 """
@@ -27,7 +27,13 @@ logger = logging.getLogger(__name__)
 # Format: "admin:<exp_unix_timestamp>:<hmac_sha256_hex>"
 # Signed with ADMIN_SECRET so the server can verify without storing sessions.
 
-_ADMIN_TOKEN_TTL = 3600  # 1 hour
+_ADMIN_TOKEN_TTL = 900  # 15 minutes (reduced from 1 hour for security)
+
+# ── Token revocation list ─────────────────────────────────────────────────────
+# In-memory set of revoked token signatures. Cleared on cold start, which is
+# acceptable because tokens are short-lived (15 min) and worst case a revoked
+# token survives until its natural expiry.
+_revoked_tokens: set[str] = set()
 
 
 def _issue_admin_token() -> str:
@@ -42,10 +48,17 @@ def _issue_admin_token() -> str:
     return f"{payload}:{sig}"
 
 
+def revoke_admin_token(token: str) -> None:
+    """Add a token's signature to the revocation set."""
+    parts = token.split(":")
+    if len(parts) == 3:
+        _revoked_tokens.add(parts[2])
+
+
 def verify_admin_token(token: str) -> bool:
     """
     Verify a previously issued admin session token.
-    Returns False if the token is malformed, expired, or has an invalid signature.
+    Returns False if the token is malformed, expired, revoked, or has an invalid signature.
     """
     try:
         parts = token.split(":")
@@ -53,6 +66,11 @@ def verify_admin_token(token: str) -> bool:
             return False
         exp = int(parts[1])
         if time.time() > exp:
+            # Lazily clean up expired entries from the revocation set
+            _revoked_tokens.discard(parts[2])
+            return False
+        # Check revocation list before expensive HMAC
+        if parts[2] in _revoked_tokens:
             return False
         payload = f"admin:{exp}"
         expected_sig = hmac.new(
@@ -162,7 +180,7 @@ async def verify_admin(request: AdminLoginRequest, req: Request):
     Verify the admin secret and issue a short-lived signed session token.
 
     - Authenticates with ADMIN_SECRET only (CRON_SECRET is never returned).
-    - Issues a 1-hour signed token the frontend uses for subsequent admin calls.
+    - Issues a 15-minute signed token the frontend uses for subsequent admin calls.
     - Constant-time comparison prevents timing attacks.
     - Rate-limited to 5 attempts/minute per IP, Supabase-backed and shared
       across all serverless instances (falls back to in-memory if DB is down).

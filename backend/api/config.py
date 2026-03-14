@@ -81,7 +81,7 @@ class Settings(BaseSettings):
 
     # ── Security / CORS ──────────────────────────────────────────────────
     ALLOWED_ORIGINS: Union[str, List[str]] = Field(
-        default="http://localhost:5173,https://ai-advisor-pi.vercel.app,http://symbolos.ca,https://symbolos.ca"
+        default="http://localhost:5173,https://ai-advisor-pi.vercel.app,https://symbolos.ca"
     )
 
     @field_validator("ALLOWED_ORIGINS", mode="before")

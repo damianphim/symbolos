@@ -5,7 +5,11 @@
  * from here instead of duplicating the normalizeUrl logic.
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.PROD
+    ? (() => { throw new Error('VITE_API_URL must be set in production') })()
+    : 'http://localhost:8000'
+)
 
 /**
  * Normalize the API URL:

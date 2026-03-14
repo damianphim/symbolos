@@ -118,7 +118,7 @@ Respond ONLY with valid JSON, no markdown, no explanation:
 }}"""
 
         message = await client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model=settings.CLAUDE_MODEL,
             max_tokens=1200,
             messages=[{"role": "user", "content": prompt}]
         )

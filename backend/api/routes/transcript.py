@@ -229,6 +229,15 @@ async def parse_transcript(
     if len(pdf_bytes) < 4 or pdf_bytes[:4] != PDF_MAGIC:
         raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
 
+    # SEC-025: Structural PDF validation — verify the file has a valid PDF trailer.
+    # Magic bytes alone can be faked; a real PDF must contain a %%EOF marker and
+    # at least one xref or startxref reference.
+    tail = pdf_bytes[-1024:] if len(pdf_bytes) > 1024 else pdf_bytes
+    if b"%%EOF" not in tail:
+        raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
+    if b"startxref" not in tail and b"xref" not in pdf_bytes:
+        raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
+
     try:
         extracted = await extract_transcript_data(pdf_bytes)
     except json.JSONDecodeError as e:

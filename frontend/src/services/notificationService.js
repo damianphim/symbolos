@@ -6,7 +6,11 @@
 
 import { supabase } from '../lib/supabase'
 
-const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/api\/?$/, '')
+const BASE = (import.meta.env.VITE_API_URL || (
+  import.meta.env.PROD
+    ? (() => { throw new Error('VITE_API_URL must be set in production') })()
+    : 'http://localhost:8000'
+)).replace(/\/api\/?$/, '')
 
 /** Get the current user's Bearer token from Supabase session. */
 async function _authHeader() {
