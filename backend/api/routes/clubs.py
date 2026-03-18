@@ -184,11 +184,15 @@ def _verify_action_token(token: str):
     """Verify a signed action token. Returns (submission_id, action) or raises."""
     try:
         parts = token.split(":")
+        logger.info(f"Token verification: {len(parts)} parts, first='{parts[0] if parts else '?'}'")
         if len(parts) != 5 or parts[0] != "club":
+            logger.warning(f"Token format invalid: {len(parts)} parts")
             return None, None
         _, submission_id, action, exp_str, sig = parts
         exp = int(exp_str)
-        if time.time() > exp:
+        now = time.time()
+        if now > exp:
+            logger.warning(f"Token expired: now={now}, exp={exp}, diff={now - exp}s")
             return None, None
         payload = f"club:{submission_id}:{action}:{exp_str}"
         expected_sig = hmac.new(
@@ -197,11 +201,13 @@ def _verify_action_token(token: str):
             hashlib.sha256,
         ).hexdigest()
         if not hmac.compare_digest(sig, expected_sig):
+            logger.warning(f"Token HMAC mismatch: got={sig[:16]}... expected={expected_sig[:16]}...")
             return None, None
         if action not in ("approved", "rejected"):
             return None, None
         return submission_id, action
-    except Exception:
+    except Exception as e:
+        logger.exception(f"Token verification error: {e}")
         return None, None
 
 
@@ -796,6 +802,7 @@ async def admin_email_action(token: str):
     No auth required — the HMAC-signed token is the credential.
     Returns an HTML page with the result.
     """
+    logger.info(f"Admin action called with token: {token[:60]}...")
     submission_id, action = _verify_action_token(token)
     if not submission_id:
         return HTMLResponse(_action_result_html(
