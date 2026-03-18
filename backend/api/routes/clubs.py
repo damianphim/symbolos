@@ -842,7 +842,7 @@ async def admin_email_action(token: str):
 
         # If approved, create the actual club
         if action == "approved":
-            supabase.table("clubs").insert({
+            club_data = {
                 "name": submission["name"],
                 "description": submission["description"],
                 "category": submission.get("category") or "Social",
@@ -853,14 +853,25 @@ async def admin_email_action(token: str):
                 "is_private": submission.get("is_private", False),
                 "is_verified": True,
                 "created_by": submission.get("submitted_by"),
-                "executive_emails": submission.get("executive_emails"),
-                "member_count": 0,
-            }).execute()
+            }
+            # Only include executive_emails if the clubs table has it
+            if submission.get("executive_emails"):
+                club_data["executive_emails"] = submission["executive_emails"]
+            try:
+                supabase.table("clubs").insert(club_data).execute()
+            except Exception as insert_err:
+                logger.exception(f"Error inserting club (trying without optional fields): {insert_err}")
+                # Retry without optional fields that might not exist in the table
+                club_data.pop("executive_emails", None)
+                supabase.table("clubs").insert(club_data).execute()
 
         # Notify the submitter
         contact_email = submission.get("contact_email")
         if contact_email:
-            _send_submitter_notification_email(contact_email, submission["name"], action)
+            try:
+                _send_submitter_notification_email(contact_email, submission["name"], action)
+            except Exception as email_err:
+                logger.exception(f"Failed to send submitter notification: {email_err}")
 
         if action == "approved":
             return HTMLResponse(_action_result_html(
