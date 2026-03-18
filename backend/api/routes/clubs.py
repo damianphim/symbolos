@@ -241,7 +241,12 @@ def _send_admin_club_email(submission: dict):
         exec_emails = escape(submission.get("executive_emails", "") or "Not provided")
         sub_id = submission.get("id", "")
 
-        approve_token, reject_token = _generate_action_tokens(sub_id)
+        # Use tokens already stored on the submission
+        approve_token = submission.get("approve_token", "")
+        reject_token = submission.get("reject_token", "")
+        if not approve_token or not reject_token:
+            logger.error(f"No tokens found on submission {sub_id} — cannot send email")
+            return
         # Links go directly to the backend API endpoint which returns an HTML result page
         base = settings.API_BASE_URL.rstrip("/")
         approve_url = f"{base}/api/clubs/admin/action?token={approve_token}"
@@ -699,18 +704,32 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
             "status": "pending",
         }).execute()
 
-        # Send approval email to admins
+        # Generate tokens and send approval email to admins
         email_sent = False
         email_error = None
+        token_generated = False
         if insert_result.data:
+            sub_id = insert_result.data[0].get("id", "")
+            # Generate tokens directly here so we can track failures
             try:
-                _send_admin_club_email(insert_result.data[0])
-                email_sent = True
-            except Exception as email_err:
-                email_error = str(email_err)
-                logger.exception(f"Failed to send admin email: {email_err}")
+                _generate_action_tokens(sub_id)
+                token_generated = True
+            except Exception as token_err:
+                email_error = f"Token generation failed: {token_err}"
+                logger.exception(f"Failed to generate action tokens: {token_err}")
 
-        return {"success": True, "email_sent": email_sent, "email_error": email_error, "message": "Club submission received. We'll review it shortly!"}
+            if token_generated:
+                try:
+                    # Re-fetch the submission with tokens
+                    updated = supabase.table("club_submissions").select("*").eq("id", sub_id).execute()
+                    if updated.data:
+                        _send_admin_club_email(updated.data[0])
+                        email_sent = True
+                except Exception as email_err:
+                    email_error = f"Email send failed: {email_err}"
+                    logger.exception(f"Failed to send admin email: {email_err}")
+
+        return {"success": True, "email_sent": email_sent, "token_generated": token_generated, "email_error": email_error, "message": "Club submission received. We'll review it shortly!"}
     except Exception as e:
         logger.exception(f"Error submitting club: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit club")
