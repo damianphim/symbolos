@@ -9,10 +9,10 @@ from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr, Field, AnyHttpUrl
 from typing import Optional, List
-import hashlib
-import hmac
 import logging
+import secrets
 import time
+from datetime import datetime, timedelta, timezone
 from html import escape
 
 from ..utils.supabase_client import get_supabase
@@ -164,48 +164,52 @@ def _send_join_request_email(creator_email: str, club_name: str, requester_name:
         logger.exception(f"Failed to send join request email: {e}")
 
 
-# ── Signed action tokens for email-based club approval ───────────────────────
-_ACTION_TOKEN_TTL = 604800  # 7 days
+# ── DB-stored action tokens for email-based club approval ────────────────────
+_ACTION_TOKEN_TTL_DAYS = 7
 
 
-def _generate_action_token(submission_id: str, action: str) -> str:
-    """Generate an HMAC-signed token encoding submission_id + action + expiry."""
-    exp = int(time.time()) + _ACTION_TOKEN_TTL
-    payload = f"club:{submission_id}:{action}:{exp}"
-    sig = hmac.new(
-        settings.ADMIN_SECRET.encode(),
-        payload.encode(),
-        hashlib.sha256,
-    ).hexdigest()
-    return f"{payload}:{sig}"
+def _generate_action_tokens(submission_id: str) -> tuple[str, str]:
+    """Generate random tokens for approve/reject and store them in the DB."""
+    approve_token = secrets.token_urlsafe(32)
+    reject_token = secrets.token_urlsafe(32)
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=_ACTION_TOKEN_TTL_DAYS)).isoformat()
+
+    supabase = get_supabase()
+    supabase.table("club_submissions").update({
+        "approve_token": approve_token,
+        "reject_token": reject_token,
+        "token_expires_at": expires_at,
+    }).eq("id", submission_id).execute()
+
+    return approve_token, reject_token
 
 
 def _verify_action_token(token: str):
-    """Verify a signed action token. Returns (submission_id, action) or raises."""
+    """Look up a token in the DB. Returns (submission_id, action) or (None, None)."""
     try:
-        parts = token.split(":")
-        logger.info(f"Token verification: {len(parts)} parts, first='{parts[0] if parts else '?'}'")
-        if len(parts) != 5 or parts[0] != "club":
-            logger.warning(f"Token format invalid: {len(parts)} parts")
-            return None, None
-        _, submission_id, action, exp_str, sig = parts
-        exp = int(exp_str)
-        now = time.time()
-        if now > exp:
-            logger.warning(f"Token expired: now={now}, exp={exp}, diff={now - exp}s")
-            return None, None
-        payload = f"club:{submission_id}:{action}:{exp_str}"
-        expected_sig = hmac.new(
-            settings.ADMIN_SECRET.encode(),
-            payload.encode(),
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(sig, expected_sig):
-            logger.warning(f"Token HMAC mismatch: got={sig[:16]}... expected={expected_sig[:16]}...")
-            return None, None
-        if action not in ("approved", "rejected"):
-            return None, None
-        return submission_id, action
+        supabase = get_supabase()
+        # Check approve tokens
+        result = supabase.table("club_submissions").select("id, token_expires_at, status").eq("approve_token", token).execute()
+        if result.data:
+            row = result.data[0]
+            expires = row.get("token_expires_at", "")
+            if expires and datetime.fromisoformat(expires) < datetime.now(timezone.utc):
+                logger.warning(f"Approve token expired for submission {row['id']}")
+                return None, None
+            return row["id"], "approved"
+
+        # Check reject tokens
+        result = supabase.table("club_submissions").select("id, token_expires_at, status").eq("reject_token", token).execute()
+        if result.data:
+            row = result.data[0]
+            expires = row.get("token_expires_at", "")
+            if expires and datetime.fromisoformat(expires) < datetime.now(timezone.utc):
+                logger.warning(f"Reject token expired for submission {row['id']}")
+                return None, None
+            return row["id"], "rejected"
+
+        logger.warning(f"Token not found in DB: {token[:20]}...")
+        return None, None
     except Exception as e:
         logger.exception(f"Token verification error: {e}")
         return None, None
@@ -235,8 +239,7 @@ def _send_admin_club_email(submission: dict):
         exec_emails = escape(submission.get("executive_emails", "") or "Not provided")
         sub_id = submission.get("id", "")
 
-        approve_token = _generate_action_token(sub_id, "approved")
-        reject_token = _generate_action_token(sub_id, "rejected")
+        approve_token, reject_token = _generate_action_tokens(sub_id)
         # Links go directly to the backend API endpoint which returns an HTML result page
         base = settings.API_BASE_URL.rstrip("/")
         approve_url = f"{base}/api/clubs/admin/action?token={approve_token}"
@@ -793,38 +796,6 @@ def _action_result_html(title: str, message: str, is_success: bool) -> str:
     <a href="https://symbolos.ca" style="display:inline-block;margin-top:20px;background:#ED1B2F;color:#fff;font-size:14px;font-weight:600;text-decoration:none;padding:10px 24px;border-radius:8px;">Go to Symbolos</a>
   </div>
 </body></html>"""
-
-
-@router.get("/admin/debug-token")
-async def debug_token(token: str):
-    """Temporary debug endpoint — remove after fixing."""
-    try:
-        parts = token.split(":")
-        result = {
-            "raw_token_first80": token[:80],
-            "token_length": len(token),
-            "parts_count": len(parts),
-            "parts_preview": [p[:20] for p in parts],
-        }
-        if len(parts) >= 4:
-            try:
-                result["exp"] = int(parts[3])
-                result["now"] = int(time.time())
-                result["expired"] = int(time.time()) > int(parts[3])
-            except ValueError:
-                result["exp_parse_error"] = parts[3][:20]
-        if len(parts) == 5:
-            payload = f"club:{parts[1]}:{parts[2]}:{parts[3]}"
-            expected_sig = hmac.new(
-                settings.ADMIN_SECRET.encode(), payload.encode(), hashlib.sha256
-            ).hexdigest()
-            result["sig_match"] = hmac.compare_digest(parts[4], expected_sig)
-            result["sig_got"] = parts[4][:16]
-            result["sig_expected"] = expected_sig[:16]
-        result["admin_secret_len"] = len(settings.ADMIN_SECRET)
-        return result
-    except Exception as e:
-        return {"error": str(e), "token_first80": token[:80]}
 
 
 @router.get("/admin/action")
