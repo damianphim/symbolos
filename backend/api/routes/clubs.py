@@ -154,7 +154,7 @@ def _send_join_request_email(creator_email: str, club_name: str, requester_name:
 </body></html>"""
 
         resend.Emails.send({
-            "from": "McGill AI Advisor <onboarding@resend.dev>",
+            "from": "Symbolos <notifications@symbolos.ca>",
             "to": [creator_email],
             "subject": subject,
             "html": html,
@@ -299,7 +299,7 @@ def _send_admin_club_email(submission: dict):
 </body></html>"""
 
         resend.Emails.send({
-            "from": "McGill AI Advisor <onboarding@resend.dev>",
+            "from": "Symbolos <notifications@symbolos.ca>",
             "to": admin_emails,
             "subject": subject,
             "html": html,
@@ -356,7 +356,7 @@ def _send_submitter_notification_email(contact_email: str, club_name: str, statu
 </body></html>"""
 
         resend.Emails.send({
-            "from": "McGill AI Advisor <onboarding@resend.dev>",
+            "from": "Symbolos <notifications@symbolos.ca>",
             "to": [contact_email],
             "subject": subject,
             "html": html,

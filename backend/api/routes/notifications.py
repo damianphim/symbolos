@@ -268,7 +268,7 @@ def _send_email(to: str, event_title: str, event_date: str, event_type: str, day
 
         resend.api_key = settings.RESEND_API_KEY
         resend.Emails.send({
-            "from": "McGill AI Advisor <onboarding@resend.dev>",
+            "from": "Symbolos <notifications@symbolos.ca>",
             "to": [to],
             "subject": subject,
             "html": html,
