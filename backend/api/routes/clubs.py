@@ -735,23 +735,14 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
         raise HTTPException(status_code=500, detail="Failed to submit club")
 
 
-ADMIN_USER_EMAILS = {"aduda2469@gmail.com", "dphimister24@gmail.com"}
+ADMIN_USER_IDS = {
+    "82e6f229-ce80-47a8-a63c-f099b03dfc73",  # aduda2469@gmail.com
+}
 
 
 def _is_admin_user(user_id: str) -> bool:
-    """Check if the authenticated user is an admin by looking up their email."""
-    try:
-        supabase = get_supabase()
-        result = supabase.table("profiles").select("email").eq("id", user_id).execute()
-        if result.data and result.data[0].get("email") in ADMIN_USER_EMAILS:
-            return True
-        # Fallback: check auth.users via service role
-        user = supabase.auth.admin.get_user_by_id(user_id)
-        if user and user.user and user.user.email in ADMIN_USER_EMAILS:
-            return True
-    except Exception as e:
-        logger.warning(f"Admin check failed: {e}")
-    return False
+    """Check if the authenticated user is an admin."""
+    return user_id in ADMIN_USER_IDS
 
 
 @router.delete("/{club_id}")
