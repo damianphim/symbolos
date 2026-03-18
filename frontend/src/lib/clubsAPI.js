@@ -20,9 +20,19 @@ async function authHeaders(json = true) {
 
 
 const clubsAPI = {
-  async getClubs({ search, category, limit = 50 } = {}) {
-    // No clubs added yet — club leaders can request to add clubs
-    return { clubs: [], count: 0 }
+  async getClubs({ search, category, limit = 50, offset = 0 } = {}) {
+    try {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (category) params.set('category', category)
+      if (limit) params.set('limit', String(limit))
+      const res = await fetch(`${BASE_URL}/api/clubs?${params}`, { headers: await authHeaders() })
+      if (!res.ok) throw new Error('Failed to fetch clubs')
+      return await res.json()
+    } catch (e) {
+      console.error('getClubs error:', e)
+      return { clubs: [], count: 0 }
+    }
   },
 
   async getStarterClubs(userId, major) {
