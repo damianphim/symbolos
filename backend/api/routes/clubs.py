@@ -168,18 +168,20 @@ def _send_join_request_email(creator_email: str, club_name: str, requester_name:
 _ACTION_TOKEN_TTL_DAYS = 7
 
 
-def _generate_action_tokens(submission_id: str) -> tuple[str, str]:
+def _generate_action_tokens(submission_id: str):
     """Generate random tokens for approve/reject and store them in the DB."""
     approve_token = secrets.token_urlsafe(32)
     reject_token = secrets.token_urlsafe(32)
     expires_at = (datetime.now(timezone.utc) + timedelta(days=_ACTION_TOKEN_TTL_DAYS)).isoformat()
 
+    logger.info(f"Generating action tokens for submission {submission_id}")
     supabase = get_supabase()
     supabase.table("club_submissions").update({
         "approve_token": approve_token,
         "reject_token": reject_token,
         "token_expires_at": expires_at,
     }).eq("id", submission_id).execute()
+    logger.info(f"Action tokens stored for submission {submission_id}")
 
     return approve_token, reject_token
 
@@ -698,10 +700,15 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
         }).execute()
 
         # Send approval email to admins
+        email_sent = False
         if insert_result.data:
-            _send_admin_club_email(insert_result.data[0])
+            try:
+                _send_admin_club_email(insert_result.data[0])
+                email_sent = True
+            except Exception as email_err:
+                logger.exception(f"Failed to send admin email: {email_err}")
 
-        return {"success": True, "message": "Club submission received. We'll review it shortly!"}
+        return {"success": True, "email_sent": email_sent, "message": "Club submission received. We'll review it shortly!"}
     except Exception as e:
         logger.exception(f"Error submitting club: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit club")
