@@ -282,7 +282,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
                   { key: 'notifySameDay', labelEn: 'Same day',  labelFr: 'Jour même',  labelZh: '当天' },
                   { key: 'notify1Day',    labelEn: '1 day before', labelFr: '1 jour avant', labelZh: '1天前' },
                   { key: 'notify7Days',   labelEn: '1 week before', labelFr: '1 semaine avant', labelZh: '1周前' },
-                ].map(({ key, labelEn, labelFr }) => (
+                ].map(({ key, labelEn, labelFr, labelZh }) => (
                   <label key={key} className={`cal-v2-chip ${form[key] ? 'active' : ''}`}
                     style={form[key] ? { borderColor: selectedType.color, background: selectedType.bg, color: selectedType.color } : {}}>
                     <input type="checkbox" checked={form[key]} onChange={() => toggle(key)} />
