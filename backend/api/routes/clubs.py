@@ -669,13 +669,13 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
             raise HTTPException(status_code=404, detail="Join request not found")
         join_req = req_result.data[0]
 
-        # Verify club ownership
-        club_result = supabase.table("clubs").select("created_by").eq("id", join_req["club_id"]).execute()
-        if not club_result.data or club_result.data[0].get("created_by") != current_user_id:
-            raise HTTPException(status_code=403, detail="Only the club creator can handle join requests")
+        # Verify club ownership or admin
+        if not _is_club_owner_or_admin(join_req["club_id"], current_user_id):
+            raise HTTPException(status_code=403, detail="Only the club creator or admins can handle join requests")
 
         # Update request status
-        supabase.table("club_join_requests").update({"status": body.action + "d"}).eq("id", request_id).execute()
+        new_status = "approved" if body.action == "approve" else "denied"
+        supabase.table("club_join_requests").update({"status": new_status}).eq("id", request_id).execute()
 
         # If approved, add user to club
         if body.action == "approve":
@@ -694,7 +694,7 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
                     "calendar_synced": False,
                 }).execute()
 
-        return {"success": True, "status": body.action + "d"}
+        return {"success": True, "status": new_status}
     except HTTPException:
         raise
     except Exception as e:
