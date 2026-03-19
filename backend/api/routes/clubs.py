@@ -219,34 +219,30 @@ def _verify_action_token(token: str):
 
 def _send_admin_club_email(submission: dict):
     """Send an approval/rejection email to admin emails when a club is submitted."""
+    if not settings.RESEND_API_KEY:
+        raise Exception("RESEND_API_KEY not set")
+
+    admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",") if e.strip()]
+    if not admin_emails:
+        raise Exception("No ADMIN_EMAILS configured")
+
+    safe_name = escape(submission.get("name", "Unknown"))
+    safe_desc = escape(submission.get("description", "")[:200])
+    category = escape(submission.get("category", "Social"))
+    visibility = "Private" if submission.get("is_private") else "Public"
+    location = escape(submission.get("location", "") or "Not specified")
+    schedule = escape(submission.get("meeting_schedule", "") or "Not specified")
+    contact = escape(submission.get("contact_email", "") or "Not provided")
+    exec_emails = escape(submission.get("executive_emails", "") or "Not provided")
+    sub_id = submission.get("id", "")
+
+    # Use tokens already stored on the submission
+    approve_token = submission.get("approve_token", "")
+    reject_token = submission.get("reject_token", "")
+    if not approve_token or not reject_token:
+        raise Exception(f"No tokens on submission {sub_id}: approve={bool(approve_token)} reject={bool(reject_token)}")
+
     try:
-        import resend
-        if not settings.RESEND_API_KEY:
-            logger.warning("RESEND_API_KEY not set — skipping admin club email")
-            return
-
-        resend.api_key = settings.RESEND_API_KEY
-        admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",") if e.strip()]
-        if not admin_emails:
-            logger.warning("No ADMIN_EMAILS configured — skipping admin club email")
-            return
-
-        safe_name = escape(submission.get("name", "Unknown"))
-        safe_desc = escape(submission.get("description", "")[:200])
-        category = escape(submission.get("category", "Social"))
-        visibility = "Private" if submission.get("is_private") else "Public"
-        location = escape(submission.get("location", "") or "Not specified")
-        schedule = escape(submission.get("meeting_schedule", "") or "Not specified")
-        contact = escape(submission.get("contact_email", "") or "Not provided")
-        exec_emails = escape(submission.get("executive_emails", "") or "Not provided")
-        sub_id = submission.get("id", "")
-
-        # Use tokens already stored on the submission
-        approve_token = submission.get("approve_token", "")
-        reject_token = submission.get("reject_token", "")
-        if not approve_token or not reject_token:
-            logger.error(f"No tokens found on submission {sub_id} — cannot send email")
-            return
         # Links go directly to the backend API endpoint which returns an HTML result page
         base = settings.API_BASE_URL.rstrip("/")
         approve_url = f"{base}/api/clubs/admin/action?token={approve_token}"
