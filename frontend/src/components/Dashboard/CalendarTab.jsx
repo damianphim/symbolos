@@ -163,9 +163,9 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
 
         <form id="event-modal-form" className="cal-modal-body-v2" onSubmit={handleSubmit}>
 
-          {/* Type selector */}
+          {/* Type selector — only show 'club' option if user manages clubs */}
           <div className="cal-v2-type-row">
-            {EVENT_TYPE_OPTIONS.map(opt => (
+            {EVENT_TYPE_OPTIONS.filter(opt => opt.key !== 'club' || managedClubs.length > 0).map(opt => (
               <button key={opt.key} type="button"
                 className={`cal-v2-type-card ${form.type === opt.key ? 'selected' : ''}`}
                 style={form.type === opt.key ? { borderColor: opt.color, background: opt.bg, color: opt.color } : {}}
