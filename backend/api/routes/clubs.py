@@ -309,6 +309,8 @@ def _send_admin_club_email(submission: dict):
         logger.info(f"Resend API response for club {submission.get('name')}: status={resp.status_code} body={resp_data}")
         if resp.status_code >= 400:
             raise Exception(f"Resend API error {resp.status_code}: {resp_data}")
+        # Store response for debugging
+        submission["_resend_response"] = {"status": resp.status_code, "body": resp_data}
     except Exception as e:
         logger.exception(f"Failed to send admin club email: {e}")
         raise
@@ -723,18 +725,21 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
                 email_error = f"Token generation failed: {token_err}"
                 logger.exception(f"Failed to generate action tokens: {token_err}")
 
+            resend_debug = None
             if token_generated:
                 try:
                     # Re-fetch the submission with tokens
                     updated = supabase.table("club_submissions").select("*").eq("id", sub_id).execute()
                     if updated.data:
-                        _send_admin_club_email(updated.data[0])
+                        sub_data = updated.data[0]
+                        _send_admin_club_email(sub_data)
                         email_sent = True
+                        resend_debug = sub_data.get("_resend_response")
                 except Exception as email_err:
                     email_error = f"Email send failed: {email_err}"
                     logger.exception(f"Failed to send admin email: {email_err}")
 
-        return {"success": True, "email_sent": email_sent, "token_generated": token_generated, "email_error": email_error, "admin_emails": settings.ADMIN_EMAILS, "version": "v4", "message": "Club submission received. We'll review it shortly!"}
+        return {"success": True, "email_sent": email_sent, "token_generated": token_generated, "email_error": email_error, "resend_debug": resend_debug, "admin_emails": settings.ADMIN_EMAILS, "version": "v5", "message": "Club submission received. We'll review it shortly!"}
     except Exception as e:
         logger.exception(f"Error submitting club: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit club")
