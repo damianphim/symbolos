@@ -661,38 +661,47 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
     """Approve or deny a join request."""
     if body.action not in ("approve", "deny"):
         raise HTTPException(status_code=400, detail="Action must be 'approve' or 'deny'")
-    supabase = get_supabase()
+    try:
+        supabase = get_supabase()
 
-    # Get the request
-    req_result = supabase.table("club_join_requests").select("*").eq("id", request_id).execute()
-    if not req_result.data:
-        raise HTTPException(status_code=404, detail="Join request not found")
-    join_req = req_result.data[0]
+        # Step 1: Get the request
+        logger.info(f"[join-action] Looking up request {request_id}")
+        req_result = supabase.table("club_join_requests").select("*").eq("id", request_id).execute()
+        if not req_result.data:
+            raise HTTPException(status_code=404, detail="Join request not found")
+        join_req = req_result.data[0]
+        logger.info(f"[join-action] Found request for club {join_req.get('club_id')} by user {join_req.get('user_id')}")
 
-    # Verify club ownership or admin
-    if not _is_club_owner_or_admin(join_req["club_id"], current_user_id):
-        raise HTTPException(status_code=403, detail="Only the club creator or admins can handle join requests")
+        # Step 2: Verify club ownership or admin
+        is_admin = current_user_id in ADMIN_USER_IDS
+        logger.info(f"[join-action] current_user={current_user_id}, is_admin={is_admin}")
+        if not is_admin:
+            club_result = supabase.table("clubs").select("created_by").eq("id", join_req["club_id"]).execute()
+            if not club_result.data or club_result.data[0].get("created_by") != current_user_id:
+                raise HTTPException(status_code=403, detail="Only the club creator or admins can handle join requests")
 
-    if body.action == "approve":
-        # Add user to club if not already joined
-        existing = (
-            supabase.table("user_clubs")
-            .select("user_id")
-            .eq("user_id", join_req["user_id"])
-            .eq("club_id", join_req["club_id"])
-            .execute()
-        )
-        if not existing.data:
-            supabase.table("user_clubs").insert({
-                "user_id": join_req["user_id"],
-                "club_id": join_req["club_id"],
-                "calendar_synced": False,
-            }).execute()
+        # Step 3: If approve, add to club
+        if body.action == "approve":
+            logger.info(f"[join-action] Approving — adding user to club")
+            existing = supabase.table("user_clubs").select("user_id").eq("user_id", join_req["user_id"]).eq("club_id", join_req["club_id"]).execute()
+            if not existing.data:
+                supabase.table("user_clubs").insert({
+                    "user_id": join_req["user_id"],
+                    "club_id": join_req["club_id"],
+                    "calendar_synced": False,
+                }).execute()
 
-    # Delete the join request row (cleaner than updating status)
-    supabase.table("club_join_requests").delete().eq("id", request_id).execute()
+        # Step 4: Delete the join request
+        logger.info(f"[join-action] Deleting request {request_id}")
+        supabase.table("club_join_requests").delete().eq("id", request_id).execute()
 
-    return {"success": True, "status": "approved" if body.action == "approve" else "denied"}
+        logger.info(f"[join-action] Done — action={body.action}")
+        return {"success": True, "status": "approved" if body.action == "approve" else "denied"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"[join-action] FAILED: {e}")
+        raise HTTPException(status_code=500, detail=f"Join request error: {type(e).__name__}: {str(e)}")
 
 
 @router.get("/user/{user_id}")
