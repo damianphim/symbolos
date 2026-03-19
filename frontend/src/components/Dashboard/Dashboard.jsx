@@ -20,6 +20,7 @@ import DegreePlanningView from './DegreePlanningView'
 import Forum from '../Forum/Forum'
 import MarkCompleteModal from './MarkCompleteModal'
 import CalendarTab from './CalendarTab'
+import clubsAPI from '../../lib/clubsAPI'
 import TranscriptUpload from './TranscriptUpload'
 
 import OnboardingTutorial from './OnboardingTutorial'
@@ -69,6 +70,7 @@ export default function Dashboard() {
 
   // ── Club calendar events ───────────────────────────────
   const [clubCalendarEvents, setClubCalendarEvents] = useState([])
+  const [managedClubs, setManagedClubs] = useState([])
 
   // ── Course search ──────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('')
@@ -239,6 +241,25 @@ export default function Dashboard() {
     document.body.style.setProperty('--rsb-width', visible ? '320px' : '0px')
     return () => document.body.style.setProperty('--rsb-width', '0px')
   }, [rightSidebarOpen, activeTab])
+
+  // ── Fetch managed clubs (for calendar event/announcement creation) ──
+  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
+  useEffect(() => {
+    if (!user?.id) return
+    const isAdmin = ADMIN_EMAILS.has(profile?.email || user?.email)
+    async function load() {
+      try {
+        if (isAdmin) {
+          const res = await clubsAPI.getClubs({ limit: 200 })
+          setManagedClubs(res.clubs || [])
+        } else {
+          const res = await clubsAPI.getCreatedClubs(user.id)
+          setManagedClubs(res.clubs || [])
+        }
+      } catch { setManagedClubs([]) }
+    }
+    load()
+  }, [user?.id, profile?.email])
 
   // ── Language switch: regenerate cards in the new language ────
   // On mount: loadAdvisorCards already handles language mismatch via localStorage key.
@@ -706,7 +727,7 @@ export default function Dashboard() {
           {activeTab === 'forum' && <Forum />}
 
           {activeTab === 'calendar' && (
-            <CalendarTab user={user} clubEvents={clubCalendarEvents} />
+            <CalendarTab user={user} clubEvents={clubCalendarEvents} managedClubs={managedClubs} />
           )}
 
           {activeTab === 'profile' && (

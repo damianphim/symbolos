@@ -157,6 +157,56 @@ const clubsAPI = {
     return res.json()
   },
 
+  // ── Club Events ──────────────────────────────────────────────────────────
+  async getSubscribedClubEvents() {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/events/subscribed`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { events: [] }
+  },
+
+  async createClubEvent(clubId, data) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/events`, {
+      method: 'POST', headers: await authHeaders(), body: JSON.stringify(data),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to create event') }
+    return res.json()
+  },
+
+  async deleteClubEvent(clubId, eventId) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/events/${eventId}`, {
+      method: 'DELETE', headers: await authHeaders(),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to delete event') }
+    return res.json()
+  },
+
+  // ── Club Announcements ──────────────────────────────────────────────────
+  async getSubscribedClubAnnouncements() {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/announcements/subscribed`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { announcements: [] }
+  },
+
+  async createClubAnnouncement(clubId, data) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/announcements`, {
+      method: 'POST', headers: await authHeaders(), body: JSON.stringify(data),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to create announcement') }
+    return res.json()
+  },
+
+  async deleteClubAnnouncement(clubId, annId) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/announcements/${annId}`, {
+      method: 'DELETE', headers: await authHeaders(),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to delete announcement') }
+    return res.json()
+  },
+
   async getCategories() {
     return {
       categories: [

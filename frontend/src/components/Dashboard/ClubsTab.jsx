@@ -199,7 +199,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
   )
 }
 
-function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, onOpen, onDelete, isAdmin, clubLoading, t }) {
+function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
@@ -282,13 +282,23 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
           </button>
         )}
         {isAdmin && (
-          <button
-            className="club-delete-chip"
-            onClick={(e) => { e.stopPropagation(); const v = window.prompt(`Type "delete" to permanently remove "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
-            title="Delete club"
-          >
-            <FaTimes size={10} />
-          </button>
+          <>
+            <button
+              className="club-edit-btn"
+              onClick={(e) => { e.stopPropagation(); onEdit(club) }}
+              title="Edit club"
+              style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--card-bg)', cursor: 'pointer' }}
+            >
+              <FaEdit size={10} />
+            </button>
+            <button
+              className="club-delete-chip"
+              onClick={(e) => { e.stopPropagation(); const v = window.prompt(`Type "delete" to permanently remove "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
+              title="Delete club"
+            >
+              <FaTimes size={10} />
+            </button>
+          </>
         )}
         <button className="club-card__open-btn" onClick={() => onOpen(club)} title="View details">
           <FaChevronRight size={11} />
@@ -1024,6 +1034,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                     onToggleCalendar={handleToggleCalendar}
                     onOpen={setOpenClub}
                     onDelete={handleDeleteClub}
+                    onEdit={setEditingClub}
                     isAdmin={isAdmin}
                     clubLoading={clubLoading}
                     t={t}

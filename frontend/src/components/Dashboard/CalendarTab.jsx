@@ -14,6 +14,7 @@ import { lookupExam, formatExamTime } from '../../utils/examSchedule2026'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
 // FIX #16: Import Supabase calendar API instead of reading/writing localStorage
 import { getEvents, saveEvent, deleteEvent as deleteEventDB, migrateLocalStorageEvents, expandRecurringEvents } from '../../lib/calendarAPI'
+import clubsAPI from '../../lib/clubsAPI'
 import './CalendarTab.css'
 
 // ── McGill Academic Dates 2025–26 ────────────────────────────────
@@ -100,7 +101,7 @@ const EVENT_TYPE_OPTIONS = [
   { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', icon: <FaClipboardList />,   labelEn: 'Exam',      labelFr: 'Examen',     labelZh: '考试' },
 ]
 
-function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, language }) {
+function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, language, managedClubs = [] }) {
   const today = new Date().toLocaleDateString('en-CA', {
     timeZone: localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone
   })
@@ -121,6 +122,8 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
     type:        event?.type        || 'personal',
     category:    event?.category    || '',
     description: event?.description || '',
+    clubId:      event?.clubId      || (managedClubs[0]?.id || ''),
+    recurrence:  event?.recurrence  || '',
     ...(event?.id && !event?.titleKey
       ? {
           notifyEnabled: event.notifyEnabled ?? true,
@@ -215,6 +218,38 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
               placeholder={L(language, 'Room, building…', 'Salle, bâtiment…', '教室、建筑…')}
             />
           </div>
+
+          {/* Club selector (only when type is 'club') */}
+          {form.type === 'club' && managedClubs.length > 0 && (
+            <div className="cal-v2-field">
+              <label className="cal-v2-label">{L(language, 'Club', 'Club', '社团')} <span className="cal-v2-required">*</span></label>
+              <select className="cal-v2-input" value={form.clubId} onChange={e => f('clubId')(e.target.value)}>
+                {managedClubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          {/* Recurrence (only when type is 'club') */}
+          {form.type === 'club' && (
+            <div className="cal-v2-field">
+              <label className="cal-v2-label">{L(language, 'Recurrence', 'Récurrence', '重复')}</label>
+              <select className="cal-v2-input" value={form.recurrence} onChange={e => f('recurrence')(e.target.value)}>
+                <option value="">{L(language, 'One-time event', 'Événement unique', '一次性事件')}</option>
+                <option value="weekly_monday">Weekly Monday</option>
+                <option value="weekly_tuesday">Weekly Tuesday</option>
+                <option value="weekly_wednesday">Weekly Wednesday</option>
+                <option value="weekly_thursday">Weekly Thursday</option>
+                <option value="weekly_friday">Weekly Friday</option>
+                <option value="weekly_saturday">Weekly Saturday</option>
+                <option value="weekly_sunday">Weekly Sunday</option>
+                <option value="biweekly_monday">Bi-weekly Monday</option>
+                <option value="biweekly_tuesday">Bi-weekly Tuesday</option>
+                <option value="biweekly_wednesday">Bi-weekly Wednesday</option>
+                <option value="biweekly_thursday">Bi-weekly Thursday</option>
+                <option value="biweekly_friday">Bi-weekly Friday</option>
+              </select>
+            </div>
+          )}
 
           {/* Description */}
           <div className="cal-v2-field">
@@ -776,7 +811,47 @@ function googleCalendarUrl(event) {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${fmt(event.title)}&dates=${dates}&details=${fmt(event.description)}&location=${fmt(event.location)}`
 }
 
-export default function CalendarTab({ user, clubEvents = [] }) {
+function AnnouncementModal({ clubs, onSave, onClose, language }) {
+  const [form, setForm] = useState({ title: '', body: '', clubId: clubs[0]?.id || '' })
+  return (
+    <div className="cal-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="cal-modal cal-modal-v2" style={{ maxWidth: '460px' }}>
+        <div className="cal-modal-accent" style={{ background: '#d97706' }} />
+        <div className="cal-modal-header-v2">
+          <div className="cal-modal-header-left">
+            <span className="cal-modal-type-icon"><FaBullhorn /></span>
+            <h3>{L(language, 'Post Announcement', 'Publier une annonce', '发布公告')}</h3>
+          </div>
+          <button className="cal-modal-close" onClick={onClose}><FaTimes /></button>
+        </div>
+        <form className="cal-modal-body-v2" onSubmit={e => { e.preventDefault(); if (form.title.trim() && form.body.trim() && form.clubId) onSave(form) }}>
+          <div className="cal-v2-field">
+            <label className="cal-v2-label">{L(language, 'Club', 'Club', '社团')}</label>
+            <select className="cal-v2-input" value={form.clubId} onChange={e => setForm(p => ({ ...p, clubId: e.target.value }))}>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="cal-v2-field">
+            <label className="cal-v2-label">{L(language, 'Title', 'Titre', '标题')} <span className="cal-v2-required">*</span></label>
+            <input className="cal-v2-input" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder={L(language, 'Announcement title…', 'Titre de l\'annonce…', '公告标题…')} required autoFocus />
+          </div>
+          <div className="cal-v2-field">
+            <label className="cal-v2-label">{L(language, 'Message', 'Message', '消息')} <span className="cal-v2-required">*</span></label>
+            <textarea className="cal-v2-input cal-v2-textarea" rows={4} value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} placeholder={L(language, 'Write your announcement…', 'Rédigez votre annonce…', '写下你的公告…')} required />
+          </div>
+          <div className="cal-v2-footer">
+            <div className="cal-v2-actions-right">
+              <button type="button" className="cal-v2-btn-ghost" onClick={onClose}>{L(language, 'Cancel', 'Annuler', '取消')}</button>
+              <button type="submit" className="cal-v2-btn-primary" style={{ background: '#d97706' }}><FaCheck size={11} /> {L(language, 'Post', 'Publier', '发布')}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }) {
   const { t, language } = useLanguage()
   const { getTodayStr, getNow } = useTimezone()
   const [notifPrefs] = useNotificationPrefs(user?.id, user?.email)
@@ -807,6 +882,9 @@ export default function CalendarTab({ user, clubEvents = [] }) {
   // isLoadingEvents shows a spinner while the initial fetch is in flight.
   const [userEvents, setUserEvents]       = useState([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(true)
+  const [serverClubEvents, setServerClubEvents] = useState([])
+  const [clubAnnouncements, setClubAnnouncements] = useState([])
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
 
   // ── Load exam schedule from current courses ─────────────────────
   useEffect(() => {
@@ -898,6 +976,72 @@ export default function CalendarTab({ user, clubEvents = [] }) {
     return () => { cancelled = true }
   }, [user?.id])
 
+  // ── Fetch server-stored club events & announcements ─────────────
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    async function loadClubData() {
+      try {
+        const [evRes, annRes] = await Promise.all([
+          clubsAPI.getSubscribedClubEvents(),
+          clubsAPI.getSubscribedClubAnnouncements(),
+        ])
+        if (cancelled) return
+        // Shape server events to match calendar event format
+        const shaped = (evRes.events || []).map(ev => ({
+          id: `sclub-${ev.id}`,
+          _serverId: ev.id,
+          title: ev.title,
+          date: ev.date,
+          time: ev.time || '',
+          end_time: ev.end_time || '',
+          type: 'club',
+          category: ev.clubs?.name || '',
+          description: ev.description || '',
+          location: ev.location || '',
+          clubId: ev.club_id,
+          recurrence: ev.recurrence || null,
+          readOnly: false,
+        }))
+        // Expand recurring server club events
+        const expanded = expandRecurringEvents(shaped)
+        setServerClubEvents(expanded)
+        setClubAnnouncements(annRes.announcements || [])
+      } catch (err) {
+        console.error('Failed to load club events/announcements:', err)
+      }
+    }
+    loadClubData()
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  const refreshClubData = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const [evRes, annRes] = await Promise.all([
+        clubsAPI.getSubscribedClubEvents(),
+        clubsAPI.getSubscribedClubAnnouncements(),
+      ])
+      const shaped = (evRes.events || []).map(ev => ({
+        id: `sclub-${ev.id}`,
+        _serverId: ev.id,
+        title: ev.title,
+        date: ev.date,
+        time: ev.time || '',
+        end_time: ev.end_time || '',
+        type: 'club',
+        category: ev.clubs?.name || '',
+        description: ev.description || '',
+        location: ev.location || '',
+        clubId: ev.club_id,
+        recurrence: ev.recurrence || null,
+        readOnly: false,
+      }))
+      setServerClubEvents(expandRecurringEvents(shaped))
+      setClubAnnouncements(annRes.announcements || [])
+    } catch (err) { console.error('Failed to refresh club data:', err) }
+  }, [user?.id])
+
   const formatDate = useCallback((dateStr) => {
     const [y, m, d] = dateStr.split('-')
     return `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
@@ -952,8 +1096,9 @@ export default function CalendarTab({ user, clubEvents = [] }) {
       ...examEvents,
       ...retypedUser,
       ...clubEvents,
+      ...serverClubEvents,
     ]
-  }, [userEvents, examEvents, clubEvents, language, t])
+  }, [userEvents, examEvents, clubEvents, serverClubEvents, language, t])
 
   const filteredEvents = useMemo(() =>
     allEvents.filter(e => {
@@ -995,6 +1140,27 @@ export default function CalendarTab({ user, clubEvents = [] }) {
 
   // ── FIX #16: Save handler writes to Supabase ────────────────────
   const handleSaveEvent = async (event) => {
+    // ── Club event → save via club API ──────────────────────────────
+    if (event.type === 'club' && event.clubId) {
+      setShowModal(false); setEditEvent(null); setPreselectedDate(null)
+      try {
+        await clubsAPI.createClubEvent(event.clubId, {
+          title: event.title,
+          description: event.description || '',
+          date: event.date,
+          time: event.time || null,
+          end_time: event.end_time || null,
+          location: event.location || null,
+          recurrence: event.recurrence || null,
+        })
+        await refreshClubData()
+      } catch (err) {
+        console.error('Failed to create club event:', err)
+      }
+      return
+    }
+
+    // ── Personal / Academic / Exam events → existing flow ───────────
     const isEdit = event.id && userEvents.some(e => e.id === event.id)
 
     // Optimistic update — patch local state immediately so UI feels instant
@@ -1346,7 +1512,59 @@ export default function CalendarTab({ user, clubEvents = [] }) {
               )
             })}
           </div>
+
+          {/* Club Announcements Section */}
+          {clubAnnouncements.length > 0 && (
+            <>
+              <h3 style={{ margin: '24px 0 12px', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaBullhorn size={13} style={{ color: '#d97706' }} /> {L(language, 'Club Announcements', 'Annonces de club', '社团公告')}
+              </h3>
+              <div className="cal-announce-list">
+                {clubAnnouncements.map(ann => (
+                  <div key={ann.id} className="cal-announce-card" style={{ borderLeftColor: '#d97706' }}>
+                    <div className="cal-announce-card-left">
+                      <div className="cal-announce-type" style={{ color: '#d97706', background: '#fef3c7' }}>
+                        <FaBullhorn /> {ann.clubs?.name || 'Club'}
+                      </div>
+                      <h4>{ann.title}</h4>
+                      <p className="cal-announce-desc">{ann.body}</p>
+                    </div>
+                    <div className="cal-announce-card-right">
+                      <div className="cal-announce-date">{formatDate(ann.date)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Post Announcement Button (for owners/admins) */}
+          {managedClubs.length > 0 && (
+            <button
+              className="cal-v2-btn-primary"
+              style={{ background: '#d97706', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+              onClick={() => setShowAnnouncementModal(true)}
+            >
+              <FaBullhorn size={12} /> {L(language, 'Post Announcement', 'Publier une annonce', '发布公告')}
+            </button>
+          )}
         </div>
+      )}
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <AnnouncementModal
+          clubs={managedClubs}
+          onSave={async (data) => {
+            try {
+              await clubsAPI.createClubAnnouncement(data.clubId, { title: data.title, body: data.body })
+              await refreshClubData()
+            } catch (err) { console.error('Failed to create announcement:', err) }
+            setShowAnnouncementModal(false)
+          }}
+          onClose={() => setShowAnnouncementModal(false)}
+          language={language}
+        />
       )}
 
       {/* Day Events Drawer */}
@@ -1386,6 +1604,7 @@ export default function CalendarTab({ user, clubEvents = [] }) {
           onDelete={handleDeleteEvent}
           onClose={() => { setShowModal(false); setEditEvent(null); setPreselectedDate(null) }}
           t={t} notifPrefs={notifPrefs} user={user} language={language}
+          managedClubs={managedClubs}
         />
       )}
 

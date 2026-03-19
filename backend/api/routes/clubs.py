@@ -92,6 +92,21 @@ class JoinRequestAction(BaseModel):
     action: str  # "approve" or "deny"
 
 
+class ClubEventCreate(BaseModel):
+    title:       str            = Field(..., min_length=1, max_length=200)
+    description: Optional[str]  = Field(None, max_length=1000)
+    date:        str            = Field(...)  # YYYY-MM-DD
+    time:        Optional[str]  = None        # HH:MM
+    end_time:    Optional[str]  = None        # HH:MM
+    location:    Optional[str]  = Field(None, max_length=200)
+    recurrence:  Optional[str]  = None        # null, 'weekly_monday', 'biweekly_tuesday', etc.
+
+
+class ClubAnnouncementCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    body:  str = Field(..., min_length=1, max_length=2000)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_starter_names(major: Optional[str]) -> List[str]:
@@ -461,15 +476,11 @@ async def get_created_clubs(user_id: str, current_user_id: str = Depends(get_cur
 
 @router.put("/edit/{club_id}")
 async def edit_club(club_id: str, body: UpdateClubRequest, current_user_id: str = Depends(get_current_user_id)):
-    """Update a club's info. Only the creator can edit."""
+    """Update a club's info. Club owner or admins can edit."""
     try:
         supabase = get_supabase()
-        # Verify ownership
-        club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
-        if not club_result.data:
-            raise HTTPException(status_code=404, detail="Club not found")
-        if club_result.data[0].get("created_by") != current_user_id:
-            raise HTTPException(status_code=403, detail="Only the club creator can edit this club")
+        if not _is_club_owner_or_admin(club_id, current_user_id):
+            raise HTTPException(status_code=403, detail="Only the club owner or admins can edit this club")
 
         update_data = {k: v for k, v in body.dict().items() if v is not None}
         if not update_data:
@@ -750,6 +761,128 @@ ADMIN_USER_IDS = {
 def _is_admin_user(user_id: str) -> bool:
     """Check if the authenticated user is an admin."""
     return user_id in ADMIN_USER_IDS
+
+
+def _is_club_owner_or_admin(club_id: str, user_id: str) -> bool:
+    """Check if user is the club creator OR a global admin."""
+    if _is_admin_user(user_id):
+        return True
+    supabase = get_supabase()
+    club = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+    if club.data and club.data[0].get("created_by") == user_id:
+        return True
+    return False
+
+
+# ── Club Events ──────────────────────────────────────────────────────────────
+
+@router.post("/{club_id}/events")
+async def create_club_event(club_id: str, body: ClubEventCreate, current_user_id: str = Depends(get_current_user_id)):
+    """Create a club event. Only club owner or admins can create."""
+    if not _is_club_owner_or_admin(club_id, current_user_id):
+        raise HTTPException(status_code=403, detail="Only club owner or admins can create events")
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_events").insert({
+            "club_id": club_id,
+            "title": body.title,
+            "description": body.description,
+            "date": body.date,
+            "time": body.time,
+            "end_time": body.end_time,
+            "location": body.location,
+            "recurrence": body.recurrence,
+            "created_by": current_user_id,
+        }).execute()
+        return {"success": True, "event": result.data[0] if result.data else None}
+    except Exception as e:
+        logger.exception(f"Error creating club event: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create event")
+
+
+@router.get("/events/subscribed")
+async def get_subscribed_club_events(current_user_id: str = Depends(get_current_user_id)):
+    """Get all club events from clubs the user has calendar_synced=true."""
+    try:
+        supabase = get_supabase()
+        # Get user's synced club IDs
+        memberships = supabase.table("user_clubs").select("club_id").eq("user_id", current_user_id).eq("calendar_synced", True).execute()
+        club_ids = [m["club_id"] for m in (memberships.data or [])]
+        if not club_ids:
+            return {"events": []}
+
+        # Get all events for those clubs, with club name
+        events = supabase.table("club_events").select("*, clubs(name, category)").in_("club_id", club_ids).order("date").execute()
+        return {"events": events.data or []}
+    except Exception as e:
+        logger.exception(f"Error fetching subscribed club events: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch club events")
+
+
+@router.delete("/{club_id}/events/{event_id}")
+async def delete_club_event(club_id: str, event_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Delete a club event. Only club owner or admins can delete."""
+    if not _is_club_owner_or_admin(club_id, current_user_id):
+        raise HTTPException(status_code=403, detail="Only club owner or admins can delete events")
+    try:
+        supabase = get_supabase()
+        supabase.table("club_events").delete().eq("id", event_id).eq("club_id", club_id).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.exception(f"Error deleting club event: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete event")
+
+
+# ── Club Announcements ──────────────────────────────────────────────────────
+
+@router.post("/{club_id}/announcements")
+async def create_club_announcement(club_id: str, body: ClubAnnouncementCreate, current_user_id: str = Depends(get_current_user_id)):
+    """Create a club announcement. Only club owner or admins can create."""
+    if not _is_club_owner_or_admin(club_id, current_user_id):
+        raise HTTPException(status_code=403, detail="Only club owner or admins can create announcements")
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_announcements").insert({
+            "club_id": club_id,
+            "title": body.title,
+            "body": body.body,
+            "created_by": current_user_id,
+        }).execute()
+        return {"success": True, "announcement": result.data[0] if result.data else None}
+    except Exception as e:
+        logger.exception(f"Error creating club announcement: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create announcement")
+
+
+@router.get("/announcements/subscribed")
+async def get_subscribed_club_announcements(current_user_id: str = Depends(get_current_user_id)):
+    """Get all announcements from clubs the user has calendar_synced=true."""
+    try:
+        supabase = get_supabase()
+        memberships = supabase.table("user_clubs").select("club_id").eq("user_id", current_user_id).eq("calendar_synced", True).execute()
+        club_ids = [m["club_id"] for m in (memberships.data or [])]
+        if not club_ids:
+            return {"announcements": []}
+
+        announcements = supabase.table("club_announcements").select("*, clubs(name, category)").in_("club_id", club_ids).order("created_at", desc=True).execute()
+        return {"announcements": announcements.data or []}
+    except Exception as e:
+        logger.exception(f"Error fetching subscribed announcements: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch announcements")
+
+
+@router.delete("/{club_id}/announcements/{ann_id}")
+async def delete_club_announcement(club_id: str, ann_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Delete a club announcement. Only club owner or admins can delete."""
+    if not _is_club_owner_or_admin(club_id, current_user_id):
+        raise HTTPException(status_code=403, detail="Only club owner or admins can delete announcements")
+    try:
+        supabase = get_supabase()
+        supabase.table("club_announcements").delete().eq("id", ann_id).eq("club_id", club_id).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.exception(f"Error deleting club announcement: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete announcement")
 
 
 @router.delete("/{club_id}")
