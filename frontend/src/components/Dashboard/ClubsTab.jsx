@@ -518,6 +518,12 @@ function JoinRequestsModal({ club, onClose, onAction, t }) {
                 <div key={req.id} className="join-request-row">
                   <div className="join-request-info">
                     <span className="join-request-name">{req.requester_name || 'Unknown'}</span>
+                    {req.requester_email && <span className="join-request-email">{req.requester_email}</span>}
+                    {req.requester_linkedin && (
+                      <a className="join-request-linkedin" href={req.requester_linkedin} target="_blank" rel="noopener noreferrer">
+                        LinkedIn Profile
+                      </a>
+                    )}
                     <span className="join-request-date">{new Date(req.created_at).toLocaleDateString()}</span>
                   </div>
                   <div className="join-request-actions">
@@ -887,10 +893,18 @@ export default function ClubsTab({ user, onClubEventsChange }) {
   const fetchCreatedClubs = useCallback(async () => {
     if (!user?.id) return
     try {
-      const data = await clubsAPI.getCreatedClubs(user.id)
-      const list = Array.isArray(data) ? data : data.clubs ?? []
+      // For admins, fetch ALL clubs so they can manage any club
+      // For regular users, only their created clubs
+      let list
+      if (isAdmin) {
+        const data = await clubsAPI.getClubs({ limit: 200 })
+        list = Array.isArray(data) ? data : data.clubs ?? []
+      } else {
+        const data = await clubsAPI.getCreatedClubs(user.id)
+        list = Array.isArray(data) ? data : data.clubs ?? []
+      }
       if (!isMounted.current) return
-      setCreatedClubs(list)
+      setCreatedClubs(isAdmin ? list : list)
       // Fetch pending counts for private clubs
       const counts = {}
       for (const club of list) {
@@ -903,7 +917,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
       }
       if (isMounted.current) setPendingCounts(counts)
     } catch { /* silent */ }
-  }, [user?.id])
+  }, [user?.id, isAdmin])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -1050,9 +1064,6 @@ export default function ClubsTab({ user, onClubEventsChange }) {
         </button>
         <button className={`clubs-tab-btn ${activeView === 'my-clubs' ? 'active' : ''}`} onClick={() => setActiveView('my-clubs')}>
           <FaHeart size={12} /> {t('clubs.tabMine')}
-          {(resolvedMyClubs.length > 0 || createdClubs.length > 0) && (
-            <span className="clubs-tab-count">{resolvedMyClubs.length + createdClubs.length}</span>
-          )}
           {totalPendingRequests > 0 && (
             <span className="clubs-tab-notification">{totalPendingRequests}</span>
           )}
@@ -1168,7 +1179,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
               {createdClubs.length > 0 && (
                 <div className="clubs-mine__section">
                   <h3 className="clubs-mine__section-title">
-                    <FaStar size={13} /> {t('clubs.createdByYou')}
+                    <FaStar size={13} /> {isAdmin ? 'Manage Clubs' : t('clubs.createdByYou')}
                     <span className="clubs-mine__section-count">{createdClubs.length}</span>
                   </h3>
                   <div className="clubs-mine__list">

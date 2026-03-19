@@ -915,6 +915,16 @@
   font-weight: 700;
   color: var(--text-primary, #111827);
 }
+.join-request-email {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+}
+.join-request-linkedin {
+  font-size: 0.75rem;
+  color: #2563eb;
+  text-decoration: none;
+}
+.join-request-linkedin:hover { text-decoration: underline; }
 .join-request-date {
   font-size: 0.73rem;
   color: var(--text-tertiary, #9ca3af);

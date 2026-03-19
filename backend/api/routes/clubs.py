@@ -630,15 +630,11 @@ async def edit_club(club_id: str, body: UpdateClubRequest, current_user_id: str 
 
 @router.get("/join-requests/{club_id}")
 async def get_join_requests(club_id: str, current_user_id: str = Depends(get_current_user_id)):
-    """Get pending join requests for a club. Only the creator can view."""
+    """Get pending join requests for a club. Club owner or admins can view."""
     try:
         supabase = get_supabase()
-        # Verify ownership
-        club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
-        if not club_result.data:
-            raise HTTPException(status_code=404, detail="Club not found")
-        if club_result.data[0].get("created_by") != current_user_id:
-            raise HTTPException(status_code=403, detail="Only the club creator can view join requests")
+        if not _is_club_owner_or_admin(club_id, current_user_id):
+            raise HTTPException(status_code=403, detail="Only the club creator or admins can view join requests")
 
         result = (
             supabase.table("club_join_requests")
