@@ -922,10 +922,14 @@ async def get_club_members(club_id: str, current_user_id: str = Depends(get_curr
     if not _is_club_owner_or_admin(club_id, current_user_id):
         raise HTTPException(status_code=403, detail="Only club owner or admins can view members")
     supabase = get_supabase()
-    memberships = supabase.table("user_clubs").select("user_id, created_at").eq("club_id", club_id).execute()
+    try:
+        memberships = supabase.table("user_clubs").select("user_id").eq("club_id", club_id).execute()
+    except Exception as e:
+        logger.exception(f"Error fetching club members: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch members: {str(e)}")
     members = []
     for m in (memberships.data or []):
-        profile = {"id": m["user_id"], "joined_at": m.get("created_at")}
+        profile = {"id": m["user_id"]}
         try:
             p = supabase.table("profiles").select("full_name, email").eq("id", m["user_id"]).execute()
             if p.data:

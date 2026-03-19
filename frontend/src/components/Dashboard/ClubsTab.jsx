@@ -115,13 +115,18 @@ function JoinRequestModal({ club, onSubmit, onClose }) {
   )
 }
 
-function MembersSection({ clubId, meta }) {
+function MembersSection({ clubId, meta, refreshKey }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    clubsAPI.getClubMembers(clubId).then(d => { setMembers(d.members || []); setLoading(false) })
+  const fetchMembers = useCallback(() => {
+    setLoading(true)
+    clubsAPI.getClubMembers(clubId)
+      .then(d => setMembers(d.members || []))
+      .finally(() => setLoading(false))
   }, [clubId])
+
+  useEffect(() => { fetchMembers() }, [fetchMembers, refreshKey])
 
   const handleRemove = async (userId, name) => {
     if (!window.confirm(`Remove ${name || 'this member'} from the club?`)) return
@@ -152,6 +157,7 @@ function MembersSection({ clubId, meta }) {
 }
 
 function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId }) {
+  const [memberRefreshKey, setMemberRefreshKey] = useState(0)
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
   const meta = getCat(display.category)
@@ -261,8 +267,11 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
 
           {canManage && (
             <section className="club-drawer__section">
-              <h3 className="club-drawer__section-title"><FaUsers size={12} /> Members</h3>
-              <MembersSection clubId={club.id} meta={meta} />
+              <h3 className="club-drawer__section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaUsers size={12} /> Members
+                <button onClick={() => setMemberRefreshKey(k => k + 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary, #9ca3af)', fontSize: '11px', padding: '2px 6px' }} title="Refresh members">↻</button>
+              </h3>
+              <MembersSection clubId={club.id} meta={meta} refreshKey={memberRefreshKey} />
             </section>
           )}
 
