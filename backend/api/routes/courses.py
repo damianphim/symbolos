@@ -41,13 +41,6 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-# Columns used when fetching full section detail for a single course
-_DETAIL_COLS = (
-    '"Term Name", "Class Ave.1", instructor, Class, course_name, '
-    'rmp_rating, rmp_difficulty, rmp_num_ratings, rmp_would_take_again, '
-    'mc_rating, mc_num_ratings, blended_rating, description, credits'
-)
-
 _SUBJECTS_CACHE_KEY = "all_subjects"
 
 
@@ -214,7 +207,9 @@ async def get_course_details(
     _: str = Depends(get_current_user_id),
 ):
     """
-    Detailed info for a specific course — all sections, grade history, RMP + MC data.
+    Detailed info for a specific course — grade history, RMP + MC data, schedule.
+    Uses the get_course_details RPC to return 1 aggregated row instead of
+    fetching every historical section row (75+ rows for popular courses).
     MUST be declared after /search and /subjects.
     """
     try:
@@ -229,107 +224,57 @@ async def get_course_details(
         clean_catalog = catalog.strip()
         course_code   = f"{clean_subject}{clean_catalog}"
 
-        response = supabase.from_("courses").select(_DETAIL_COLS).eq("Course", course_code).execute()
+        # ── Single aggregated row from Postgres RPC ────────────────────────
+        rpc_resp = supabase.rpc(
+            "get_course_details", {"p_course_code": course_code}
+        ).execute()
 
-        sections = response.data or []
-        if not sections:
+        data = rpc_resp.data or []
+        if not data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Course {clean_subject} {clean_catalog} not found",
             )
-
-        def extract_year(term_name):
-            if not term_name:
-                return 0
-            m = re.search(r"\d{4}", str(term_name))
-            return int(m.group()) if m else 0
-
-        # Grade trend by year
-        year_grades: dict = {}
-        for section in sections:
-            avg = section.get("Class Ave.1")
-            if avg:
-                try:
-                    year = extract_year(section.get("Term Name"))
-                    year_grades.setdefault(year, []).append(float(avg))
-                except (ValueError, TypeError):
-                    pass
-
-        sorted_years = sorted(year_grades.keys(), reverse=True)
-
-        recent_avg = None
-        if sorted_years:
-            recent_vals = year_grades[sorted_years[0]]
-            recent_avg = round(sum(recent_vals) / len(recent_vals), 2)
-
-        all_avgs = [float(s["Class Ave.1"]) for s in sections if s.get("Class Ave.1")]
-        overall_avg = round(sum(all_avgs) / len(all_avgs), 2) if all_avgs else None
-
-        grade_trend = []
-        for year in sorted_years[:5]:
-            avgs = year_grades[year]
-            grade_trend.append({
-                "year":     year,
-                "average":  round(sum(avgs) / len(avgs), 2),
-                "sections": len(avgs),
-            })
-
-        # Unique instructors, most recent first
-        seen_instructors: set = set()
-        instructors = []
-        for section in sorted(sections, key=lambda s: extract_year(s.get("Term Name")), reverse=True):
-            instr = section.get("instructor")
-            if instr and instr not in seen_instructors:
-                seen_instructors.add(instr)
-                instructors.append(instr)
-
-        # RMP data (first section with data wins)
-        rmp_data = {}
-        for section in sections:
-            rmp = section.get("rmp_rating")
-            if rmp and rmp > 0:
-                rmp_data = {
-                    "rmp_rating":           rmp,
-                    "rmp_difficulty":       section.get("rmp_difficulty"),
-                    "rmp_num_ratings":      section.get("rmp_num_ratings"),
-                    "rmp_would_take_again": section.get("rmp_would_take_again"),
-                }
-                break
-
-        # MC + blended rating (first section with data wins)
-        mc_data = {}
-        for section in sections:
-            mc = section.get("mc_rating")
-            if mc and mc > 0:
-                mc_data = {
-                    "mc_rating":      mc,
-                    "mc_num_ratings": section.get("mc_num_ratings"),
-                    "blended_rating": section.get("blended_rating"),
-                }
-                break
+        row = data[0]
 
         course_obj = {
             "subject":         clean_subject,
             "catalog":         clean_catalog,
-            "title":           sections[0].get("course_name", ""),
-            "description":     sections[0].get("description") or None,
-            "credits":         sections[0].get("credits") or None,
-            "average":         recent_avg,
-            "overall_average": overall_avg,
-            "grade_trend":     grade_trend,
-            "instructors":     instructors,
-            "num_sections":    len(sections),
+            "title":           row.get("course_name") or "",
+            "description":     row.get("description") or None,
+            "credits":         row.get("credits") or None,
+            "average":         row.get("recent_avg"),
+            "overall_average": row.get("overall_avg"),
+            "grade_trend":     row.get("grade_trend") or [],
+            "instructors":     row.get("instructors") or [],
+            "num_sections":    len(row.get("instructors") or []),
+            "prerequisites":   row.get("prerequisites") or None,
+            "corequisites":    row.get("corequisites") or None,
+            "restrictions":    row.get("restrictions") or None,
         }
+
         if include_ratings:
-            course_obj.update(rmp_data)
-            course_obj.update(mc_data)
+            if row.get("rmp_rating"):
+                course_obj.update({
+                    "rmp_rating":           row.get("rmp_rating"),
+                    "rmp_difficulty":       row.get("rmp_difficulty"),
+                    "rmp_num_ratings":      row.get("rmp_num_ratings"),
+                    "rmp_would_take_again": row.get("rmp_would_take_again"),
+                })
+            if row.get("mc_rating"):
+                course_obj["mc_rating"]      = row.get("mc_rating")
+                course_obj["mc_num_ratings"] = row.get("mc_num_ratings")
+            if row.get("blended_rating"):
+                course_obj["blended_rating"] = row.get("blended_rating")
 
         # ── Fetch schedule from mcgill_sections ────────────────────────────
+        # mcgill_sections stores course_code with a space: "COMP 202"
         try:
+            course_code_spaced = f"{clean_subject} {clean_catalog}"
             sched_resp = (
                 supabase.from_("mcgill_sections")
                 .select("crn, term, section_type, instructor, days, times, location")
-                .eq("course_code", course_code)
+                .eq("course_code", course_code_spaced)
                 .order("term", desc=True)
                 .execute()
             )

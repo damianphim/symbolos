@@ -2,7 +2,8 @@ import { useState } from 'react'
 import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
   FaUser, FaChartBar, FaFlag, FaChevronLeft, FaChevronRight,
-  FaArrowLeft, FaTrophy, FaLayerGroup, FaCalendarAlt, FaExternalLinkAlt
+  FaArrowLeft, FaTrophy, FaLayerGroup, FaCalendarAlt, FaExternalLinkAlt,
+  FaExclamationCircle
 } from 'react-icons/fa'
 import { MdOutlineRateReview } from 'react-icons/md'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -386,7 +387,7 @@ export default function CoursesTab({
                 )}
               </div>
 
-              {/* RIGHT — rating + instructors */}
+              {/* RIGHT — rating + instructors + requirements */}
               <div className="course-detail-col">
 
                 {rating && (
@@ -430,6 +431,40 @@ export default function CoursesTab({
                           {idx === 0 && <span className="instructor-recent-badge">most recent</span>}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Requirements ────────────────────────────── */}
+                {(selectedCourse.prerequisites || selectedCourse.corequisites || selectedCourse.restrictions) && (
+                  <div className="course-detail-section">
+                    <div className="course-detail-section-header">
+                      <FaExclamationCircle />
+                      <h3 className="course-detail-section-title">Requirements</h3>
+                    </div>
+                    <div className="requirements-list">
+
+                      {selectedCourse.prerequisites && (
+                        <div className="requirement-item">
+                          <span className="requirement-label">Prerequisites</span>
+                          <span className="requirement-text">{selectedCourse.prerequisites}</span>
+                        </div>
+                      )}
+
+                      {selectedCourse.corequisites && (
+                        <div className="requirement-item">
+                          <span className="requirement-label">Corequisites</span>
+                          <span className="requirement-text">{selectedCourse.corequisites}</span>
+                        </div>
+                      )}
+
+                      {selectedCourse.restrictions && (
+                        <div className="requirement-item">
+                          <span className="requirement-label">Restrictions</span>
+                          <span className="requirement-text">{selectedCourse.restrictions}</span>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 )}

@@ -478,6 +478,34 @@
 }
 [data-theme="dark"] .instructor-recent-badge { color: #a78bfa; background: rgba(139,92,246,0.15); }
 
+/* ── Requirements ────────────────────────────────────────── */
+
+.requirements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.requirement-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.requirement-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.requirement-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 /* ── Schedule ────────────────────────────────────────────── */
 
 .schedule-term-group { margin-bottom: 16px; }
@@ -598,6 +626,7 @@
   .btn-search, .search-input { min-height: 44px; }
   .prof-flag-btn { opacity: 1; }
 }
+
 /* ── VSB Banner ──────────────────────────────────────────────────── */
 .vsb-banner {
   display: flex;
