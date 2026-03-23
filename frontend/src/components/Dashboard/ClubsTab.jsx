@@ -115,14 +115,19 @@ function JoinRequestModal({ club, onSubmit, onClose }) {
   )
 }
 
-function MembersSection({ clubId, clubOwnerId, meta, refreshKey, canToggleRoles }) {
+function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [callerRole, setCallerRole] = useState('member')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchMembers = useCallback(() => {
     setLoading(true)
     clubsAPI.getClubMembers(clubId)
-      .then(d => setMembers(d.members || []))
+      .then(d => {
+        setMembers(d.members || [])
+        setCallerRole(d.caller_role || 'member')
+      })
       .finally(() => setLoading(false))
   }, [clubId])
 
@@ -133,12 +138,16 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey, canToggleRoles 
     try {
       await clubsAPI.removeClubMember(clubId, userId)
       setMembers(prev => prev.filter(m => m.id !== userId))
-    } catch { /* silent */ }
+    } catch (e) { alert(e.message) }
   }
 
-  const handleToggleRole = async (userId) => {
+  const handleSetRole = async (userId, newRole) => {
+    const label = newRole === 'owner' ? 'Transfer ownership to this member? You will become an admin.' : null
+    if (newRole === 'owner' && !window.confirm(label)) return
     try {
-      const result = await clubsAPI.updateMemberRole(clubId, userId)
+      const result = await clubsAPI.updateMemberRole(clubId, userId, newRole)
+      // If ownership transferred, refresh entire list to get updated roles
+      if (newRole === 'owner') { fetchMembers(); return }
       setMembers(prev => prev.map(m => m.id === userId ? { ...m, role: result.role } : m))
     } catch (e) { alert(e.message) }
   }
@@ -146,11 +155,40 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey, canToggleRoles 
   if (loading) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>Loading members...</p>
   if (!members.length) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>No members yet.</p>
 
+  const canManage = callerRole === 'owner' || callerRole === 'admin'
+  const roleOrder = { owner: 0, admin: 1, member: 2 }
+  const filteredMembers = members.filter(m => {
+    if (!searchTerm) return true
+    const q = searchTerm.toLowerCase()
+    return (m.name || '').toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q)
+  }).sort((a, b) => (roleOrder[a.role] ?? 2) - (roleOrder[b.role] ?? 2))
+
   return (
     <div className="club-members-list">
-      {members.map(m => {
-        const isOwner = m.id === clubOwnerId
-        const role = isOwner ? 'owner' : (m.role || 'member')
+      {members.length > 5 && (
+        <div className="club-members-search-wrap">
+          <FaSearch size={11} style={{ color: 'var(--text-tertiary, #9ca3af)' }} />
+          <input
+            type="text"
+            className="club-members-search"
+            placeholder="Search members..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
+      <div className="club-members-count" style={{ fontSize: '11px', color: 'var(--text-tertiary, #9ca3af)', padding: '4px 0' }}>
+        {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''}
+        {searchTerm && ` matching "${searchTerm}"`}
+      </div>
+      {filteredMembers.map(m => {
+        const isOwner = m.role === 'owner'
+        const role = m.role || 'member'
+        // Determine what actions caller can take on this member
+        const canAffect = canManage && !isOwner && (
+          callerRole === 'owner' || // owners can affect anyone except themselves
+          (callerRole === 'admin') // admins can affect members and other admins
+        )
         return (
           <div key={m.id} className="club-member-row">
             <div className="club-member-info">
@@ -163,19 +201,27 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey, canToggleRoles 
               {m.email && <span className="club-member-email">{m.email}</span>}
             </div>
             <div className="club-member-actions">
-              {canToggleRoles && !isOwner && (
-                <button
-                  className={`club-member-role-toggle ${role === 'admin' ? 'club-member-role-toggle--demote' : ''}`}
-                  onClick={() => handleToggleRole(m.id)}
-                  title={role === 'admin' ? 'Demote to member' : 'Promote to admin'}
-                >
-                  {role === 'admin' ? '↓ Demote' : '↑ Promote'}
-                </button>
-              )}
-              {!isOwner && (
-                <button className="club-member-remove" onClick={() => handleRemove(m.id, m.name)} title="Remove member">
-                  <FaTimes size={10} />
-                </button>
+              {canAffect && (
+                <>
+                  {role === 'member' && (
+                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'admin')} title="Promote to admin">
+                      ↑ Admin
+                    </button>
+                  )}
+                  {role === 'admin' && (
+                    <button className="club-member-role-toggle club-member-role-toggle--demote" onClick={() => handleSetRole(m.id, 'member')} title="Demote to member">
+                      ↓ Demote
+                    </button>
+                  )}
+                  {callerRole === 'owner' && !isOwner && (
+                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'owner')} title="Transfer ownership" style={{ color: '#b45309', fontSize: '11px' }}>
+                      ♛ Owner
+                    </button>
+                  )}
+                  <button className="club-member-remove" onClick={() => handleRemove(m.id, m.name)} title="Remove member">
+                    <FaTimes size={10} />
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -185,7 +231,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey, canToggleRoles 
   )
 }
 
-function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId }) {
+function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
@@ -227,6 +273,17 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
               <button className="club-action-btn club-action-btn--leave" onClick={() => onLeave(club.id)} disabled={isLoading}>
                 <FaTimes size={12} /> {t('clubs.leaveClub')}
               </button>
+            ) : hasPendingRequest ? (
+              <div>
+                <button className="club-action-btn club-action-btn--applied" disabled style={{ opacity: 0.85 }}>
+                  <FaCheck size={12} /> {t('clubs.requestedBtn')}
+                </button>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', margin: '6px 0 0', textAlign: 'center' }}>
+                  {language === 'fr' ? 'En attente de réponse du club. Vous ne pouvez pas annuler ou postuler à nouveau.'
+                    : language === 'zh' ? '等待社团回复，暂时无法撤回或重新申请。'
+                    : 'Waiting for club to respond. You cannot withdraw or reapply until then.'}
+                </p>
+              </div>
             ) : isPrivate ? (
               <button className="club-action-btn club-action-btn--join" onClick={() => onJoin(club.id)} disabled={isLoading}>
                 <FaLock size={12} /> {t('clubs.requestJoinBtn')}
@@ -294,13 +351,13 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
             </section>
           )}
 
-          {canManage && (
+          {joined && (
             <section className="club-drawer__section">
               <h3 className="club-drawer__section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FaUsers size={12} /> Members
                 <button onClick={() => setMemberRefreshKey(k => k + 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary, #9ca3af)', fontSize: '11px', padding: '2px 6px' }} title="Refresh members">↻</button>
               </h3>
-              <MembersSection clubId={club.id} clubOwnerId={display.created_by} meta={meta} refreshKey={memberRefreshKey} canToggleRoles={canManage} />
+              <MembersSection clubId={club.id} clubOwnerId={display.created_by} meta={meta} refreshKey={memberRefreshKey} />
             </section>
           )}
 
@@ -327,7 +384,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onJoin, onLeave, 
   )
 }
 
-function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
@@ -336,8 +393,11 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
   const handleJoin = async (e) => {
     e.stopPropagation()
     await onJoin(club.id)
-    setJustJoined(true)
-    setTimeout(() => setJustJoined(false), 2500)
+    // Don't flash "joined" animation for private clubs (modal opens instead)
+    if (!isPrivate) {
+      setJustJoined(true)
+      setTimeout(() => setJustJoined(false), 2500)
+    }
   }
 
   return (
@@ -389,6 +449,19 @@ function ClubCard({ club, joined, calSynced, onJoin, onLeave, onToggleCalendar, 
             <button className="club-leave-chip" onClick={() => onLeave(club.id)} disabled={isLoading}>
               <FaTimes size={10} /> {t('clubs.leave')}
             </button>
+          </div>
+        ) : hasPendingRequest ? (
+          <div>
+            <button
+              className="club-join-btn club-join-btn--applied"
+              disabled
+              style={{ background: meta.bg, borderColor: meta.color, color: meta.color, opacity: 0.85 }}
+            >
+              <FaCheck size={10} /> {t('clubs.requestedBtn')}
+            </button>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', margin: '4px 0 0', textAlign: 'center', lineHeight: 1.3 }}>
+              {language === 'fr' ? 'En attente de réponse' : language === 'zh' ? '等待回复中' : 'Awaiting response'}
+            </p>
           </div>
         ) : (
           <button
@@ -473,10 +546,10 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, onDelet
   )
 }
 
-function CreatedClubRow({ club, onEdit, onManageRequests, pendingCount, t }) {
+function CreatedClubRow({ club, onEdit, onManageRequests, onOpen, pendingCount, t }) {
   const meta = getCat(club.category)
   return (
-    <div className="my-club-row created-club-row">
+    <div className="my-club-row created-club-row" onClick={() => onOpen(club)} style={{ cursor: 'pointer' }}>
       <ClubAvatar name={club.name} category={club.category} size="sm" />
       <div className="my-club-row__info">
         <span className="my-club-row__name">{club.name}</span>
@@ -499,6 +572,9 @@ function CreatedClubRow({ club, onEdit, onManageRequests, pendingCount, t }) {
         )}
         <button className="club-edit-btn" onClick={() => onEdit(club)}>
           <FaEdit size={10} /> {t('clubs.editBtn')}
+        </button>
+        <button className="club-card__open-btn" onClick={() => onOpen(club)}>
+          <FaChevronRight size={11} />
         </button>
       </div>
     </div>
@@ -881,6 +957,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
   const [managingRequestsClub, setManagingRequestsClub] = useState(null)
   const [joinToast, setJoinToast] = useState(null)
   const [joinRequestClub, setJoinRequestClub] = useState(null)
+  const [pendingRequestClubIds, setPendingRequestClubIds] = useState(new Set())
   const debounceRef = useRef(null)
   const isMounted = useRef(true)
 
@@ -964,10 +1041,19 @@ export default function ClubsTab({ user, onClubEventsChange }) {
     } catch { /* silent */ }
   }, [])
 
+  const fetchPendingRequests = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const data = await clubsAPI.getUserPendingRequests(user.id)
+      if (isMounted.current) setPendingRequestClubIds(new Set(data.pending_club_ids || []))
+    } catch { /* silent */ }
+  }, [user?.id])
+
   useEffect(() => { setPage(1); fetchClubs(1) }, [fetchClubs])
   useEffect(() => { fetchMyClubs() }, [fetchMyClubs])
   useEffect(() => { fetchCreatedClubs() }, [fetchCreatedClubs])
   useEffect(() => { fetchCategories() }, [fetchCategories])
+  useEffect(() => { fetchPendingRequests() }, [fetchPendingRequests])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -985,7 +1071,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
       return
     }
     // For private clubs, show the join request modal first (unless joinInfo already provided)
-    const club = clubs.find(c => c.id === clubId)
+    const club = clubs.find(c => c.id === clubId) || (openClub?.id === clubId ? openClub : null)
     if (club?.is_private && !joinInfo) {
       setJoinRequestClub(club)
       return
@@ -994,6 +1080,11 @@ export default function ClubsTab({ user, onClubEventsChange }) {
     try {
       const result = await clubsAPI.joinClub(user.id, clubId, joinInfo || {})
       if (result.status === 'requested') {
+        setPendingRequestClubIds(prev => new Set([...prev, clubId]))
+        // Force drawer re-render so "Applied" button shows immediately
+        if (openClub?.id === clubId) setOpenClub(prev => prev ? { ...prev } : prev)
+        // Also confirm from server to keep in sync
+        fetchPendingRequests()
         setJoinToast(t('clubs.requestSentToast').replace('{name}', club?.name || 'club'))
       } else {
         await fetchMyClubs()
@@ -1061,9 +1152,11 @@ export default function ClubsTab({ user, onClubEventsChange }) {
     return list
   }, [clubs, sortMode])
 
+  const createdClubIds = useMemo(() => new Set(createdClubs.map(c => c.id)), [createdClubs])
+
   const resolvedMyClubs = useMemo(() =>
-    myClubs.map(m => ({ club: m.club ?? m, calendar_synced: m.calendar_synced ?? false })).filter(m => m.club?.id),
-    [myClubs]
+    myClubs.map(m => ({ club: m.club ?? m, calendar_synced: m.calendar_synced ?? false })).filter(m => m.club?.id && !createdClubIds.has(m.club.id)),
+    [myClubs, createdClubIds]
   )
 
   const clubsById = useMemo(() => {
@@ -1186,6 +1279,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                     club={club}
                     joined={joinedIds.has(club.id)}
                     calSynced={calSyncedIds.has(club.id)}
+                    hasPendingRequest={pendingRequestClubIds.has(club.id)}
                     onJoin={handleJoin}
                     onLeave={handleLeave}
                     onToggleCalendar={handleToggleCalendar}
@@ -1232,6 +1326,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
                         club={club}
                         onEdit={setEditingClub}
                         onManageRequests={setManagingRequestsClub}
+                        onOpen={setOpenClub}
                         pendingCount={pendingCounts[club.id] || 0}
                         t={t}
                       />
@@ -1285,6 +1380,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
           liveClub={clubsById[openClub.id]}
           joined={joinedIds.has(openClub.id)}
           calSynced={calSyncedIds.has(openClub.id)}
+          hasPendingRequest={pendingRequestClubIds.has(openClub.id)}
           onJoin={handleJoin}
           onLeave={handleLeave}
           onToggleCalendar={handleToggleCalendar}

@@ -281,6 +281,10 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                     )}
                   </div>
                 )}
+                <div className="tu-verify-hint">
+                  <FaExclamationTriangle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                  <span>Please double-check your imported data for accuracy. Go to <strong>Degree Planning</strong> to review your courses and GPA, and <strong>Settings</strong> to verify your profile info.</span>
+                </div>
                 <div className="tu-actions tu-actions--center">
                   <button className="tu-btn tu-btn--primary" onClick={onClose}>Done</button>
                 </div>
@@ -325,6 +329,10 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                       </span>
                     </div>
                   ))}
+                </div>
+                <div className="tu-verify-hint">
+                  <FaExclamationTriangle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                  <span>Please double-check your calendar for accuracy. Go to <strong>Calendar</strong> to verify lecture times, exam dates, and assignment deadlines. Use <strong>Edit Events</strong> to fix any incorrect times.</span>
                 </div>
                 <div className="tu-actions tu-actions--center">
                   <button className="tu-btn tu-btn--primary" onClick={onClose}>Done</button>

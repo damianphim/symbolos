@@ -309,7 +309,24 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     })
   }, [completedCourses, currentCourses, profile, requiredCodes])
 
-  const generateRecs = async () => {
+  const _recsRateLimited = () => {
+    const key = 'elective_recs_timestamps'
+    const now = Date.now()
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000
+    try {
+      const stamps = JSON.parse(localStorage.getItem(key) || '[]').filter(t => t > weekAgo)
+      if (stamps.length >= 2) return true // max 2 per week
+      stamps.push(now)
+      localStorage.setItem(key, JSON.stringify(stamps))
+      return false
+    } catch { return false }
+  }
+
+  const generateRecs = async (skipRateLimit = false) => {
+    if (!skipRateLimit && _recsRateLimited()) {
+      setRecsError('You can refresh elective suggestions up to 2 times per week. Try again later.')
+      return
+    }
     setRecsLoading(true)
     setRecsError(null)
     try {
@@ -361,7 +378,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     setShowRecs(true)
     if (!hasLoaded.current) {
       hasLoaded.current = true
-      generateRecs()
+      generateRecs(true) // initial load doesn't count toward rate limit
     }
   }
 
@@ -371,7 +388,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     if (!hasLoaded.current) return
     if (prevProfileKey.current === profileKey) return
     prevProfileKey.current = profileKey
-    generateRecs()
+    generateRecs(true) // profile change doesn't count toward rate limit
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileKey])
 
@@ -392,52 +409,6 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
 
   return (
     <div className="dp-electives">
-      {/* ── Taken Electives ─────────────────────────────── */}
-      <div className="dp-electives-header">
-        <div className="dp-electives-title-row">
-          <span className="dp-electives-spark">📚</span>
-          <div>
-            <h3 className="dp-electives-title">My Elective Courses</h3>
-            <p className="dp-electives-sub">
-              Courses you've taken that don't count toward{' '}
-              {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
-            </p>
-          </div>
-        </div>
-        <span className="dp-electives-badge">{electiveCourses.length}</span>
-      </div>
-
-      {electiveCourses.length === 0 ? (
-        <div className="dp-electives-empty">
-          <span style={{ fontSize: '2rem', opacity: 0.3 }}>🎓</span>
-          <p>No elective courses found yet.</p>
-          <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
-            Courses you complete outside your major &amp; minor requirements will appear here.
-          </p>
-        </div>
-      ) : (
-        <div className="dp-electives-grid">
-          {electiveCourses.map((c, i) => {
-            const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
-            return (
-              <div key={i} className="dp-elective-card dp-elective-card--taken">
-                <div className="dp-elective-top">
-                  <span className="dp-elective-code">{c.subject} {c.catalog}</span>
-                  <span
-                    className="dp-elective-cat"
-                    style={{ background: srcStyle.bg, color: srcStyle.color }}
-                  >
-                    {SOURCE_LABELS[c._source] || 'Done'}
-                  </span>
-                </div>
-                <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
-                {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
       {/* ── AI Recommendations ──────────────────────────── */}
       <div className="dp-electives-recs-section">
         <div className="dp-electives-recs-header">
@@ -510,6 +481,52 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
           </div>
         )}
       </div>
+
+      {/* ── Taken Electives ─────────────────────────────── */}
+      <div className="dp-electives-header">
+        <div className="dp-electives-title-row">
+          <span className="dp-electives-spark">📚</span>
+          <div>
+            <h3 className="dp-electives-title">My Elective Courses</h3>
+            <p className="dp-electives-sub">
+              Courses you've taken that don't count toward{' '}
+              {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
+            </p>
+          </div>
+        </div>
+        <span className="dp-electives-badge">{electiveCourses.length}</span>
+      </div>
+
+      {electiveCourses.length === 0 ? (
+        <div className="dp-electives-empty">
+          <span style={{ fontSize: '2rem', opacity: 0.3 }}>🎓</span>
+          <p>No elective courses found yet.</p>
+          <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+            Courses you complete outside your major &amp; minor requirements will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="dp-electives-grid">
+          {electiveCourses.map((c, i) => {
+            const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
+            return (
+              <div key={i} className="dp-elective-card dp-elective-card--taken">
+                <div className="dp-elective-top">
+                  <span className="dp-elective-code">{c.subject} {c.catalog}</span>
+                  <span
+                    className="dp-elective-cat"
+                    style={{ background: srcStyle.bg, color: srcStyle.color }}
+                  >
+                    {SOURCE_LABELS[c._source] || 'Done'}
+                  </span>
+                </div>
+                <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
+                {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

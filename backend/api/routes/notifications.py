@@ -493,10 +493,20 @@ async def run_notification_cron(request: Request):
         else:
             failed_ids.append(row["id"])
 
+    # Also run newsletter scrape
+    newsletter_result = {}
+    try:
+        from .newsletters import scrape_newsletter_sources
+        newsletter_result = await scrape_newsletter_sources(request)
+    except Exception as e:
+        logger.error(f"Newsletter scrape in cron failed: {e}")
+        newsletter_result = {"error": str(e)}
+
     logger.info(f"Cron: enabled={NOTIFICATIONS_ENABLED}, sent={sent_count}, failed={len(failed_ids)}")
     return {
         "sent": sent_count,
         "failed": len(failed_ids),
         "failed_ids": failed_ids,
         "notifications_enabled": NOTIFICATIONS_ENABLED,
+        "newsletter_scrape": newsletter_result,
     }

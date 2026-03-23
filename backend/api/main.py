@@ -29,7 +29,7 @@ from .exceptions import (
 from .routes import (
     chat, courses, users, favorites, completed, notifications,
     current, suggestions, cards, transcript, degree_requirements,
-    electives, clubs, syllabus, professors, admin,
+    electives, clubs, syllabus, professors, admin, newsletters,
 )
 
 logger = setup_logging()
@@ -336,6 +336,7 @@ app.include_router(electives.router,           prefix=f"{settings.API_PREFIX}/el
 app.include_router(clubs.router,               prefix=f"{settings.API_PREFIX}/clubs",               tags=["Clubs"])
 app.include_router(syllabus.router,            prefix=f"{settings.API_PREFIX}/syllabus",            tags=["Syllabus"])
 app.include_router(professors.router,          prefix=f"{settings.API_PREFIX}/professors",          tags=["Professors"])
+app.include_router(newsletters.router,         prefix=f"{settings.API_PREFIX}/newsletters",         tags=["Newsletters"])
 
 
 @app.get("/")

@@ -90,6 +90,14 @@ const clubsAPI = {
     return { success: true }
   },
 
+  async getUserPendingRequests(userId) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/pending-requests`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { pending_club_ids: [] }
+  },
+
   async toggleCalendarSync(userId, clubId, synced) {
     try {
       const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/calendar/${clubId}?synced=${synced}`, { method: 'PATCH', headers: await authHeaders() })
@@ -174,9 +182,10 @@ const clubsAPI = {
     return res.json()
   },
 
-  async updateMemberRole(clubId, memberUserId) {
+  async updateMemberRole(clubId, memberUserId, role) {
     const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/members/${memberUserId}/role`, {
       method: 'PATCH', headers: await authHeaders(),
+      body: JSON.stringify({ role }),
     })
     if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to update role') }
     return res.json()

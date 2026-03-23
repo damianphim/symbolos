@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   FaCog, FaPalette, FaBell, FaLock, FaBolt,
   FaSun, FaMoon, FaSyncAlt, FaDownload,
   FaEnvelope, FaGraduationCap, FaUsers, FaUser, FaCheck,
   FaTrash, FaExclamationTriangle, FaClipboardList,
+  FaNewspaper, FaSearch, FaTimes, FaCalendarAlt, FaBellSlash,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useTimezone, TIMEZONES } from '../../contexts/TimezoneContext'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
+import newslettersAPI from '../../lib/newslettersAPI'
 import './Settings.css'
 
 export default function Settings({ user, profile, onUpdateSettings }) {
@@ -35,6 +37,66 @@ export default function Settings({ user, profile, onUpdateSettings }) {
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+
+  // ── Newsletter state ──────────────────────────────────────────────
+  const [nlSources, setNlSources] = useState([])
+  const [nlSearch, setNlSearch] = useState('')
+  const [nlLoading, setNlLoading] = useState(false)
+  const [nlExpanded, setNlExpanded] = useState(false)
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    setNlLoading(true)
+    newslettersAPI.getSources().then(data => {
+      if (!cancelled) setNlSources(Array.isArray(data) ? data : [])
+    }).catch(() => {}).finally(() => { if (!cancelled) setNlLoading(false) })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  const handleNlToggle = async (source) => {
+    const prev = [...nlSources]
+    const wasSubscribed = source.subscribed
+    setNlSources(s => s.map(src => src.id === source.id ? { ...src, subscribed: !src.subscribed, email_muted: false } : src))
+    try {
+      if (wasSubscribed) {
+        await newslettersAPI.unsubscribe(source.id)
+      } else {
+        await newslettersAPI.subscribe(source.id, true)
+        // Offer to open the actual newsletter page
+        if (source.url && window.confirm(
+          language === 'fr'
+            ? `Voulez-vous aussi recevoir les emails de ${source.name} ? Cela ouvrira leur page d'inscription.`
+            : `Would you also like to receive emails directly from ${source.name}? This will open their signup page.`
+        )) {
+          window.open(source.url, '_blank', 'noopener')
+        }
+      }
+    } catch {
+      setNlSources(prev)
+    }
+  }
+
+  const handleNlMuteToggle = async (source) => {
+    const prev = [...nlSources]
+    const newMuted = !source.email_muted
+    setNlSources(s => s.map(src => src.id === source.id ? { ...src, email_muted: newMuted } : src))
+    try {
+      await newslettersAPI.updateSubscription(source.id, { emailMuted: newMuted })
+    } catch {
+      setNlSources(prev)
+    }
+  }
+
+  const filteredNlSources = nlSearch
+    ? nlSources.filter(s => s.name.toLowerCase().includes(nlSearch.toLowerCase()) || s.category.toLowerCase().includes(nlSearch.toLowerCase()))
+    : nlSources
+
+  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
+  const isMcGillEmail = (() => {
+    const email = (user?.email || profile?.email || '').toLowerCase()
+    return email.endsWith('@mcgill.ca') || email.endsWith('@mail.mcgill.ca') || ADMIN_EMAILS.has(email)
+  })()
 
   const flash = () => {
     setAutoSaveFlash(true)
@@ -105,10 +167,11 @@ export default function Settings({ user, profile, onUpdateSettings }) {
   ]
 
   const EVENT_TYPE_CFG = {
-    exam:     { icon: <FaClipboardList />, color: '#7c3aed', bg: '#f5f3ff', label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
-    academic: { icon: <FaGraduationCap />, color: '#1d4ed8', bg: '#eff6ff', label: t('calendar.academicDates') },
-    club:     { icon: <FaUsers />,         color: '#0891b2', bg: '#ecfeff', label: t('calendar.clubEvents') },
-    personal: { icon: <FaUser />,          color: '#059669', bg: '#ecfdf5', label: t('calendar.personalEvents') },
+    exam:       { icon: <FaClipboardList />, color: '#7c3aed', bg: '#f5f3ff', label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
+    academic:   { icon: <FaGraduationCap />, color: '#1d4ed8', bg: '#eff6ff', label: t('calendar.academicDates') },
+    club:       { icon: <FaUsers />,         color: '#d97706', bg: '#fef3c7', label: t('calendar.clubEvents') },
+    personal:   { icon: <FaUser />,          color: '#059669', bg: '#ecfdf5', label: t('calendar.personalEvents') },
+    newsletter: { icon: <FaNewspaper />,     color: '#0891b2', bg: '#ecfeff', label: language === 'fr' ? 'Infolettres' : language === 'zh' ? '通讯' : 'Newsletters' },
   }
 
   return (
@@ -232,6 +295,108 @@ export default function Settings({ user, profile, onUpdateSettings }) {
 
           </div>
         </div>
+
+        {/* ── Newsletter Subscriptions (McGill emails only) ── */}
+        {isMcGillEmail && <div className="settings-section">
+          <div className="section-header">
+            <span className="section-icon"><FaNewspaper /></span>
+            <h3 className="section-title">
+              {language === 'fr' ? 'Abonnements aux infolettres' : language === 'zh' ? '通讯订阅' : 'Newsletter Subscriptions'}
+            </h3>
+          </div>
+          <div className="section-content">
+            <p className="setting-description" style={{ marginBottom: 12, padding: '0 20px' }}>
+              {language === 'fr'
+                ? 'Abonnez-vous aux infolettres pour recevoir leurs événements dans votre calendrier.'
+                : language === 'zh'
+                ? '订阅通讯以将其活动同步到您的日历。'
+                : 'Subscribe to newsletters to sync their events to your calendar.'}
+            </p>
+
+            {nlExpanded && nlSources.length > 3 && (
+              <div className="nl-search-bar" style={{ position: 'relative', marginBottom: 12, padding: '0 20px' }}>
+                <FaSearch size={12} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+                <input
+                  type="text"
+                  placeholder={language === 'fr' ? 'Rechercher...' : 'Search newsletters...'}
+                  value={nlSearch}
+                  onChange={e => setNlSearch(e.target.value)}
+                  className="setting-select"
+                  style={{ paddingLeft: 28, width: '100%', boxSizing: 'border-box' }}
+                />
+                {nlSearch && (
+                  <button onClick={() => setNlSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#999' }}>
+                    <FaTimes size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {nlLoading ? (
+              <p className="setting-description" style={{ textAlign: 'center', padding: '16px 20px' }}>Loading...</p>
+            ) : filteredNlSources.length === 0 ? (
+              <p className="setting-description" style={{ textAlign: 'center', padding: '16px 20px' }}>
+                {nlSearch
+                  ? (language === 'fr' ? 'Aucun résultat' : 'No results found')
+                  : (language === 'fr' ? 'Aucune infolettre disponible' : language === 'zh' ? '暂无通讯' : 'No newsletters available yet')}
+              </p>
+            ) : (
+              <div className="nl-source-list" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {(nlExpanded || nlSearch ? filteredNlSources : filteredNlSources.slice(0, 3)).map(src => (
+                  <div key={src.id} className="setting-item" style={{ padding: '10px 20px' }}>
+                    <div className="setting-info" style={{ flex: 1 }}>
+                      <label className="setting-label" style={{ fontSize: '0.85rem' }}>
+                        {src.logo_url && <img src={src.logo_url} alt="" style={{ width: 18, height: 18, borderRadius: 4, verticalAlign: 'middle', marginRight: 6 }} />}
+                        {src.name}
+                      </label>
+                      <p className="setting-description" style={{ fontSize: '0.75rem', marginTop: 2 }}>
+                        {src.category}
+                        {src.subscribed && !src.email_muted && <> &middot; <FaCalendarAlt size={9} style={{ verticalAlign: 'middle' }} /> {language === 'fr' ? 'Calendrier + emails' : 'Calendar + emails'}</>}
+                        {src.subscribed && src.email_muted && <> &middot; <FaCalendarAlt size={9} style={{ verticalAlign: 'middle' }} /> {language === 'fr' ? 'Calendrier uniquement' : 'Calendar only'}</>}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                      {src.subscribed && (
+                        <button
+                          className={`notif-method-btn ${src.email_muted ? 'active' : ''}`}
+                          style={{ fontSize: '0.72rem', padding: '4px 8px', opacity: src.email_muted ? 1 : 0.6 }}
+                          onClick={() => handleNlMuteToggle(src)}
+                          title={src.email_muted ? 'Unmute emails' : 'Mute emails'}
+                        >
+                          <FaBellSlash size={10} /> {src.email_muted
+                            ? (language === 'fr' ? 'Muet' : 'Muted')
+                            : (language === 'fr' ? 'Muet' : 'Mute Emails')}
+                        </button>
+                      )}
+                      <button
+                        className={`notif-method-btn ${src.subscribed ? 'active' : ''}`}
+                        style={{ minWidth: 90, fontSize: '0.78rem', padding: '5px 10px' }}
+                        onClick={() => handleNlToggle(src)}
+                      >
+                        {src.subscribed ? <><FaCheck size={10} /> {language === 'fr' ? 'Abonné' : 'Subscribed'}</> : (language === 'fr' ? "S'abonner" : 'Subscribe')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {!nlSearch && filteredNlSources.length > 3 && (
+                  <button
+                    onClick={() => setNlExpanded(prev => !prev)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      width: '100%', padding: '10px 20px', background: 'none', border: 'none',
+                      borderTop: '1px solid var(--border-primary, #2a2a3a)',
+                      color: 'var(--text-secondary, #aaa)', fontSize: '0.8rem', cursor: 'pointer',
+                    }}
+                  >
+                    {nlExpanded
+                      ? (language === 'fr' ? 'Voir moins' : 'Show less')
+                      : (language === 'fr' ? `Voir ${filteredNlSources.length - 3} de plus` : `Show ${filteredNlSources.length - 3} more`)}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>}
 
         {/* ── Privacy ── */}
         <div className="settings-section">

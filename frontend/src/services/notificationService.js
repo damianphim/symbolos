@@ -61,13 +61,28 @@ export async function scheduleNotification(event, userId, userEmail) {
  * Idempotently queue notifications for a read-only exam event.
  * Does NOT create a calendar_events row — safe to call on every load.
  */
+function to24h(timeStr) {
+  if (!timeStr) return null
+  // Already HH:MM 24h format
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
+  // Parse "2:00 PM", "12:30 AM", etc.
+  const m = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+  if (!m) return null
+  let h = parseInt(m[1], 10)
+  const min = m[2]
+  const period = m[3].toUpperCase()
+  if (period === 'PM' && h !== 12) h += 12
+  if (period === 'AM' && h === 12) h = 0
+  return `${String(h).padStart(2, '0')}:${min}`
+}
+
 export async function queueExamNotification(event, userId, userEmail) {
   const payload = {
     client_id:        event.id,           // e.g. "exam-COMP251-0" — used for dedup
     user_id:          userId,
     title:            event.title,
     date:             event.date,
-    time:             event.time        || null,
+    time:             to24h(event.time),
     type:             'exam',
     category:         event.category    || null,
     description:      event.description || null,

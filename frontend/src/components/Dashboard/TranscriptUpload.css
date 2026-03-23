@@ -523,6 +523,25 @@
   text-align: center;
 }
 
+/* ── Verify hint ─────────────────────────────────────── */
+.tu-verify-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  text-align: left;
+}
+.tu-verify-hint strong {
+  color: var(--text-primary);
+}
+
 /* ── Syllabus file list ───────────────────────────────── */
 .tu-file-list {
   display: flex;

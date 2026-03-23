@@ -267,7 +267,14 @@ export const AuthProvider = ({ children }) => {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const value = { user, profile, loading, error, needsOnboarding, signUp, signIn, signOut, deleteAccount, updateProfile, completeOnboarding, clearError }
+  const refreshProfile = useCallback(async () => {
+    if (!user?.id) return
+    loadedForUserId.current = null
+    loadingProfile.current = false
+    await loadProfile(user.id)
+  }, [user?.id, loadProfile])
+
+  const value = { user, profile, loading, error, needsOnboarding, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

@@ -654,14 +654,14 @@ async def parse_syllabuses(
                 "description": "\n".join(desc_parts),
                 "location": a_location or None,
                 "course_code": course_code,
-                "notify_enabled": is_exam,
-                "notify_email": is_exam,
+                "notify_enabled": True,
+                "notify_email": True,
                 "notify_sms": False,
                 "notify_email_addr": None,
                 "notify_phone": None,
                 "notify_same_day": False,
-                "notify_1day": is_exam,
-                "notify_7days": is_exam,
+                "notify_1day": True,
+                "notify_7days": True,
             })
 
         # ── 4. Build office hours rows ─────────────────────────────────────────
@@ -726,6 +726,57 @@ async def parse_syllabuses(
                         result["calendar_events_added"] += 1
                     except Exception as row_err:
                         logger.warning(f"Could not save office hours row: {row_err}")
+
+        # ── 6. Queue notifications for assessment events (midterms, finals, quizzes, assignments) ──
+        try:
+            # Fetch the user's email for notifications
+            user_row = supabase.table("users").select("email").eq("id", user_id).execute()
+            user_email = user_row.data[0].get("email") if user_row.data else None
+
+            if user_email and course_code:
+                # Query back the inserted events that have notifications enabled
+                notif_events = (
+                    supabase.table("calendar_events")
+                    .select("id, title, date, time, type, notify_enabled, notify_email, notify_sms, notify_same_day, notify_1day, notify_7days")
+                    .eq("user_id", user_id)
+                    .eq("course_code", course_code)
+                    .eq("notify_enabled", True)
+                    .execute()
+                )
+                today_str = date.today().isoformat()
+                notif_rows = []
+                for ev in (notif_events.data or []):
+                    if not ev.get("date") or ev["date"] < today_str:
+                        continue
+                    ev_date = date.fromisoformat(ev["date"])
+                    method = "email"
+                    offsets = []
+                    if ev.get("notify_7days"):
+                        offsets.append(7)
+                    if ev.get("notify_1day"):
+                        offsets.append(1)
+                    if ev.get("notify_same_day"):
+                        offsets.append(0)
+                    for days_before in offsets:
+                        send_on = ev_date - timedelta(days=days_before)
+                        if send_on >= date.today():
+                            notif_rows.append({
+                                "user_id": user_id,
+                                "event_id": ev["id"],
+                                "event_title": ev["title"],
+                                "event_date": ev["date"],
+                                "event_type": ev.get("type", "academic"),
+                                "send_on": send_on.isoformat(),
+                                "method": method,
+                                "email": user_email,
+                                "phone": None,
+                                "sent": False,
+                            })
+                if notif_rows:
+                    supabase.table("notification_queue").insert(notif_rows).execute()
+                    logger.info(f"Queued {len(notif_rows)} notifications for {course_code} assessments")
+        except Exception as notif_err:
+            logger.warning(f"Could not queue notifications for {course_code}: {notif_err}")
 
         logger.info(
             f"Syllabus import for user {user_id}, course {course_code}: "

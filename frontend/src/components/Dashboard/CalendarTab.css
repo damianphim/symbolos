@@ -608,8 +608,12 @@
   width: fit-content;
 }
 
-.cal-event-popup-edit {
-  width: 100%;
+.cal-event-popup-actions {
+  display: flex;
+  border-top: 1px solid var(--border-primary);
+}
+.cal-event-popup-actions > button {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -618,13 +622,15 @@
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   border: none;
-  border-top: 1px solid var(--border-primary);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.cal-event-popup-edit:hover { background: var(--bg-quaternary); color: var(--accent-primary); }
+.cal-event-popup-actions > button:not(:last-child) {
+  border-right: 1px solid var(--border-primary);
+}
+.cal-event-popup-actions > button:hover { background: var(--bg-quaternary); color: var(--accent-primary); }
 
 /* ── Add Event Modal ─────────────────────────────────────────────── */
 .cal-modal-overlay {

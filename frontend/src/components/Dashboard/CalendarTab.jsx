@@ -3,8 +3,7 @@ import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
-  FaStar, FaBullseye,
-  FaChevronDown, FaChevronUp
+  FaStar, FaBullseye, FaNewspaper
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTimezone } from '../../contexts/TimezoneContext'
@@ -15,6 +14,7 @@ import currentCoursesAPI from '../../lib/currentCoursesAPI'
 // FIX #16: Import Supabase calendar API instead of reading/writing localStorage
 import { getEvents, saveEvent, deleteEvent as deleteEventDB, migrateLocalStorageEvents, expandRecurringEvents } from '../../lib/calendarAPI'
 import clubsAPI from '../../lib/clubsAPI'
+import newslettersAPI from '../../lib/newslettersAPI'
 import './CalendarTab.css'
 
 // ── McGill Academic Dates 2025–26 ────────────────────────────────
@@ -318,7 +318,7 @@ function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, lan
 }
 
 // ── Single Event Popup ────────────────────────────────────────────
-function EventPopup({ event, onClose, onEdit, canEdit, t, language, formatDate, typeConfig, getEventStyle }) {
+function EventPopup({ event, onClose, onEdit, canEdit, onHide, t, language, formatDate, typeConfig, getEventStyle }) {
   const style = getEventStyle(event, typeConfig)
   const days = daysUntil(event.date)
   const countdownText = days < 0
@@ -370,20 +370,22 @@ function EventPopup({ event, onClose, onEdit, canEdit, t, language, formatDate, 
           <FaExternalLinkAlt size={10} /> {t('calendar.addToGoogle')}
         </a>
       </div>
-      {canEdit && (
-        <button className="cal-event-popup-edit" onClick={onEdit}>
-          <FaEdit /> {t('calendar.editEvent')}
+      <div className="cal-event-popup-actions">
+        {canEdit && (
+          <button className="cal-event-popup-edit" onClick={onEdit}>
+            <FaEdit /> {t('calendar.editEvent')}
+          </button>
+        )}
+        <button className="cal-event-popup-hide" onClick={onHide}>
+          <EyeOffIcon /> {L(language, 'Hide from calendar', 'Masquer du calendrier', '从日历隐藏')}
         </button>
-      )}
-
+      </div>
     </div>
   )
 }
 
 // ── Day Events Drawer ─────────────────────────────────────────────
 function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEvent, t, language, formatDate, typeConfig, getEventStyle, userEventIds }) {
-  const [expanded, setExpanded] = useState(null)
-
   return (
     <div className="cal-day-drawer-overlay" onClick={onClose}>
       <div className="cal-day-drawer" onClick={e => e.stopPropagation()}>
@@ -403,10 +405,10 @@ function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEve
           {events.map(event => {
             const style = getEventStyle(event, typeConfig)
             const isEditable = userEventIds.has(event.id)
-            const isExpanded = expanded === event.id
             return (
-              <div key={event.id} className="cal-day-drawer__item" style={{ borderLeftColor: style.color }}>
-                <div className="cal-day-drawer__item-header" onClick={() => setExpanded(isExpanded ? null : event.id)}>
+              <div key={event.id} className="cal-day-drawer__item" style={{ borderLeftColor: style.color, cursor: 'pointer' }}
+                onClick={() => onSelectEvent(event)}>
+                <div className="cal-day-drawer__item-header">
                   <div className="cal-day-drawer__item-left">
                     <span className="cal-day-drawer__item-type" style={{ color: style.color, background: style.bg }}>
                       {style.icon} {style.label}
@@ -424,30 +426,9 @@ function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEve
                         <FaEdit size={11} />
                       </button>
                     )}
-                    {isExpanded ? <FaChevronUp size={11} /> : <FaChevronDown size={11} />}
+                    <FaChevronRight size={11} style={{ color: 'var(--text-tertiary, #9ca3af)' }} />
                   </div>
                 </div>
-                {isExpanded && (
-                  <div className="cal-day-drawer__item-body">
-                    {event.location && (
-                      <div className="cal-day-drawer__item-location">
-                        📍 {event.location}
-                      </div>
-                    )}
-                    {event.category && <div className="cal-day-drawer__item-cat">{event.category}</div>}
-                    {event.description && <p className="cal-day-drawer__item-desc">{event.description}</p>}
-                    {event.notifyEnabled && (
-                      <div className="cal-event-popup-notif">
-                        <FaBell size={10} />
-                        {[
-                          event.notifySameDay && t('calendar.remindSameDay'),
-                          event.notify1Day    && t('calendar.remind1Day'),
-                          event.notify7Days   && t('calendar.remind7Days'),
-                        ].filter(Boolean).join(', ')}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             )
           })}
@@ -573,8 +554,9 @@ function EyeOffIcon() {
   )
 }
 
-function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onClose, language, onEditSlot }) {
-  const groups = React.useMemo(() => {
+function BulkDeleteModal({ userEvents, allEvents = [], onHide, hiddenSlotKeys, onUnhideAll, onClose, language, onEditSlot, serverClubEvents = [], mutedClubIds, onToggleMuteClub, hiddenEventIds, onToggleHideEvent, typeConfig = {}, getEventStyle }) {
+  // Group recurring class slots by course code (old behavior)
+  const classGroups = React.useMemo(() => {
     const anchors = userEvents.filter(e => e.recurrence && e.course_code && !e._isRecurringOccurrence)
     const map = {}
     for (const ev of anchors) {
@@ -587,12 +569,28 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
     return map
   }, [userEvents])
 
-  const slotKey = (ev) => `${ev.course_code}::${ev.recurrence}`
+  // Group all non-recurring events by type for individual hide toggles
+  const eventsByType = React.useMemo(() => {
+    const map = {}
+    for (const ev of allEvents) {
+      // Skip recurring class slots (handled separately above)
+      if (ev.course_code && ev.recurrence && ev._isRecurringOccurrence) continue
+      if (ev.course_code && ev.recurrence) continue
+      const type = ev.type || 'personal'
+      if (!map[type]) map[type] = []
+      map[type].push(ev)
+    }
+    // Sort each group by date
+    for (const type in map) {
+      map[type].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+    }
+    return map
+  }, [allEvents])
 
-  const hasAnything = Object.keys(groups).length > 0
-  const hiddenCount = hiddenSlotKeys?.size || 0
+  const slotKey = (ev) => `${ev.course_code}::${ev.recurrence}::${ev.time || ''}`
 
-  // Count visible vs hidden per course
+  const totalHidden = (hiddenSlotKeys?.size || 0) + (hiddenEventIds?.size || 0) + (mutedClubIds?.size || 0)
+
   const getCourseStats = (evs) => {
     const keys = evs.map(slotKey)
     const hidden = keys.filter(k => hiddenSlotKeys?.has(k)).length
@@ -602,14 +600,11 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
   const hideAllForCourse = (evs) => {
     const keys = evs.map(slotKey)
     const allHidden = keys.every(k => hiddenSlotKeys?.has(k))
-    if (allHidden) {
-      // unhide all
-      onHide(keys, 'unhide')
-    } else {
-      // hide all visible ones
-      onHide(keys.filter(k => !hiddenSlotKeys?.has(k)), 'hide')
-    }
+    if (allHidden) onHide(keys, 'unhide')
+    else onHide(keys.filter(k => !hiddenSlotKeys?.has(k)), 'hide')
   }
+
+  const typeOrder = ['course', 'academic', 'exam', 'personal', 'club']
 
   return (
     <div className="cal-bulk-overlay" onClick={onClose}>
@@ -620,16 +615,16 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
           <div className="mgr-header-left">
             <FaLayerGroup size={15} style={{ color: '#ed1b2f' }} />
             <div>
-              <h3 className="mgr-title">{L(language, 'Manage Classes', 'Gérer les cours', '管理课程')}</h3>
-              {hiddenCount > 0 && (
+              <h3 className="mgr-title">{L(language, 'Manage Events', 'Gérer les événements', '管理事件')}</h3>
+              {totalHidden > 0 && (
                 <p className="mgr-subtitle">
-                  {L(language, `${hiddenCount} slot${hiddenCount !== 1 ? 's' : ''} hidden`, `${hiddenCount} cours masqué${hiddenCount !== 1 ? 's' : ''}`, `${hiddenCount}个课程已隐藏`)}
+                  {L(language, `${totalHidden} item${totalHidden !== 1 ? 's' : ''} hidden`, `${totalHidden} élément${totalHidden !== 1 ? 's' : ''} masqué${totalHidden !== 1 ? 's' : ''}`, `${totalHidden}项已隐藏`)}
                 </p>
               )}
             </div>
           </div>
           <div className="mgr-header-right">
-            {hiddenCount > 0 && (
+            {totalHidden > 0 && (
               <button className="mgr-show-all-btn" onClick={onUnhideAll}>
                 <EyeIcon /> {L(language, 'Show all', 'Tout afficher', '全部显示')}
               </button>
@@ -646,64 +641,174 @@ function BulkDeleteModal({ userEvents, onHide, hiddenSlotKeys, onUnhideAll, onCl
           <span className="mgr-legend-hint">{L(language, 'Click 👁 to toggle visibility', 'Cliquez 👁 pour basculer', '点击👁切换可见性')}</span>
         </div>
 
-        {/* Content */}
-        {!hasAnything ? (
-          <div className="mgr-empty">
-            <span style={{ fontSize: '2rem' }}>📅</span>
-            <p>{L(language, 'No recurring class slots found.', 'Aucun cours récurrent trouvé.', '未找到循环课程。')}</p>
-            <p className="mgr-empty-hint">{L(language, 'Add courses from the Courses tab.', 'Ajoutez des cours depuis l\'onglet Cours.', '从课程标签添加课程。')}</p>
-          </div>
-        ) : (
-          <div className="mgr-list">
-            {Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([courseCode, days]) => {
-              const allEvs  = Object.values(days).flat()
-              const stats   = getCourseStats(allEvs)
-              const allHidden = stats.hidden === stats.total
-
-              return (
-                <div key={courseCode} className="mgr-course">
-                  <div className="mgr-course-header">
-                    <div className="mgr-course-header-left">
-                      <span className="mgr-course-code">{courseCode}</span>
-                      <span className="mgr-course-stats">
-                        {stats.hidden > 0
-                          ? <span className="mgr-course-stats--partial">{stats.visible}/{stats.total} {L(language, 'visible', 'visible', '可见')}</span>
-                          : <span className="mgr-course-stats--all">{L(language, 'All visible', 'Tout visible', '全部可见')}</span>
-                        }
-                      </span>
+        <div className="mgr-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          {/* ── Recurring Class Slots ── */}
+          {Object.keys(classGroups).length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: typeConfig.course?.color || '#ed1b2f', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {typeConfig.course?.icon} {L(language, 'Recurring Classes', 'Cours récurrents', '循环课程')}
+              </div>
+              {Object.entries(classGroups).sort(([a],[b]) => a.localeCompare(b)).map(([courseCode, days]) => {
+                const allEvs = Object.values(days).flat()
+                const stats = getCourseStats(allEvs)
+                const allHidden = stats.hidden === stats.total
+                return (
+                  <div key={courseCode} className="mgr-course">
+                    <div className="mgr-course-header">
+                      <div className="mgr-course-header-left">
+                        <span className="mgr-course-code">{courseCode}</span>
+                        <span className="mgr-course-stats">
+                          {stats.hidden > 0
+                            ? <span className="mgr-course-stats--partial">{stats.visible}/{stats.total} {L(language, 'visible', 'visible', '可见')}</span>
+                            : <span className="mgr-course-stats--all">{L(language, 'All visible', 'Tout visible', '全部可见')}</span>
+                          }
+                        </span>
+                      </div>
+                      <button
+                        className={`mgr-course-toggle ${allHidden ? 'mgr-course-toggle--hidden' : ''}`}
+                        onClick={() => hideAllForCourse(allEvs)}
+                      >
+                        {allHidden ? <EyeOffIcon /> : <EyeIcon />}
+                        <span>{allHidden ? L(language, 'Show all', 'Afficher tout', '全部显示') : L(language, 'Hide all', 'Masquer tout', '全部隐藏')}</span>
+                      </button>
                     </div>
-                    <button
-                      className={`mgr-course-toggle ${allHidden ? 'mgr-course-toggle--hidden' : ''}`}
-                      onClick={() => hideAllForCourse(allEvs)}
-                      title={allHidden ? L(language, 'Show all slots', 'Afficher tous les cours', '显示所有课程') : L(language, 'Hide all slots', 'Masquer tous les cours', '隐藏所有课程')}
-                    >
-                      {allHidden ? <EyeOffIcon /> : <EyeIcon />}
-                      <span>{allHidden ? L(language, 'Show all', 'Afficher tout', '全部显示') : L(language, 'Hide all', 'Masquer tout', '全部隐藏')}</span>
-                    </button>
+                    <div className="mgr-slots">
+                      {Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([rec, evs]) =>
+                        evs.map(ev => (
+                          <SlotRow
+                            key={`${slotKey(ev)}-${ev.time}-${ev.recurrence}`}
+                            ev={ev}
+                            isHidden={hiddenSlotKeys?.has(slotKey(ev))}
+                            onToggleHide={() => {
+                              const key = slotKey(ev)
+                              onHide([key], hiddenSlotKeys?.has(key) ? 'unhide' : 'hide')
+                            }}
+                            onSave={onEditSlot}
+                            language={language}
+                          />
+                        ))
+                      )}
+                    </div>
                   </div>
+                )
+              })}
+            </div>
+          )}
 
-                  <div className="mgr-slots">
-                    {Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([rec, evs]) =>
-                      evs.map(ev => (
-                        <SlotRow
-                          key={`${slotKey(ev)}-${ev.time}-${ev.recurrence}`}
-                          ev={ev}
-                          isHidden={hiddenSlotKeys?.has(slotKey(ev))}
-                          onToggleHide={() => {
-                            const key = slotKey(ev)
-                            onHide([key], hiddenSlotKeys?.has(key) ? 'unhide' : 'hide')
-                          }}
-                          onSave={onEditSlot}
-                          language={language}
-                        />
-                      ))
-                    )}
+          {/* ── Individual Events by Type ── */}
+          {typeOrder.filter(type => eventsByType[type]?.length > 0).map(type => {
+            const events = eventsByType[type]
+            const cfg = typeConfig[type] || typeConfig.personal || { color: '#059669', bg: '#ecfdf5', label: type }
+            // For club events, group by club
+            if (type === 'club') {
+              const clubMap = {}
+              events.forEach(ev => {
+                const cid = ev.clubId || 'unknown'
+                if (!clubMap[cid]) clubMap[cid] = { name: ev.category || 'Club', events: [] }
+                clubMap[cid].events.push(ev)
+              })
+              return (
+                <div key={type} style={{ marginBottom: 12 }}>
+                  <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: cfg.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {cfg.icon} {cfg.label}
                   </div>
+                  {Object.entries(clubMap).map(([clubId, { name, events: clubEvs }]) => {
+                    const isMuted = mutedClubIds?.has(clubId)
+                    return (
+                      <div key={clubId} className="mgr-course">
+                        <div className="mgr-course-header">
+                          <div className="mgr-course-header-left">
+                            <span className="mgr-course-code">{name}</span>
+                          </div>
+                          <button
+                            className={`mgr-course-toggle ${isMuted ? 'mgr-course-toggle--hidden' : ''}`}
+                            onClick={() => onToggleMuteClub(clubId)}
+                          >
+                            {isMuted ? <EyeOffIcon /> : <EyeIcon />}
+                            <span>{isMuted ? L(language, 'Show all', 'Afficher tout', '全部显示') : L(language, 'Hide all', 'Masquer tout', '全部隐藏')}</span>
+                          </button>
+                        </div>
+                        <div className="mgr-slots">
+                          {clubEvs.map(ev => {
+                            const isHidden = hiddenEventIds?.has(ev.id) || isMuted
+                            const dateObj = ev.date ? new Date(ev.date + 'T00:00:00') : null
+                            const shortDate = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                            const hasEnd = ev.end_time && String(ev.end_time).trim()
+                            const timeLabel = ev.time ? (hasEnd ? `${ev.time}–${ev.end_time}` : ev.time) : null
+                            return (
+                              <div key={ev.id} className={`slot-row ${isHidden ? 'slot-row--hidden' : ''}`}>
+                                <div className="slot-row-main">
+                                  <span className="slot-day-pill">{shortDate}</span>
+                                  <div className="slot-info">
+                                    <span className="slot-label">{ev.title}</span>
+                                    {timeLabel && <span className="slot-time">{timeLabel}</span>}
+                                  </div>
+                                </div>
+                                <div className="slot-row-actions">
+                                  <button
+                                    className={`slot-action-btn slot-eye-btn ${isHidden ? 'slot-eye-btn--hidden' : ''}`}
+                                    onClick={e => { e.stopPropagation(); onToggleHideEvent(ev.id) }}
+                                    disabled={isMuted}
+                                  >
+                                    {isHidden ? <EyeOffIcon /> : <EyeIcon />}
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )
-            })}
-          </div>
-        )}
+            }
+
+            // Non-club event types
+            return (
+              <div key={type} style={{ marginBottom: 12 }}>
+                <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: cfg.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {cfg.icon} {cfg.label}
+                </div>
+                <div className="mgr-slots">
+                  {events.map(ev => {
+                    const isHidden = hiddenEventIds?.has(ev.id)
+                    const dateObj = ev.date ? new Date(ev.date + 'T00:00:00') : null
+                    const shortDate = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                    const hasEnd = ev.end_time && String(ev.end_time).trim()
+                    const timeLabel = ev.time ? (hasEnd ? `${ev.time}–${ev.end_time}` : ev.time) : null
+                    return (
+                      <div key={ev.id} className={`slot-row ${isHidden ? 'slot-row--hidden' : ''}`}>
+                        <div className="slot-row-main">
+                          <span className="slot-day-pill">{shortDate}</span>
+                          <div className="slot-info">
+                            <span className="slot-label">{ev.title}</span>
+                            {timeLabel && <span className="slot-time">{timeLabel}</span>}
+                          </div>
+                        </div>
+                        <div className="slot-row-actions">
+                          <button
+                            className={`slot-action-btn slot-eye-btn ${isHidden ? 'slot-eye-btn--hidden' : ''}`}
+                            onClick={e => { e.stopPropagation(); onToggleHideEvent(ev.id) }}
+                          >
+                            {isHidden ? <EyeOffIcon /> : <EyeIcon />}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          {Object.keys(classGroups).length === 0 && Object.keys(eventsByType).length === 0 && (
+            <div className="mgr-empty">
+              <span style={{ fontSize: '2rem' }}>📅</span>
+              <p>{L(language, 'No events found.', 'Aucun événement trouvé.', '未找到事件。')}</p>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="mgr-footer">
@@ -812,7 +917,13 @@ function googleCalendarUrl(event) {
 }
 
 function AnnouncementModal({ clubs, onSave, onClose, language }) {
-  const [form, setForm] = useState({ title: '', body: '', clubId: clubs[0]?.id || '' })
+  const [form, setForm] = useState({ title: '', body: '', clubId: clubs[0]?.id || '', attachEvent: false, eventDate: '', eventTime: '', eventEndTime: '', eventLocation: '' })
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!form.title.trim() || !form.body.trim() || !form.clubId) return
+    if (form.attachEvent && !form.eventDate) return
+    onSave(form)
+  }
   return (
     <div className="cal-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="cal-modal cal-modal-v2" style={{ maxWidth: '460px' }}>
@@ -824,7 +935,7 @@ function AnnouncementModal({ clubs, onSave, onClose, language }) {
           </div>
           <button className="cal-modal-close" onClick={onClose}><FaTimes /></button>
         </div>
-        <form className="cal-modal-body-v2" onSubmit={e => { e.preventDefault(); if (form.title.trim() && form.body.trim() && form.clubId) onSave(form) }}>
+        <form className="cal-modal-body-v2" onSubmit={handleSubmit}>
           <div className="cal-v2-field">
             <label className="cal-v2-label">{L(language, 'Club', 'Club', '社团')}</label>
             <select className="cal-v2-input" value={form.clubId} onChange={e => setForm(p => ({ ...p, clubId: e.target.value }))}>
@@ -839,6 +950,35 @@ function AnnouncementModal({ clubs, onSave, onClose, language }) {
             <label className="cal-v2-label">{L(language, 'Message', 'Message', '消息')} <span className="cal-v2-required">*</span></label>
             <textarea className="cal-v2-input cal-v2-textarea" rows={4} value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} placeholder={L(language, 'Write your announcement…', 'Rédigez votre annonce…', '写下你的公告…')} required />
           </div>
+          <div className="cal-v2-field">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              <input type="checkbox" checked={form.attachEvent} onChange={e => setForm(p => ({ ...p, attachEvent: e.target.checked }))} style={{ accentColor: '#d97706' }} />
+              <FaCalendarAlt size={12} style={{ color: '#d97706' }} />
+              {L(language, 'Attach an event', 'Joindre un événement', '附加活动')}
+            </label>
+          </div>
+          {form.attachEvent && (
+            <>
+              <div className="cal-v2-field">
+                <label className="cal-v2-label">{L(language, 'Event Date', 'Date', '日期')} <span className="cal-v2-required">*</span></label>
+                <input className="cal-v2-input" type="date" value={form.eventDate} onChange={e => setForm(p => ({ ...p, eventDate: e.target.value }))} required />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="cal-v2-field" style={{ flex: 1 }}>
+                  <label className="cal-v2-label">{L(language, 'Start', 'Début', '开始')}</label>
+                  <input className="cal-v2-input" type="time" value={form.eventTime} onChange={e => setForm(p => ({ ...p, eventTime: e.target.value }))} />
+                </div>
+                <div className="cal-v2-field" style={{ flex: 1 }}>
+                  <label className="cal-v2-label">{L(language, 'End', 'Fin', '结束')}</label>
+                  <input className="cal-v2-input" type="time" value={form.eventEndTime} onChange={e => setForm(p => ({ ...p, eventEndTime: e.target.value }))} />
+                </div>
+              </div>
+              <div className="cal-v2-field">
+                <label className="cal-v2-label">{L(language, 'Location', 'Lieu', '地点')}</label>
+                <input className="cal-v2-input" value={form.eventLocation} onChange={e => setForm(p => ({ ...p, eventLocation: e.target.value }))} placeholder={L(language, 'e.g. SSMU Ballroom', 'ex. Salle de bal SSMU', '例如 SSMU舞厅')} />
+              </div>
+            </>
+          )}
           <div className="cal-v2-footer">
             <div className="cal-v2-actions-right">
               <button type="button" className="cal-v2-btn-ghost" onClick={onClose}>{L(language, 'Cancel', 'Annuler', '取消')}</button>
@@ -866,6 +1006,7 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
     exam:     { color: '#7c3aed', bg: '#f5f3ff', icon: <FaClipboardList />, label: L(language, 'Final Exams', 'Examens finaux', '期末考试') },
     personal: { color: '#059669', bg: '#ecfdf5', icon: <FaUser />,          label: t('calendar.personalEvents') },
     club:     { color: '#d97706', bg: '#fef3c7', icon: <FaUsers />,         label: L(language, 'Club Meeting', 'Réunion de club', '社团会议') },
+    newsletter: { color: '#0891b2', bg: '#ecfeff', icon: <FaNewspaper />,   label: L(language, 'Newsletter', 'Infolettre', '通讯') },
   }
 
   const getEventStyle = useCallback((event, cfg) => {
@@ -885,6 +1026,35 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
   const [serverClubEvents, setServerClubEvents] = useState([])
   const [clubAnnouncements, setClubAnnouncements] = useState([])
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
+  const [newsletterEvents, setNewsletterEvents] = useState([])
+
+  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
+  const isMcGillEmail = (() => {
+    const email = (user?.email || '').toLowerCase()
+    return email.endsWith('@mcgill.ca') || email.endsWith('@mail.mcgill.ca') || ADMIN_EMAILS.has(email)
+  })()
+
+  // ── Load newsletter events (McGill emails only) ────────────────
+  useEffect(() => {
+    if (!user?.id || !isMcGillEmail) return
+    let cancelled = false
+    newslettersAPI.getEvents().then(events => {
+      if (cancelled) return
+      setNewsletterEvents(events.map(ev => ({
+        id: `nl-${ev.id}`,
+        title: ev.title,
+        date: ev.date,
+        time: ev.time || null,
+        end_time: ev.end_time || null,
+        type: 'newsletter',
+        category: ev.source_name || 'Newsletter',
+        description: ev.description || '',
+        location: ev.location || '',
+        link: ev.link || '',
+      })))
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.id])
 
   // ── Load exam schedule from current courses ─────────────────────
   useEffect(() => {
@@ -1050,7 +1220,7 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
   const [view, setView]               = useState('calendar')
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
-  const [filter, setFilter]           = useState({ course: true, academic: true, exam: true, personal: true, club: true })
+  const [filter, setFilter]           = useState({ course: true, academic: true, exam: true, personal: true, club: true, newsletter: true })
   const [showModal, setShowModal]     = useState(false)
   const [editEvent, setEditEvent]     = useState(null)
   const [preselectedDate, setPreselectedDate] = useState(null)
@@ -1078,6 +1248,34 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
     }
   }, [hiddenSlotKeys, user?.id])
 
+  // Per-club mute state for calendar (hide club events without unsyncing)
+  const [mutedClubIds, setMutedClubIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`mutedClubs_${user?.id}`)
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch { return new Set() }
+  })
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`mutedClubs_${user?.id}`, JSON.stringify([...mutedClubIds]))
+    } catch { /* silent */ }
+  }, [mutedClubIds, user?.id])
+
+  // Per-event hide state (hide any individual event by ID)
+  const [hiddenEventIds, setHiddenEventIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`hiddenEvents_${user?.id}`)
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    } catch { return new Set() }
+  })
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`hiddenEvents_${user?.id}`, JSON.stringify([...hiddenEventIds]))
+    } catch { /* silent */ }
+  }, [hiddenEventIds, user?.id])
+
   // FIX #19: tEvent defined inside useMemo so it always captures the current
   // translation function. language is a real dependency — no eslint-disable needed.
   const allEvents = useMemo(() => {
@@ -1097,19 +1295,22 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
       ...retypedUser,
       ...clubEvents,
       ...serverClubEvents,
+      ...newsletterEvents.map(tEvent),
     ]
-  }, [userEvents, examEvents, clubEvents, serverClubEvents, language, t])
+  }, [userEvents, examEvents, clubEvents, serverClubEvents, newsletterEvents, language, t])
 
   const filteredEvents = useMemo(() =>
     allEvents.filter(e => {
       if (filter[e.type] === false) return false
       if (e.course_code && e.recurrence) {
-        const key = `${e.course_code}::${e.recurrence}`
+        const key = `${e.course_code}::${e.recurrence}::${e.time || ''}`
         if (hiddenSlotKeys.has(key)) return false
       }
+      if (e.type === 'club' && e.clubId && mutedClubIds.has(e.clubId)) return false
+      if (hiddenEventIds.has(e.id)) return false
       return true
     }),
-    [allEvents, filter, hiddenSlotKeys]
+    [allEvents, filter, hiddenSlotKeys, mutedClubIds, hiddenEventIds]
   )
 
   const eventsByDate = useMemo(() => {
@@ -1266,8 +1467,8 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
 
   // Edit a slot's day/time — updates anchor + all occurrences in state + Supabase
   const handleEditSlot = async (anchorEv, { recurrence, time, end_time }) => {
-    const oldKey = `${anchorEv.course_code}::${anchorEv.recurrence}`
-    const newKey = `${anchorEv.course_code}::${recurrence}`
+    const oldKey = `${anchorEv.course_code}::${anchorEv.recurrence}::${anchorEv.time || ''}`
+    const newKey = `${anchorEv.course_code}::${recurrence}::${time || ''}`
 
     // Strip _isRecurringOccurrence/_anchorId so expandRecurringEvents treats it as a fresh anchor
     const updatedAnchor = {
@@ -1394,8 +1595,8 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
               </div>
             )}
           </div>
-          <button className="cal-bulk-toggle-btn" onClick={() => setShowBulkDelete(true)} title={L(language, 'Bulk delete classes', 'Supprimer des cours en masse', '批量删除课程')}>
-            <FaLayerGroup size={12} /> {L(language, 'Edit Classes', 'Modifier les cours', '编辑课程')}
+          <button className="cal-bulk-toggle-btn" onClick={() => setShowBulkDelete(true)} title={L(language, 'Manage events', 'Gérer les événements', '管理事件')}>
+            <FaLayerGroup size={12} /> {L(language, 'Edit Events', 'Modifier les événements', '编辑事件')}
           </button>
           <button className="cal-add-btn" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
             <FaPlus /> {t('calendar.addEventBtn')}
@@ -1405,7 +1606,7 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
 
       {/* Filter Bar */}
       <div className="cal-filter-bar">
-        {Object.entries(typeConfig).map(([key, cfg]) => (
+        {Object.entries(typeConfig).filter(([key]) => key !== 'newsletter' || isMcGillEmail).map(([key, cfg]) => (
           <button key={key}
             className={`cal-filter-chip ${filter[key] ? 'active' : ''}`}
             style={filter[key] ? { borderColor: cfg.color, background: cfg.bg, color: cfg.color } : {}}
@@ -1478,7 +1679,7 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
             })}
           </div>
           <div className="cal-legend">
-            {Object.entries(typeConfig).map(([key, cfg]) => (
+            {Object.entries(typeConfig).filter(([key]) => key !== 'newsletter' || isMcGillEmail).map(([key, cfg]) => (
               <div key={key} className="cal-legend-item">
                 <span className="cal-legend-dot" style={{ background: cfg.color }} />
                 {cfg.label}
@@ -1578,7 +1779,22 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
           clubs={managedClubs}
           onSave={async (data) => {
             try {
-              await clubsAPI.createClubAnnouncement(data.clubId, { title: data.title, body: data.body })
+              let eventId = null
+              if (data.attachEvent) {
+                const ev = await clubsAPI.createClubEvent(data.clubId, {
+                  title: data.title,
+                  date: data.eventDate,
+                  time: data.eventTime || null,
+                  end_time: data.eventEndTime || null,
+                  location: data.eventLocation || null,
+                })
+                eventId = ev.id || ev.event?.id || null
+              }
+              await clubsAPI.createClubAnnouncement(data.clubId, {
+                title: data.title,
+                body: data.body,
+                event_id: eventId,
+              })
               await refreshClubData()
             } catch (err) { console.error('Failed to create announcement:', err) }
             setShowAnnouncementModal(false)
@@ -1611,6 +1827,16 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
             onClose={() => setPopupEvent(null)}
             canEdit={userEventIds.has(popupEvent.id)}
             onEdit={() => { setEditEvent(popupEvent); setPopupEvent(null); setShowModal(true) }}
+            onHide={() => {
+              const ev = popupEvent
+              if (ev.course_code && ev.recurrence) {
+                const key = `${ev.course_code}::${ev.recurrence}::${ev.time || ''}`
+                setHiddenSlotKeys(prev => new Set([...prev, key]))
+              } else {
+                setHiddenEventIds(prev => new Set([...prev, ev.id]))
+              }
+              setPopupEvent(null)
+            }}
             t={t} language={language} formatDate={formatDate}
             typeConfig={typeConfig} getEventStyle={getEventStyle}
           />
@@ -1666,12 +1892,30 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
       {showBulkDelete && (
         <BulkDeleteModal
           userEvents={userEvents}
+          allEvents={allEvents}
           onHide={handleBulkHide}
           hiddenSlotKeys={hiddenSlotKeys}
-          onUnhideAll={handleBulkUnhideAll}
+          onUnhideAll={() => { handleBulkUnhideAll(); setHiddenEventIds(new Set()); setMutedClubIds(new Set()) }}
           onClose={() => setShowBulkDelete(false)}
           language={language}
           onEditSlot={handleEditSlot}
+          serverClubEvents={serverClubEvents}
+          mutedClubIds={mutedClubIds}
+          onToggleMuteClub={(clubId) => setMutedClubIds(prev => {
+            const next = new Set(prev)
+            if (next.has(clubId)) next.delete(clubId)
+            else next.add(clubId)
+            return next
+          })}
+          hiddenEventIds={hiddenEventIds}
+          onToggleHideEvent={(eventId) => setHiddenEventIds(prev => {
+            const next = new Set(prev)
+            if (next.has(eventId)) next.delete(eventId)
+            else next.add(eventId)
+            return next
+          })}
+          typeConfig={typeConfig}
+          getEventStyle={getEventStyle}
         />
       )}
     </div>

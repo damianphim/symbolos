@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 import anthropic
 import logging
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from api.utils.supabase_client import get_supabase, get_user_by_id
@@ -144,7 +144,8 @@ def fetch_saved_cards(user_id: str) -> list:
         .execute().data or [])
 
 
-def cards_are_fresh(user_id: str, max_age_hours: int = 12) -> bool:
+def cards_are_fresh(user_id: str, max_age_hours: int = 168) -> bool:
+    """Returns True if AI cards exist and were generated within max_age_hours (default 7 days)."""
     try:
         supabase = get_supabase()
         resp = (supabase.table("advisor_cards")
@@ -152,12 +153,43 @@ def cards_are_fresh(user_id: str, max_age_hours: int = 12) -> bool:
             .order("generated_at", desc=True).limit(1).execute())
         if not resp.data:
             return False
-        generated_at = resp.data[0].get("generated_at")
-        if not generated_at:
-            return False
-        from datetime import timedelta
-        gen_time = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
-        return (datetime.now(timezone.utc) - gen_time) < timedelta(hours=max_age_hours)
+        generated_at = datetime.fromisoformat(
+            resp.data[0]["generated_at"].replace("Z", "+00:00"))
+        age_hours = (datetime.now(timezone.utc) - generated_at).total_seconds() / 3600
+        return age_hours < max_age_hours
+    except Exception:
+        return False
+
+
+def _count_generations_this_week(user_id: str) -> int:
+    """Count how many times AI cards were generated for this user in the last 7 days."""
+    try:
+        supabase = get_supabase()
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        # Count distinct generated_at timestamps (each generation batch shares one timestamp)
+        resp = (supabase.table("advisor_cards")
+            .select("generated_at")
+            .eq("user_id", user_id).eq("source", "ai")
+            .gte("generated_at", week_ago)
+            .order("generated_at", desc=True)
+            .execute())
+        if not resp.data:
+            return 0
+        # Count unique generation timestamps (each batch shares one)
+        unique_times = set(r["generated_at"] for r in resp.data)
+        return len(unique_times)
+    except Exception:
+        return 0
+
+
+def cards_exist(user_id: str) -> bool:
+    """Returns True if any AI cards exist for this user, regardless of age."""
+    try:
+        supabase = get_supabase()
+        resp = (supabase.table("advisor_cards")
+            .select("id").eq("user_id", user_id).eq("source", "ai")
+            .limit(1).execute())
+        return bool(resp.data)
     except Exception:
         return False
 
@@ -356,11 +388,23 @@ async def get_cards(user_id: str, req: Request, current_user_id: str = Depends(g
 @router.post("/generate/{user_id}", response_model=dict)
 async def generate_cards(user_id: str, request: GenerateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
     require_self(current_user_id, user_id)
+    """
+    Generate AI cards.
+    - If force=False and cards are fresh (< 7 days old), returns existing cards immediately.
+    - If force=True, regenerates (max 2 times per week).
+    """
     try:
         get_user_by_id(user_id)
         if not request.force and cards_are_fresh(user_id):
             logger.info(f"Cards already fresh for {user_id}, skipping generation")
             return _fetch_cards_response(user_id)
+
+        # Rate limit: max 2 forced regenerations per week
+        if request.force:
+            gen_count = _count_generations_this_week(user_id)
+            if gen_count >= 2:
+                logger.info(f"Rate limit: {user_id} already generated {gen_count} times this week")
+                return _fetch_cards_response(user_id)
 
         ctx = fetch_student_context(user_id)
         saved = fetch_saved_cards(user_id)

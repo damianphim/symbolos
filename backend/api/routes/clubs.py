@@ -137,8 +137,9 @@ class ClubEventCreate(BaseModel):
 
 
 class ClubAnnouncementCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    body:  str = Field(..., min_length=1, max_length=2000)
+    title:    str           = Field(..., min_length=1, max_length=200)
+    body:     str           = Field(..., min_length=1, max_length=2000)
+    event_id: Optional[str] = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -308,6 +309,98 @@ def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title
             logger.info(f"Event notification sent to {len(emails)} members of {club_name}")
     except Exception as e:
         logger.exception(f"Failed to send event notification: {e}")
+
+
+def _notify_club_members_announcement(supabase, club_id: str, club_name: str, title: str, body_text: str, event=None):
+    """Email all members of a club about a new announcement, optionally with an attached event."""
+    if not settings.RESEND_API_KEY:
+        return
+
+    members = supabase.table("user_clubs").select("user_id").eq("club_id", club_id).execute()
+    if not members.data:
+        return
+
+    emails = []
+    for m in members.data:
+        try:
+            profile = supabase.table("users").select("email").eq("id", m["user_id"]).execute()
+            if profile.data and profile.data[0].get("email"):
+                emails.append(profile.data[0]["email"])
+        except Exception:
+            continue
+
+    if not emails:
+        return
+
+    safe_name = escape(club_name)
+    safe_title = escape(title)
+    safe_body = escape(body_text[:500]).replace("\n", "<br/>")
+
+    # Build optional event details block
+    event_block = ""
+    if event:
+        ev_title = escape(event.get("title", ""))
+        ev_date = escape(event.get("date", "TBA"))
+        ev_time = escape(event.get("time") or "TBA")
+        ev_loc = escape(event.get("location") or "TBA")
+        event_block = f"""
+          <div style="margin:16px 0;padding:1px 0;">
+            <div style="margin-bottom:4px;"><span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border-radius:12px;">Event</span></div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:12px;border-radius:8px;">
+              <tr><td style="padding:4px 0;font-size:13px;color:#6b7280;width:80px;">Event</td><td style="padding:4px 0;font-size:14px;color:#111827;font-weight:600;">{ev_title}</td></tr>
+              <tr><td style="padding:4px 0;font-size:13px;color:#6b7280;">Date</td><td style="padding:4px 0;font-size:14px;color:#111827;">{ev_date}</td></tr>
+              <tr><td style="padding:4px 0;font-size:13px;color:#6b7280;">Time</td><td style="padding:4px 0;font-size:14px;color:#111827;">{ev_time}</td></tr>
+              <tr><td style="padding:4px 0;font-size:13px;color:#6b7280;">Location</td><td style="padding:4px 0;font-size:14px;color:#111827;">{ev_loc}</td></tr>
+            </table>
+          </div>"""
+
+    subject = f"📢 {safe_title} — {safe_name}"
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td style="background:#ED1B2F;border-radius:12px 12px 0 0;padding:20px 28px;">
+          <span style="color:#fff;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Symbolos</span>
+        </td></tr>
+        <tr><td style="background:#ffffff;padding:28px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
+          <div style="margin-bottom:16px;">
+            <span style="display:inline-block;background:#ede9fe;color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;">Announcement</span>
+          </div>
+          <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;line-height:1.3;">{safe_title}</h1>
+          <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">From <strong>{safe_name}</strong></p>
+          <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">{safe_body}</p>
+          {event_block}
+          <div style="text-align:center;margin-top:20px;">
+            <a href="https://symbolos.ca" style="display:inline-block;background:#ED1B2F;color:#fff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">View on Symbolos</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6;">
+            You're receiving this because you are a member of {safe_name} on Symbolos.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
+    try:
+        import httpx
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={"from": "Symbolos <notifications@symbolos.ca>", "to": emails, "subject": subject, "html": html},
+            timeout=10,
+        )
+        if resp.status_code >= 400:
+            logger.warning(f"Resend error for announcement notification: {resp.status_code} {resp.text}")
+        else:
+            logger.info(f"Announcement notification sent to {len(emails)} members of {club_name}")
+    except Exception as e:
+        logger.exception(f"Failed to send announcement notification: {e}")
 
 
 # ── DB-stored action tokens for email-based club approval ────────────────────
@@ -684,7 +777,7 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
                 supabase.table("user_clubs").insert({
                     "user_id": join_req["user_id"],
                     "club_id": join_req["club_id"],
-                    "calendar_synced": False,
+                    "calendar_synced": True,
                 }).execute()
 
         # Step 4: Delete the join request
@@ -768,6 +861,21 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
             if existing_req.data:
                 raise HTTPException(status_code=409, detail="You already have a pending request for this club")
 
+            # Rate limit: max 3 applications per club per year
+            from datetime import datetime, timedelta
+            one_year_ago = (datetime.utcnow() - timedelta(days=365)).isoformat()
+            yearly_requests = (
+                supabase.table("club_join_requests")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .eq("club_id", body.club_id)
+                .gte("created_at", one_year_ago)
+                .execute()
+            )
+            yearly_count = yearly_requests.count if yearly_requests.count is not None else len(yearly_requests.data or [])
+            if yearly_count >= 3:
+                raise HTTPException(status_code=429, detail="You can only apply to this club 3 times per year")
+
             # Use user-provided info from the join form
             requester_name = body.requester_name or "A student"
             requester_email = body.requester_email or ""
@@ -820,7 +928,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
             supabase.table("user_clubs").insert({
                 "user_id": user_id,
                 "club_id": body.club_id,
-                "calendar_synced": False,
+                "calendar_synced": True,
             }).execute()
             return {"success": True, "status": "joined"}
     except HTTPException:
@@ -828,6 +936,20 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
     except Exception as e:
         logger.exception(f"Error joining club: {e}")
         raise HTTPException(status_code=500, detail="Failed to join club")
+
+
+@router.get("/user/{user_id}/pending-requests")
+async def get_user_pending_requests(user_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Get all club IDs where the user has a pending join request."""
+    require_self(current_user_id, user_id)
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_join_requests").select("club_id").eq("user_id", user_id).eq("status", "pending").execute()
+        club_ids = [r["club_id"] for r in (result.data or [])]
+        return {"pending_club_ids": club_ids}
+    except Exception as e:
+        logger.exception(f"Error fetching pending requests: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch pending requests")
 
 
 @router.delete("/user/{user_id}/leave/{club_id}")
@@ -939,19 +1061,53 @@ def _is_club_owner_or_admin(club_id: str, user_id: str) -> bool:
 
 @router.get("/{club_id}/members")
 async def get_club_members(club_id: str, current_user_id: str = Depends(get_current_user_id)):
-    """Get all members of a club. Only club owner or admins can view."""
-    if not _is_club_owner_or_admin(club_id, current_user_id):
-        raise HTTPException(status_code=403, detail="Only club owner or admins can view members")
+    """Get all members of a club. Any club member can view the list."""
     supabase = get_supabase()
+
+    # Check if caller is a member (or owner/admin/global admin)
+    is_admin_or_owner = _is_club_owner_or_admin(club_id, current_user_id)
+    membership_check = supabase.table("user_clubs").select("user_id, role").eq("user_id", current_user_id).eq("club_id", club_id).execute()
+    is_member = bool(membership_check.data)
+    if not is_member and not is_admin_or_owner:
+        raise HTTPException(status_code=403, detail="Only club members can view the member list")
+
+    # Determine caller's role
+    club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+    owner_id = club_result.data[0].get("created_by") if club_result.data else None
+
+    # If the owner's account no longer exists, transfer ownership to a random admin (or member)
+    if owner_id:
+        owner_exists = supabase.table("users").select("id").eq("id", owner_id).execute()
+        if not owner_exists.data:
+            logger.warning(f"Club {club_id} owner {owner_id} no longer exists, transferring ownership")
+            memberships_all = supabase.table("user_clubs").select("user_id, role").eq("club_id", club_id).execute()
+            candidates = [m for m in (memberships_all.data or []) if m["user_id"] != owner_id]
+            # Prefer admins, then any member
+            admins = [m for m in candidates if m.get("role") == "admin"]
+            new_owner = (admins[0] if admins else candidates[0]) if candidates else None
+            if new_owner:
+                new_owner_id = new_owner["user_id"]
+                supabase.table("clubs").update({"created_by": new_owner_id}).eq("id", club_id).execute()
+                supabase.table("user_clubs").update({"role": "owner"}).eq("club_id", club_id).eq("user_id", new_owner_id).execute()
+                # Remove the old owner from user_clubs if they're still there
+                supabase.table("user_clubs").delete().eq("club_id", club_id).eq("user_id", owner_id).execute()
+                owner_id = new_owner_id
+                logger.info(f"Club {club_id} ownership transferred to {new_owner_id}")
+
+    if current_user_id == owner_id:
+        caller_role = "owner"
+    elif is_admin_or_owner:
+        caller_role = "admin"
+    elif membership_check.data and membership_check.data[0].get("role") == "admin":
+        caller_role = "admin"
+    else:
+        caller_role = "member"
+
     try:
         memberships = supabase.table("user_clubs").select("user_id, role").eq("club_id", club_id).execute()
     except Exception as e:
         logger.exception(f"Error fetching club members: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch members: {str(e)}")
-
-    # Get the club owner
-    club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
-    owner_id = club_result.data[0].get("created_by") if club_result.data else None
 
     members = []
     for m in (memberships.data or []):
@@ -969,37 +1125,76 @@ async def get_club_members(club_id: str, current_user_id: str = Depends(get_curr
     # Sort: owner first, then admins, then members
     role_order = {"owner": 0, "admin": 1, "member": 2}
     members.sort(key=lambda m: role_order.get(m["role"], 2))
-    return {"members": members, "count": len(members)}
+    return {"members": members, "count": len(members), "can_manage": is_admin_or_owner or caller_role in ("owner", "admin"), "caller_role": caller_role}
 
 
 @router.patch("/{club_id}/members/{member_user_id}/role")
-async def update_member_role(club_id: str, member_user_id: str, current_user_id: str = Depends(get_current_user_id)):
-    """Toggle a member's role between admin and member. Only club owner or admins can do this."""
-    if not _is_club_owner_or_admin(club_id, current_user_id):
-        raise HTTPException(status_code=403, detail="Only club owner or admins can change roles")
+async def update_member_role(club_id: str, member_user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+    """Set a member's role. Accepts { "role": "admin"|"member"|"owner" }."""
     supabase = get_supabase()
 
-    # Can't change the owner's role
+    # Get club owner
     club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
-    if club_result.data and club_result.data[0].get("created_by") == member_user_id:
-        raise HTTPException(status_code=400, detail="Cannot change the club owner's role")
+    if not club_result.data:
+        raise HTTPException(status_code=404, detail="Club not found")
+    owner_id = club_result.data[0].get("created_by")
 
-    # Get current role and toggle
+    # Determine caller's role
+    caller_is_owner = current_user_id == owner_id
+    caller_is_global_admin = _is_admin_user(current_user_id)
+    caller_membership = supabase.table("user_clubs").select("role").eq("user_id", current_user_id).eq("club_id", club_id).execute()
+    caller_is_club_admin = caller_membership.data and caller_membership.data[0].get("role") == "admin"
+
+    if not (caller_is_owner or caller_is_global_admin or caller_is_club_admin):
+        raise HTTPException(status_code=403, detail="Only club owner or admins can change roles")
+
+    # Parse requested role
+    body = await req.json()
+    new_role = body.get("role")
+    if new_role not in ("admin", "member", "owner"):
+        raise HTTPException(status_code=400, detail="Role must be 'admin', 'member', or 'owner'")
+
+    # Can't change the owner's role (unless transferring ownership TO someone else)
+    target_is_owner = member_user_id == owner_id
+    if target_is_owner and new_role != "owner":
+        raise HTTPException(status_code=400, detail="Cannot change the club owner's role directly. Transfer ownership instead.")
+
+    # Only the current owner can transfer ownership
+    if new_role == "owner":
+        if not caller_is_owner:
+            raise HTTPException(status_code=403, detail="Only the current owner can transfer ownership")
+        # Transfer: promote target to owner, demote current owner to admin
+        supabase.table("user_clubs").update({"role": "owner"}).eq("user_id", member_user_id).eq("club_id", club_id).execute()
+        supabase.table("user_clubs").update({"role": "admin"}).eq("user_id", current_user_id).eq("club_id", club_id).execute()
+        supabase.table("clubs").update({"created_by": member_user_id}).eq("id", club_id).execute()
+        return {"success": True, "role": "owner"}
+
+    # Admins cannot change other admins or the owner
+    if caller_is_club_admin and not caller_is_owner and not caller_is_global_admin:
+        target_membership = supabase.table("user_clubs").select("role").eq("user_id", member_user_id).eq("club_id", club_id).execute()
+        target_role = target_membership.data[0].get("role") if target_membership.data else "member"
+        if target_is_owner:
+            raise HTTPException(status_code=403, detail="Admins cannot change the owner's role")
+
+    # Get current role of target
     membership = supabase.table("user_clubs").select("role").eq("user_id", member_user_id).eq("club_id", club_id).execute()
     if not membership.data:
         raise HTTPException(status_code=404, detail="Member not found")
-    current_role = membership.data[0].get("role") or "member"
-    new_role = "member" if current_role == "admin" else "admin"
+
     supabase.table("user_clubs").update({"role": new_role}).eq("user_id", member_user_id).eq("club_id", club_id).execute()
     return {"success": True, "role": new_role}
 
 
 @router.delete("/{club_id}/members/{member_user_id}")
 async def remove_club_member(club_id: str, member_user_id: str, current_user_id: str = Depends(get_current_user_id)):
-    """Remove a member from a club. Only club owner or admins can remove."""
+    """Remove a member from a club. Owner/admins can remove (admins can remove members and other admins, but not owner)."""
     if not _is_club_owner_or_admin(club_id, current_user_id):
         raise HTTPException(status_code=403, detail="Only club owner or admins can remove members")
     supabase = get_supabase()
+    # Cannot remove the owner
+    club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+    if club_result.data and club_result.data[0].get("created_by") == member_user_id:
+        raise HTTPException(status_code=400, detail="Cannot remove the club owner")
     supabase.table("user_clubs").delete().eq("user_id", member_user_id).eq("club_id", club_id).execute()
     return {"success": True}
 
@@ -1100,12 +1295,32 @@ async def create_club_announcement(club_id: str, body: ClubAnnouncementCreate, c
         raise HTTPException(status_code=403, detail="Only club owner or admins can create announcements")
     try:
         supabase = get_supabase()
-        result = supabase.table("club_announcements").insert({
+        row = {
             "club_id": club_id,
             "title": body.title,
             "body": body.body,
             "created_by": current_user_id,
-        }).execute()
+        }
+        if body.event_id:
+            row["event_id"] = body.event_id
+        result = supabase.table("club_announcements").insert(row).execute()
+
+        # Send email to all club members
+        club_row = supabase.table("clubs").select("name").eq("id", club_id).execute()
+        club_name = club_row.data[0]["name"] if club_row.data else "Club"
+
+        # If event attached, fetch its details for the email
+        event_data = None
+        if body.event_id:
+            try:
+                ev_row = supabase.table("club_events").select("title, date, time, location").eq("id", body.event_id).execute()
+                if ev_row.data:
+                    event_data = ev_row.data[0]
+            except Exception:
+                pass
+
+        _notify_club_members_announcement(supabase, club_id, club_name, body.title, body.body, event=event_data)
+
         return {"success": True, "announcement": result.data[0] if result.data else None}
     except Exception as e:
         logger.exception(f"Error creating club announcement: {e}")
@@ -1190,9 +1405,9 @@ async def admin_review_submission(submission_id: str, req: Request):
         # Update status
         supabase.table("club_submissions").update({"status": new_status}).eq("id", submission_id).execute()
 
-        # If approved, create the actual club
+        # If approved, create the actual club and auto-add owner as member
         if new_status == "approved":
-            supabase.table("clubs").insert({
+            club_result = supabase.table("clubs").insert({
                 "name": submission["name"],
                 "description": submission["description"],
                 "category": submission.get("category") or "Social",
@@ -1204,8 +1419,16 @@ async def admin_review_submission(submission_id: str, req: Request):
                 "is_verified": True,
                 "created_by": submission.get("submitted_by"),
                 "executive_emails": submission.get("executive_emails"),
-                "member_count": 0,
+                "member_count": 1,
             }).execute()
+            new_club = club_result.data[0] if club_result.data else None
+            if new_club and submission.get("submitted_by"):
+                supabase.table("user_clubs").insert({
+                    "user_id": submission["submitted_by"],
+                    "club_id": new_club["id"],
+                    "role": "owner",
+                    "calendar_synced": True,
+                }).execute()
 
         return {"success": True, "status": new_status}
     except HTTPException:
@@ -1290,8 +1513,19 @@ async def admin_email_action(token: str):
             if submission.get("executive_emails"):
                 club_data["executive_emails"] = submission["executive_emails"]
             logger.info(f"Inserting club: {club_data}")
-            supabase.table("clubs").insert(club_data).execute()
+            club_result = supabase.table("clubs").insert(club_data).execute()
+            new_club = club_result.data[0] if club_result.data else None
             logger.info(f"Club inserted successfully: {submission['name']}")
+            # Auto-add owner as member
+            if new_club and submission.get("submitted_by"):
+                supabase.table("user_clubs").insert({
+                    "user_id": submission["submitted_by"],
+                    "club_id": new_club["id"],
+                    "role": "owner",
+                    "calendar_synced": True,
+                }).execute()
+                supabase.table("clubs").update({"member_count": 1}).eq("id", new_club["id"]).execute()
+                logger.info(f"Owner auto-added as member for club: {submission['name']}")
 
         # Update status only after successful club creation
         supabase.table("club_submissions").update({"status": action}).eq("id", submission_id).execute()

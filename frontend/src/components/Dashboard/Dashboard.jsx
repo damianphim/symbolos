@@ -27,7 +27,7 @@ import OnboardingTutorial from './OnboardingTutorial'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { user, profile, signOut, updateProfile } = useAuth()
+  const { user, profile, signOut, updateProfile, refreshProfile } = useAuth()
   const { t, language } = useLanguage()
 
   // Stable ref for current language — used inside useCallbacks without
@@ -130,18 +130,38 @@ export default function Dashboard() {
 
   // ── Advisor card handlers ──────────────────────────────
 
+  // ── Helpers: localStorage card cache ────────────────────────
+  const _cacheCards = useCallback((cards, generatedAt) => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`advisor_cards_${user.id}`, JSON.stringify({ cards, generatedAt, ts: Date.now() }))
+    } catch { /* quota exceeded — ignore */ }
+  }, [user?.id])
+
+  const _getCachedCards = useCallback(() => {
+    if (!user?.id) return null
+    try {
+      const raw = localStorage.getItem(`advisor_cards_${user.id}`)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      // Cache valid for 1 hour — after that we re-fetch from server
+      if (Date.now() - parsed.ts > 3600000) return null
+      return parsed
+    } catch { return null }
+  }, [user?.id])
+
   const refreshAdvisorCards = useCallback(async (force = true, lang = null) => {
     if (!user?.id) return
     if (isGeneratingCardsRef.current) return
     isGeneratingCardsRef.current = true
     try {
       setCardsGenerating(true)
-      // Pass language explicitly so it doesn't rely on localStorage timing
       const usedLang = lang || languageRef.current
       const data = await cardsAPI.generateCards(user.id, force, usedLang)
-      setAdvisorCards(data.cards || [])
+      const cards = data.cards || []
+      setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
-      // Persist the language these AI cards were generated in
+      _cacheCards(cards, data.generated_at)
       try { localStorage.setItem(`cards_language_${user.id}`, usedLang) } catch {}
     } catch (error) {
       console.error('Error generating advisor cards:', error)
@@ -149,7 +169,7 @@ export default function Dashboard() {
       setCardsGenerating(false)
       isGeneratingCardsRef.current = false
     }
-  }, [user?.id])
+  }, [user?.id, _cacheCards])
 
   const loadAdvisorCards = useCallback(async () => {
     if (!user?.id) return
@@ -157,18 +177,36 @@ export default function Dashboard() {
     isLoadingCardsRef.current = true
     try {
       setCardsLoading(true)
+
+      // Try localStorage cache first for instant display
+      const cached = _getCachedCards()
+      if (cached && cached.cards?.length > 0) {
+        setAdvisorCards(cached.cards)
+        setCardsGeneratedAt(cached.generatedAt || null)
+      }
+
+      // Always fetch from server to get latest
       const data = await cardsAPI.getCards(user.id)
       const cards = data.cards || []
       setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
+      _cacheCards(cards, data.generated_at)
 
-      // If cards exist but were generated in a different language, regenerate now
+      // If cards exist but were generated in a different language, retranslate
       const storedLang = (() => { try { return localStorage.getItem(`cards_language_${user.id}`) } catch { return null } })()
       const aiCards = cards.filter(c => c.source === 'ai')
       const langMismatch = aiCards.length > 0 && storedLang && storedLang !== languageRef.current
 
       if (langMismatch && !isGeneratingCardsRef.current) {
-        await refreshAdvisorCards(true, languageRef.current)
+        // Use retranslate instead of full regeneration for language mismatch on load
+        try {
+          const retranslated = await cardsAPI.retranslateCards(user.id, languageRef.current)
+          if (retranslated?.cards?.length) {
+            setAdvisorCards(retranslated.cards)
+            _cacheCards(retranslated.cards, retranslated.generated_at)
+          }
+          try { localStorage.setItem(`cards_language_${user.id}`, languageRef.current) } catch {}
+        } catch { /* fall through — user sees old-language cards */ }
       } else if (cards.length === 0 && !isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
       }
@@ -178,7 +216,7 @@ export default function Dashboard() {
       setCardsLoading(false)
       isLoadingCardsRef.current = false
     }
-  }, [user?.id, refreshAdvisorCards])
+  }, [user?.id, refreshAdvisorCards, _getCachedCards, _cacheCards])
 
   const handleCardChipClick = async (cardId, message, cardTitle, cardBody) => {
     if (!user?.id) return ''
@@ -261,9 +299,9 @@ export default function Dashboard() {
     load()
   }, [user?.id, profile?.email])
 
-  // ── Language switch: regenerate cards in the new language ────
-  // On mount: loadAdvisorCards already handles language mismatch via localStorage key.
-  // On actual switch: force-regenerate AI cards + retranslate, and update the key.
+  // ── Language switch: retranslate cards (no full regeneration) ────
+  // On mount: loadAdvisorCards already handles language mismatch.
+  // On actual switch: retranslate existing cards, don't burn a generation.
   const prevLanguageRef = useRef(null)
   useEffect(() => {
     const isMount = prevLanguageRef.current === null
@@ -272,13 +310,14 @@ export default function Dashboard() {
 
     if (isMount || !switched || !user?.id) return
 
-    // Update stored language key immediately so loadAdvisorCards won't re-trigger
     try { localStorage.setItem(`cards_language_${user.id}`, language) } catch {}
 
-    Promise.all([
-      refreshAdvisorCards(true, language),
-      cardsAPI.retranslateCards(user.id, language),
-    ]).catch(e => console.error('Language switch card update failed:', e))
+    cardsAPI.retranslateCards(user.id, language).then(data => {
+      if (data?.cards?.length) {
+        setAdvisorCards(data.cards)
+        _cacheCards(data.cards, data.generated_at)
+      }
+    }).catch(e => console.error('Language switch card retranslation failed:', e))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language])
 
@@ -581,6 +620,7 @@ export default function Dashboard() {
     setShowTranscriptUpload(false)
     loadCompletedCourses()
     loadCurrentCourses()
+    refreshProfile()
     refreshAdvisorCards(true)
   }
 
