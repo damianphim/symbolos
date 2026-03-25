@@ -447,11 +447,15 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
     try:
         get_user_by_id(user_id)
         ctx = fetch_student_context(user_id)
-        saved = fetch_saved_cards(user_id)
-        prompt = build_rich_context(ctx, saved_cards=saved) + _lang_instruction(request.language)
+        # Don't include saved_cards — they may be in a different language
+        # which would influence the model to respond in that language instead.
+        prompt = build_rich_context(ctx, saved_cards=None)
+        lang_inst = _lang_instruction(request.language)
 
         client = get_anthropic_client()
-        message = client.messages.create(model=settings.CLAUDE_MODEL, max_tokens=4096,
+        message = client.messages.create(
+            model=settings.CLAUDE_MODEL, max_tokens=4096,
+            system=lang_inst.strip() if lang_inst else None,
             messages=[{"role": "user", "content": prompt}])
         raw = message.content[0].text.strip()
         if raw.startswith("```"):
