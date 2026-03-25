@@ -27,7 +27,7 @@ import OnboardingTutorial from './OnboardingTutorial'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { user, profile, signOut, updateProfile, refreshProfile } = useAuth()
+  const { user, profile, signOut, updateProfile, refreshProfile, authFlags } = useAuth()
   const { t, language } = useLanguage()
 
   // Stable ref for current language — used inside useCallbacks without
@@ -130,29 +130,52 @@ export default function Dashboard() {
 
   // ── Advisor card handlers ──────────────────────────────
 
-  // ── Helpers: localStorage card cache ────────────────────────
-  const _cacheCards = useCallback((cards, generatedAt) => {
+  // ── Helpers: localStorage card cache (per-language) ────────────
+  const _cacheCards = useCallback((cards, generatedAt, lang = null) => {
     if (!user?.id) return
+    const usedLang = lang || languageRef.current || 'en'
     try {
-      localStorage.setItem(`advisor_cards_${user.id}`, JSON.stringify({ cards, generatedAt, ts: Date.now() }))
+      localStorage.setItem(`advisor_cards_${user.id}_${usedLang}`, JSON.stringify({ cards, generatedAt, ts: Date.now() }))
     } catch { /* quota exceeded — ignore */ }
   }, [user?.id])
 
-  const _getCachedCards = useCallback(() => {
+  const _getCachedCards = useCallback((lang = null) => {
     if (!user?.id) return null
+    const usedLang = lang || languageRef.current || 'en'
     try {
-      const raw = localStorage.getItem(`advisor_cards_${user.id}`)
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      // Cache valid for 1 hour — after that we re-fetch from server
-      if (Date.now() - parsed.ts > 3600000) return null
-      return parsed
+      const raw = localStorage.getItem(`advisor_cards_${user.id}_${usedLang}`)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // Cache valid for 6 hours
+        if (Date.now() - parsed.ts < 6 * 3600000) return parsed
+      }
+      return null
     } catch { return null }
   }, [user?.id])
 
-  const refreshAdvisorCards = useCallback(async (force = true, lang = null) => {
+  // Rate limit: 2 manual card refreshes per week (admins unlimited)
+  const _cardsRateLimited = useCallback(() => {
+    if (authFlags?.is_admin) return false
+    const key = 'cards_refresh_timestamps'
+    const now = Date.now()
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000
+    try {
+      const stamps = JSON.parse(localStorage.getItem(key) || '[]').filter(t => t > weekAgo)
+      if (stamps.length >= 2) return true
+      stamps.push(now)
+      localStorage.setItem(key, JSON.stringify(stamps))
+      return false
+    } catch { return false }
+  }, [authFlags?.is_admin])
+
+  const refreshAdvisorCards = useCallback(async (force = true, lang = null, skipRateLimit = false) => {
     if (!user?.id) return
     if (isGeneratingCardsRef.current) return
+    // Rate limit manual refreshes (force=true means user clicked refresh)
+    if (force && !skipRateLimit && _cardsRateLimited()) {
+      alert('You can refresh your academic brief up to 2 times per week. Try again later!')
+      return
+    }
     isGeneratingCardsRef.current = true
     try {
       setCardsGenerating(true)
@@ -161,7 +184,7 @@ export default function Dashboard() {
       const cards = data.cards || []
       setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
-      _cacheCards(cards, data.generated_at)
+      _cacheCards(cards, data.generated_at, usedLang)
       try { localStorage.setItem(`cards_language_${user.id}`, usedLang) } catch {}
     } catch (error) {
       console.error('Error generating advisor cards:', error)
@@ -169,7 +192,7 @@ export default function Dashboard() {
       setCardsGenerating(false)
       isGeneratingCardsRef.current = false
     }
-  }, [user?.id, _cacheCards])
+  }, [user?.id, _cacheCards, _cardsRateLimited])
 
   const loadAdvisorCards = useCallback(async () => {
     if (!user?.id) return
@@ -188,26 +211,45 @@ export default function Dashboard() {
       // Always fetch from server to get latest
       const data = await cardsAPI.getCards(user.id)
       const cards = data.cards || []
-      setAdvisorCards(cards)
-      setCardsGeneratedAt(data.generated_at || null)
-      _cacheCards(cards, data.generated_at)
+      // cards_language_ tracks what language the SERVER cards are in
+      const serverLang = (() => { try { return localStorage.getItem(`cards_language_${user.id}`) } catch { return null } })()
+      const currentLang = languageRef.current
 
-      // If cards exist but were generated in a different language, retranslate
-      const storedLang = (() => { try { return localStorage.getItem(`cards_language_${user.id}`) } catch { return null } })()
+      // Check if server cards match the current UI language.
+      // If serverLang is unknown (null), we can't trust the server cards'
+      // language — treat it as a mismatch and retranslate to be safe.
       const aiCards = cards.filter(c => c.source === 'ai')
-      const langMismatch = aiCards.length > 0 && storedLang && storedLang !== languageRef.current
+      const langKnownAndMatches = serverLang === currentLang
+      const needsRetranslation = aiCards.length > 0 && !langKnownAndMatches
 
-      if (langMismatch && !isGeneratingCardsRef.current) {
-        // Use retranslate instead of full regeneration for language mismatch on load
-        try {
-          const retranslated = await cardsAPI.retranslateCards(user.id, languageRef.current)
-          if (retranslated?.cards?.length) {
-            setAdvisorCards(retranslated.cards)
-            _cacheCards(retranslated.cards, retranslated.generated_at)
-          }
-          try { localStorage.setItem(`cards_language_${user.id}`, languageRef.current) } catch {}
-        } catch { /* fall through — user sees old-language cards */ }
-      } else if (cards.length === 0 && !isGeneratingCardsRef.current) {
+      if (needsRetranslation && !isGeneratingCardsRef.current) {
+        // Server cards may be in a different language — DON'T display them yet.
+        // Cache them under their reported language (if known).
+        if (serverLang) _cacheCards(cards, data.generated_at, serverLang)
+
+        // Check if we have a cached translation for the current language
+        const cachedTranslation = _getCachedCards(currentLang)
+        if (cachedTranslation?.cards?.length) {
+          setAdvisorCards(cachedTranslation.cards)
+          setCardsGeneratedAt(cachedTranslation.generatedAt || null)
+        } else {
+          // No cache — call API to retranslate (updates server)
+          try {
+            const retranslated = await cardsAPI.retranslateCards(user.id, currentLang)
+            if (retranslated?.cards?.length) {
+              setAdvisorCards(retranslated.cards)
+              _cacheCards(retranslated.cards, retranslated.generated_at, currentLang)
+              try { localStorage.setItem(`cards_language_${user.id}`, currentLang) } catch {}
+            }
+          } catch { /* fall through — user sees cached cards from initial load */ }
+        }
+      } else if (cards.length > 0) {
+        // Server cards match current language — display and cache them
+        setAdvisorCards(cards)
+        setCardsGeneratedAt(data.generated_at || null)
+        _cacheCards(cards, data.generated_at, currentLang)
+        try { localStorage.setItem(`cards_language_${user.id}`, currentLang) } catch {}
+      } else if (!isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
       }
     } catch (error) {
@@ -281,13 +323,11 @@ export default function Dashboard() {
   }, [rightSidebarOpen, activeTab])
 
   // ── Fetch managed clubs (for calendar event/announcement creation) ──
-  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
   useEffect(() => {
     if (!user?.id) return
-    const isAdmin = ADMIN_EMAILS.has(profile?.email || user?.email)
     async function load() {
       try {
-        if (isAdmin) {
+        if (authFlags?.is_admin) {
           const res = await clubsAPI.getClubs({ limit: 200 })
           setManagedClubs(res.clubs || [])
         } else {
@@ -297,7 +337,7 @@ export default function Dashboard() {
       } catch { setManagedClubs([]) }
     }
     load()
-  }, [user?.id, profile?.email])
+  }, [user?.id, authFlags?.is_admin])
 
   // ── Language switch: retranslate cards (no full regeneration) ────
   // On mount: loadAdvisorCards already handles language mismatch.
@@ -310,12 +350,24 @@ export default function Dashboard() {
 
     if (isMount || !switched || !user?.id) return
 
-    try { localStorage.setItem(`cards_language_${user.id}`, language) } catch {}
+    // Check if we have a cached translation for the new language
+    const cached = _getCachedCards(language)
+    if (cached?.cards?.length) {
+      // Instant switch from cache — no API call, no tokens burned
+      setAdvisorCards(cached.cards)
+      setCardsGeneratedAt(cached.generatedAt || null)
+      // DON'T update cards_language_ here — server still has the old language.
+      // cards_language_ must only reflect what the server actually stores.
+      return
+    }
 
+    // No cache for this language — call API to retranslate (costs tokens once)
+    // Only update cards_language AFTER successful retranslation
     cardsAPI.retranslateCards(user.id, language).then(data => {
       if (data?.cards?.length) {
         setAdvisorCards(data.cards)
-        _cacheCards(data.cards, data.generated_at)
+        _cacheCards(data.cards, data.generated_at, language)
+        try { localStorage.setItem(`cards_language_${user.id}`, language) } catch {}
       }
     }).catch(e => console.error('Language switch card retranslation failed:', e))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -621,7 +673,7 @@ export default function Dashboard() {
     loadCompletedCourses()
     loadCurrentCourses()
     refreshProfile()
-    refreshAdvisorCards(true)
+    refreshAdvisorCards(true, null, true) // skip rate limit after transcript import
   }
 
   // ── Effects ────────────────────────────────────────────
@@ -694,6 +746,7 @@ export default function Dashboard() {
               key="clubs-tab-v2"
               user={user}
               profile={profile}
+              authFlags={authFlags}
               onClubEventsChange={setClubCalendarEvents}
             />
           )}
@@ -746,6 +799,7 @@ export default function Dashboard() {
               currentCoursesMap={currentCoursesMap}
               favoritesMap={favoritesMap}
               profile={profile}
+              authFlags={authFlags}
               onToggleFavorite={handleToggleFavorite}
               onToggleCompleted={handleToggleCompleted}
               onToggleCurrent={handleToggleCurrent}
@@ -767,7 +821,7 @@ export default function Dashboard() {
           {activeTab === 'forum' && <Forum />}
 
           {activeTab === 'calendar' && (
-            <CalendarTab user={user} clubEvents={clubCalendarEvents} managedClubs={managedClubs} />
+            <CalendarTab user={user} authFlags={authFlags} clubEvents={clubCalendarEvents} managedClubs={managedClubs} />
           )}
 
           {activeTab === 'profile' && (

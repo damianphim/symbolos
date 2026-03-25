@@ -1,35 +1,29 @@
 import { useState, useEffect } from 'react'
-import { MAJORS, MINORS, FACULTIES, ENVIRONMENT_MAJORS, LAW_MAJORS, AES_MAJORS, DENTISTRY_PROGRAMS } from '../../utils/mcgillData'
+import {
+  MAJORS, MINORS, FACULTIES, FACULTY_MAJORS,
+  getMajorsForFaculty, majorHasHonours,
+  ARTS_MAJORS_BASC, SCIENCE_MAJORS_BASC,
+  BASC_INTERFACULTY_PROGRAMS, BASC_STREAMS,
+} from '../../utils/mcgillData'
 import './EnhancedProfileForm.css'
 
-const BASC_PROGRAMS = [
-  'Cognitive Science',
-  'Cognitive Science (Honours)',
-  'Sustainability, Science and Society',
-  'Sustainability, Science and Society (Honours)',
-  'Environment',
-  'Environment (Honours)',
-]
-
 const isBasc = (faculty) => faculty === 'Bachelor of Arts and Science'
-const isEnv  = (faculty) => faculty === 'School of Environment'
-const isLaw  = (faculty) => faculty === 'Faculty of Law'
-const isAes  = (faculty) => faculty === 'Faculty of Agricultural and Environmental Sciences'
-const isDentistry = (faculty) => faculty === 'Faculty of Dental Medicine and Oral Health Sciences'
+const bascIsMultiTrack = (c) => c === 'Multi-track' || c === 'Joint Honours'
 
 export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     username: '',
     major: '',
-    other_majors: [], // Array of additional majors
+    other_majors: [],
     minor: '',
-    other_minors: [], // Array of additional minors
+    other_minors: [],
     concentration: '',
     faculty: '',
     year: '',
     interests: '',
     current_gpa: '',
-    advanced_standing: [] // Array of {course_code, course_title, credits}
+    is_honours: false,
+    advanced_standing: []
   })
 
   const [showMajorDropdown, setShowMajorDropdown] = useState(false)
@@ -54,6 +48,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
         year: profile.year || '',
         interests: profile.interests || '',
         current_gpa: profile.current_gpa || '',
+        is_honours: profile.is_honours || false,
         advanced_standing: (profile.advanced_standing || []).map(c => ({
           counts_toward_degree: true,
           counts_toward_major: false,
@@ -63,9 +58,54 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
     }
   }, [profile])
 
+  // Get majors for the currently selected faculty
+  const primaryMajorOptions = (() => {
+    const f = formData.faculty
+    if (!f) return MAJORS
+    if (isBasc(f)) return [] // handled separately
+    const facultyMajors = getMajorsForFaculty(f)
+    return facultyMajors.length > 0 ? facultyMajors : MAJORS
+  })()
+
+  // Check if current major supports honours
+  const showHonoursToggle = (() => {
+    if (isBasc(formData.faculty)) {
+      // BASC honours is handled via program names (e.g., "Cognitive Science (Honours)")
+      return false
+    }
+    return majorHasHonours(formData.faculty, formData.major)
+  })()
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  // When faculty changes, reset major if it's not in the new faculty's list
+  const handleFacultyChange = (e) => {
+    const newFaculty = e.target.value
+    const newMajors = getMajorsForFaculty(newFaculty)
+    setFormData(prev => ({
+      ...prev,
+      faculty: newFaculty,
+      // Clear major if it doesn't exist in the new faculty
+      major: newMajors.includes(prev.major) ? prev.major : '',
+      // Reset honours when changing faculty
+      is_honours: false,
+      // Reset BASC-specific fields
+      ...(isBasc(newFaculty) ? { concentration: '', other_majors: [] } : {}),
+    }))
+  }
+
+  // When major changes, reset honours if new major doesn't support it
+  const handleMajorChange = (e) => {
+    const newMajor = e.target.value
+    const hasHon = majorHasHonours(formData.faculty, newMajor)
+    setFormData(prev => ({
+      ...prev,
+      major: newMajor,
+      is_honours: hasHon ? prev.is_honours : false,
+    }))
   }
 
   const handleAddMajor = (major) => {
@@ -136,34 +176,27 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
-    // Clean the form data before sending
+
     const cleanedData = {}
-    
-    // FIXED: For optional string fields, send null if empty (not empty string)
-    // This allows the database to properly clear/update the field
-    
-    // Optional fields - send null to clear, or trimmed value if not empty
+
     const trimmedUsername = formData.username?.trim()
     cleanedData.username = trimmedUsername || null
-    
+
     const trimmedMinor = formData.minor?.trim()
     cleanedData.minor = trimmedMinor || null
-    
+
     const trimmedConcentration = formData.concentration?.trim()
     cleanedData.concentration = trimmedConcentration || null
-    
+
     const trimmedInterests = formData.interests?.trim()
     cleanedData.interests = trimmedInterests || null
-    
-    // Required fields - keep empty string for validation
+
     cleanedData.major = formData.major?.trim() || ""
     cleanedData.faculty = formData.faculty?.trim() || ""
-    
-    // Year - send null if empty
+    cleanedData.is_honours = formData.is_honours || false
+
     cleanedData.year = formData.year ? parseInt(formData.year) : null
-    
-    // GPA - validate and send null if invalid or empty
+
     if (formData.current_gpa) {
       const gpa = parseFloat(formData.current_gpa)
       if (!isNaN(gpa) && gpa >= 0 && gpa <= 4) {
@@ -174,20 +207,19 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
     } else {
       cleanedData.current_gpa = null
     }
-    
-    // Arrays - send empty array if no items, or filtered array if has items
+
     if (formData.other_majors?.length > 0) {
       cleanedData.other_majors = [...new Set(formData.other_majors.filter(m => m?.trim()))]
     } else {
       cleanedData.other_majors = []
     }
-    
+
     if (formData.other_minors?.length > 0) {
       cleanedData.other_minors = [...new Set(formData.other_minors.filter(m => m?.trim()))]
     } else {
       cleanedData.other_minors = []
     }
-    
+
     if (formData.advanced_standing?.length > 0) {
       cleanedData.advanced_standing = formData.advanced_standing.filter(
         course => course.course_code?.trim()
@@ -195,7 +227,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
     } else {
       cleanedData.advanced_standing = []
     }
-    
+
     onSave(cleanedData)
   }
 
@@ -247,7 +279,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                 id="faculty"
                 name="faculty"
                 value={formData.faculty}
-                onChange={handleChange}
+                onChange={handleFacultyChange}
                 required
               >
                 <option value="">Select your faculty</option>
@@ -298,6 +330,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                       concentration: stream === 'Interfaculty' ? '' : stream,
                       major: '',
                       other_majors: [],
+                      is_honours: false,
                     }))
                   }}
                 >
@@ -308,7 +341,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
               </div>
 
               {/* Interfaculty/Honours stream */}
-              {(!formData.concentration || (!bascIsMultiTrack(formData.concentration))) && (
+              {(!formData.concentration || !bascIsMultiTrack(formData.concentration)) && (
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="major">
@@ -327,6 +360,20 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                     </select>
                     <span className="helper-text">The interfaculty concentration you are completing</span>
                   </div>
+                  {formData.major && (
+                    <div className="form-group">
+                      <label className="honours-toggle-label">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_honours}
+                          onChange={(e) => setFormData(prev => ({ ...prev, is_honours: e.target.checked }))}
+                          className="honours-checkbox"
+                        />
+                        <span>Honours Program</span>
+                      </label>
+                      <span className="helper-text">Select if you are in the Honours stream of this program</span>
+                    </div>
+                  )}
                   <div className="form-group">
                     <label htmlFor="minor">Minor (optional)</label>
                     <select id="minor" name="minor" value={formData.minor} onChange={handleChange}>
@@ -390,14 +437,19 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                     id="major"
                     name="major"
                     value={formData.major}
-                    onChange={handleChange}
+                    onChange={handleMajorChange}
                     required
                   >
                     <option value="">Select your major</option>
-                    {(isEnv(formData.faculty) ? ENVIRONMENT_MAJORS : isLaw(formData.faculty) ? LAW_MAJORS : isAes(formData.faculty) ? AES_MAJORS : isDentistry(formData.faculty) ? DENTISTRY_PROGRAMS : MAJORS).map(major => (
+                    {primaryMajorOptions.map(major => (
                       <option key={major} value={major}>{major}</option>
                     ))}
                   </select>
+                  {formData.faculty && primaryMajorOptions.length === 0 && (
+                    <span className="helper-text" style={{ color: 'var(--warning)' }}>
+                      No majors configured for this faculty yet
+                    </span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -411,6 +463,24 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                 </div>
               </div>
 
+              {/* Honours toggle — only shown if the selected major supports it */}
+              {showHonoursToggle && (
+                <div className="form-group honours-toggle-group">
+                  <label className="honours-toggle-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_honours}
+                      onChange={(e) => setFormData(prev => ({ ...prev, is_honours: e.target.checked }))}
+                      className="honours-checkbox"
+                    />
+                    <span>Honours Program</span>
+                  </label>
+                  <span className="helper-text">
+                    Select if you are enrolled in the Honours stream of {formData.major}
+                  </span>
+                </div>
+              )}
+
               {/* Additional Majors */}
               <div className="form-group">
                 <label>
@@ -421,7 +491,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                   {formData.other_majors.map(major => (
                     <div key={major} className="selected-tag">
                       <span>{major}</span>
-                      <button type="button" onClick={() => handleRemoveMajor(major)} className="remove-tag">✕</button>
+                      <button type="button" onClick={() => handleRemoveMajor(major)} className="remove-tag">\u2715</button>
                     </div>
                   ))}
                   <button type="button" onClick={() => setShowMajorDropdown(!showMajorDropdown)} className="add-more-btn">
@@ -447,7 +517,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                   {formData.other_minors.map(minor => (
                     <div key={minor} className="selected-tag">
                       <span>{minor}</span>
-                      <button type="button" onClick={() => handleRemoveMinor(minor)} className="remove-tag">✕</button>
+                      <button type="button" onClick={() => handleRemoveMinor(minor)} className="remove-tag">\u2715</button>
                     </div>
                   ))}
                   <button type="button" onClick={() => setShowMinorDropdown(!showMinorDropdown)} className="add-more-btn">
@@ -542,13 +612,13 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
               onClick={() => setShowAdvancedStanding(!showAdvancedStanding)}
               className="toggle-section-btn"
             >
-              {showAdvancedStanding ? '− Hide' : '+ Add Credits'}
+              {showAdvancedStanding ? '\u2212 Hide' : '+ Add Credits'}
             </button>
           </div>
 
           {formData.advanced_standing.length > 0 && (
             <div className="credits-summary">
-              <strong>{formData.advanced_standing.length} course{formData.advanced_standing.length !== 1 ? 's' : ''}</strong> • 
+              <strong>{formData.advanced_standing.length} course{formData.advanced_standing.length !== 1 ? 's' : ''}</strong> {'\u2022'}
               <strong> {formData.advanced_standing.reduce((sum, c) => sum + (c.credits || 0), 0)} credits</strong> from AP/IB/transfer
             </div>
           )}
@@ -572,24 +642,29 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                           onClick={() => handleRemoveAdvancedCourse(index)}
                           className="remove-chip-btn"
                           title="Remove"
-                        >✕</button>
+                        >
+                          \u2715
+                        </button>
                       </div>
-                      <div className="advanced-course-toggles">
-                        <label className="toggle-label">
+                      {course.course_title && (
+                        <div className="course-title">{course.course_title}</div>
+                      )}
+                      <div className="advanced-course-flags">
+                        <label className="flag-label">
                           <input
                             type="checkbox"
                             checked={course.counts_toward_degree !== false}
                             onChange={() => handleToggleAdvancedFlag(index, 'counts_toward_degree')}
                           />
-                          <span>Counts toward degree total</span>
+                          <span>Counts toward degree</span>
                         </label>
-                        <label className="toggle-label">
+                        <label className="flag-label">
                           <input
                             type="checkbox"
                             checked={!!course.counts_toward_major}
                             onChange={() => handleToggleAdvancedFlag(index, 'counts_toward_major')}
                           />
-                          <span>Counts toward major / minor</span>
+                          <span>Counts toward major</span>
                         </label>
                       </div>
                     </div>
@@ -597,65 +672,53 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                 </div>
               )}
 
-              {/* Add new advanced standing */}
-              <div className="add-advanced-course">
+              {/* Add new course */}
+              <div className="add-course-row">
                 <input
                   type="text"
-                  placeholder="Course code (e.g., MATH140, COMP202)"
+                  placeholder="Course code (e.g., MATH 133)"
                   value={newAdvancedCourse.course_code}
-                  onChange={(e) => {
-                    const code = e.target.value.toUpperCase().replace(/\s/g, '');
-                    setNewAdvancedCourse(prev => ({
-                      ...prev,
-                      course_code: code
-                    }))
-                  }}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddAdvancedCourse();
-                    }
-                  }}
+                  onChange={(e) => setNewAdvancedCourse(prev => ({ ...prev, course_code: e.target.value }))}
                   className="course-code-input"
                 />
-                <select
+                <input
+                  type="text"
+                  placeholder="Course title (optional)"
+                  value={newAdvancedCourse.course_title}
+                  onChange={(e) => setNewAdvancedCourse(prev => ({ ...prev, course_title: e.target.value }))}
+                  className="course-title-input"
+                />
+                <input
+                  type="number"
+                  placeholder="Credits"
                   value={newAdvancedCourse.credits}
-                  onChange={(e) => setNewAdvancedCourse(prev => ({
-                    ...prev,
-                    credits: parseInt(e.target.value)
-                  }))}
-                  className="credits-select"
-                >
-                  <option value="3">3 credits</option>
-                  <option value="4">4 credits</option>
-                  <option value="6">6 credits</option>
-                  <option value="1">1 credit</option>
-                  <option value="2">2 credits</option>
-                </select>
+                  onChange={(e) => setNewAdvancedCourse(prev => ({ ...prev, credits: parseInt(e.target.value) || 3 }))}
+                  min="1"
+                  max="12"
+                  className="course-credits-input"
+                />
                 <button
                   type="button"
                   onClick={handleAddAdvancedCourse}
                   className="add-course-btn"
-                  disabled={!newAdvancedCourse.course_code}
+                  disabled={!newAdvancedCourse.course_code.trim()}
                 >
                   Add
                 </button>
-              </div>
-
-              <div className="common-credits-hint">
-                <strong>Common examples:</strong> MATH140, MATH141, CHEM110, PHYS131, COMP202, BIOL111, ECON208, PSYC100
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Form Actions */}
+      {/* Submit */}
       <div className="form-actions">
-        <button type="button" onClick={onCancel} className="btn btn-cancel">
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary">
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="cancel-btn">
+            Cancel
+          </button>
+        )}
+        <button type="submit" className="save-btn">
           Save Profile
         </button>
       </div>

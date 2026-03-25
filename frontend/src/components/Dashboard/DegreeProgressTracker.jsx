@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { FACULTY_CREDIT_REQUIREMENTS, PROGRAM_CREDIT_REQUIREMENTS } from '../../utils/mcgillData'
+import { getCreditsRequired } from '../../utils/mcgillData'
 import { FaBook, FaBolt, FaCheck, FaBullseye, FaRegCircle, FaGraduationCap, FaLightbulb } from 'react-icons/fa'
 import { GiPartyPopper } from 'react-icons/gi'
 import { LuBicepsFlexed } from 'react-icons/lu'
@@ -24,17 +24,12 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
     // Total earned credits
     const totalEarnedCredits = completedCredits + advancedStandingCredits
 
-    // Get credit requirements - check program first, then faculty, default to 120
-    let TOTAL_CREDITS_REQUIRED = 120 // Default
-    
-    // Check if the major has specific credit requirements
-    if (profile?.major && PROGRAM_CREDIT_REQUIREMENTS[profile.major]) {
-      TOTAL_CREDITS_REQUIRED = PROGRAM_CREDIT_REQUIREMENTS[profile.major]
-    }
-    // Otherwise check faculty requirements
-    else if (profile?.faculty && FACULTY_CREDIT_REQUIREMENTS[profile.faculty]) {
-      TOTAL_CREDITS_REQUIRED = FACULTY_CREDIT_REQUIREMENTS[profile.faculty]
-    }
+    // Get credit requirements from the single source of truth
+    const TOTAL_CREDITS_REQUIRED = getCreditsRequired(
+      profile?.faculty,
+      profile?.major,
+      profile?.is_honours
+    )
     
     const remainingCredits = Math.max(0, TOTAL_CREDITS_REQUIRED - totalEarnedCredits)
     const progressPercentage = Math.min(100, (totalEarnedCredits / TOTAL_CREDITS_REQUIRED) * 100)

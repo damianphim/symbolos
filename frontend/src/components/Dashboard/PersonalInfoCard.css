@@ -513,3 +513,15 @@
   padding: 0;
   text-decoration: underline;
 }
+
+.honours-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  padding: 1px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}

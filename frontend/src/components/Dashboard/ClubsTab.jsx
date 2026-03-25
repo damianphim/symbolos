@@ -928,11 +928,9 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
 
 const PAGE_SIZE = 24
 
-const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
-
-export default function ClubsTab({ user, onClubEventsChange }) {
+export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   const { t } = useLanguage()
-  const isAdmin = ADMIN_EMAILS.has(user?.email)
+  const isAdmin = authFlags?.is_admin ?? false
   const [activeView, setActiveView] = useState('explore')
   const [clubs, setClubs] = useState([])
   const [categories, setCategories] = useState([])
@@ -1066,7 +1064,7 @@ export default function ClubsTab({ user, onClubEventsChange }) {
   const handleJoin = async (clubId, joinInfo) => {
     if (!user?.id) return
     // Only @mail.mcgill.ca emails can join clubs
-    if (!user.email?.endsWith('@mail.mcgill.ca') && !ADMIN_EMAILS.has(user.email)) {
+    if (!user.email?.endsWith('@mail.mcgill.ca') && !authFlags?.is_admin) {
       setError('Only accounts with a @mail.mcgill.ca email can join clubs.')
       return
     }

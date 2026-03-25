@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import api, { usersAPI } from '../lib/api'
+import api, { usersAPI, authAPI } from '../lib/api'
 
 const AuthContext = createContext({})
 
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   // even though a minimal profile already exists in the DB.
   // Cleared by completeOnboarding() when the user finishes or skips.
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
+  const [authFlags, setAuthFlags]             = useState({ is_admin: false, is_mcgill_email: false })
 
   const mountedRef         = useRef(true)
   const loadingProfile     = useRef(false)
@@ -265,6 +266,14 @@ export const AuthProvider = ({ children }) => {
     if (mountedRef.current) setNeedsOnboarding(false)
   }, [user?.id, loadProfile])
 
+  // Fetch auth flags (admin, mcgill email) from backend when user is set
+  useEffect(() => {
+    if (!user?.id) { setAuthFlags({ is_admin: false, is_mcgill_email: false }); return }
+    authAPI.getFlags().then(flags => {
+      if (mountedRef.current) setAuthFlags(flags)
+    })
+  }, [user?.id])
+
   const clearError = useCallback(() => setError(null), [])
 
   const refreshProfile = useCallback(async () => {
@@ -274,7 +283,7 @@ export const AuthProvider = ({ children }) => {
     await loadProfile(user.id)
   }, [user?.id, loadProfile])
 
-  const value = { user, profile, loading, error, needsOnboarding, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError }
+  const value = { user, profile, loading, error, needsOnboarding, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

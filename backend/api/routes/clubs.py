@@ -69,7 +69,6 @@ class ClubSubmission(BaseModel):
     meeting_schedule: Optional[str]  = Field(None, max_length=300)
     location:         Optional[str]  = Field(None, max_length=200)
     is_private:       bool           = False
-    submitted_by:     Optional[str]  = None
     executive_emails: str             = Field(..., min_length=2, max_length=500)
 
 
@@ -761,13 +760,9 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
         join_req = req_result.data[0]
         logger.info(f"[join-action] Found request for club {join_req.get('club_id')} by user {join_req.get('user_id')}")
 
-        # Step 2: Verify club ownership or admin
-        is_admin = current_user_id in ADMIN_USER_IDS
-        logger.info(f"[join-action] current_user={current_user_id}, is_admin={is_admin}")
-        if not is_admin:
-            club_result = supabase.table("clubs").select("created_by").eq("id", join_req["club_id"]).execute()
-            if not club_result.data or club_result.data[0].get("created_by") != current_user_id:
-                raise HTTPException(status_code=403, detail="Only the club creator or admins can handle join requests")
+        # Step 2: Verify club ownership, per-club admin, or global admin
+        if not _is_club_owner_or_admin(current_user_id, join_req["club_id"]):
+            raise HTTPException(status_code=403, detail="Only the club owner or admins can handle join requests")
 
         # Step 3: If approve, add to club
         if body.action == "approve":
@@ -790,7 +785,7 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
         raise
     except Exception as e:
         logger.exception(f"[join-action] FAILED: {e}")
-        raise HTTPException(status_code=500, detail=f"Join request error: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process join request")
 
 
 @router.get("/user/{user_id}")
@@ -992,7 +987,7 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
             "meeting_schedule": submission.meeting_schedule,
             "location": submission.location,
             "is_private": submission.is_private,
-            "submitted_by": submission.submitted_by or current_user_id,
+            "submitted_by": current_user_id,
             "executive_emails": submission.executive_emails,
             "status": "pending",
         }).execute()
@@ -1107,7 +1102,7 @@ async def get_club_members(club_id: str, current_user_id: str = Depends(get_curr
         memberships = supabase.table("user_clubs").select("user_id, role").eq("club_id", club_id).execute()
     except Exception as e:
         logger.exception(f"Error fetching club members: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch members: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch members")
 
     members = []
     for m in (memberships.data or []):
@@ -1149,8 +1144,11 @@ async def update_member_role(club_id: str, member_user_id: str, req: Request, cu
         raise HTTPException(status_code=403, detail="Only club owner or admins can change roles")
 
     # Parse requested role
-    body = await req.json()
-    new_role = body.get("role")
+    try:
+        body = await req.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    new_role = body.get("role") if isinstance(body, dict) else None
     if new_role not in ("admin", "member", "owner"):
         raise HTTPException(status_code=400, detail="Role must be 'admin', 'member', or 'owner'")
 

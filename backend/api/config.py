@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     TWILIO_FROM_NUMBER: str = ""
     CRON_SECRET: str = ""
     ADMIN_SECRET: str = ""  # Separate from CRON_SECRET — used only for admin panel login
-    ADMIN_EMAILS: str = "dphimister24@gmail.com,aduda2469@gmail.com"  # Comma-separated admin emails for club approval notifications
+    ADMIN_EMAILS: str = ""  # Comma-separated admin emails — set via env var, never hardcode
     API_BASE_URL: str = "https://ai-advisor-backend-seven.vercel.app"  # Public backend URL for email action links
 
     @field_validator("ADMIN_SECRET")

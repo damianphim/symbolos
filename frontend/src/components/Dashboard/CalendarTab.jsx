@@ -991,7 +991,7 @@ function AnnouncementModal({ clubs, onSave, onClose, language }) {
   )
 }
 
-export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }) {
+export default function CalendarTab({ user, authFlags, clubEvents = [], managedClubs = [] }) {
   const { t, language } = useLanguage()
   const { getTodayStr, getNow } = useTimezone()
   const [notifPrefs] = useNotificationPrefs(user?.id, user?.email)
@@ -1028,11 +1028,7 @@ export default function CalendarTab({ user, clubEvents = [], managedClubs = [] }
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [newsletterEvents, setNewsletterEvents] = useState([])
 
-  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
-  const isMcGillEmail = (() => {
-    const email = (user?.email || '').toLowerCase()
-    return email.endsWith('@mcgill.ca') || email.endsWith('@mail.mcgill.ca') || ADMIN_EMAILS.has(email)
-  })()
+  const isMcGillEmail = authFlags?.is_mcgill_email ?? false
 
   // ── Load newsletter events (McGill emails only) ────────────────
   useEffect(() => {

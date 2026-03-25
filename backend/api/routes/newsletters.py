@@ -56,7 +56,9 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 MCGILL_EMAIL_DOMAINS = ("mcgill.ca", "mail.mcgill.ca")
-ADMIN_EMAILS = {"aduda2469@gmail.com", "dphimister24@gmail.com"}
+
+def _get_admin_emails() -> set:
+    return set(e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip())
 
 
 async def _require_mcgill_email(user_id: str):
@@ -67,7 +69,7 @@ async def _require_mcgill_email(user_id: str):
         email = (resp.data or {}).get("email", "")
         if not email or (
             not any(email.lower().endswith(f"@{d}") for d in MCGILL_EMAIL_DOMAINS)
-            and email.lower() not in ADMIN_EMAILS
+            and email.lower() not in _get_admin_emails()
         ):
             raise HTTPException(
                 status_code=403,
@@ -567,9 +569,33 @@ def _parse_time_fuzzy(text: str) -> Optional[str]:
     return None
 
 
+def _is_safe_url(url: str) -> bool:
+    """Block SSRF: reject private/internal IPs and non-HTTP schemes."""
+    from urllib.parse import urlparse
+    import ipaddress
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        return False
+    hostname = parsed.hostname or ""
+    if not hostname:
+        return False
+    # Block obvious internal hostnames
+    if hostname in ("localhost", "metadata.google.internal") or hostname.endswith(".internal"):
+        return False
+    try:
+        ip = ipaddress.ip_address(hostname)
+        return ip.is_global
+    except ValueError:
+        # Not an IP — hostname is OK (DNS will resolve it)
+        return True
+
+
 def _fetch_page(url: str) -> Optional[str]:
     """Fetch a URL, return HTML or None."""
     import httpx
+    if not _is_safe_url(url):
+        logger.warning(f"Blocked unsafe URL: {url}")
+        return None
     try:
         resp = httpx.get(url, timeout=15, follow_redirects=True, headers={
             "User-Agent": "Symbolos-Bot/1.0 (McGill student calendar tool)",

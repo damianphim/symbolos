@@ -743,3 +743,29 @@
     width: 100%;
   }
 }
+
+/* Honours toggle */
+.honours-toggle-group {
+  margin-top: 4px;
+}
+
+.honours-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.honours-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.honours-toggle-label + .helper-text {
+  margin-top: 4px;
+  padding-left: 28px;
+}

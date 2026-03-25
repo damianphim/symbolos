@@ -6,7 +6,7 @@ SEC-006: Tightened in-memory fallback limit from 10 to 3 rpm (per-instance on se
 SEC-009: Removed 'unsafe-inline' from script-src CSP; added frame-ancestors 'none'.
 SEC-010: Normalise rate limit path key to prevent bypass via trailing slash/case.
 """
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -19,6 +19,7 @@ from datetime import datetime, timezone, timedelta
 
 from .config import settings
 from .logging_config import setup_logging
+from .auth import get_current_user_id
 from .exceptions import (
     AppException,
     app_exception_handler,
@@ -359,3 +360,20 @@ async def health_check():
     if settings.DEBUG:
         response["version"] = settings.API_VERSION
     return response
+
+
+@app.get(f"{settings.API_PREFIX}/auth/flags")
+async def auth_flags(current_user_id: str = Depends(get_current_user_id)):
+    """Return auth flags for the current user (admin status, McGill email)."""
+    from .utils.supabase_client import get_supabase
+    admin_emails = set(e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip())
+    mcgill_domains = ("@mcgill.ca", "@mail.mcgill.ca")
+    try:
+        sb = get_supabase()
+        resp = sb.table("users").select("email").eq("id", current_user_id).single().execute()
+        email = (resp.data or {}).get("email", "").lower()
+        is_admin = email in admin_emails
+        is_mcgill = any(email.endswith(d) for d in mcgill_domains) or is_admin
+        return {"is_admin": is_admin, "is_mcgill_email": is_mcgill}
+    except Exception:
+        return {"is_admin": False, "is_mcgill_email": False}

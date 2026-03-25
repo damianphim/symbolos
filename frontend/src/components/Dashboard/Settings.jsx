@@ -16,7 +16,7 @@ import './Settings.css'
 
 export default function Settings({ user, profile, onUpdateSettings }) {
   const { language, setLanguage, t } = useLanguage()
-  const { deleteAccount } = useAuth()
+  const { deleteAccount, authFlags } = useAuth()
   const { theme, setTheme } = useTheme()
   const { timezone, setTimezone } = useTimezone()
 
@@ -92,11 +92,7 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     ? nlSources.filter(s => s.name.toLowerCase().includes(nlSearch.toLowerCase()) || s.category.toLowerCase().includes(nlSearch.toLowerCase()))
     : nlSources
 
-  const ADMIN_EMAILS = new Set(['aduda2469@gmail.com', 'dphimister24@gmail.com'])
-  const isMcGillEmail = (() => {
-    const email = (user?.email || profile?.email || '').toLowerCase()
-    return email.endsWith('@mcgill.ca') || email.endsWith('@mail.mcgill.ca') || ADMIN_EMAILS.has(email)
-  })()
+  const isMcGillEmail = authFlags?.is_mcgill_email ?? false
 
   const flash = () => {
     setAutoSaveFlash(true)

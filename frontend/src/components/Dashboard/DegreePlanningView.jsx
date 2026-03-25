@@ -3,13 +3,14 @@ import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
   FaBullseye, FaFileUpload, FaChevronDown, FaChevronUp,
   FaGraduationCap, FaListAlt, FaLightbulb, FaExternalLinkAlt,
-  FaChevronRight, FaCircle, FaBolt, FaPlane
+  FaChevronRight, FaCircle, FaBolt, FaPlane, FaInfoCircle
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { supabase } from '../../lib/supabase'
 import DegreeProgressTracker from './DegreeProgressTracker'
 import DegreeRequirementsView from './DegreeRequirementsView'
 import StudyAbroadView from './StudyAbroadView'
+import AdvisingResourcesView from './AdvisingResourcesView'
 import './DegreePlanningView.css'
 
 // Fix double /api/api bug
@@ -310,6 +311,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
   }, [completedCourses, currentCourses, profile, requiredCodes])
 
   const _recsRateLimited = () => {
+    if (authFlags?.is_admin) return false // admins unlimited
     const key = 'elective_recs_timestamps'
     const now = Date.now()
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000
@@ -1192,6 +1194,7 @@ export default function DegreePlanningView({
   onCourseClick,
   onImportTranscript,
   onImportSyllabus,
+  authFlags,
 }) {
   const { t } = useLanguage()
   const [subTab, setSubTab] = useState('my_courses')
@@ -1231,6 +1234,13 @@ export default function DegreePlanningView({
           <FaPlane className="dp-subtab-icon" />
           <span>{t('dp.studyAbroad')}</span>
         </button>
+        <button
+          className={`dp-subtab-btn ${subTab === 'advising' ? 'dp-subtab-btn--active' : ''}`}
+          onClick={() => setSubTab('advising')}
+        >
+          <FaInfoCircle className="dp-subtab-icon" />
+          <span>{t('dp.advisingResources')}</span>
+        </button>
       </div>
 
       {/* ── Degree Requirements tab ───────────────────────── */}
@@ -1248,6 +1258,13 @@ export default function DegreePlanningView({
       {subTab === 'study_abroad' && (
         <div className="dp-sa-tab-wrap">
           <StudyAbroadView profile={profile} />
+        </div>
+      )}
+
+      {/* ── Advising Resources tab ────────────────────────── */}
+      {subTab === 'advising' && (
+        <div className="dp-sa-tab-wrap">
+          <AdvisingResourcesView profile={profile} />
         </div>
       )}
 

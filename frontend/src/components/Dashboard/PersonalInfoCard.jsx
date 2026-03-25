@@ -139,7 +139,9 @@ export default function PersonalInfoCard({ profile, user, onUpdateProfile }) {
                   <div className="info-field">
                     <label className="field-label">{t('profile.major')}</label>
                     <div className="field-value">
-                      {profile?.major || <span className="text-muted">{t('profile.notSpecified')}</span>}
+                      {profile?.major
+                        ? <>{profile.major}{profile?.is_honours && <span className="honours-badge"> (Honours)</span>}</>
+                        : <span className="text-muted">{t('profile.notSpecified')}</span>}
                     </div>
                   </div>
 

@@ -238,4 +238,16 @@ export const usersAPI = {
   },
 }
 
+// Auth flags API
+export const authAPI = {
+  async getFlags() {
+    try {
+      const response = await api.get('/auth/flags')
+      return response.data
+    } catch {
+      return { is_admin: false, is_mcgill_email: false }
+    }
+  },
+}
+
 export default api
