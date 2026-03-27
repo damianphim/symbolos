@@ -61,15 +61,17 @@ DEFAULT_STARTERS = [
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
 class ClubSubmission(BaseModel):
-    name:             str            = Field(..., min_length=2, max_length=100)
-    description:      str            = Field(..., min_length=2, max_length=1000)
-    category:         Optional[str]  = Field(None, max_length=60)
-    contact_email:    Optional[str]  = Field(None, max_length=200)
-    website_url:      Optional[str]  = None
-    meeting_schedule: Optional[str]  = Field(None, max_length=300)
-    location:         Optional[str]  = Field(None, max_length=200)
-    is_private:       bool           = False
-    executive_emails: str             = Field(..., min_length=2, max_length=500)
+    name:              str            = Field(..., min_length=2, max_length=100)
+    description:       str            = Field(..., min_length=2, max_length=1000)
+    category:          Optional[str]  = Field(None, max_length=60)
+    contact_email:     Optional[str]  = Field(None, max_length=200)
+    website_url:       Optional[str]  = None
+    meeting_schedule:  Optional[str]  = Field(None, max_length=300)
+    location:          Optional[str]  = Field(None, max_length=200)
+    is_private:        bool           = False
+    executive_emails:  str             = Field(..., min_length=2, max_length=500)
+    join_instructions: Optional[str]  = Field(None, max_length=2000)
+    application_url:   Optional[str]  = None
 
 
 class JoinClubRequest(BaseModel):
@@ -79,15 +81,21 @@ class JoinClubRequest(BaseModel):
     requester_linkedin: Optional[str] = None
 
 
+class AddManagerRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=200)
+
+
 class UpdateClubRequest(BaseModel):
-    name:             Optional[str]  = Field(None, min_length=2, max_length=100)
-    description:      Optional[str]  = Field(None, max_length=1000)
-    category:         Optional[str]  = Field(None, max_length=60)
-    contact_email:    Optional[str]  = Field(None, max_length=200)
-    website_url:      Optional[str]  = None
-    meeting_schedule: Optional[str]  = Field(None, max_length=300)
-    location:         Optional[str]  = Field(None, max_length=200)
-    is_private:       Optional[bool] = None
+    name:              Optional[str]  = Field(None, min_length=2, max_length=100)
+    description:       Optional[str]  = Field(None, max_length=1000)
+    category:          Optional[str]  = Field(None, max_length=60)
+    contact_email:     Optional[str]  = Field(None, max_length=200)
+    website_url:       Optional[str]  = None
+    meeting_schedule:  Optional[str]  = Field(None, max_length=300)
+    location:          Optional[str]  = Field(None, max_length=200)
+    is_private:        Optional[bool] = None
+    join_instructions: Optional[str]  = Field(None, max_length=2000)
+    application_url:   Optional[str]  = None
 
 
 class JoinRequestAction(BaseModel):
@@ -947,6 +955,20 @@ async def get_user_pending_requests(user_id: str, current_user_id: str = Depends
         raise HTTPException(status_code=500, detail="Failed to fetch pending requests")
 
 
+@router.get("/user/{user_id}/subscriptions")
+async def get_user_subscriptions(user_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Get all club IDs the user is subscribed to."""
+    require_self(current_user_id, user_id)
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_subscriptions").select("club_id").eq("user_id", user_id).execute()
+        club_ids = [r["club_id"] for r in (result.data or [])]
+        return {"subscribed_club_ids": club_ids}
+    except Exception as e:
+        logger.exception(f"Error fetching subscriptions: {e}")
+        return {"subscribed_club_ids": []}
+
+
 @router.delete("/user/{user_id}/leave/{club_id}")
 async def leave_club(user_id: str, club_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
     require_self(current_user_id, user_id)
@@ -978,6 +1000,14 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
     """Submit a new club for admin review."""
     try:
         supabase = get_supabase()
+
+        # Only @mail.mcgill.ca emails can submit clubs (admins exempt)
+        if not _is_admin_user(current_user_id):
+            user_row = supabase.table("users").select("email").eq("id", current_user_id).execute()
+            user_email = user_row.data[0].get("email", "") if user_row.data else ""
+            if not user_email.endswith("@mail.mcgill.ca"):
+                raise HTTPException(status_code=403, detail="Only accounts with a @mail.mcgill.ca email can submit clubs.")
+
         insert_result = supabase.table("club_submissions").insert({
             "name": submission.name,
             "description": submission.description,
@@ -989,6 +1019,8 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
             "is_private": submission.is_private,
             "submitted_by": current_user_id,
             "executive_emails": submission.executive_emails,
+            "join_instructions": submission.join_instructions,
+            "application_url": submission.application_url,
             "status": "pending",
         }).execute()
 
@@ -1038,7 +1070,7 @@ def _is_admin_user(user_id: str) -> bool:
 
 
 def _is_club_owner_or_admin(club_id: str, user_id: str) -> bool:
-    """Check if user is the club creator, a global admin, or a per-club admin."""
+    """Check if user is the club creator, a global admin, a per-club admin, or a club manager."""
     if _is_admin_user(user_id):
         return True
     supabase = get_supabase()
@@ -1049,6 +1081,13 @@ def _is_club_owner_or_admin(club_id: str, user_id: str) -> bool:
     membership = supabase.table("user_clubs").select("role").eq("user_id", user_id).eq("club_id", club_id).execute()
     if membership.data and membership.data[0].get("role") == "admin":
         return True
+    # Check club_managers table
+    try:
+        mgr = supabase.table("club_managers").select("id").eq("club_id", club_id).eq("user_id", user_id).execute()
+        if mgr.data:
+            return True
+    except Exception:
+        pass  # Table may not exist yet
     return False
 
 
@@ -1337,6 +1376,172 @@ async def delete_club_announcement(club_id: str, ann_id: str, current_user_id: s
     except Exception as e:
         logger.exception(f"Error deleting club announcement: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete announcement")
+
+
+# ── Club Subscriptions ────────────────────────────────────────────────────────
+
+@router.post("/{club_id}/subscribe")
+async def toggle_subscribe(club_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Toggle subscription to a club's events/news. Returns the new state."""
+    try:
+        supabase = get_supabase()
+        # Verify club exists
+        club_result = supabase.table("clubs").select("id").eq("id", club_id).execute()
+        if not club_result.data:
+            raise HTTPException(status_code=404, detail="Club not found")
+
+        # Check current subscription
+        existing = (
+            supabase.table("club_subscriptions")
+            .select("id")
+            .eq("club_id", club_id)
+            .eq("user_id", current_user_id)
+            .execute()
+        )
+        if existing.data:
+            # Unsubscribe
+            supabase.table("club_subscriptions").delete().eq("club_id", club_id).eq("user_id", current_user_id).execute()
+            return {"success": True, "is_subscribed": False}
+        else:
+            # Subscribe
+            supabase.table("club_subscriptions").insert({
+                "club_id": club_id,
+                "user_id": current_user_id,
+            }).execute()
+            return {"success": True, "is_subscribed": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error toggling subscription: {e}")
+        raise HTTPException(status_code=500, detail="Failed to toggle subscription")
+
+
+@router.get("/{club_id}/subscribers")
+async def get_subscribers_count(club_id: str):
+    """Get the subscriber count for a club (public)."""
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_subscriptions").select("id", count="exact").eq("club_id", club_id).execute()
+        count = result.count if result.count is not None else len(result.data or [])
+        return {"count": count}
+    except Exception as e:
+        logger.exception(f"Error fetching subscribers: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch subscribers")
+
+
+# ── Club Managers ─────────────────────────────────────────────────────────────
+
+@router.get("/{club_id}/managers")
+async def get_club_managers(club_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Get managers for a club. Any authenticated user can view."""
+    try:
+        supabase = get_supabase()
+        result = supabase.table("club_managers").select("*").eq("club_id", club_id).execute()
+        managers = []
+        for m in (result.data or []):
+            profile = {"id": m["id"], "user_id": m["user_id"], "role": m.get("role", "manager"), "added_at": m.get("added_at")}
+            try:
+                p = supabase.table("users").select("username, email").eq("id", m["user_id"]).execute()
+                if p.data:
+                    profile["name"] = p.data[0].get("username", "") or p.data[0].get("email", "")
+                    profile["email"] = p.data[0].get("email", "")
+            except Exception:
+                pass
+            managers.append(profile)
+
+        # Also include the club creator as a manager (always)
+        club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+        creator_id = club_result.data[0].get("created_by") if club_result.data else None
+        if creator_id and not any(m["user_id"] == creator_id for m in managers):
+            creator_profile = {"id": None, "user_id": creator_id, "role": "owner", "added_at": None}
+            try:
+                p = supabase.table("users").select("username, email").eq("id", creator_id).execute()
+                if p.data:
+                    creator_profile["name"] = p.data[0].get("username", "") or p.data[0].get("email", "")
+                    creator_profile["email"] = p.data[0].get("email", "")
+            except Exception:
+                pass
+            managers.insert(0, creator_profile)
+
+        return {"managers": managers, "count": len(managers)}
+    except Exception as e:
+        logger.exception(f"Error fetching club managers: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch managers")
+
+
+@router.post("/{club_id}/managers")
+async def add_club_manager(club_id: str, body: AddManagerRequest, current_user_id: str = Depends(get_current_user_id)):
+    """Add a manager to a club by email. Only club owner or existing managers can add."""
+    try:
+        supabase = get_supabase()
+        # Check permission: must be club owner, existing manager, or global admin
+        if not _is_club_owner_or_admin(club_id, current_user_id):
+            # Also check if caller is a club_manager
+            mgr_check = supabase.table("club_managers").select("id").eq("club_id", club_id).eq("user_id", current_user_id).execute()
+            if not mgr_check.data:
+                raise HTTPException(status_code=403, detail="Only club owner or managers can add managers")
+
+        # Look up user by email
+        user_result = supabase.table("users").select("id, username, email").eq("email", body.email).execute()
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail=f"No user found with email {body.email}")
+
+        target_user = user_result.data[0]
+        target_user_id = target_user["id"]
+
+        # Check if already a manager
+        existing = supabase.table("club_managers").select("id").eq("club_id", club_id).eq("user_id", target_user_id).execute()
+        if existing.data:
+            raise HTTPException(status_code=409, detail="User is already a manager of this club")
+
+        # Check if user is the club creator (already implicit manager)
+        club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+        if club_result.data and club_result.data[0].get("created_by") == target_user_id:
+            raise HTTPException(status_code=409, detail="User is the club creator and already has full access")
+
+        supabase.table("club_managers").insert({
+            "club_id": club_id,
+            "user_id": target_user_id,
+            "role": "manager",
+        }).execute()
+
+        return {
+            "success": True,
+            "manager": {
+                "user_id": target_user_id,
+                "name": target_user.get("username", "") or target_user.get("email", ""),
+                "email": target_user.get("email", ""),
+                "role": "manager",
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error adding club manager: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add manager")
+
+
+@router.delete("/{club_id}/managers/{manager_user_id}")
+async def remove_club_manager(club_id: str, manager_user_id: str, current_user_id: str = Depends(get_current_user_id)):
+    """Remove a manager from a club. Only club owner or global admin."""
+    try:
+        supabase = get_supabase()
+        # Only club owner or global admin can remove managers
+        club_result = supabase.table("clubs").select("created_by").eq("id", club_id).execute()
+        if not club_result.data:
+            raise HTTPException(status_code=404, detail="Club not found")
+        owner_id = club_result.data[0].get("created_by")
+
+        if current_user_id != owner_id and not _is_admin_user(current_user_id):
+            raise HTTPException(status_code=403, detail="Only the club owner or global admins can remove managers")
+
+        supabase.table("club_managers").delete().eq("club_id", club_id).eq("user_id", manager_user_id).execute()
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error removing club manager: {e}")
+        raise HTTPException(status_code=500, detail="Failed to remove manager")
 
 
 @router.delete("/{club_id}")

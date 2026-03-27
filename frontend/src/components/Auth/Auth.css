@@ -102,6 +102,13 @@
   margin: 0;
 }
 
+.auth-branding-disclaimer {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  margin: 6px 0 0;
+  font-style: italic;
+}
+
 /* Feature list */
 .auth-feature-list {
   list-style: none;
@@ -514,6 +521,34 @@
 
 .auth-back-btn:hover {
   color: var(--text-primary);
+}
+
+/* ── Email verification screen ────────────────── */
+.auth-verify-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0 16px;
+}
+
+.auth-verify-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.auth-verify-hint {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin: 10px 0 0;
+  font-style: italic;
+}
+
+.auth-verify-success {
+  font-size: 0.83rem;
+  color: var(--success-primary);
+  margin-top: 10px;
 }
 
 /* ── Responsive ───────────────────────────────── */

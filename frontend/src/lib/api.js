@@ -248,6 +248,18 @@ export const authAPI = {
       return { is_admin: false, is_mcgill_email: false }
     }
   },
+  async sendVerification(userId, email) {
+    const response = await api.post('/auth/send-verification', {
+      user_id: userId,
+      email,
+      redirect_url: window.location.origin,
+    })
+    return response.data
+  },
+  async verifyEmail(userId, token) {
+    const response = await api.post('/auth/verify-email', { user_id: userId, token })
+    return response.data
+  },
 }
 
 export default api

@@ -1574,6 +1574,9 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
               <FaBullhorn /> {t('calendar.announcements')}
               {urgentEvents.length > 0 && <span className="cal-badge">{urgentEvents.length}</span>}
             </button>
+            <button className={view === 'newsletters' ? 'active' : ''} onClick={() => setView('newsletters')}>
+              <FaNewspaper /> {L(language, 'Newsletters', 'Infolettres', '通讯')}
+            </button>
           </div>
           <div className="cal-export-wrap">
             <button className="cal-export-btn" onClick={() => setShowExportMenu(p => !p)}>
@@ -1765,6 +1768,44 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
             >
               <FaBullhorn size={12} /> {L(language, 'Post Announcement', 'Publier une annonce', '发布公告')}
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Newsletters View */}
+      {view === 'newsletters' && (
+        <div className="cal-announcements">
+          <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FaNewspaper size={13} style={{ color: '#0891b2' }} /> {L(language, 'Newsletter Events', 'Événements des infolettres', '通讯事件')}
+          </h3>
+          {newsletterEvents.length === 0 ? (
+            <div className="cal-empty-state">
+              <FaNewspaper size={40} />
+              <p>{L(language, 'No newsletter events. Subscribe to newsletters in Settings to see events here.', 'Aucun événement de bulletin. Abonnez-vous aux bulletins dans Paramètres pour voir les événements ici.', '暂无通讯事件。在设置中订阅通讯以在此处查看事件。')}</p>
+            </div>
+          ) : (
+            <div className="cal-announce-list">
+              {newsletterEvents.map(event => {
+                const style = getEventStyle(event, typeConfig)
+                const days = daysUntil(event.date)
+                return (
+                  <div key={event.id} className="cal-announce-card" style={{ borderLeftColor: '#0891b2' }}
+                    onClick={() => setPopupEvent(event)}>
+                    <div className="cal-announce-card-left">
+                      <div className="cal-announce-type" style={{ color: '#0891b2', background: '#ecfeff' }}>
+                        <FaNewspaper /> {L(language, 'Newsletter', 'Infolettre', '通讯')}
+                      </div>
+                      <h4>{event.title}</h4>
+                      {event.description && <p className="cal-announce-desc">{event.description}</p>}
+                    </div>
+                    <div className="cal-announce-card-right">
+                      <div className="cal-announce-date">{formatDate(event.date)}</div>
+                      <div className="cal-announce-countdown">{countdownLabel(days)}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
       )}

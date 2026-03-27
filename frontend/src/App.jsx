@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { LanguageProvider } from './contexts/LanguageContext'
@@ -8,12 +8,15 @@ import Dashboard from './components/Dashboard/Dashboard'
 import ProfileSetup from './components/ProfileSetup/ProfileSetup'
 import Loading from './components/Loading/Loading'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
+import { authAPI } from './lib/api'
 import './theme.css'
 import './App.css'
 import AdminSuggestions from './components/Admin/AdminSuggestions'
 
 function AppContent() {
-  const { user, profile, loading, error, needsOnboarding } = useAuth()
+  const { user, profile, loading, error, needsOnboarding, refreshProfile } = useAuth()
+  const [verifying, setVerifying] = useState(false)
+  const [verifyError, setVerifyError] = useState('')
 
   // Enforce 2-second minimum loading screen
   const [minLoadDone, setMinLoadDone] = useState(false)
@@ -22,10 +25,40 @@ function AppContent() {
     return () => clearTimeout(t)
   }, [])
 
-  // Wait for both the minimum loading time AND auth state to resolve before
-  // rendering anything — including the admin route. This ensures the session
-  // is evaluated before the admin panel (or any other route) is displayed.
-  if (loading || !minLoadDone) return <Loading />
+  // Handle ?verify_token=xxx&user_id=xxx — sent by the verification email link
+  const handleVerifyToken = useCallback(async () => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('verify_token')
+    const userId = params.get('user_id')
+    if (!token || !userId) return
+
+    // Clear params from URL immediately so reloads don't re-trigger
+    window.history.replaceState({}, '', window.location.pathname)
+
+    setVerifying(true)
+    try {
+      await authAPI.verifyEmail(userId, token)
+      await refreshProfile()
+    } catch (err) {
+      setVerifyError(err?.response?.data?.detail || 'Verification failed. The link may have expired.')
+    } finally {
+      setVerifying(false)
+    }
+  }, [refreshProfile])
+
+  useEffect(() => { handleVerifyToken() }, [handleVerifyToken])
+
+  if (loading || !minLoadDone || verifying) return <Loading />
+
+  if (verifyError) {
+    return (
+      <div className="error-screen">
+        <h2>Verification failed</h2>
+        <p>{verifyError}</p>
+        <button onClick={() => { setVerifyError(''); window.location.replace('/') }}>Back to sign in</button>
+      </div>
+    )
+  }
 
   if (error?.type === 'AUTH_INIT_FAILED') {
     return (
@@ -37,22 +70,17 @@ function AppContent() {
     )
   }
 
-  // Admin panel — only rendered after auth has resolved and user is logged in.
-  // The server-side /api/admin/verify endpoint enforces the actual credential
-  // check; this guard simply prevents the login form from loading before the
-  // session is known.
   if (user && window.location.pathname === '/admin') return <AdminSuggestions />
 
-  // New signup — show onboarding flow
   if (user && needsOnboarding) return <ProfileSetup />
 
-  // Returning user with loaded profile
+  // Signed in but email not verified → show Login in verify mode
+  if (user && profile && profile.email_verified === false) return <Login forceVerify email={profile.email} userId={user.id} />
+
   if (user && profile) return <Dashboard />
 
-  // Profile is being fetched
   if (user && !profile && !error) return <Loading />
 
-  // Unauthenticated (also catches unauthenticated /admin attempts)
   return <Login />
 }
 

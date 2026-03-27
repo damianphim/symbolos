@@ -515,7 +515,7 @@
 
 .dp-req-course {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 6px 8px;
   border-radius: 7px;
@@ -525,6 +525,46 @@
 .dp-req-course:hover { background: var(--bg-hover); }
 .dp-req-course--done { opacity: 0.75; }
 .dp-req-course--taking { background: var(--accent-lighter); }
+.dp-req-course--conflict { opacity: 0.6; background: var(--bg-secondary); }
+
+.dp-req-course-main { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 4px; }
+.dp-req-course-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.dp-req-conflict-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--warning-light, #fef9c3);
+  color: var(--warning-text, #92400e);
+  flex-shrink: 0;
+}
+
+.dp-req-overlap-assign {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.dp-req-overlap-label {
+  font-size: 10.5px;
+  color: var(--warning-primary, #f59e0b);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dp-req-overlap-select {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--warning-primary, #f59e0b);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.dp-req-overlap-select:focus { outline: none; }
 
 .dp-req-course-icon {
   font-size: 13px;
@@ -947,6 +987,36 @@
 .dp-elective-credits {
   font-size: 11px;
   color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.dp-elective-assign {
+  margin-top: 8px;
+  border-top: 1px solid var(--border-primary);
+  padding-top: 8px;
+}
+
+.dp-elective-assign-select {
+  width: 100%;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.dp-elective-assign-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.dp-elective-assign-note {
+  font-size: 10.5px;
+  color: var(--warning-primary, #f59e0b);
+  margin: 4px 0 0;
   font-weight: 500;
 }
 

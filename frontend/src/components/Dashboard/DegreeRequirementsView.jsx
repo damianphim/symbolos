@@ -27,10 +27,11 @@ const TYPE_LABELS = {
   beng:          'B.Eng.',
   bge:           'B.G.E.',
   bscarch:       'B.Sc.(Arch.)',
-  concentration: 'Concentration',
-  core:          'Core',
-  required:      'Core',
-  diploma:       'Diploma',
+  concentration:      'Concentration',
+  core:               'Core',
+  required:           'Core',
+  diploma:            'Diploma',
+  supplementary_minor: 'Supplementary Minor',
 }
 const TYPE_COLORS = {
   major:         '#dc2626',
@@ -712,6 +713,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 )
               })}
             </div>
+            {showRecommended && (
+              <p className="rsb-disclaimer" style={{ marginTop: '1rem' }}>{t('rsb.disclaimer')}</p>
+            )}
           </div>
         )}
       </main>

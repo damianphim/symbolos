@@ -491,7 +491,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                   {formData.other_majors.map(major => (
                     <div key={major} className="selected-tag">
                       <span>{major}</span>
-                      <button type="button" onClick={() => handleRemoveMajor(major)} className="remove-tag">\u2715</button>
+                      <button type="button" onClick={() => handleRemoveMajor(major)} className="remove-tag">×</button>
                     </div>
                   ))}
                   <button type="button" onClick={() => setShowMajorDropdown(!showMajorDropdown)} className="add-more-btn">
@@ -517,7 +517,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                   {formData.other_minors.map(minor => (
                     <div key={minor} className="selected-tag">
                       <span>{minor}</span>
-                      <button type="button" onClick={() => handleRemoveMinor(minor)} className="remove-tag">\u2715</button>
+                      <button type="button" onClick={() => handleRemoveMinor(minor)} className="remove-tag">×</button>
                     </div>
                   ))}
                   <button type="button" onClick={() => setShowMinorDropdown(!showMinorDropdown)} className="add-more-btn">
@@ -612,7 +612,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
               onClick={() => setShowAdvancedStanding(!showAdvancedStanding)}
               className="toggle-section-btn"
             >
-              {showAdvancedStanding ? '\u2212 Hide' : '+ Add Credits'}
+              {showAdvancedStanding ? '− Hide' : (formData.advanced_standing.length > 0 ? 'Edit Credits' : '+ Add Credits')}
             </button>
           </div>
 
@@ -643,10 +643,10 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
                           className="remove-chip-btn"
                           title="Remove"
                         >
-                          \u2715
+                          ×
                         </button>
                       </div>
-                      {course.course_title && (
+                      {course.course_title && course.course_title !== 'None' && (
                         <div className="course-title">{course.course_title}</div>
                       )}
                       <div className="advanced-course-flags">
@@ -714,11 +714,11 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
       {/* Submit */}
       <div className="form-actions">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="cancel-btn">
+          <button type="button" onClick={onCancel} className="btn-cancel">
             Cancel
           </button>
         )}
-        <button type="submit" className="save-btn">
+        <button type="submit" className="btn-primary">
           Save Profile
         </button>
       </div>

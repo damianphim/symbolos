@@ -495,6 +495,7 @@
   transition: all 0.2s;
   font-weight: 700;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .remove-chip-btn:hover {

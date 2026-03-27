@@ -25,6 +25,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
   const [parsed, setParsed] = useState(null)
   const [results, setResults] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [showAllCompleted, setShowAllCompleted] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleFile = (f) => {
@@ -51,13 +52,15 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
   }
 
   const handleImport = async () => {
-    if (!file) return
+    if (!parsed) return
     setStep('importing')
     try {
-      const form = new FormData()
-      form.append('file', file)
-      form.append('dry_run', 'false')
-      const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${BASE_URL}/api/transcript/import/${userId}`, {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed),
+      })
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Import failed') }
       const data = await res.json()
       setResults(data.results)
@@ -213,8 +216,8 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                     <div className="tu-course-list">
                       {parsed.current_courses.slice(0, 5).map((c, i) => (
                         <div key={i} className="tu-course-row tu-course-row--current">
-                          <span className="tu-course-code">{c.code}</span>
-                          <span className="tu-course-name">{c.title}</span>
+                          <span className="tu-course-code">{c.course_code}</span>
+                          <span className="tu-course-name">{c.course_title}</span>
                           <span className="tu-course-tag">Current</span>
                         </div>
                       ))}
@@ -225,19 +228,24 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                   <div className="tu-section">
                     <p className="tu-section-title">Completed Courses ({parsed.completed_courses.length})</p>
                     <div className="tu-course-list">
-                      {parsed.completed_courses.slice(0, 5).map((c, i) => (
+                      {(showAllCompleted ? parsed.completed_courses : parsed.completed_courses.slice(0, 5)).map((c, i) => (
                         <div key={i} className="tu-course-row">
-                          <span className="tu-course-code">{c.code}</span>
-                          <span className="tu-course-name">{c.title}</span>
+                          <span className="tu-course-code">{c.course_code}</span>
+                          <span className="tu-course-name">{c.course_title}</span>
                           {c.grade && <span className="tu-course-grade">{c.grade}</span>}
                         </div>
                       ))}
                       {parsed.completed_courses.length > 5 && (
-                        <p className="tu-course-more">+{parsed.completed_courses.length - 5} more</p>
+                        <button className="tu-course-more" onClick={() => setShowAllCompleted(v => !v)}>
+                          {showAllCompleted ? 'Show less' : `+${parsed.completed_courses.length - 5} more`}
+                        </button>
                       )}
                     </div>
                   </div>
                 )}
+                <div className="tu-verify-hint" style={{ margin: '12px 0' }}>
+                  <span>AI-extracted data may contain errors. After importing, review your courses in <strong>Degree Planning</strong> and profile info in <strong>Settings</strong> to ensure accuracy.</span>
+                </div>
                 <div className="tu-actions tu-actions--center">
                   <button className="tu-btn tu-btn--secondary" onClick={handleReset}>Cancel</button>
                   <button className="tu-btn tu-btn--primary" onClick={handleImport}>Confirm Import</button>
@@ -282,7 +290,6 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                   </div>
                 )}
                 <div className="tu-verify-hint">
-                  <FaExclamationTriangle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
                   <span>Please double-check your imported data for accuracy. Go to <strong>Degree Planning</strong> to review your courses and GPA, and <strong>Settings</strong> to verify your profile info.</span>
                 </div>
                 <div className="tu-actions tu-actions--center">
@@ -331,7 +338,6 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                   ))}
                 </div>
                 <div className="tu-verify-hint">
-                  <FaExclamationTriangle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
                   <span>Please double-check your calendar for accuracy. Go to <strong>Calendar</strong> to verify lecture times, exam dates, and assignment deadlines. Use <strong>Edit Events</strong> to fix any incorrect times.</span>
                 </div>
                 <div className="tu-actions tu-actions--center">

@@ -16,13 +16,13 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
 
     const current = parseFloat(currentGPA)
     const target = parseFloat(targetGPA)
-    const completed = parseFloat(completedCredits)
-    const remaining = totalCreditsRequired - completed
+    const completed = Math.round(parseFloat(completedCredits))
+    const remaining = Math.max(0, totalCreditsRequired - completed)
 
     if (isNaN(current) || isNaN(target) || isNaN(completed)) return null
     if (target < 0 || target > 4.0) return { error: 'Target GPA must be between 0.0 and 4.0' }
     if (current < 0 || current > 4.0) return { error: 'Current GPA must be between 0.0 and 4.0' }
-    if (completed < 0 || completed > totalCreditsRequired) return { error: 'Completed credits cannot exceed total credits' }
+    if (completed < 0) return { error: 'Completed credits cannot be negative' }
     if (remaining <= 0) return { error: 'You have already completed all required credits' }
 
     const requiredGPA = (target * totalCreditsRequired - current * completed) / remaining
@@ -130,11 +130,11 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
           </div>
           <div className="stat-box">
             <span className="stat-label">{t('gpa.creditsCompleted')}</span>
-            <span className="stat-value">{completedCredits || 0}</span>
+            <span className="stat-value">{Math.round(completedCredits || 0)}</span>
           </div>
           <div className="stat-box">
             <span className="stat-label">{t('gpa.creditsRemaining')}</span>
-            <span className="stat-value">{totalCreditsRequired - (completedCredits || 0)}</span>
+            <span className="stat-value">{Math.max(0, totalCreditsRequired - Math.round(completedCredits || 0))}</span>
           </div>
         </div>
 

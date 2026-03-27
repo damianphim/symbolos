@@ -640,6 +640,18 @@
   color: #fff;
 }
 
+.settings-btn--primary,
+.delete-account-btn.settings-btn--primary {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+}
+.settings-btn--primary:hover,
+.delete-account-btn.settings-btn--primary:hover {
+  opacity: 0.88;
+  color: #ffffff !important;
+}
+
 /* ── Delete confirm modal additions ──────────────────── */
 .modal-content--danger {
   border-top: 3px solid #dc2626;

@@ -2316,6 +2316,7 @@ ARTS_PROGRAMS = [
         "block_key": "comp_electives",
         "title": "Complementary – COMP 300+ Electives",
         "credits_needed": 6,
+        "min_level": 300,
         "notes": "An additional 3 credits from Group A or B, plus remaining credits from COMP 230 or COMP 300-level or above (except COMP 396).",
         "courses": [
           {"subject":"COMP","catalog":"230","title":"Logic and Computability","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Great for theory-focused students; pairs with COMP 330"},
@@ -2370,6 +2371,80 @@ ARTS_PROGRAMS = [
   },
 
 
+
+  # ──────────────────────────────────────────────────────────────────
+  # COMPUTER SCIENCE – SUPPLEMENTARY MINOR (B.A.)
+  # ──────────────────────────────────────────────────────────────────
+  {
+    "program_key": "supplemental_computer_science_minor",
+    "name": "Computer Science – Supplementary Minor Concentration (B.A.)",
+    "program_type": "minor",
+    "faculty": "Faculty of Arts",
+    "total_credits": 18,
+    "description": (
+      "Exclusively available to students enrolled in the Major Concentration in Computer Science "
+      "or Software Engineering (Faculty of Arts). Requires 18 credits from COMP courses at the "
+      "300 level or above (excluding COMP 364 and COMP 396), with up to 3 credits from approved "
+      "MATH courses. There may be no overlap in credits between this Supplementary Minor and the "
+      "paired Major Concentration. Course selection must receive approval from an Academic Adviser "
+      "in the School of Computer Science."
+    ),
+    "ecalendar_url": "https://coursecatalogue.mcgill.ca/en/undergraduate/arts/programs/computer-science/computer-science-supplementary-minor-concentration-ba/",
+    "blocks": [
+      {
+        "block_key": "supp_cs_comp_upper",
+        "title": "COMP 300+ Electives",
+        "block_type": "choose_credits",
+        "credits_needed": 15,
+        "courses_needed": None,
+        "group_name": None,
+        "notes": "15 credits from COMP courses at the 300 level or above. COMP 364 and COMP 396 are excluded. No credit overlap with paired CS or Software Engineering Major. Adviser approval required.",
+        "sort_order": 1,
+        "courses": [
+          {"subject":"COMP","catalog":"302","title":"Programming Languages and Paradigms","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Functional and logic programming; pairs well with upper-year theory"},
+          {"subject":"COMP","catalog":"303","title":"Software Design","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Software architecture and design patterns"},
+          {"subject":"COMP","catalog":"307","title":"Introduction to Web Development","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Highly practical; great for building portfolio projects"},
+          {"subject":"COMP","catalog":"308","title":"Web Development with JavaScript","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"310","title":"Operating Systems","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"320","title":"Introduction to Computer Graphics","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"321","title":"Introduction to Software Engineering","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"330","title":"Theory of Computation","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Automata, grammars, and computability — core CS theory"},
+          {"subject":"COMP","catalog":"350","title":"Numerical Computing","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"360","title":"Algorithm Design","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Advanced algorithm techniques; great prep for technical interviews"},
+          {"subject":"COMP","catalog":"400","title":"Topics in Computing Science","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"409","title":"Concurrent Programming","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"417","title":"Computer Networks","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"421","title":"Programming Languages","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"424","title":"Artificial Intelligence","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"McGill's flagship AI course; excellent for CS/AI track"},
+          {"subject":"COMP","catalog":"451","title":"Algorithms and Bioinformatics","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"462","title":"Combinatorial Optimization","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"489","title":"Reinforcement Learning","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"551","title":"Applied Machine Learning","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Top ML course; highly valued for industry and research"},
+          {"subject":"COMP","catalog":"558","title":"Fundamentals of Visual Computing","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"566","title":"Discrete Optimization","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"579","title":"Heuristic Search","credits":3,"is_required":False},
+          {"subject":"COMP","catalog":"599","title":"Master's Thesis Research 1","credits":3,"is_required":False},
+        ],
+      },
+      {
+        "block_key": "supp_cs_math_opt",
+        "title": "Optional MATH Substitution (max 3 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 3,
+        "courses_needed": None,
+        "group_name": None,
+        "notes": "Up to 3 of the 18 required credits may come from the approved MATH list below instead of COMP 300+.",
+        "sort_order": 2,
+        "courses": [
+          {"subject":"MATH","catalog":"223","title":"Linear Algebra","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Foundational for ML, graphics, and numerical methods"},
+          {"subject":"MATH","catalog":"318","title":"Mathematical Logic","credits":3,"is_required":False},
+          {"subject":"MATH","catalog":"323","title":"Probability","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Essential for machine learning and statistics"},
+          {"subject":"MATH","catalog":"324","title":"Statistics","credits":3,"is_required":False},
+          {"subject":"MATH","catalog":"340","title":"Discrete Mathematics","credits":3,"is_required":False},
+        ],
+      },
+    ],
+  },
 
   # ──────────────────────────────────────────────────────────────────
   # GERMAN STUDIES

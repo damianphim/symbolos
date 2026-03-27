@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   FaSearch, FaUsers, FaHeart, FaCalendarAlt,
   FaPlus, FaTimes, FaExternalLinkAlt, FaChevronRight,
-  FaEnvelope, FaCheck, FaBell,
-  FaChevronDown, FaChevronLeft, FaStar,
+  FaEnvelope, FaCheck, FaBell, FaBullhorn, FaTrash,
+  FaChevronDown, FaChevronLeft, FaStar, FaCog, FaCrown,
   FaBook, FaPalette, FaGraduationCap,
   FaLock, FaGlobe, FaEdit, FaUserPlus, FaUserCheck, FaUserTimes
 } from 'react-icons/fa'
@@ -231,7 +231,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   )
 }
 
-function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId }) {
+function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
@@ -268,29 +268,30 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
               </div>
             </div>
           </div>
-          <div className="club-drawer__strip-actions">
-            {joined ? (
-              <button className="club-action-btn club-action-btn--leave" onClick={() => onLeave(club.id)} disabled={isLoading}>
-                <FaTimes size={12} /> {t('clubs.leaveClub')}
-              </button>
-            ) : hasPendingRequest ? (
-              <div>
-                <button className="club-action-btn club-action-btn--applied" disabled style={{ opacity: 0.85 }}>
-                  <FaCheck size={12} /> {t('clubs.requestedBtn')}
-                </button>
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', margin: '6px 0 0', textAlign: 'center' }}>
-                  {language === 'fr' ? 'En attente de réponse du club. Vous ne pouvez pas annuler ou postuler à nouveau.'
-                    : language === 'zh' ? '等待社团回复，暂时无法撤回或重新申请。'
-                    : 'Waiting for club to respond. You cannot withdraw or reapply until then.'}
-                </p>
-              </div>
-            ) : isPrivate ? (
-              <button className="club-action-btn club-action-btn--join" onClick={() => onJoin(club.id)} disabled={isLoading}>
-                <FaLock size={12} /> {t('clubs.requestJoinBtn')}
-              </button>
+          <div className="club-drawer__strip-actions" style={{ display: 'flex', gap: '8px' }}>
+            {/* Subscribe button — toggle to get club updates */}
+            <button
+              className={`club-action-btn ${isSubscribed ? 'club-action-btn--subscribed' : 'club-action-btn--subscribe'}`}
+              onClick={() => onToggleSubscribe(club.id)}
+              disabled={isLoading}
+              title={isSubscribed ? t('clubs.unsubscribeTooltip') : t('clubs.subscribeTooltip')}
+            >
+              {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
+            </button>
+            {/* Join button — links to application_url if set, otherwise website_url */}
+            {(display.application_url || display.website_url) ? (
+              <a
+                href={display.application_url || display.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="club-action-btn club-action-btn--join"
+                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                {t('clubs.joinClub')}
+              </a>
             ) : (
-              <button className="club-action-btn club-action-btn--join" onClick={() => onJoin(club.id)} disabled={isLoading}>
-                <FaPlus size={12} /> {t('clubs.joinClub')}
+              <button className="club-action-btn club-action-btn--join" disabled title={t('clubs.noWebsite')}>
+                {t('clubs.joinClub')}
               </button>
             )}
           </div>
@@ -325,6 +326,24 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
             <section className="club-drawer__section">
               <h3 className="club-drawer__section-title"><FaCheck size={12} /> {t('clubs.about')}</h3>
               <p className="club-drawer__desc">{display.description}</p>
+            </section>
+          )}
+
+          {display.join_instructions && (
+            <section className="club-drawer__section">
+              <h3 className="club-drawer__section-title"><FaUserPlus size={12} /> {t('clubs.howToJoin')}</h3>
+              <p className="club-drawer__desc" style={{ whiteSpace: 'pre-line' }}>{display.join_instructions}</p>
+              {display.application_url && (
+                <a
+                  className="club-drawer__link-btn"
+                  href={display.application_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ marginTop: '8px', display: 'inline-flex' }}
+                >
+                  <FaExternalLinkAlt size={10} /> {t('clubs.applyNow')}
+                </a>
+              )}
             </section>
           )}
 
@@ -384,7 +403,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   )
 }
 
-function ClubCard({ club, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
@@ -464,18 +483,32 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, onJoin, onLeave,
             </p>
           </div>
         ) : (
-          <button
-            className={`club-join-btn ${justJoined ? 'done' : ''} ${isPrivate ? 'club-join-btn--request' : ''}`}
-            onClick={handleJoin}
-            disabled={isLoading}
-            style={justJoined ? { background: meta.color, borderColor: meta.color } : {}}
-          >
-            {justJoined
-              ? <><FaCheck size={10} /> {isPrivate ? t('clubs.requestedBtn') : t('clubs.joinedBtn')}</>
-              : isPrivate
-                ? <><FaLock size={10} /> {t('clubs.requestJoinBtn')}</>
-                : <><FaPlus size={10} /> {t('clubs.joinBtn')}</>}
-          </button>
+          <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+            <button
+              className={`club-join-btn ${isSubscribed ? 'club-join-btn--subscribed' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onToggleSubscribe(club.id) }}
+              disabled={isLoading}
+              style={{ flex: 1 }}
+            >
+              {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
+            </button>
+            {(club.application_url || club.website_url) ? (
+              <a
+                href={club.application_url || club.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="club-join-btn"
+                onClick={e => e.stopPropagation()}
+                style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+              >
+                {t('clubs.joinClub')}
+              </a>
+            ) : (
+              <button className="club-join-btn" onClick={e => e.stopPropagation()} disabled style={{ flex: 1, opacity: 0.5 }}>
+                {t('clubs.joinClub')}
+              </button>
+            )}
+          </div>
         )}
         {isAdmin && (
           <>
@@ -546,7 +579,7 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, onDelet
   )
 }
 
-function CreatedClubRow({ club, onEdit, onManageRequests, onOpen, pendingCount, t }) {
+function CreatedClubRow({ club, onEdit, onManage, onManageRequests, onOpen, pendingCount, t }) {
   const meta = getCat(club.category)
   return (
     <div className="my-club-row created-club-row" onClick={() => onOpen(club)} style={{ cursor: 'pointer' }}>
@@ -570,8 +603,8 @@ function CreatedClubRow({ club, onEdit, onManageRequests, onOpen, pendingCount, 
             {pendingCount > 0 && <span className="club-request-badge">{pendingCount}</span>}
           </button>
         )}
-        <button className="club-edit-btn" onClick={() => onEdit(club)}>
-          <FaEdit size={10} /> {t('clubs.editBtn')}
+        <button className="club-edit-btn club-edit-btn--manage" onClick={() => onManage(club)}>
+          <FaCog size={10} /> {t('clubs.manage.btn')}
         </button>
         <button className="club-card__open-btn" onClick={() => onOpen(club)}>
           <FaChevronRight size={11} />
@@ -665,6 +698,394 @@ function JoinRequestsModal({ club, onClose, onAction, t }) {
     </div>
   )
 }
+
+// ── Club Management Dashboard ─────────────────────────────────────────────────
+function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
+  const [activeSection, setActiveSection] = useState('overview')
+  const [managers, setManagers] = useState([])
+  const [subscribers, setSubscribers] = useState({ count: 0 })
+  const [newManagerEmail, setNewManagerEmail] = useState('')
+  const [managerLoading, setManagerLoading] = useState(false)
+  const [managerError, setManagerError] = useState('')
+  const [managerSuccess, setManagerSuccess] = useState('')
+  const [announcements, setAnnouncements] = useState([])
+  const [events, setEvents] = useState([])
+  const [annForm, setAnnForm] = useState({ title: '', body: '' })
+  const [annSubmitting, setAnnSubmitting] = useState(false)
+  const [eventForm, setEventForm] = useState({ title: '', description: '', event_date: '', location: '' })
+  const [eventSubmitting, setEventSubmitting] = useState(false)
+  const [editForm, setEditForm] = useState({
+    name: club?.name || '', category: club?.category || '',
+    description: club?.description || '', meeting_schedule: club?.meeting_schedule || '',
+    website_url: club?.website_url || '', contact_email: club?.contact_email || '',
+    location: club?.location || '', is_private: club?.is_private ?? false,
+    executive_emails: club?.executive_emails || '',
+    join_instructions: club?.join_instructions || '',
+    application_url: club?.application_url || '',
+  })
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editSuccess, setEditSuccess] = useState(false)
+  const meta = getCat(club?.category)
+
+  useEffect(() => {
+    if (!club?.id) return
+    clubsAPI.getClubManagers(club.id).then(d => setManagers(d.managers || []))
+    clubsAPI.getClubEvents?.(club.id)?.then?.(d => setEvents(d.events || d || []))?.catch?.(() => {})
+    clubsAPI.getClubAnnouncements?.(club.id)?.then?.(d => setAnnouncements(d.announcements || d || []))?.catch?.(() => {})
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/clubs/${club.id}/subscribers`)
+      .then(r => r.json()).then(d => setSubscribers(d)).catch(() => {})
+  }, [club?.id])
+
+  const handleAddManager = async () => {
+    if (!newManagerEmail.trim()) return
+    setManagerLoading(true)
+    setManagerError('')
+    setManagerSuccess('')
+    try {
+      const result = await clubsAPI.addClubManager(club.id, newManagerEmail.trim())
+      setManagers(prev => [...prev, result.manager])
+      setNewManagerEmail('')
+      setManagerSuccess(t('clubs.manage.managerAdded'))
+      setTimeout(() => setManagerSuccess(''), 3000)
+    } catch (e) {
+      setManagerError(e.message)
+    } finally {
+      setManagerLoading(false)
+    }
+  }
+
+  const handleRemoveManager = async (userId, name) => {
+    if (!window.confirm(t('clubs.manage.removeManagerConfirm').replace('{name}', name || ''))) return
+    try {
+      await clubsAPI.removeClubManager(club.id, userId)
+      setManagers(prev => prev.filter(m => m.user_id !== userId))
+    } catch (e) { setManagerError(e.message) }
+  }
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault()
+    setEditSubmitting(true)
+    try {
+      await onSave(club.id, editForm)
+      setEditSuccess(true)
+      setTimeout(() => setEditSuccess(false), 3000)
+    } catch {}
+    finally { setEditSubmitting(false) }
+  }
+
+  const handleCreateAnnouncement = async (e) => {
+    e.preventDefault()
+    if (!annForm.title.trim()) return
+    setAnnSubmitting(true)
+    try {
+      await clubsAPI.createClubAnnouncement(club.id, annForm)
+      setAnnForm({ title: '', body: '' })
+      // Refresh announcements
+      clubsAPI.getClubAnnouncements?.(club.id)?.then?.(d => setAnnouncements(d.announcements || d || []))?.catch?.(() => {})
+    } catch {}
+    finally { setAnnSubmitting(false) }
+  }
+
+  const handleDeleteAnnouncement = async (annId) => {
+    try {
+      await clubsAPI.deleteClubAnnouncement(club.id, annId)
+      setAnnouncements(prev => prev.filter(a => a.id !== annId))
+    } catch {}
+  }
+
+  const handleCreateEvent = async (e) => {
+    e.preventDefault()
+    if (!eventForm.title.trim() || !eventForm.event_date) return
+    setEventSubmitting(true)
+    try {
+      await clubsAPI.createClubEvent(club.id, eventForm)
+      setEventForm({ title: '', description: '', event_date: '', location: '' })
+      clubsAPI.getClubEvents?.(club.id)?.then?.(d => setEvents(d.events || d || []))?.catch?.(() => {})
+    } catch {}
+    finally { setEventSubmitting(false) }
+  }
+
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await clubsAPI.deleteClubEvent(club.id, eventId)
+      setEvents(prev => prev.filter(ev => ev.id !== eventId))
+    } catch {}
+  }
+
+  const sections = [
+    { key: 'overview', icon: <FaStar size={13} />, label: t('clubs.manage.overview') },
+    { key: 'edit', icon: <FaEdit size={13} />, label: t('clubs.manage.editInfo') },
+    { key: 'managers', icon: <FaCrown size={13} />, label: t('clubs.manage.managers') },
+    { key: 'announcements', icon: <FaBullhorn size={13} />, label: t('clubs.manage.announcements') },
+    { key: 'events', icon: <FaCalendarAlt size={13} />, label: t('clubs.manage.events') },
+  ]
+
+  if (!club) return null
+
+  return (
+    <div className="clubs-modal-overlay" onClick={onClose}>
+      <div className="club-manage-dashboard" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="club-manage__header">
+          <div className="club-manage__header-left">
+            <ClubAvatar name={club.name} category={club.category} size="md" />
+            <div>
+              <h2 className="club-manage__title">{club.name}</h2>
+              <p className="club-manage__subtitle">{t('clubs.manage.dashboardTitle')}</p>
+            </div>
+          </div>
+          <button className="clubs-modal__close" onClick={onClose}><FaTimes /></button>
+        </div>
+
+        {/* Section tabs */}
+        <div className="club-manage__tabs">
+          {sections.map(s => (
+            <button
+              key={s.key}
+              className={`club-manage__tab ${activeSection === s.key ? 'active' : ''}`}
+              onClick={() => setActiveSection(s.key)}
+            >
+              {s.icon} {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Section content */}
+        <div className="club-manage__content">
+
+          {/* ── Overview ── */}
+          {activeSection === 'overview' && (
+            <div className="club-manage__overview">
+              <div className="club-manage__stats-grid">
+                <div className="club-manage__stat-card">
+                  <FaUsers size={20} style={{ color: meta.color }} />
+                  <div className="club-manage__stat-val">{club.member_count ?? 0}</div>
+                  <div className="club-manage__stat-label">{t('clubs.members')}</div>
+                </div>
+                <div className="club-manage__stat-card">
+                  <FaBell size={20} style={{ color: '#2563eb' }} />
+                  <div className="club-manage__stat-val">{subscribers.count ?? 0}</div>
+                  <div className="club-manage__stat-label">{t('clubs.manage.subscribers')}</div>
+                </div>
+                <div className="club-manage__stat-card">
+                  <FaCrown size={20} style={{ color: '#f59e0b' }} />
+                  <div className="club-manage__stat-val">{managers.length}</div>
+                  <div className="club-manage__stat-label">{t('clubs.manage.managers')}</div>
+                </div>
+                <div className="club-manage__stat-card">
+                  <FaBullhorn size={20} style={{ color: '#8b5cf6' }} />
+                  <div className="club-manage__stat-val">{announcements.length}</div>
+                  <div className="club-manage__stat-label">{t('clubs.manage.announcements')}</div>
+                </div>
+              </div>
+              <div className="club-manage__quick-info">
+                <p><strong>{t('clubs.fieldCategory')}:</strong> {club.category || '—'}</p>
+                <p><strong>{t('clubs.fieldEmail')}:</strong> {club.contact_email || '—'}</p>
+                <p><strong>{t('clubs.fieldUrl')}:</strong> {club.website_url ? <a href={club.website_url} target="_blank" rel="noopener noreferrer">{club.website_url}</a> : '—'}</p>
+                <p><strong>{t('clubs.fieldSchedule')}:</strong> {club.meeting_schedule || '—'}</p>
+                <p><strong>{t('clubs.fieldVisibility')}:</strong> {club.is_private ? t('clubs.private') : t('clubs.visibilityPublic')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Edit Info ── */}
+          {activeSection === 'edit' && (
+            <form className="club-manage__edit-form" onSubmit={handleSaveEdit}>
+              {editSuccess && <div className="club-manage__success"><FaCheck size={12} /> {t('clubs.manage.saved')}</div>}
+              <div className="clubs-field">
+                <label>{t('clubs.fieldName')} *</label>
+                <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div className="clubs-field-row">
+                <div className="clubs-field">
+                  <label>{t('clubs.fieldCategory')}</label>
+                  <select value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}>
+                    <option value="">{t('clubs.fieldCategoryDefault')}</option>
+                    {Object.keys(CATEGORY_META).filter(k => k !== 'Default').map(c => (
+                      <option key={c} value={c}>{t(CATEGORY_I18N_KEY[c] || c) || c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="clubs-field">
+                  <label>{t('clubs.fieldLocation')}</label>
+                  <input value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
+                </div>
+              </div>
+              <div className="clubs-field">
+                <label>{t('clubs.fieldDesc')} *</label>
+                <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+              </div>
+              <div className="clubs-field-row">
+                <div className="clubs-field">
+                  <label>{t('clubs.fieldSchedule')}</label>
+                  <input value={editForm.meeting_schedule} onChange={e => setEditForm(f => ({ ...f, meeting_schedule: e.target.value }))} />
+                </div>
+                <div className="clubs-field">
+                  <label>{t('clubs.fieldEmail')}</label>
+                  <input value={editForm.contact_email} onChange={e => setEditForm(f => ({ ...f, contact_email: e.target.value }))} />
+                </div>
+              </div>
+              <div className="clubs-field">
+                <label>{t('clubs.fieldUrl')}</label>
+                <input value={editForm.website_url} onChange={e => setEditForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://..." />
+              </div>
+              <div className="clubs-field">
+                <label>{t('clubs.fieldApplicationUrl')}</label>
+                <input value={editForm.application_url} onChange={e => setEditForm(f => ({ ...f, application_url: e.target.value }))} placeholder="https://..." />
+                <span className="clubs-field-hint">{t('clubs.fieldApplicationUrlHint')}</span>
+              </div>
+              <div className="clubs-field">
+                <label>{t('clubs.fieldJoinInstructions')}</label>
+                <textarea value={editForm.join_instructions} onChange={e => setEditForm(f => ({ ...f, join_instructions: e.target.value }))} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
+                <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
+              </div>
+              <div className="clubs-field">
+                <label>{t('clubs.fieldVisibility')}</label>
+                <div className="clubs-visibility-toggle">
+                  <button type="button" className={`clubs-visibility-option ${!editForm.is_private ? 'active' : ''}`} onClick={() => setEditForm(f => ({ ...f, is_private: false }))}>
+                    <FaGlobe size={12} /> {t('clubs.visibilityPublic')}
+                  </button>
+                  <button type="button" className={`clubs-visibility-option ${editForm.is_private ? 'active' : ''}`} onClick={() => setEditForm(f => ({ ...f, is_private: true }))}>
+                    <FaLock size={11} /> {t('clubs.visibilityPrivate')}
+                  </button>
+                </div>
+              </div>
+              <div className="clubs-modal__footer">
+                <button type="submit" className="club-action-btn club-action-btn--join" disabled={editSubmitting}>
+                  {editSubmitting ? <><span className="btn-spinner" /> {t('clubs.saving')}</> : <><FaCheck size={12} /> {t('clubs.saveChanges')}</>}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Managers ── */}
+          {activeSection === 'managers' && (
+            <div className="club-manage__managers">
+              <div className="club-manage__add-manager">
+                <label>{t('clubs.manage.addManagerLabel')}</label>
+                <div className="club-manage__add-row">
+                  <input
+                    type="email"
+                    value={newManagerEmail}
+                    onChange={e => setNewManagerEmail(e.target.value)}
+                    placeholder={t('clubs.manage.addManagerPlaceholder')}
+                    onKeyDown={e => e.key === 'Enter' && handleAddManager()}
+                  />
+                  <button className="club-action-btn club-action-btn--join" onClick={handleAddManager} disabled={managerLoading || !newManagerEmail.trim()}>
+                    <FaUserPlus size={12} /> {t('clubs.manage.addBtn')}
+                  </button>
+                </div>
+                {managerError && <p className="club-manage__error">{managerError}</p>}
+                {managerSuccess && <p className="club-manage__success-text">{managerSuccess}</p>}
+              </div>
+              <div className="club-manage__manager-list">
+                {managers.map((m, i) => (
+                  <div key={m.user_id || i} className="club-manage__manager-row">
+                    <div className="club-manage__manager-info">
+                      <div className="club-manage__manager-avatar">
+                        {m.role === 'owner' ? <FaCrown size={14} style={{ color: '#f59e0b' }} /> : <FaUserCheck size={14} />}
+                      </div>
+                      <div>
+                        <span className="club-manage__manager-name">{m.name || m.email || 'Unknown'}</span>
+                        <span className="club-manage__manager-role">{m.role === 'owner' ? t('clubs.manage.owner') : t('clubs.manage.manager')}</span>
+                      </div>
+                    </div>
+                    {m.role !== 'owner' && (
+                      <button className="club-manage__remove-btn" onClick={() => handleRemoveManager(m.user_id, m.name)} title={t('clubs.manage.removeManager')}>
+                        <FaUserTimes size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {managers.length === 0 && <p className="club-manage__empty">{t('clubs.manage.noManagers')}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* ── Announcements ── */}
+          {activeSection === 'announcements' && (
+            <div className="club-manage__announcements">
+              <form className="club-manage__ann-form" onSubmit={handleCreateAnnouncement}>
+                <div className="clubs-field">
+                  <label>{t('clubs.manage.annTitle')} *</label>
+                  <input value={annForm.title} onChange={e => setAnnForm(f => ({ ...f, title: e.target.value }))} placeholder={t('clubs.manage.annTitlePlaceholder')} />
+                </div>
+                <div className="clubs-field">
+                  <label>{t('clubs.manage.annBody')}</label>
+                  <textarea value={annForm.body} onChange={e => setAnnForm(f => ({ ...f, body: e.target.value }))} rows={3} placeholder={t('clubs.manage.annBodyPlaceholder')} />
+                </div>
+                <button type="submit" className="club-action-btn club-action-btn--join" disabled={annSubmitting || !annForm.title.trim()}>
+                  <FaBullhorn size={12} /> {annSubmitting ? t('clubs.saving') : t('clubs.manage.postAnnouncement')}
+                </button>
+              </form>
+              <div className="club-manage__ann-list">
+                {announcements.length === 0 && <p className="club-manage__empty">{t('clubs.manage.noAnnouncements')}</p>}
+                {announcements.map((a, i) => (
+                  <div key={a.id || i} className="club-manage__ann-item">
+                    <div className="club-manage__ann-item-header">
+                      <strong>{a.title}</strong>
+                      <button className="club-manage__remove-btn" onClick={() => handleDeleteAnnouncement(a.id)}><FaTrash size={11} /></button>
+                    </div>
+                    {a.body && <p>{a.body}</p>}
+                    {a.created_at && <span className="club-manage__ann-date">{new Date(a.created_at).toLocaleDateString()}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Events ── */}
+          {activeSection === 'events' && (
+            <div className="club-manage__events">
+              <form className="club-manage__event-form" onSubmit={handleCreateEvent}>
+                <div className="clubs-field-row">
+                  <div className="clubs-field" style={{ flex: 2 }}>
+                    <label>{t('clubs.manage.eventTitle')} *</label>
+                    <input value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} placeholder={t('clubs.manage.eventTitlePlaceholder')} />
+                  </div>
+                  <div className="clubs-field" style={{ flex: 1 }}>
+                    <label>{t('clubs.manage.eventDate')} *</label>
+                    <input type="datetime-local" value={eventForm.event_date} onChange={e => setEventForm(f => ({ ...f, event_date: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="clubs-field-row">
+                  <div className="clubs-field" style={{ flex: 2 }}>
+                    <label>{t('clubs.manage.eventDesc')}</label>
+                    <input value={eventForm.description} onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))} placeholder={t('clubs.manage.eventDescPlaceholder')} />
+                  </div>
+                  <div className="clubs-field" style={{ flex: 1 }}>
+                    <label>{t('clubs.fieldLocation')}</label>
+                    <input value={eventForm.location} onChange={e => setEventForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. SSMU 302" />
+                  </div>
+                </div>
+                <button type="submit" className="club-action-btn club-action-btn--join" disabled={eventSubmitting || !eventForm.title.trim() || !eventForm.event_date}>
+                  <FaCalendarAlt size={12} /> {eventSubmitting ? t('clubs.saving') : t('clubs.manage.createEvent')}
+                </button>
+              </form>
+              <div className="club-manage__event-list">
+                {events.length === 0 && <p className="club-manage__empty">{t('clubs.manage.noEvents')}</p>}
+                {events.map((ev, i) => (
+                  <div key={ev.id || i} className="club-manage__event-item">
+                    <div className="club-manage__event-item-header">
+                      <strong>{ev.title}</strong>
+                      <button className="club-manage__remove-btn" onClick={() => handleDeleteEvent(ev.id)}><FaTrash size={11} /></button>
+                    </div>
+                    <div className="club-manage__event-meta">
+                      {ev.event_date && <span><FaCalendarAlt size={10} /> {new Date(ev.event_date).toLocaleString()}</span>}
+                      {ev.location && <span>📍 {ev.location}</span>}
+                    </div>
+                    {ev.description && <p>{ev.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 function EditClubModal({ club, onClose, onSave, t }) {
   const [form, setForm] = useState({
@@ -799,7 +1220,7 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
   const [form, setForm] = useState({
     name: '', category: '', description: '', meeting_schedule: '',
     website_url: '', contact_email: '', location: '', is_private: false,
-    executive_emails: '',
+    executive_emails: '', join_instructions: '', application_url: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -845,6 +1266,14 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
           </div>
         ) : (
           <form className="clubs-modal__body" onSubmit={handleSubmit} noValidate>
+            <div className="clubs-mcgill-notice" style={{
+              background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px',
+              padding: '10px 14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px',
+              fontSize: '13px', color: '#92400e', lineHeight: '1.4',
+            }}>
+              <FaEnvelope size={14} style={{ flexShrink: 0 }} />
+              <span>{t('clubs.mcgillEmailRequired')}</span>
+            </div>
             <div className={`clubs-field ${errors.name ? 'error' : ''}`}>
               <label>{t('clubs.fieldName')} <span className="req">*</span></label>
               <input value={form.name} onChange={e => set('name')(e.target.value)} placeholder={t('clubs.fieldNamePlaceholder')} />
@@ -883,6 +1312,16 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
             <div className="clubs-field">
               <label>{t('clubs.fieldUrl')}</label>
               <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://..." />
+            </div>
+            <div className="clubs-field">
+              <label>{t('clubs.fieldApplicationUrl')}</label>
+              <input type="url" value={form.application_url} onChange={e => set('application_url')(e.target.value)} placeholder="https://..." />
+              <span className="clubs-field-hint">{t('clubs.fieldApplicationUrlHint')}</span>
+            </div>
+            <div className="clubs-field">
+              <label>{t('clubs.fieldJoinInstructions')}</label>
+              <textarea value={form.join_instructions} onChange={e => set('join_instructions')(e.target.value)} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
+              <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
             </div>
             <div className="clubs-field">
               <label>{t('clubs.fieldExecEmails')}</label>
@@ -952,10 +1391,12 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [openClub, setOpenClub] = useState(null)
   const [editingClub, setEditingClub] = useState(null)
+  const [managingClub, setManagingClub] = useState(null)
   const [managingRequestsClub, setManagingRequestsClub] = useState(null)
   const [joinToast, setJoinToast] = useState(null)
   const [joinRequestClub, setJoinRequestClub] = useState(null)
   const [pendingRequestClubIds, setPendingRequestClubIds] = useState(new Set())
+  const [subscribedIds, setSubscribedIds] = useState(new Set())
   const debounceRef = useRef(null)
   const isMounted = useRef(true)
 
@@ -963,6 +1404,14 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     isMounted.current = true
     return () => { isMounted.current = false }
   }, [])
+
+  // Fetch user subscriptions on mount
+  useEffect(() => {
+    if (!user?.id) return
+    clubsAPI.getUserSubscriptions(user.id).then(data => {
+      if (isMounted.current) setSubscribedIds(new Set(data.subscribed_club_ids || []))
+    }).catch(() => {})
+  }, [user?.id])
 
   const joinedIds    = useMemo(() => new Set(myClubs.map(m => m.club?.id ?? m.id)), [myClubs])
   const calSyncedIds = useMemo(() => new Set(myClubs.filter(m => m.calendar_synced).map(m => m.club?.id ?? m.id)), [myClubs])
@@ -1113,6 +1562,27 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     finally { setClubBusy(clubId, false) }
   }
 
+  const handleToggleSubscribe = async (clubId) => {
+    setClubBusy(clubId, true)
+    try {
+      const result = await clubsAPI.toggleSubscription(clubId)
+      if (isMounted.current) {
+        setSubscribedIds(prev => {
+          const next = new Set(prev)
+          if (result.is_subscribed) next.add(clubId)
+          else next.delete(clubId)
+          return next
+        })
+        const club = clubs.find(c => c.id === clubId) || openClub
+        setJoinToast(result.is_subscribed
+          ? t('clubs.subscribedToast').replace('{name}', club?.name || '')
+          : t('clubs.unsubscribedToast').replace('{name}', club?.name || ''))
+        setTimeout(() => { if (isMounted.current) setJoinToast(null) }, 3000)
+      }
+    } catch (e) { setError(e.message) }
+    finally { setClubBusy(clubId, false) }
+  }
+
   const handleToggleCalendar = async (clubId, synced) => {
     setClubBusy(clubId, true)
     try {
@@ -1136,6 +1606,8 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
   const handleSubmitClub = async (formData) => {
     await clubsAPI.submitClub({ ...formData, submitted_by: user?.id })
+    setJoinToast(t('clubs.clubSubmittedToast'))
+    setTimeout(() => { if (isMounted.current) setJoinToast(null) }, 4000)
   }
 
   const handleEditClub = async (clubId, formData) => {
@@ -1278,9 +1750,11 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     joined={joinedIds.has(club.id)}
                     calSynced={calSyncedIds.has(club.id)}
                     hasPendingRequest={pendingRequestClubIds.has(club.id)}
+                    isSubscribed={subscribedIds.has(club.id)}
                     onJoin={handleJoin}
                     onLeave={handleLeave}
                     onToggleCalendar={handleToggleCalendar}
+                    onToggleSubscribe={handleToggleSubscribe}
                     onOpen={setOpenClub}
                     onDelete={handleDeleteClub}
                     onEdit={setEditingClub}
@@ -1323,6 +1797,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                         key={club.id}
                         club={club}
                         onEdit={setEditingClub}
+                        onManage={setManagingClub}
                         onManageRequests={setManagingRequestsClub}
                         onOpen={setOpenClub}
                         pendingCount={pendingCounts[club.id] || 0}
@@ -1379,9 +1854,11 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
           joined={joinedIds.has(openClub.id)}
           calSynced={calSyncedIds.has(openClub.id)}
           hasPendingRequest={pendingRequestClubIds.has(openClub.id)}
+          isSubscribed={subscribedIds.has(openClub.id)}
           onJoin={handleJoin}
           onLeave={handleLeave}
           onToggleCalendar={handleToggleCalendar}
+          onToggleSubscribe={handleToggleSubscribe}
           onClose={() => setOpenClub(null)}
           clubLoading={clubLoading}
           t={t}
@@ -1404,6 +1881,16 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
           onClose={() => setManagingRequestsClub(null)}
           onAction={() => { fetchCreatedClubs(); fetchMyClubs() }}
           t={t}
+        />
+      )}
+
+      {managingClub && (
+        <ClubManageDashboard
+          club={managingClub}
+          onClose={() => setManagingClub(null)}
+          onSave={handleEditClub}
+          t={t}
+          isAdmin={isAdmin}
         />
       )}
     </div>

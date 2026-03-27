@@ -148,6 +148,23 @@
   color: var(--accent-primary, #ED1B2F);
 }
 
+.rsb-unpin-btn--has-pins {
+  color: var(--accent-primary, #ED1B2F);
+  position: relative;
+}
+
+.rsb-pin-count {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--accent-primary, #ED1B2F);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 4px;
+  min-width: 14px;
+  text-align: center;
+}
+
 .rsb-close-btn:hover {
   background: var(--bg-secondary, #f9fafb);
   color: var(--text-primary, #111827);
@@ -407,4 +424,165 @@
   border-color: #c0152a;
   color: white;
   box-shadow: -3px 0 16px rgba(237, 27, 47, 0.6);
+}
+
+/* ── Pin button on messages ── */
+.rsb-msg__bubble-wrap {
+  position: relative;
+  max-width: 84%;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.rsb-msg--user .rsb-msg__bubble-wrap {
+  align-items: flex-end;
+}
+
+.rsb-pin-btn {
+  position: absolute;
+  top: 2px;
+  right: -20px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #9ca3af);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rsb-msg--user .rsb-pin-btn {
+  right: auto;
+  left: -20px;
+}
+
+.rsb-msg:hover .rsb-pin-btn,
+.rsb-pin-btn--active {
+  opacity: 1;
+}
+
+.rsb-pin-btn--active {
+  color: var(--accent-primary, #ED1B2F);
+}
+
+.rsb-pin-btn:hover {
+  color: var(--accent-primary, #ED1B2F);
+  opacity: 1;
+}
+
+/* ── Pinned messages section ── */
+.rsb-pinned-section {
+  border-bottom: 1px solid var(--border-primary, #e5e7eb);
+  flex-shrink: 0;
+}
+
+.rsb-pinned-section__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #f9fafb);
+  border: none;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background 0.15s;
+}
+
+.rsb-pinned-section__toggle:hover {
+  background: var(--bg-tertiary, #f3f4f6);
+}
+
+.rsb-pinned-section__list {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.375rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.rsb-pinned-msg {
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent-primary, #ED1B2F);
+  background: rgba(237, 27, 47, 0.04);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.rsb-pinned-msg--user {
+  border-left-color: var(--accent-primary, #ED1B2F);
+}
+
+.rsb-pinned-msg--assistant {
+  border-left-color: #6b7280;
+}
+
+.rsb-pinned-msg__text {
+  margin: 0;
+  color: var(--text-primary, #111827);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.rsb-pinned-msg__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.rsb-pinned-msg__tab {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #9ca3af);
+  text-transform: capitalize;
+}
+
+/* ── Disclaimer & footer ── */
+.rsb-disclaimer {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #9ca3af);
+  text-align: center;
+  padding: 0 0.25rem;
+}
+
+.rsb-not-affiliated {
+  font-size: 0.6rem;
+  color: var(--text-secondary, #b0b0b0);
+  text-align: center;
+  margin-top: 0.25rem;
+  padding-bottom: 0.125rem;
+}
+
+/* ── Dark mode: pinned section ── */
+[data-theme="dark"] .rsb-pinned-section__toggle {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .rsb-pinned-msg {
+  background: rgba(255,255,255,0.04);
+}
+
+[data-theme="dark"] .rsb-pin-btn {
+  color: var(--text-secondary, #6b7280);
+}
+
+[data-theme="dark"] .rsb-pin-btn--active,
+[data-theme="dark"] .rsb-pin-btn:hover {
+  color: #f87171;
 }

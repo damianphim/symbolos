@@ -76,6 +76,10 @@ Extract student_info fields:
   - cum_gpa: the CUMULATIVE GPA on the final summary line labelled "CUM GPA"
   - advanced_standing: ALL courses listed under "Credits/Exemptions" or
     "Advanced Placement Exams" — these are AP/IB/transfer credits. Capture every one.
+    IMPORTANT: Read the credit value shown next to each individual course on the transcript.
+    If per-course credits are not individually listed but a section total is shown
+    (e.g. "Advanced Placement Exams - 20 credits" with 6 courses), divide the total
+    evenly (20/6 ≈ 3.33 per course) — do NOT default to 3 if the total doesn't match.
 == STEP 2: Completed courses ==
 Include ANY course row that has a final grade — including:
   - Standard letter grades: A, A-, B+, B, B-, C+, C, C-, D, F
@@ -261,7 +265,15 @@ async def parse_transcript(
     if is_dry_run:
         return {"parsed": extracted, "saved": False}
 
-    # ── Persist ───────────────────────────────────────────────────────────────
+    # Non-dry-run: persist the extracted data
+    results = _persist_transcript_data(user_id, extracted)
+    return {"results": results, "saved": True}
+
+
+# ── Persist helper (shared by parse and import endpoints) ────────────────────
+
+def _persist_transcript_data(user_id: str, extracted: dict) -> dict:
+    """Write parsed transcript data to the database. Returns a results summary."""
     supabase = get_supabase()
     results = {
         "completed_added": 0,
@@ -301,7 +313,7 @@ async def parse_transcript(
                 "term": term.capitalize(),
                 "year": course.get("year"),
                 "grade": grade or None,
-                "credits": course.get("credits", 3),
+                "credits": int(float(course.get("credits") or 3)),
             }
             supabase.table("completed_courses").insert(row).execute()
             results["completed_added"] += 1
@@ -327,7 +339,7 @@ async def parse_transcript(
                 "course_title": course.get("course_title"),
                 "subject": course.get("subject", course["course_code"].split()[0]),
                 "catalog": course.get("catalog", course["course_code"].split()[-1]),
-                "credits": course.get("credits", 3),
+                "credits": int(float(course.get("credits") or 3)),
             }
             supabase.table("current_courses").insert(row).execute()
             results["current_added"] += 1
@@ -337,8 +349,6 @@ async def parse_transcript(
 
     # 3. Update user profile from student_info
     # SEC-022: Validate and bound Claude-extracted values before writing to DB.
-    # This path bypasses the UserUpdate Pydantic model, so we must manually
-    # enforce the same constraints here.
     student_info = extracted.get("student_info") or {}
     profile_updates = {}
 
@@ -355,25 +365,24 @@ async def parse_transcript(
             if 0 <= year_val <= 10:
                 profile_updates["year"] = year_val
         except (ValueError, TypeError):
-            pass  # skip invalid year from Claude
+            pass
     if student_info.get("cum_gpa") is not None:
         try:
             gpa_val = float(student_info["cum_gpa"])
             if 0.0 <= gpa_val <= 4.0:
                 profile_updates["current_gpa"] = round(gpa_val, 2)
         except (ValueError, TypeError):
-            pass  # skip invalid GPA from Claude
+            pass
     if student_info.get("advanced_standing"):
-        # Validate each item has the expected shape and bounded values
         raw_standing = student_info["advanced_standing"]
         if isinstance(raw_standing, list):
             validated = []
-            for item in raw_standing[:50]:  # cap at 50 items
+            for item in raw_standing[:50]:
                 if isinstance(item, dict) and item.get("course_code"):
                     validated.append({
                         "course_code": str(item["course_code"]).strip()[:20],
                         "course_title": str(item.get("course_title", "")).strip()[:200],
-                        "credits": min(max(float(item.get("credits", 3)), 0), 20),
+                        "credits": min(max(float(item.get("credits") or 3), 0), 20),
                     })
             if validated:
                 profile_updates["advanced_standing"] = validated
@@ -391,4 +400,70 @@ async def parse_transcript(
         f"+{results['current_added']} current, "
         f"profile_updated={results['profile_updated']}"
     )
+    return results
+
+
+# ── Import endpoint (accepts pre-parsed JSON, no Claude call needed) ─────────
+
+from pydantic import BaseModel, Field
+from typing import List
+
+
+class _CourseItem(BaseModel):
+    course_code: str = Field(..., max_length=20)
+    course_title: str | None = Field(None, max_length=200)
+    subject: str | None = Field(None, max_length=10)
+    catalog: str | None = Field(None, max_length=10)
+    term: str | None = Field(None, max_length=10)
+    year: int | None = None
+    grade: str | None = Field(None, max_length=5)
+    credits: float | None = 3
+
+
+class _StudentInfo(BaseModel):
+    major: str | None = Field(None, max_length=100)
+    minor: str | None = Field(None, max_length=100)
+    faculty: str | None = Field(None, max_length=100)
+    year: int | None = None
+    cum_gpa: float | None = None
+    advanced_standing: list | None = None
+
+
+class ImportRequest(BaseModel):
+    """Pre-parsed transcript data sent from the frontend after preview."""
+    student_info: _StudentInfo | None = None
+    completed_courses: List[_CourseItem] | None = Field(None, max_length=200)
+    current_courses: List[_CourseItem] | None = Field(None, max_length=50)
+
+
+@router.post("/import/{user_id}")
+async def import_transcript(
+    user_id: str,
+    body: ImportRequest,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """
+    Import pre-parsed transcript data (from a previous dry_run parse).
+    This avoids a second Claude API call and prevents Vercel timeout issues.
+    """
+    require_self(current_user_id, user_id)
+
+    try:
+        get_user_by_id(user_id)
+    except UserNotFoundException:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Normalize course codes in the validated data
+    extracted = body.model_dump()
+    for course in extracted.get("completed_courses") or []:
+        if course.get("course_code"):
+            course["course_code"] = normalize_course_code(course["course_code"])
+    for course in extracted.get("current_courses") or []:
+        if course.get("course_code"):
+            course["course_code"] = normalize_course_code(course["course_code"])
+    for course in (extracted.get("student_info") or {}).get("advanced_standing") or []:
+        if isinstance(course, dict) and course.get("course_code"):
+            course["course_code"] = normalize_course_code(course["course_code"])
+
+    results = _persist_transcript_data(user_id, extracted)
     return {"results": results, "saved": True}

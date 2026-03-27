@@ -27,6 +27,8 @@ async function getAuthHeaders() {
 // Map profile major/minor names to program_keys
 function toProgramKey(name, type = 'major', faculty = '') {
   if (!name) return null
+  // Normalize: strip trailing degree designators like "(B.A.)", "(B.Sc.)", "(Honours)"
+  name = name.replace(/\s*\([^)]+\)\s*$/, '').trim() || name
   const fl = faculty.toLowerCase()
   const isSci = fl.includes('science') && !fl.includes('arts & science') && !fl.includes('arts and science')
   const isBasc = fl.includes('arts & science') || fl.includes('arts and science')
@@ -160,6 +162,7 @@ function toProgramKey(name, type = 'major', faculty = '') {
     'East Asian Studies': 'east_asian_studies',
     'Geography': 'geography',
     'Computer Science': 'computer_science_arts',
+    'Supplemental Computer Science': 'supplemental_computer_science',
     'German Studies': 'german_studies',
     'Hispanic Studies': 'hispanic_studies',
     'Italian Studies': 'italian_studies',
@@ -266,13 +269,14 @@ function CourseRow({ course, onClick, actions }) {
 
 
 // ── Electives Panel ────────────────────────────────────────────────────────────
-function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData, allProgramData }) {
+function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData, allProgramData, courseAllocations, assignCourse }) {
   const { t } = useLanguage()
   const [recs, setRecs]           = useState(null)
   const [recsLoading, setRecsLoading] = useState(false)
   const [recsError, setRecsError] = useState(null)
   const [showRecs, setShowRecs]   = useState(false)
   const hasLoaded                 = useRef(false)
+  const [assignedNote, setAssignedNote] = useState(null) // show warning when user assigns an elective
 
   // Build a set of ALL course codes that count toward ANY major or minor
   const requiredCodes = useMemo(() => {
@@ -284,6 +288,30 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     })
     return codes
   }, [allProgramData])
+
+  // Wildcard blocks: any PSYC 300+ etc. — user courses matching these aren't electives
+  const wildcardBlocks = useMemo(() => {
+    const blocks = []
+    allProgramData.forEach(prog => {
+      prog?.blocks?.forEach(b => {
+        if ((b.courses?.some(c => !c.catalog)) || b.min_level) {
+          blocks.push({
+            subjects: new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean)),
+            minLevel: b.min_level || 0,
+          })
+        }
+      })
+    })
+    return blocks
+  }, [allProgramData])
+
+  const handleAssign = (courseKey, programKey) => {
+    assignCourse(courseKey, programKey || null)
+    if (programKey) {
+      setAssignedNote(courseKey)
+      setTimeout(() => setAssignedNote(null), 4000)
+    }
+  }
 
   // Find courses the user has taken that don't go toward any major/minor
   const electiveCourses = useMemo(() => {
@@ -306,9 +334,20 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     return allTaken.filter(c => {
       if (!c.subject || !c.catalog) return false
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
-      return !requiredCodes.has(key)
+      if (requiredCodes.has(key)) return false
+      if (courseAllocations[key]) return false // manually assigned to a program
+      // Check wildcard blocks
+      for (const wb of wildcardBlocks) {
+        if (!wb.subjects.has(c.subject?.toUpperCase())) continue
+        if (wb.minLevel > 0) {
+          const lvl = parseInt(c.catalog)
+          if (isNaN(lvl) || lvl < wb.minLevel) continue
+        }
+        return false // matches a wildcard block → not an elective
+      }
+      return true
     })
-  }, [completedCourses, currentCourses, profile, requiredCodes])
+  }, [completedCourses, currentCourses, profile, requiredCodes, wildcardBlocks, courseAllocations])
 
   const _recsRateLimited = () => {
     if (authFlags?.is_admin) return false // admins unlimited
@@ -474,6 +513,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
                 )
               })}
             </div>
+            <p className="rsb-disclaimer">{t('rsb.disclaimer')}</p>
           </>
         )}
 
@@ -523,6 +563,23 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
                   </span>
                 </div>
                 <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
+                <div className="dp-elective-assign">
+                  <select
+                    className="dp-elective-assign-select"
+                    value={courseAllocations[`${c.subject} ${c.catalog}`.toUpperCase()] || ''}
+                    onChange={e => handleAssign(`${c.subject} ${c.catalog}`.toUpperCase(), e.target.value)}
+                  >
+                    <option value="">Count toward...</option>
+                    {allProgramData.map(prog => prog && (
+                      <option key={prog.program_key} value={prog.program_key}>
+                        {prog.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || prog.program_key}
+                      </option>
+                    ))}
+                  </select>
+                  {assignedNote === `${c.subject} ${c.catalog}`.toUpperCase() && (
+                    <p className="dp-elective-assign-note">⚠ Double-check with your academic advisor whether this course actually counts toward this program.</p>
+                  )}
+                </div>
                 {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
               </div>
             )
@@ -534,26 +591,56 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
 }
 
 // ── My Program Requirements card ──────────────────────────────────────────────
-function ProgramSection({ prog, completedCourses, currentCourses, advStanding, openBlocks, setOpenBlocks }) {
+function ProgramSection({ prog, completedCourses, currentCourses, advStanding, openBlocks, setOpenBlocks, courseAllocations = {}, assignCourse, overlapKeys = new Set(), allProgramData = [] }) {
   const { t } = useLanguage()
   if (!prog) return null
 
-  // Progress: count all matched non-transfer courses toward total_credits
+  const progKey = prog.program_key
+
+  // Progress: two-phase — exact listed courses then wildcard blocks (min_level / null catalog)
   const totalCredits = prog.total_credits || 36
   let earnedCredits = 0
-  const seenKeys = new Set()
+  const seenDbKeys   = new Set() // DB course keys already scanned
+  const seenUserKeys = new Set() // user course keys already counted (avoid double-count)
+
+  // Phase 1: exact course matches (transfer excluded from credit total)
   prog.blocks?.forEach(b => b.courses?.forEach(c => {
     if (!c.catalog) return
     const key = `${c.subject} ${c.catalog}`.toUpperCase()
-    if (seenKeys.has(key)) return
-    seenKeys.add(key)
-    const isTransfer = matchTransfer(c, advStanding)
-    if (!isTransfer) {
-      const inCompleted = completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-      const inCurrent   = currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-      if (inCompleted || inCurrent) earnedCredits += parseFloat(c.credits || 3)
+    if (seenDbKeys.has(key)) return
+    seenDbKeys.add(key)
+    if (matchTransfer(c, advStanding)) return
+    // If overlapping course allocated to a different program, skip it
+    if (overlapKeys.has(key) && courseAllocations[key] && courseAllocations[key] !== progKey) return
+    const inCompleted = completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
+    const inCurrent   = currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
+    if (inCompleted || inCurrent) {
+      // Use actual earned credits from user record (more accurate than seeded value)
+      const uc = [...completedCourses, ...currentCourses].find(u => `${u.subject} ${u.catalog}`.toUpperCase() === key)
+      earnedCredits += parseFloat(uc?.credits || c.credits || 3)
+      seenUserKeys.add(key)
     }
   }))
+
+  // Phase 2: wildcard blocks — blocks with min_level or null-catalog entries
+  // Count any matching user course not already counted above
+  prog.blocks?.forEach(b => {
+    const hasWildcard = (b.courses?.some(c => !c.catalog)) || b.min_level
+    if (!hasWildcard) return
+    const blockSubjects = new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
+    const minLevel = b.min_level || 0
+    for (const uc of [...completedCourses, ...currentCourses]) {
+      const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+      if (seenDbKeys.has(ucKey) || seenUserKeys.has(ucKey)) continue
+      if (!blockSubjects.has(uc.subject?.toUpperCase())) continue
+      if (minLevel > 0) { const lvl = parseInt(uc.catalog); if (isNaN(lvl) || lvl < minLevel) continue }
+      // If overlapping course allocated to a different program, skip it
+      if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
+      earnedCredits += parseFloat(uc.credits || 3)
+      seenUserKeys.add(ucKey)
+    }
+  })
+
   const pct = Math.min(100, Math.round((earnedCredits / totalCredits) * 100))
 
   return (
@@ -569,16 +656,34 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
       {/* Blocks */}
       {prog.blocks?.map(block => {
         const isOpen = openBlocks[block.id]
-        // For block progress: count matched courses (any, not just is_required)
+        // For block progress: count matched courses (any, not just is_required) + wildcard matches
         const blockCourses = block.courses?.filter(c => c.catalog) || []
-        const blockMatched = blockCourses.filter(c => {
+        const exactMatched = blockCourses.filter(c => {
           const key = `${c.subject} ${c.catalog}`.toUpperCase()
-          if (matchTransfer(c, advStanding)) return false
+          // Transfer credits count as "done" for block completion (course is met)
+          if (matchTransfer(c, advStanding)) return true
           return completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key) ||
                  currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
         })
+        const exactKeys = new Set(blockCourses.map(c => `${c.subject} ${c.catalog}`.toUpperCase()))
         const creditsNeeded = block.credits_needed || 0
-        const creditsEarned = blockMatched.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
+        let creditsEarned = exactMatched.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
+
+        // Wildcard: blocks with null-catalog entries or min_level count matching user courses
+        const hasWildcard = (block.courses?.some(c => !c.catalog)) || block.min_level
+        if (hasWildcard && creditsEarned < creditsNeeded) {
+          const blockSubjects = new Set(block.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
+          const minLevel = block.min_level || 0
+          for (const uc of [...completedCourses, ...currentCourses]) {
+            if (creditsEarned >= creditsNeeded) break
+            const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+            if (exactKeys.has(ucKey)) continue
+            if (!blockSubjects.has(uc.subject?.toUpperCase())) continue
+            if (minLevel > 0) { const lvl = parseInt(uc.catalog); if (isNaN(lvl) || lvl < minLevel) continue }
+            creditsEarned += parseFloat(uc.credits || 3)
+          }
+        }
+        const blockMatched = exactMatched
         const blockDone = creditsNeeded > 0 && creditsEarned >= creditsNeeded
 
         return (
@@ -594,7 +699,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
               </div>
               <div className="dp-req-block-right">
                 <span className={`dp-req-pill ${blockDone ? 'dp-req-pill--done' : ''}`}>
-                  {blockDone ? '✓' : `${creditsEarned}/${creditsNeeded}cr`}
+                  {blockDone ? '✓ Done' : `${creditsEarned}/${creditsNeeded}cr`}
                 </span>
               </div>
             </button>
@@ -607,19 +712,47 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                   const isTransfer = matchTransfer(c, advStanding)
                   const done = isTransfer || completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
                   const taking = !done && currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
+                  const isOverlap = c.catalog && overlapKeys.has(key) && (done || taking)
+                  const allocatedTo = isOverlap ? (courseAllocations[key] || null) : null
+                  const allocatedElsewhere = isOverlap && allocatedTo && allocatedTo !== progKey
+                  const otherProgName = allocatedElsewhere
+                    ? (allProgramData.find(p => p?.program_key === allocatedTo)?.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || allocatedTo)
+                    : null
                   return (
-                    <div key={c.id} className={`dp-req-course ${done ? 'dp-req-course--done' : ''} ${taking ? 'dp-req-course--taking' : ''}`}>
-                      {done
+                    <div key={c.id} className={`dp-req-course ${done && !allocatedElsewhere ? 'dp-req-course--done' : ''} ${taking && !allocatedElsewhere ? 'dp-req-course--taking' : ''} ${allocatedElsewhere ? 'dp-req-course--conflict' : ''}`}>
+                      {done && !allocatedElsewhere
                         ? <FaCheckCircle className="dp-req-course-icon dp-req-course-icon--done" />
-                        : taking
+                        : taking && !allocatedElsewhere
                           ? <FaCircle className="dp-req-course-icon dp-req-course-icon--taking" />
                           : <FaCircle className="dp-req-course-icon dp-req-course-icon--empty" />
                       }
-                      <span className="dp-req-course-code">{c.subject} {c.catalog || '•••'}</span>
-                      <span className="dp-req-course-title">{c.title}</span>
-                      {done && isTransfer  && <span className="dp-req-transfer-tag">{t('dp.statusTransfer')}</span>}
-                      {done && !isTransfer && <span className="dp-req-done-tag">{t('dp.statusDone')}</span>}
-                      {taking             && <span className="dp-req-taking-tag">{t('dp.statusTaking')}</span>}
+                      <div className="dp-req-course-main">
+                        <div className="dp-req-course-row">
+                          <span className="dp-req-course-code">{c.subject} {c.catalog || '•••'}</span>
+                          <span className="dp-req-course-title">{c.title}</span>
+                          {done && isTransfer  && <span className="dp-req-transfer-tag">{t('dp.statusTransfer')} · {t('dp.transferExempt')}</span>}
+                          {done && !isTransfer && !allocatedElsewhere && <span className="dp-req-done-tag">{t('dp.statusDone')}</span>}
+                          {taking && !allocatedElsewhere && <span className="dp-req-taking-tag">{t('dp.statusTaking')}</span>}
+                          {allocatedElsewhere && <span className="dp-req-conflict-tag">Counted toward {otherProgName}</span>}
+                        </div>
+                        {isOverlap && assignCourse && (
+                          <div className="dp-req-overlap-assign">
+                            <span className="dp-req-overlap-label">⚠ Overlaps with another program —</span>
+                            <select
+                              className="dp-req-overlap-select"
+                              value={allocatedTo || ''}
+                              onChange={e => assignCourse(key, e.target.value || null)}
+                            >
+                              <option value="">Count toward all (unassigned)</option>
+                              {allProgramData.filter(Boolean).map(p => (
+                                <option key={p.program_key} value={p.program_key}>
+                                  Count toward {p.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || p.program_key} only
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -648,6 +781,18 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const [activeTab, setActiveTab]             = useState('major')
   const [loadFailed, setLoadFailed]           = useState(false)
   const [unavailable, setUnavailable]         = useState({ major: false, minor: false, core: false, concentration: false })
+
+  // Course allocations — lifted from ElectivesPanel so ProgramSection can also use them
+  const [courseAllocations, setCourseAllocations] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('dp_course_allocations') || '{}') } catch { return {} }
+  })
+  const assignCourse = (courseKey, programKey) => {
+    const next = programKey ? { ...courseAllocations, [courseKey]: programKey } : (() => {
+      const c = { ...courseAllocations }; delete c[courseKey]; return c
+    })()
+    setCourseAllocations(next)
+    localStorage.setItem('dp_course_allocations', JSON.stringify(next))
+  }
 
   const advStanding = profile?.advanced_standing || []
 
@@ -865,21 +1010,67 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const currentTabData = currentTab?.data
   const currentTabUnavailable = currentTab?.unavailable
 
+  // All programs array and overlap detection
+  const allProgramDataArray = useMemo(() => [
+    programData, minorData, sciData, coreData, concentrationData,
+    ...Object.values(extraMajorsData), ...Object.values(extraMinorsData),
+  ].filter(Boolean), [programData, minorData, sciData, coreData, concentrationData, extraMajorsData, extraMinorsData])
+
+  // overlapKeys: course keys that appear in 2+ programs
+  const overlapKeys = useMemo(() => {
+    const counts = new Map()
+    allProgramDataArray.forEach(prog => {
+      prog.blocks?.forEach(b => b.courses?.forEach(c => {
+        if (!c.catalog) return
+        const key = `${c.subject} ${c.catalog}`.toUpperCase()
+        counts.set(key, (counts.get(key) || 0) + 1)
+      }))
+    })
+    return new Set([...counts.entries()].filter(([, n]) => n > 1).map(([k]) => k))
+  }, [allProgramDataArray])
+
   const calcRingProgress = (prog) => {
     if (!prog) return { pct: 0, earned: 0, total: prog?.total_credits || 36 }
+    const progKey = prog.program_key
     const total = prog.total_credits || 36
     let earned = 0
-    const seen = new Set()
+    const seenDb   = new Set()
+    const seenUser = new Set()
+
+    // Phase 1: exact matches (transfer excluded)
     prog.blocks?.forEach(b => b.courses?.forEach(c => {
       if (!c.catalog) return
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
-      if (seen.has(key)) return
-      seen.add(key)
+      if (seenDb.has(key)) return
+      seenDb.add(key)
       if (matchTransfer(c, advStanding)) return
+      if (overlapKeys.has(key) && courseAllocations[key] && courseAllocations[key] !== progKey) return
       const matched = completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key) ||
                       currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-      if (matched) earned += parseFloat(c.credits || 3)
+      if (matched) {
+        const uc = [...completedCourses, ...currentCourses].find(u => `${u.subject} ${u.catalog}`.toUpperCase() === key)
+        earned += parseFloat(uc?.credits || c.credits || 3)
+        seenUser.add(key)
+      }
     }))
+
+    // Phase 2: wildcard blocks
+    prog.blocks?.forEach(b => {
+      const hasWildcard = (b.courses?.some(c => !c.catalog)) || b.min_level
+      if (!hasWildcard) return
+      const blockSubjects = new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
+      const minLevel = b.min_level || 0
+      for (const uc of [...completedCourses, ...currentCourses]) {
+        const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+        if (seenDb.has(ucKey) || seenUser.has(ucKey)) continue
+        if (!blockSubjects.has(uc.subject?.toUpperCase())) continue
+        if (minLevel > 0) { const lvl = parseInt(uc.catalog); if (isNaN(lvl) || lvl < minLevel) continue }
+        if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
+        earned += parseFloat(uc.credits || 3)
+        seenUser.add(ucKey)
+      }
+    })
+
     return { pct: Math.min(100, Math.round((earned / total) * 100)), earned, total }
   }
 
@@ -1147,6 +1338,10 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
               advStanding={advStanding}
               openBlocks={openBlocks}
               setOpenBlocks={setOpenBlocks}
+              courseAllocations={courseAllocations}
+              assignCourse={assignCourse}
+              overlapKeys={overlapKeys}
+              allProgramData={allProgramDataArray}
             />
           )}
 
@@ -1154,7 +1349,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
           {activeTab !== 'electives' && !currentTabData && currentTabUnavailable && (
             <div className="dp-req-empty" style={{ padding: '1.5rem', textAlign: 'center' }}>
               <p style={{ color: 'var(--text-secondary, #6b7280)', fontSize: '0.9rem', margin: 0 }}>
-                {t('dp.notAvailableShort').replace('{program}', '')} <strong>{currentTab?.label}</strong>
+                {t('dp.notAvailableShort').replace('{program}', currentTab?.label ?? '')}
               </p>
               <p style={{ color: 'var(--text-tertiary, #9ca3af)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
                 {t('dp.checkDegreeReqs')}
@@ -1170,7 +1365,9 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
               currentCourses={currentCourses}
               programData={programData}
               minorData={minorData}
-              allProgramData={[programData, minorData, sciData, coreData, concentrationData, ...Object.values(extraMajorsData), ...Object.values(extraMinorsData)].filter(Boolean)}
+              allProgramData={allProgramDataArray}
+              courseAllocations={courseAllocations}
+              assignCourse={assignCourse}
             />
           </div>
         </div>

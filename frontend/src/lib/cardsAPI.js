@@ -80,6 +80,14 @@ const cardsAPI = {
     return data.response
   },
 
+  async deleteCard(userId, cardId) {
+    const response = await fetch(`${BASE_URL}/api/cards/${userId}/${cardId}`, {
+      method: 'DELETE',
+      headers: await authHeaders(),
+    })
+    if (!response.ok) throw new Error('Failed to delete card')
+  },
+
   async clearCards(userId) {
     const response = await fetch(`${BASE_URL}/api/cards/${userId}`, {
       method: 'DELETE',

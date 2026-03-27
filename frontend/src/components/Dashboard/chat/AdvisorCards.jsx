@@ -296,17 +296,20 @@ function AdvisorCard({
           {/* Follow-up question chips */}
           {chips.length > 0 && (
             <div className="advisor-card__chips">
-              {chips.map((chip, i) => (
-                <button
-                  key={i}
-                  className="advisor-card__chip"
-                  onClick={() => handleSend(chip)}
-                  disabled={isThinking}
-                >
-                  <FaBolt className="chip-icon" />
-                  {chip}
-                </button>
-              ))}
+              {chips.map((chip, i) => {
+                const chipLabel = typeof chip === 'string' ? chip : (chip?.label ?? '')
+                return (
+                  <button
+                    key={i}
+                    className="advisor-card__chip"
+                    onClick={() => handleSend(chipLabel)}
+                    disabled={isThinking}
+                  >
+                    <FaBolt className="chip-icon" />
+                    {chipLabel}
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -788,6 +791,8 @@ export default function AdvisorCards({
             : <FaArrowRight />}
         </button>
       </form>
+
+      <p className="rsb-disclaimer">{t('rsb.disclaimer')}</p>
 
     </div>
   )

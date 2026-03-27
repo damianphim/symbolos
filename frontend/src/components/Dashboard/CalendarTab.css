@@ -1273,12 +1273,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0.48rem 0.9rem;
+  padding: 7px 12px;
   border-radius: 8px;
   border: 1.5px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;

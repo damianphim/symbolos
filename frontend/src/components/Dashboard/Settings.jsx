@@ -16,7 +16,7 @@ import './Settings.css'
 
 export default function Settings({ user, profile, onUpdateSettings }) {
   const { language, setLanguage, t } = useLanguage()
-  const { deleteAccount, authFlags } = useAuth()
+  const { deleteAccount, authFlags, updatePassword } = useAuth()
   const { theme, setTheme } = useTheme()
   const { timezone, setTimezone } = useTimezone()
 
@@ -37,6 +37,28 @@ export default function Settings({ user, profile, onUpdateSettings }) {
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+
+  // ── Change password state ─────────────────────────────────────────
+  const [showPwModal, setShowPwModal] = useState(false)
+  const [pwNew, setPwNew] = useState('')
+  const [pwConfirm, setPwConfirm] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState(false)
+
+  const handleChangePassword = async () => {
+    setPwError('')
+    if (pwNew.length < 8) { setPwError('Password must be at least 8 characters.'); return }
+    if (pwNew !== pwConfirm) { setPwError('Passwords do not match.'); return }
+    setPwLoading(true)
+    try {
+      const { error } = await updatePassword(pwNew)
+      if (error) setPwError(error.message)
+      else { setPwSuccess(true); setTimeout(() => { setShowPwModal(false); setPwSuccess(false); setPwNew(''); setPwConfirm('') }, 2000) }
+    } finally {
+      setPwLoading(false)
+    }
+  }
 
   // ── Newsletter state ──────────────────────────────────────────────
   const [nlSources, setNlSources] = useState([])
@@ -476,6 +498,15 @@ export default function Settings({ user, profile, onUpdateSettings }) {
           <div className="section-content">
             <div className="setting-item">
               <div className="setting-info">
+                <label className="setting-label">Change Password</label>
+                <p className="setting-description">Update your account password. You'll need to confirm the new password.</p>
+              </div>
+              <button className="delete-account-btn settings-btn--primary" onClick={() => { setShowPwModal(true); setPwNew(''); setPwConfirm(''); setPwError(''); setPwSuccess(false) }}>
+                <FaLock size={12} /> Change Password
+              </button>
+            </div>
+            <div className="setting-item">
+              <div className="setting-info">
                 <label className="setting-label">{t('settings.deleteAccount')}</label>
                 <p className="setting-description">{t('settings.deleteAccountDesc')}</p>
               </div>
@@ -532,6 +563,51 @@ export default function Settings({ user, profile, onUpdateSettings }) {
                 {deleting ? t('settings.deleteDeleting') : t('settings.deleteConfirmBtn')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showPwModal && (
+        <div className="modal-overlay" onClick={() => !pwLoading && setShowPwModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Change Password</h3>
+            {pwSuccess ? (
+              <p className="modal-text" style={{ color: 'var(--success-primary)' }}>✓ Password updated successfully!</p>
+            ) : (
+              <>
+                <div className="modal-confirm-field">
+                  <label className="modal-confirm-label">New password</label>
+                  <input
+                    className="modal-confirm-input"
+                    type="password"
+                    placeholder="At least 8 characters"
+                    value={pwNew}
+                    onChange={e => setPwNew(e.target.value)}
+                    disabled={pwLoading}
+                    autoFocus
+                  />
+                </div>
+                <div className="modal-confirm-field" style={{ marginTop: 12 }}>
+                  <label className="modal-confirm-label">Confirm new password</label>
+                  <input
+                    className="modal-confirm-input"
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={pwConfirm}
+                    onChange={e => setPwConfirm(e.target.value)}
+                    disabled={pwLoading}
+                  />
+                </div>
+                {pwError && <p className="modal-error">{pwError}</p>}
+                <div className="modal-actions">
+                  <button className="modal-btn cancel-btn" onClick={() => setShowPwModal(false)} disabled={pwLoading}>Cancel</button>
+                  <button className="modal-btn confirm-btn" onClick={handleChangePassword} disabled={pwLoading || !pwNew || !pwConfirm}>
+                    {pwLoading ? 'Updating…' : 'Update Password'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

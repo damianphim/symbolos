@@ -184,8 +184,12 @@ export default function Dashboard() {
       const cards = data.cards || []
       setAdvisorCards(cards)
       setCardsGeneratedAt(data.generated_at || null)
-      _cacheCards(cards, data.generated_at, usedLang)
-      try { localStorage.setItem(`cards_language_${user.id}`, usedLang) } catch {}
+      // Only cache + mark language when backend confirms it (cards_language !== null)
+      const confirmedLang = data.cards_language
+      if (confirmedLang) {
+        _cacheCards(cards, data.generated_at, confirmedLang)
+        try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
+      }
     } catch (error) {
       console.error('Error generating advisor cards:', error)
     } finally {
@@ -211,23 +215,18 @@ export default function Dashboard() {
       // Always fetch from server to get latest
       const data = await cardsAPI.getCards(user.id)
       const cards = data.cards || []
-      // cards_language_ tracks what language the SERVER cards are in
-      const serverLang = (() => { try { return localStorage.getItem(`cards_language_${user.id}`) } catch { return null } })()
       const currentLang = languageRef.current
 
-      // Check if server cards match the current UI language.
-      // If serverLang is unknown (null), we can't trust the server cards'
-      // language — treat it as a mismatch and retranslate to be safe.
-      const aiCards = cards.filter(c => c.source === 'ai')
-      const langKnownAndMatches = serverLang === currentLang
-      const needsRetranslation = aiCards.length > 0 && !langKnownAndMatches
+      // serverLang comes directly from the backend (stored in Supabase user metadata).
+      // This is always accurate — no localStorage guessing needed.
+      const serverLang = data.cards_language ?? null
 
-      // DEBUG — remove after fixing
-      console.log('[CARDS DEBUG] serverLang:', serverLang, '| currentLang:', currentLang, '| aiCards:', aiCards.length, '| needsRetranslation:', needsRetranslation, '| first card title:', aiCards[0]?.title?.substring(0, 40))
+      const aiCards = cards.filter(c => c.source === 'ai')
+      // Retranslate if: we have AI cards AND (server lang unknown OR doesn't match UI lang)
+      const needsRetranslation = aiCards.length > 0 && serverLang !== currentLang
 
       if (needsRetranslation && !isGeneratingCardsRef.current) {
-        // Server cards are in a different language.
-        // Cache them under their reported language (if known) for cheap switching later.
+        // Cache server cards under their known language for cheap future switching
         if (serverLang) _cacheCards(cards, data.generated_at, serverLang)
 
         // Check if we have a cached translation for the current language
@@ -236,28 +235,22 @@ export default function Dashboard() {
           setAdvisorCards(cachedTranslation.cards)
           setCardsGeneratedAt(cachedTranslation.generatedAt || null)
         } else {
-          // No cache — clear wrong-language cards and regenerate in correct language
           setAdvisorCards([])
-          console.log('[CARDS DEBUG] Retranslating to', currentLang, '...')
           try {
             const retranslated = await cardsAPI.retranslateCards(user.id, currentLang)
-            console.log('[CARDS DEBUG] Retranslation result:', retranslated?.cards?.length, 'cards, first title:', retranslated?.cards?.[0]?.title?.substring(0, 40))
             if (retranslated?.cards?.length) {
               setAdvisorCards(retranslated.cards)
               _cacheCards(retranslated.cards, retranslated.generated_at, currentLang)
-              try { localStorage.setItem(`cards_language_${user.id}`, currentLang) } catch {}
+              // retranslated.cards_language is confirmed by backend
+              try { localStorage.setItem(`cards_language_${user.id}`, retranslated.cards_language || currentLang) } catch {}
             } else {
-              // Retranslation returned empty — try full regeneration (force=true to bypass "fresh" check)
-              console.warn('Retranslation returned empty, trying full regeneration')
               await refreshAdvisorCards(true, currentLang, true)
             }
           } catch (err) {
-            // Retranslation failed — try full regeneration as last resort
             console.error('Retranslation failed, trying full regeneration:', err)
             try {
               await refreshAdvisorCards(true, currentLang, true)
             } catch {
-              // Both failed — show server cards rather than nothing
               setAdvisorCards(cards)
             }
           }
@@ -266,8 +259,10 @@ export default function Dashboard() {
         // Server cards match current language — display and cache them
         setAdvisorCards(cards)
         setCardsGeneratedAt(data.generated_at || null)
-        _cacheCards(cards, data.generated_at, currentLang)
-        try { localStorage.setItem(`cards_language_${user.id}`, currentLang) } catch {}
+        if (serverLang) {
+          _cacheCards(cards, data.generated_at, serverLang)
+          try { localStorage.setItem(`cards_language_${user.id}`, serverLang) } catch {}
+        }
       } else if (!isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
       }
@@ -382,18 +377,23 @@ export default function Dashboard() {
 
     // No cache for this language — call API to retranslate (costs tokens once)
     // Only update cards_language AFTER successful retranslation
+    setCardsGenerating(true)
     cardsAPI.retranslateCards(user.id, language).then(data => {
       if (data?.cards?.length) {
         setAdvisorCards(data.cards)
-        _cacheCards(data.cards, data.generated_at, language)
-        try { localStorage.setItem(`cards_language_${user.id}`, language) } catch {}
+        setCardsGeneratedAt(data.generated_at || null)
+        const confirmedLang = data.cards_language || language
+        _cacheCards(data.cards, data.generated_at, confirmedLang)
+        try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
       } else {
         // Empty response — fall back to full regeneration (force=true to bypass "fresh" check)
-        refreshAdvisorCards(true, language, true)
+        return refreshAdvisorCards(true, language, true)
       }
     }).catch(() => {
       // Retranslation failed — fall back to full regeneration
-      refreshAdvisorCards(true, language, true).catch(() => {})
+      return refreshAdvisorCards(true, language, true).catch(() => {})
+    }).finally(() => {
+      setCardsGenerating(false)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language])

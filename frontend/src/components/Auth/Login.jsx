@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTheme } from '../../contexts/ThemeContext'
+import { supabase } from '../../lib/supabase'
 import {
   validateEmail,
   validatePassword,
@@ -9,25 +10,45 @@ import {
 } from '../../utils/validation'
 import './Auth.css'
 
-function Login() {
-  const [mode, setMode] = useState('login') // 'login' | 'signup' | 'forgot'
+function Login({ forceVerify = false, email: propEmail = '', userId: propUserId = '' }) {
+  // Restore verify screen if the component remounts mid-verification
+  const storedVerify = (() => { try { return JSON.parse(sessionStorage.getItem('symbolos_verify') || 'null') } catch { return null } })()
+
+  const [mode, setMode] = useState(forceVerify || storedVerify ? 'verify' : 'login') // 'login' | 'signup' | 'forgot' | 'reset' | 'verify'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [username, setUsername] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [animating, setAnimating] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState(propEmail || storedVerify?.email || '')
+  const [pendingUserId] = useState(propUserId || storedVerify?.userId || '')
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resendLoading, setResendLoading] = useState(false)
+  const pollRef = useRef(null)
 
-  const { signIn, signUp, error: authError, clearError } = useAuth()
+  const { signIn, signUp, needsPasswordReset, clearPasswordReset, resetPasswordForEmail, resendVerificationEmail, updatePassword, error: authError, clearError } = useAuth()
   const { t, language, setLanguage } = useLanguage()
   const { resolvedTheme, setTheme } = useTheme()
   const cycleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
 
-  const isLogin = mode === 'login'
+  const isLogin  = mode === 'login'
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
+  const isReset  = mode === 'reset'
+  const isVerify = mode === 'verify'
+
+  // Auto-switch to reset form when user clicks password-reset link in email
+  useEffect(() => {
+    if (needsPasswordReset) {
+      setMode('reset')
+      clearPasswordReset()
+    }
+  }, [needsPasswordReset, clearPasswordReset])
 
   useEffect(() => {
     clearError()
@@ -35,8 +56,35 @@ function Login() {
     setMessage('')
   }, [mode, clearError])
 
+  // Poll for verification completion when on verify screen
+  // (handles the case where the user opens the email link in a new tab)
+  useEffect(() => {
+    if (mode !== 'verify') {
+      if (pollRef.current) clearInterval(pollRef.current)
+      return
+    }
+    pollRef.current = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.email_confirmed_at) {
+        clearInterval(pollRef.current)
+        sessionStorage.removeItem('symbolos_verify')
+        // Trigger a full session refresh so onAuthStateChange fires
+        await supabase.auth.refreshSession()
+      }
+    }, 3000)
+    return () => clearInterval(pollRef.current)
+  }, [mode])
+
+  // Resend cooldown countdown
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
+
   const switchMode = (newMode) => {
     if (newMode === mode) return
+    if (newMode !== 'verify') sessionStorage.removeItem('symbolos_verify')
     setAnimating(true)
     setTimeout(() => {
       setMode(newMode)
@@ -46,15 +94,21 @@ function Login() {
 
   const validateForm = () => {
     const newErrors = {}
-    const emailError = validateEmail(email)
-    if (emailError) newErrors.email = emailError
-    if (!isForgot) {
+    if (!isReset) {
+      const emailError = validateEmail(email)
+      if (emailError) newErrors.email = emailError
+    }
+    if (!isForgot && !isReset && !isVerify) {
       const passwordError = validatePassword(password, isSignup)
       if (passwordError) newErrors.password = passwordError
     }
     if (isSignup) {
       const usernameError = validateUsername(username)
       if (usernameError) newErrors.username = usernameError
+    }
+    if (isReset) {
+      const passwordError = validatePassword(newPassword, true)
+      if (passwordError) newErrors.newPassword = passwordError
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -68,16 +122,33 @@ function Login() {
     setLoading(true)
     try {
       if (isForgot) {
-        setMessage(t('auth.resetSent'))
+        const { error } = await resetPasswordForEmail(email)
+        if (error) setErrors({ form: error.message })
+        else setMessage(t('auth.resetSent'))
+        return
+      }
+      if (isReset) {
+        const { error } = await updatePassword(newPassword)
+        if (error) setErrors({ form: error.message })
+        else {
+          setMessage(t('auth.passwordUpdated'))
+          setTimeout(() => switchMode('login'), 2000)
+        }
         return
       }
       if (isLogin) {
         const { error } = await signIn(email, password)
         if (error) setErrors({ form: error.message })
       } else {
-        const { error } = await signUp(email, password, username.trim())
+        const { data, error, needsEmailVerification } = await signUp(email, password, username.trim())
         if (error) setErrors({ form: error.message })
-        else setMessage(t('auth.accountCreated'))
+        else if (needsEmailVerification) {
+          const uid = data?.user?.id || ''
+          setPendingEmail(email)
+          setResendCooldown(60)
+          sessionStorage.setItem('symbolos_verify', JSON.stringify({ email, userId: uid }))
+          switchMode('verify')
+        }
       }
     } catch (err) {
       setErrors({ form: err.message || t('auth.genericError') })
@@ -100,8 +171,8 @@ function Login() {
     return { level: score, label: t('auth.strengthStrong'), color: 'var(--success-hover)' }
   }
 
-  const strength = isSignup ? passwordStrength(password) : null
-  const formError = errors.form || authError?.message
+  const strength   = isSignup ? passwordStrength(password) : isReset ? passwordStrength(newPassword) : null
+  const formError  = errors.form || authError?.message
 
   return (
     <div className="auth-page">
@@ -141,9 +212,7 @@ function Login() {
             <h1 className="auth-branding-headline">
               {t('auth.brandHeadline')}
             </h1>
-            <p className="auth-branding-sub">
-              {t('auth.brandSub')}
-            </p>
+            <p className="auth-branding-disclaimer">Not affiliated with McGill University</p>
           </div>
 
           <ul className="auth-feature-list">
@@ -166,7 +235,40 @@ function Login() {
       <main className="auth-form-panel">
         <div className={`auth-card ${animating ? 'auth-card--out' : 'auth-card--in'}`}>
 
-          {!isForgot && (
+          {/* Email verification screen */}
+          {isVerify && (
+            <div className="auth-verify-screen">
+              <div className="auth-verify-icon">✉</div>
+              <h2 className="auth-card-title">Verify your email to continue</h2>
+              <p className="auth-card-subtitle">
+                We sent a verification link to <strong>{pendingEmail}</strong>.<br />
+                Click the link in that email to activate your account.
+              </p>
+              <p className="auth-verify-hint">This page will continue automatically once you verify.</p>
+              <button
+                className="btn btn-primary btn-full"
+                style={{ marginTop: '20px' }}
+                disabled={resendCooldown > 0 || resendLoading}
+                onClick={async () => {
+                  setResendLoading(true)
+                  const { error } = await resendVerificationEmail(pendingEmail)
+                  setResendLoading(false)
+                  if (error) setErrors({ form: error.message })
+                  else { setMessage('Verification email resent!'); setResendCooldown(60) }
+                }}
+              >
+                {resendLoading ? 'Sending…' : resendCooldown > 0 ? `Resend email (${resendCooldown}s)` : 'Resend verification email'}
+              </button>
+              {message && <p className="auth-verify-success">{message}</p>}
+              {errors.form && <p className="auth-error-msg" style={{ marginTop: '8px' }}>{errors.form}</p>}
+              <button className="auth-back-btn" style={{ marginTop: '16px' }} onClick={() => switchMode('login')}>
+                Back to sign in
+              </button>
+            </div>
+          )}
+
+          {/* Tabs — only for login/signup */}
+          {!isForgot && !isReset && !isVerify && (
             <div className="auth-tabs" role="tablist">
               <button
                 role="tab"
@@ -190,163 +292,223 @@ function Login() {
             </div>
           )}
 
-          <div className="auth-card-header">
-            <h2 className="auth-card-title">
-              {isForgot ? t('auth.titleForgot') : isLogin ? t('auth.titleLogin') : t('auth.titleSignup')}
-            </h2>
-            <p className="auth-card-subtitle">
-              {isForgot ? t('auth.subForgot') : isLogin ? t('auth.subLogin') : t('auth.subSignup')}
-            </p>
-          </div>
-
-          {formError && (
-            <div className="auth-alert auth-alert--error" role="alert">
-              <span className="auth-alert-icon">!</span>
-              <span>{formError}</span>
-            </div>
-          )}
-
-          {message && (
-            <div className="auth-alert auth-alert--success" role="alert">
-              <span className="auth-alert-icon">✓</span>
-              <span>{message}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="auth-form" noValidate>
-
-            {isSignup && (
-              <div className="auth-field">
-                <label className="auth-label" htmlFor="username">{t('auth.labelUsername')}</label>
-                <input
-                  id="username"
-                  type="text"
-                  className={`auth-input ${errors.username ? 'auth-input--error' : ''}`}
-                  placeholder="e.g. john_doe"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  disabled={loading}
-                />
-                {errors.username && <p className="auth-error-msg">{errors.username}</p>}
+          {!isVerify && (
+            <>
+              <div className="auth-card-header">
+                <h2 className="auth-card-title">
+                  {isForgot ? t('auth.titleForgot') : isReset ? t('auth.titleReset') : isLogin ? t('auth.titleLogin') : t('auth.titleSignup')}
+                </h2>
+                <p className="auth-card-subtitle">
+                  {isForgot ? t('auth.subForgot') : isReset ? t('auth.subReset') : isLogin ? t('auth.subLogin') : t('auth.subSignup')}
+                </p>
               </div>
-            )}
 
-            <div className="auth-field">
-              <label className="auth-label" htmlFor="email">{t('auth.labelEmail')}</label>
-              <input
-                id="email"
-                type="email"
-                className={`auth-input ${errors.email ? 'auth-input--error' : ''}`}
-                placeholder="you@mail.mcgill.ca"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                disabled={loading}
-              />
-              {errors.email && <p className="auth-error-msg">{errors.email}</p>}
-            </div>
+              {formError && (
+                <div className="auth-alert auth-alert--error" role="alert">
+                  <span className="auth-alert-icon">!</span>
+                  <span>{formError}</span>
+                </div>
+              )}
 
-            {!isForgot && (
-              <div className="auth-field">
-                <div className="auth-label-row">
-                  <label className="auth-label" htmlFor="password">{t('auth.labelPassword')}</label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      className="auth-forgot-btn"
-                      onClick={() => switchMode('forgot')}
+              {message && (
+                <div className="auth-alert auth-alert--success" role="alert">
+                  <span className="auth-alert-icon">✓</span>
+                  <span>{message}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="auth-form" noValidate>
+
+                {isSignup && (
+                  <div className="auth-field">
+                    <label className="auth-label" htmlFor="username">{t('auth.labelUsername')}</label>
+                    <input
+                      id="username"
+                      type="text"
+                      className={`auth-input ${errors.username ? 'auth-input--error' : ''}`}
+                      placeholder="e.g. john_doe"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="username"
                       disabled={loading}
-                    >
-                      {t('auth.forgotLink')}
-                    </button>
-                  )}
-                </div>
-                <div className="auth-input-wrap">
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    className={`auth-input auth-input--has-icon ${errors.password ? 'auth-input--error' : ''}`}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete={isLogin ? 'current-password' : 'new-password'}
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    className="auth-pw-toggle"
-                    onClick={() => setShowPassword(v => !v)}
-                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    )}
-                  </button>
-                </div>
-                {errors.password && <p className="auth-error-msg">{errors.password}</p>}
-                {isSignup && !errors.password && (
-                  <p className="auth-hint">{t('auth.passwordHint')}</p>
-                )}
-
-                {isSignup && password && (
-                  <div className="auth-strength">
-                    <div className="auth-strength-bar">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className="auth-strength-seg"
-                          style={{ background: i <= strength.level ? strength.color : 'var(--border-primary)' }}
-                        />
-                      ))}
-                    </div>
-                    <span className="auth-strength-label" style={{ color: strength.color }}>
-                      {strength.label}
-                    </span>
+                    />
+                    {errors.username && <p className="auth-error-msg">{errors.username}</p>}
                   </div>
                 )}
-              </div>
-            )}
 
-            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              {loading ? (
-                <span className="btn-loading">
-                  <span className="spinner" />
-                  {isForgot ? t('auth.loadingForgot') : isLogin ? t('auth.loadingLogin') : t('auth.loadingSignup')}
-                </span>
-              ) : (
-                isForgot ? t('auth.btnForgot') : isLogin ? t('auth.btnLogin') : t('auth.btnSignup')
-              )}
-            </button>
-          </form>
+                {!isReset && (
+                  <div className="auth-field">
+                    <label className="auth-label" htmlFor="email">{t('auth.labelEmail')}</label>
+                    <input
+                      id="email"
+                      type="email"
+                      className={`auth-input ${errors.email ? 'auth-input--error' : ''}`}
+                      placeholder="you@mail.mcgill.ca"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      disabled={loading}
+                    />
+                    {errors.email && <p className="auth-error-msg">{errors.email}</p>}
+                  </div>
+                )}
 
-          <div className="auth-footer">
-            {isForgot ? (
-              <button className="auth-back-btn" onClick={() => switchMode('login')}>
-                {t('auth.backToLogin')}
-              </button>
-            ) : (
-              <p className="auth-toggle">
-                {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
-                {' '}
-                <button
-                  type="button"
-                  className="auth-toggle-btn"
-                  onClick={() => switchMode(isLogin ? 'signup' : 'login')}
-                  disabled={loading}
-                >
-                  {isLogin ? t('auth.signUpLink') : t('auth.signInLink')}
+                {!isForgot && !isReset && (
+                  <div className="auth-field">
+                    <div className="auth-label-row">
+                      <label className="auth-label" htmlFor="password">{t('auth.labelPassword')}</label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          className="auth-forgot-btn"
+                          onClick={() => switchMode('forgot')}
+                          disabled={loading}
+                        >
+                          {t('auth.forgotLink')}
+                        </button>
+                      )}
+                    </div>
+                    <div className="auth-input-wrap">
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        className={`auth-input auth-input--has-icon ${errors.password ? 'auth-input--error' : ''}`}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete={isLogin ? 'current-password' : 'new-password'}
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        className="auth-pw-toggle"
+                        onClick={() => setShowPassword(v => !v)}
+                        aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && <p className="auth-error-msg">{errors.password}</p>}
+                    {isSignup && !errors.password && (
+                      <p className="auth-hint">{t('auth.passwordHint')}</p>
+                    )}
+
+                    {isSignup && password && (
+                      <div className="auth-strength">
+                        <div className="auth-strength-bar">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="auth-strength-seg"
+                              style={{ background: i <= strength.level ? strength.color : 'var(--border-primary)' }}
+                            />
+                          ))}
+                        </div>
+                        <span className="auth-strength-label" style={{ color: strength.color }}>
+                          {strength.label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* New password field for reset mode */}
+                {isReset && (
+                  <div className="auth-field">
+                    <label className="auth-label" htmlFor="new-password">{t('auth.labelNewPassword')}</label>
+                    <div className="auth-input-wrap">
+                      <input
+                        id="new-password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        className={`auth-input auth-input--has-icon ${errors.newPassword ? 'auth-input--error' : ''}`}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        autoComplete="new-password"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        className="auth-pw-toggle"
+                        onClick={() => setShowNewPassword(v => !v)}
+                        aria-label={showNewPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                        tabIndex={-1}
+                      >
+                        {showNewPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {errors.newPassword && <p className="auth-error-msg">{errors.newPassword}</p>}
+                    {!errors.newPassword && <p className="auth-hint">{t('auth.passwordHint')}</p>}
+                    {newPassword && (
+                      <div className="auth-strength">
+                        <div className="auth-strength-bar">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="auth-strength-seg"
+                              style={{ background: i <= strength.level ? strength.color : 'var(--border-primary)' }}
+                            />
+                          ))}
+                        </div>
+                        <span className="auth-strength-label" style={{ color: strength.color }}>
+                          {strength.label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                  {loading ? (
+                    <span className="btn-loading">
+                      <span className="spinner" />
+                      {isForgot ? t('auth.loadingForgot') : isReset ? t('auth.loadingReset') : isLogin ? t('auth.loadingLogin') : t('auth.loadingSignup')}
+                    </span>
+                  ) : (
+                    isForgot ? t('auth.btnForgot') : isReset ? t('auth.btnReset') : isLogin ? t('auth.btnLogin') : t('auth.btnSignup')
+                  )}
                 </button>
-              </p>
-            )}
-          </div>
+              </form>
+
+              <div className="auth-footer">
+                {isForgot || isReset ? (
+                  <button className="auth-back-btn" onClick={() => switchMode('login')}>
+                    {t('auth.backToLogin')}
+                  </button>
+                ) : (
+                  <p className="auth-toggle">
+                    {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
+                    {' '}
+                    <button
+                      type="button"
+                      className="auth-toggle-btn"
+                      onClick={() => switchMode(isLogin ? 'signup' : 'login')}
+                      disabled={loading}
+                    >
+                      {isLogin ? t('auth.signUpLink') : t('auth.signInLink')}
+                    </button>
+                  </p>
+                )}
+              </div>
+            </>
+          )}
 
         </div>
       </main>

@@ -19,8 +19,9 @@ export const AuthProvider = ({ children }) => {
   // True only for brand-new signups — keeps App.jsx on ProfileSetup
   // even though a minimal profile already exists in the DB.
   // Cleared by completeOnboarding() when the user finishes or skips.
-  const [needsOnboarding, setNeedsOnboarding] = useState(false)
-  const [authFlags, setAuthFlags]             = useState({ is_admin: false, is_mcgill_email: false })
+  const [needsOnboarding, setNeedsOnboarding]       = useState(false)
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
+  const [authFlags, setAuthFlags]                   = useState({ is_admin: false, is_mcgill_email: false })
 
   const mountedRef         = useRef(true)
   const loadingProfile     = useRef(false)
@@ -113,7 +114,21 @@ export const AuthProvider = ({ children }) => {
       async (event, session) => {
         if (!mountedRef.current) return
 
+        // Don't update user state during the brief sign-in that happens
+        // inside signUp() before we call signOut() to enforce email verification.
+        if (justSignedUp.current) return
+
         setUser(session?.user ?? null)
+
+        if (event === 'PASSWORD_RECOVERY') {
+          // User clicked a password-reset link — signal the UI to show the reset form
+          if (session?.access_token) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+          }
+          // Store recovery flag so Login.jsx can switch to 'reset' mode
+          if (mountedRef.current) setNeedsPasswordReset(true)
+          return
+        }
 
         if (event === 'SIGNED_IN' && session?.user) {
           // Pre-seed the token immediately on sign-in
@@ -128,6 +143,15 @@ export const AuthProvider = ({ children }) => {
             justUpdatedProfile.current = false
             return
           }
+
+          // If this is the first login after email verification, restore onboarding.
+          // The flag was stored in signUp() and survives the redirect from the email link.
+          const pendingId = localStorage.getItem('symbolos_pending_onboarding')
+          if (pendingId && pendingId === session.user.id) {
+            localStorage.removeItem('symbolos_pending_onboarding')
+            if (mountedRef.current) setNeedsOnboarding(true)
+          }
+
           // Non-blocking — fire in background so login feels instant
           loadProfile(session.user.id)
         }
@@ -159,11 +183,17 @@ export const AuthProvider = ({ children }) => {
       // synchronously inside signUp, before it returns.
       justSignedUp.current = true
 
-      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+      const redirectTo = `${window.location.origin}/`
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectTo },
+      })
       if (signUpError) throw signUpError
       if (!data.user) throw new Error('Signup failed: no user returned')
       if (data.user.identities && data.user.identities.length === 0) throw new Error('EMAIL_ALREADY_EXISTS')
 
+      // Create the profile row (email_verified defaults to false in the DB)
       try {
         await usersAPI.createUser({ id: data.user.id, email, username: username?.trim() || null })
       } catch (profileError) {
@@ -171,22 +201,58 @@ export const AuthProvider = ({ children }) => {
         const code   = profileError.response?.data?.code
         if (status !== 409 && code !== 'user_already_exists') {
           console.error('Profile creation error:', profileError)
-          // Don't throw — user auth succeeded, ProfileSetup will retry via updateUser
         }
       }
 
-      if (mountedRef.current) {
-        setUser(data.user)
-        loadedForUserId.current = data.user.id
-        justSignedUp.current = false
-        setNeedsOnboarding(true)
+      // Send verification email via Resend (bypasses Supabase rate limits)
+      try {
+        await authAPI.sendVerification(data.user.id, email)
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError)
+        // Non-fatal — user can resend from the verify screen
       }
 
-      return { data, error: null }
+      justSignedUp.current = false
+
+      return { data, error: null, needsEmailVerification: true }
     } catch (err) {
       justSignedUp.current = false
       setError({ type: 'SIGNUP_FAILED', message: friendlyAuthError(err) })
       return { data: null, error: { message: friendlyAuthError(err) } }
+    }
+  }
+
+  // ── resendVerificationEmail ───────────────────────────────────────────────
+  const resendVerificationEmail = async (email) => {
+    try {
+      if (!user?.id) throw new Error('No user session')
+      await authAPI.sendVerification(user.id, email)
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err?.response?.data?.detail || err.message || 'Failed to send email' } }
+    }
+  }
+
+  // ── resetPasswordForEmail ─────────────────────────────────────────────────
+  const resetPasswordForEmail = async (email) => {
+    try {
+      const redirectTo = `${window.location.origin}/`
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      if (error) throw error
+      return { error: null }
+    } catch (err) {
+      return { error: { message: friendlyAuthError(err) } }
+    }
+  }
+
+  // ── updatePassword ────────────────────────────────────────────────────────
+  const updatePassword = async (newPassword) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      return { error: null }
+    } catch (err) {
+      return { error: { message: friendlyAuthError(err) } }
     }
   }
 
@@ -283,7 +349,9 @@ export const AuthProvider = ({ children }) => {
     await loadProfile(user.id)
   }, [user?.id, loadProfile])
 
-  const value = { user, profile, loading, error, needsOnboarding, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError }
+  const clearPasswordReset = useCallback(() => setNeedsPasswordReset(false), [])
+
+  const value = { user, profile, loading, error, needsOnboarding, needsPasswordReset, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError, clearPasswordReset, resetPasswordForEmail, resendVerificationEmail, updatePassword }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

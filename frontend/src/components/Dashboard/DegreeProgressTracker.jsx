@@ -63,7 +63,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
           </div>
         </div>
         <div className="progress-labels">
-          <span className="progress-label">{stats.totalEarnedCredits} {t('degree.creditsEarned')}</span>
+          <span className="progress-label">{Math.round(stats.totalEarnedCredits)} {t('degree.creditsEarned')}</span>
           <span className="progress-label">{stats.totalRequired} {t('degree.creditsRequired')}</span>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
             <div className="credit-details">
               <div className="credit-label">{t('degree.advancedStanding')}</div>
               <div className="credit-value">
-                {stats.advancedStandingCredits} {t('courses.credits').toLowerCase()}
+                {Math.round(stats.advancedStandingCredits)} {t('courses.credits').toLowerCase()}
 
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
           <div className="credit-icon"><FaCheck /></div>
           <div className="credit-details">
             <div className="credit-label">{t('degree.totalEarned')}</div>
-            <div className="credit-value">{stats.totalEarnedCredits} {t('courses.credits').toLowerCase()}</div>
+            <div className="credit-value">{Math.round(stats.totalEarnedCredits)} {t('courses.credits').toLowerCase()}</div>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
           <div className="credit-icon"><FaBullseye /></div>
           <div className="credit-details">
             <div className="credit-label">{t('degree.remaining')}</div>
-            <div className="credit-value">{stats.remainingCredits} {t('courses.credits').toLowerCase()}</div>
+            <div className="credit-value">{Math.round(stats.remainingCredits)} {t('courses.credits').toLowerCase()}</div>
           </div>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
       {stats.advancedStandingCredits > 0 && (
         <div className="info-note">
           <span className="info-icon"><FaLightbulb /></span>
-          <span>{t('degree.creditsHeadStart').replace('{count}', stats.advancedStandingCredits)}</span>
+          <span>{t('degree.creditsHeadStart').replace('{count}', Math.round(stats.advancedStandingCredits))}</span>
         </div>
       )}
     </div>

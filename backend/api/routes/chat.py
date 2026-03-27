@@ -151,28 +151,121 @@ Navigation tips:
 - Sort by Rating to find the highest-rated professors
 """,
         "calendar": """
-The student is currently on the **Calendar tab** — they can view McGill academic dates, final exam schedules, and personal events.
+The student is currently on the **Calendar tab** — they can view their class schedule, assignment deadlines, exam dates. Events come from imported syllabi. They can add custom events.
 Navigation tips:
 - Click any day to see events or add a new one
-- Upload a syllabus to auto-populate lecture times and deadlines
 - Toggle filter chips to show/hide event types
 - Switch to Announcements view for upcoming events with countdowns
+- Syllabus upload is on the **Degree Planning tab**, not here
 """,
-        "degree": """
-The student is currently on the **Degree Planning tab** — they can track progress toward their degree requirements.
+        "favorites": """
+The student is currently on the **Degree Planning tab** — they can track progress toward their degree, upload transcripts and syllabi, explore study abroad options, view advising resources, and get AI elective recommendations.
 Navigation tips:
-- Expand any requirement block to see which courses count
-- Green = completed, blue = in-progress, grey = not yet taken
-- Degree progress percentage updates automatically as courses are marked complete
+- **Degree Progress Tracker** — shows credits completed vs required for their major. Green = completed, blue = in-progress, grey = not yet taken.
+- **Transcript Upload** — upload unofficial McGill transcript PDF to auto-import courses, grades, GPA
+- **Syllabus Upload** — upload course syllabi PDFs to extract deadlines and add them to the calendar
+- **Study Abroad** — information about exchange programs with destinations, deadlines, and credit transfer info
+- **Advising Resources** — 25+ curated McGill advising links across 8 categories (Academic Advising, Prerequisites, International Students, Registration, Financial Aid, Graduation, Student Services, Important Dates)
+- **Elective Recommendations** — AI-powered course suggestions based on the student's interests, completed courses, and degree requirements
 """,
         "profile": """
-The student is currently on the **Profile tab** — they can manage their academic profile, upload transcripts, and configure settings.
+The student is currently on the **Settings/Profile tab** — they can manage their academic profile and configure settings.
 Navigation tips:
-- Upload unofficial transcript to auto-import completed courses
+- Update faculty, major, minor, concentration, and honours status
 - Add advanced standing (AP/IB/transfer) in the Advanced Standing section
 - Set interests to get better AI recommendations
+- Change theme (light/dark/auto), language (EN/FR/中文)
+- NOTE: Transcript and syllabus upload are on the **Degree Planning tab**, not here
+""",
+        "clubs": """
+The student is currently on the **Clubs tab** — they can browse McGill student clubs, subscribe to club events/news, and submit new clubs.
+Navigation tips:
+- Browse clubs by category or search by name
+- Click a club card to see details, events, and social media links
+- Use "Subscribe" to get updates from a club in your calendar
+- Submit a new club using the "Submit Club" button (requires McGill email)
+- Club submissions are reviewed by admins before appearing publicly
+""",
+        "forum": """
+The student is currently on the **Forum tab** — they can participate in academic discussions with other McGill students.
+Navigation tips:
+- Browse discussion threads by category or search
+- Start a new discussion thread
+- Reply to existing threads
+- Upvote helpful responses
+""",
+        "chat": """
+The student is currently on the **Academic Brief tab** — this is the main dashboard showing AI-generated advisor cards with personalized insights.
+Navigation tips:
+- Cards are auto-generated based on the student's profile, courses, deadlines, and GPA
+- Cards can be filtered by category: Deadlines, Degree, Courses, Grades, Planning, Opportunities
+- Click the expand arrow on any card to see the full advice
+- Use the action buttons on cards to get more details or take action
+- Pin a card to open a focused chat thread about it in the right sidebar
+- Bookmark cards to save them
+- Drag cards to reorder them
+- Use the refresh button to regenerate cards (limited to 2x per week for non-admins)
+- Type a question in the chat bar at the bottom to create a new AI-generated card
 """,
     }
+
+    # Comprehensive site knowledge — appended to ALL tabs so assistant
+    # can always answer "how do I..." questions about any part of the site.
+    SITE_KNOWLEDGE = """
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SYMBOLOS PLATFORM — FULL FEATURE GUIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You are the assistant for Symbolos, a McGill student advisor platform. You can help users navigate ANY part of the site. Here is a complete feature guide:
+
+SITE FEATURES & NAVIGATION:
+
+**Dashboard / Academic Brief:**
+- AI-generated advisor cards with insights about your academics, deadlines, grades, opportunities
+- Cards auto-translate when you change language
+- Cards can be pinned, bookmarked, expanded, or drag-reordered
+- Card categories: Deadlines, Degree, Courses, Grades, Planning, Opportunities
+- Use the chat bar at the bottom to ask questions and generate new advisor cards
+- Cards refresh limit: 2x per week for regular users, unlimited for admins
+
+**Calendar Tab:**
+- View your class schedule, assignment deadlines, exam dates
+- Events come from imported syllabi
+- You can add custom events
+- Toggle filter chips to show/hide event types
+- Announcements view shows upcoming events with countdown timers
+
+**Degree Planning Tab:**
+- Degree Progress Tracker — shows credits completed vs required for your major
+- Transcript Upload — upload your UNOFFICIAL McGill transcript PDF to auto-import courses, grades, GPA
+- Syllabus Upload — upload course syllabi PDFs to extract deadlines and add them to your calendar
+- Study Abroad — information about exchange programs
+- Advising Resources — curated McGill advising links across 8 categories
+- Elective Recommendations — AI-powered course suggestions based on your profile
+
+**Courses Tab:**
+- Search McGill courses by code or name (e.g. "COMP 202" or "algorithms")
+- Each course card shows: title, credits, faculty, term availability, average GPA, professor ratings
+- Click a course for full details: prerequisites, corequisites, grade distribution history, RateMyProfessors ratings
+- Action buttons: ✓ = mark completed, ❤ = save/bookmark, 🔵 = mark as currently taking
+
+**Clubs Tab:**
+- Browse McGill clubs, subscribe to club events/news, submit new clubs for admin review
+
+**Settings:**
+- Update your profile (faculty, major, year, GPA), change language (EN/FR/ZH), change theme (light/dark/auto)
+
+**This Sidebar Chat:**
+- Ask questions about McGill academics, site features, or get personalized advice
+- Available on every tab except Academic Brief
+- Context-aware: knows which tab you're on
+- Pin messages to save them across tabs
+
+**IMPORTANT CORRECTIONS — do not confuse these:**
+- Transcript Upload is on the **Degree Planning tab**, NOT on Profile or Calendar
+- Syllabus Upload is on the **Degree Planning tab**, NOT on Calendar
+- Profile/Settings is for editing your academic info, theme, and language
+"""
 
     lang_instruction = ""
     if language == "fr":
@@ -181,6 +274,7 @@ Navigation tips:
         lang_instruction = "\n\nIMPORTANT: The student's interface is in Chinese. Respond entirely in Simplified Chinese (Mandarin), except for course codes and proper nouns."
 
     tab_context = TAB_GUIDANCE.get(current_tab, "") if current_tab else ""
+    site_knowledge = SITE_KNOWLEDGE
 
     # ── Base context: cached per user ─────────────────────────────────────────
     user_id = user.get("id", "")
@@ -206,7 +300,7 @@ Their question almost certainly relates to it — keep it in mind throughout:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
-    return base + card_section + tab_context + lang_instruction
+    return base + card_section + tab_context + site_knowledge + lang_instruction
 
 
 def _build_base_context(user: dict) -> str:

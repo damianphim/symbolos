@@ -441,9 +441,16 @@
 
 .tu-course-more {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--accent-primary, #ED1B2F);
   margin: 0.2rem 0 0;
   padding-left: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.tu-course-more:hover {
+  text-decoration: underline;
 }
 
 /* ── Loading / state text ────────────────────────────── */

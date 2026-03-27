@@ -14,7 +14,7 @@ const NAV_ITEMS = (t) => [
   { key: 'favorites', icon: <FaGraduationCap />, label: t('nav.degreePlanning') },
   { key: 'courses',   icon: <FaBook />,          label: t('nav.courses') },
   { key: 'calendar',  icon: <FaCalendarAlt />,   label: t('nav.calendar') },
-  { key: 'clubs',     icon: <FaUsers />,         label: 'Clubs' },
+  { key: 'clubs',     icon: <FaUsers />,         label: t('nav.clubs') },
   { key: 'forum',     icon: <FaComments />,      label: t('nav.forum') },
   { key: 'profile',   icon: <FaUser />,          label: t('nav.profile') },
 ]
@@ -133,6 +133,7 @@ export default function Sidebar({
                   <div className="sidebar-popup-arrow" />
                 </div>
               )}
+              <div className="sidebar-not-affiliated">{t('rsb.notAffiliated')}</div>
               <button className="user-info" ref={triggerRef} onClick={() => setPopupOpen(p => !p)}>
                 <div className="user-avatar">
                   {profileImage ? <img src={profileImage} alt="Profile" className="user-avatar-image" /> : avatarLetter}

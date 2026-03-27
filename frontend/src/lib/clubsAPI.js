@@ -252,6 +252,49 @@ const clubsAPI = {
     }
   },
 
+  // ── Club Subscriptions ─────────────────────────────────────────────────────
+  async toggleSubscription(clubId) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/subscribe`, {
+      method: 'POST', headers: await authHeaders(),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to toggle subscription') }
+    return res.json()
+  },
+
+  async getUserSubscriptions(userId) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}/subscriptions`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { subscribed_club_ids: [] }
+  },
+
+  // ── Club Managers ──────────────────────────────────────────────────────────
+  async getClubManagers(clubId) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/managers`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { managers: [], count: 0 }
+  },
+
+  async addClubManager(clubId, email) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/managers`, {
+      method: 'POST', headers: await authHeaders(),
+      body: JSON.stringify({ email }),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to add manager') }
+    return res.json()
+  },
+
+  async removeClubManager(clubId, managerUserId) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/managers/${managerUserId}`, {
+      method: 'DELETE', headers: await authHeaders(),
+    })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Failed to remove manager') }
+    return res.json()
+  },
+
 }
 
 export default clubsAPI

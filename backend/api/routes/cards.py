@@ -89,7 +89,17 @@ class SaveRequest(BaseModel):
 
 class CardOrder(BaseModel):
     id: str = Field(..., max_length=100)
-    position: int = Field(..., ge=0, le=100)
+    position: Optional[int] = Field(None, ge=0, le=100)
+    sort_order: Optional[int] = Field(None, ge=0, le=100)
+
+    @property
+    def resolved_position(self) -> int:
+        """Accept either 'position' or 'sort_order' from frontend."""
+        if self.position is not None:
+            return self.position
+        if self.sort_order is not None:
+            return self.sort_order
+        return 0
 
 class ReorderRequest(BaseModel):
     order: List[CardOrder] = Field(..., max_length=50)
@@ -246,13 +256,50 @@ _ACTIONS_PROMPT = (
     '(e.g. "Which courses satisfy this requirement?", "When is the deadline for this?", '
     '"How do I register for this?") — '
     'write them from the student\'s perspective as if they are asking the advisor, '
-    'NOT questions for the student to answer'
+    'NOT questions for the student to answer. '
+    'For opportunity cards that recommend professors, also include action objects with '
+    '"type" set to "email_professor" (label e.g. "Draft an email to Prof. X") or '
+    '"visit_lab_page" (label e.g. "Visit their research lab page"). '
+    'These action objects use the format {"type": "<action_type>", "label": "<display text>"}. '
+    'You may mix plain string actions and typed action objects in the same array'
 )
+
+
+def _deduplicate_completed(completed: list) -> list:
+    """
+    Filter completed courses so that withdrawn/failed attempts are excluded
+    when the same course was later completed with a passing grade.
+
+    This prevents the AI from suggesting "retake COMP 273" when the student
+    already withdrew and then retook it successfully.
+    """
+    NON_PASSING = {"W", "F", "U", "WF", "WL", "J", "KF"}
+
+    # Build a set of course codes that have at least one passing grade
+    passed_codes = set()
+    for c in completed:
+        grade = (c.get("grade") or "").strip().upper()
+        if grade and grade not in NON_PASSING:
+            passed_codes.add(c.get("course_code", ""))
+
+    # Filter: keep all entries UNLESS it's a non-passing grade for a course
+    # that was later passed
+    result = []
+    for c in completed:
+        code = c.get("course_code", "")
+        grade = (c.get("grade") or "").strip().upper()
+        if grade in NON_PASSING and code in passed_codes:
+            # Skip this entry — the student retook and passed
+            continue
+        result.append(c)
+    return result
 
 
 def build_rich_context(ctx: dict, saved_cards: list = None) -> str:
     user = ctx["user"]
     completed, current, favorites, calendar = (ctx["completed"], ctx["current"], ctx["favorites"], ctx["calendar"])
+    # Deduplicate: remove withdrawn/failed entries when course was later passed
+    completed = _deduplicate_completed(completed)
     total_credits = sum(c.get("credits") or 3 for c in completed)
     adv = user.get("advanced_standing") or []
     adv_credits = sum((a.get("credits") or 0) for a in adv)
@@ -336,6 +383,18 @@ Generate exactly 8 cards as a JSON array. Each card must include:
 {CATEGORIES_PROMPT_LIST}
   "priority" : integer 1–8 (1 = most important)
 
+PROFESSOR RECOMMENDATIONS FOR OPPORTUNITY CARDS
+For "opportunities" cards, when relevant, recommend specific McGill professors the student
+could reach out to based on their major, completed courses, and interests. Include:
+  - Professor name and department
+  - Their research area that aligns with the student's profile
+  - A suggested approach for reaching out (e.g. "Attend their office hours for COMP 251"
+    or "Email about their ML research lab openings")
+  - Only recommend professors when you have high confidence they are real McGill faculty members
+  - Add a disclaimer at the end of the card body: "Verify professor details on McGill's department website."
+At least 1 of the 8 cards should be an "opportunities" card with a professor recommendation
+if the student's profile has a declared major.
+
 Return ONLY the JSON array — no markdown, no commentary."""
 
 
@@ -359,7 +418,35 @@ Return a single JSON object (not an array) with these fields:
 Return ONLY the JSON object — no markdown, no commentary.{_lang_instruction(language)}"""
 
 
-def _fetch_cards_response(user_id: str) -> dict:
+def _get_stored_cards_language(user_id: str) -> str | None:
+    """Read the cards language stored in Supabase auth user metadata."""
+    try:
+        supabase = get_supabase()
+        resp = supabase.auth.admin.get_user_by_id(user_id)
+        meta = (resp.user.user_metadata or {}) if resp.user else {}
+        lang = meta.get("cards_language")
+        return lang if lang in ("en", "fr", "zh") else None
+    except Exception:
+        return None
+
+
+def _set_stored_cards_language(user_id: str, language: str) -> None:
+    """Persist the cards language in Supabase auth user metadata."""
+    try:
+        supabase = get_supabase()
+        resp = supabase.auth.admin.get_user_by_id(user_id)
+        existing_meta = (resp.user.user_metadata or {}) if resp.user else {}
+        existing_meta["cards_language"] = language
+        supabase.auth.admin.update_user_by_id(user_id, {"user_metadata": existing_meta})
+    except Exception as e:
+        logger.warning(f"Could not persist cards language for {user_id}: {e}")
+
+
+def _fetch_cards_response(user_id: str, confirmed_language: str | None = None) -> dict:
+    """
+    confirmed_language: pass the language when cards were just generated/retranslated.
+    When None, reads the previously persisted language from user metadata.
+    """
     get_user_by_id(user_id)
     supabase = get_supabase()
     resp = (supabase.table("advisor_cards").select("*")
@@ -370,7 +457,13 @@ def _fetch_cards_response(user_id: str) -> dict:
             card["actions"] = json.loads(card["actions"])
     ai_cards = [c for c in cards if c.get("source") == "ai"]
     generated_at = ai_cards[0].get("generated_at") if ai_cards else None
-    return {"cards": cards, "count": len(cards), "generated_at": generated_at, "fresh": cards_are_fresh(user_id)}
+    # Use confirmed language if just set; otherwise read from stored metadata
+    cards_language = confirmed_language if confirmed_language else _get_stored_cards_language(user_id)
+    return {
+        "cards": cards, "count": len(cards), "generated_at": generated_at,
+        "fresh": cards_are_fresh(user_id),
+        "cards_language": cards_language,
+    }
 
 
 @router.get("/{user_id}", response_model=dict)
@@ -397,7 +490,9 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
         get_user_by_id(user_id)
         if not request.force and cards_are_fresh(user_id):
             logger.info(f"Cards already fresh for {user_id}, skipping generation")
-            return _fetch_cards_response(user_id)
+            # confirmed_language=None: we don't know what language these cached cards are in.
+            # The frontend will check and retranslate if needed.
+            return _fetch_cards_response(user_id, confirmed_language=None)
 
         # Rate limit: max 2 forced regenerations per week
         if request.force:
@@ -428,8 +523,9 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
             card.setdefault("actions", [])
 
         save_cards(user_id, cards)
-        logger.info(f"Generated {len(cards)} cards for {user_id}")
-        return _fetch_cards_response(user_id)
+        _set_stored_cards_language(user_id, request.language)
+        logger.info(f"Generated {len(cards)} cards for {user_id} in {request.language}")
+        return _fetch_cards_response(user_id, confirmed_language=request.language)
 
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -449,14 +545,13 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
         ctx = fetch_student_context(user_id)
         # Don't include saved_cards — they may be in a different language
         # which would influence the model to respond in that language instead.
-        prompt = build_rich_context(ctx, saved_cards=None)
-        lang_inst = _lang_instruction(request.language)
+        prompt = build_rich_context(ctx, saved_cards=None) + _lang_instruction(request.language)
 
         client = get_anthropic_client()
         message = client.messages.create(
             model=settings.CLAUDE_MODEL, max_tokens=4096,
-            system=lang_inst.strip() if lang_inst else None,
-            messages=[{"role": "user", "content": prompt}])
+            messages=[{"role": "user", "content": prompt}]
+        )
         raw = message.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
@@ -470,8 +565,9 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
             card.setdefault("icon", "💡")
             card.setdefault("actions", [])
         save_cards(user_id, cards)
+        _set_stored_cards_language(user_id, request.language)
         logger.info(f"Retranslated {len(cards)} cards for {user_id} in {request.language}")
-        return _fetch_cards_response(user_id)
+        return _fetch_cards_response(user_id, confirmed_language=request.language)
 
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -643,7 +739,7 @@ async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, cur
     try:
         get_user_by_id(user_id)
         supabase = get_supabase()
-        payload = [item.model_dump() for item in request.order]
+        payload = [{"id": item.id, "position": item.resolved_position} for item in request.order]
         supabase.rpc("reorder_advisor_cards", {"payload": payload}).execute()
         logger.info(f"Successfully reordered {len(request.order)} cards for user {user_id}")
         return {"reordered": len(request.order)}
