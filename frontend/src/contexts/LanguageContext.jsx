@@ -496,6 +496,7 @@ const translations = {
     'clubs.fieldJoinInstructions': 'How to Join',
     'clubs.fieldJoinInstructionsPlaceholder': 'Describe how students can join this club — application steps, tryout dates, etc.',
     'clubs.fieldJoinInstructionsHint': 'These instructions will be shown to students viewing this club.',
+    'clubs.joinMethodRequired': 'Please provide at least one: Application URL, Join Instructions, or Website URL so students know how to join.',
     'clubs.howToJoin': 'How to Join',
     'clubs.applyNow': 'Apply Now',
 
@@ -1533,6 +1534,7 @@ const translations = {
     'clubs.fieldJoinInstructions': 'Comment rejoindre',
     'clubs.fieldJoinInstructionsPlaceholder': 'Décrivez comment les étudiants peuvent rejoindre ce club — étapes de candidature, dates d\'audition, etc.',
     'clubs.fieldJoinInstructionsHint': 'Ces instructions seront affichées aux étudiants qui consultent ce club.',
+    'clubs.joinMethodRequired': 'Veuillez fournir au moins un : URL de candidature, instructions de rejoindre, ou URL du site web.',
     'clubs.howToJoin': 'Comment rejoindre',
     'clubs.applyNow': 'Postuler',
 
@@ -2553,6 +2555,7 @@ const translations = {
     'clubs.fieldJoinInstructions': '如何加入',
     'clubs.fieldJoinInstructionsPlaceholder': '描述学生如何加入此社团——申请步骤、试审日期等。',
     'clubs.fieldJoinInstructionsHint': '这些说明将显示给浏览此社团的学生。',
+    'clubs.joinMethodRequired': '请至少提供以下之一：申请链接、加入说明或网站链接，以便学生了解如何加入。',
     'clubs.howToJoin': '如何加入',
     'clubs.applyNow': '立即申请',
 

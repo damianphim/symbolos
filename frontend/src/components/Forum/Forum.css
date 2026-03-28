@@ -455,6 +455,18 @@
   color: var(--error-primary, #ef4444);
 }
 
+.forum-action-btn--report {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.forum-action-btn--report:hover {
+  background: #fff7ed;
+  border-color: #f97316;
+  color: #f97316;
+  opacity: 1;
+}
+
 .forum-reply__actions {
   display: flex;
   gap: 6px;

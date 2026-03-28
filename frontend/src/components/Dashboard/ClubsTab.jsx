@@ -160,7 +160,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   const filteredMembers = members.filter(m => {
     if (!searchTerm) return true
     const q = searchTerm.toLowerCase()
-    return (m.name || '').toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q)
+    return (m.name || '').toLowerCase().includes(q) || (canManage && (m.email || '').toLowerCase().includes(q))
   }).sort((a, b) => (roleOrder[a.role] ?? 2) - (roleOrder[b.role] ?? 2))
 
   return (
@@ -198,7 +198,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
                   {role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Member'}
                 </span>
               </span>
-              {m.email && <span className="club-member-email">{m.email}</span>}
+              {canManage && m.email && <span className="club-member-email">{m.email}</span>}
             </div>
             <div className="club-member-actions">
               {canAffect && (
@@ -233,6 +233,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
 
 function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
+  const instructionsRef = useRef(null)
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
   const meta = getCat(display.category)
@@ -269,19 +270,25 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
             </div>
           </div>
           <div className="club-drawer__strip-actions" style={{ display: 'flex', gap: '8px' }}>
-            {/* Subscribe button — toggle to get club updates */}
-            <button
-              className={`club-action-btn ${isSubscribed ? 'club-action-btn--subscribed' : 'club-action-btn--subscribe'}`}
-              onClick={() => onToggleSubscribe(club.id)}
-              disabled={isLoading}
-              title={isSubscribed ? t('clubs.unsubscribeTooltip') : t('clubs.subscribeTooltip')}
-            >
-              {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
-            </button>
-            {/* Join button — links to application_url if set, otherwise website_url */}
-            {(display.application_url || display.website_url) ? (
+            {/* Subscribe and Join buttons — hidden for owners/managers */}
+            {canManage ? (
+              <span className="club-action-btn club-action-btn--subscribed" style={{ cursor: 'default', opacity: 0.75 }}>
+                ✓ {t('clubs.manage.owner') || 'Manager'}
+              </span>
+            ) : (
+              <>
+                <button
+                  className={`club-action-btn ${isSubscribed ? 'club-action-btn--subscribed' : 'club-action-btn--subscribe'}`}
+                  onClick={() => onToggleSubscribe(club.id)}
+                  disabled={isLoading}
+                  title={isSubscribed ? t('clubs.unsubscribeTooltip') : t('clubs.subscribeTooltip')}
+                >
+                  {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
+                </button>
+                {/* Join button — application_url → join_instructions (scroll) → website_url */}
+                {display.application_url ? (
               <a
-                href={display.application_url || display.website_url}
+                href={display.application_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="club-action-btn club-action-btn--join"
@@ -289,10 +296,29 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
               >
                 {t('clubs.joinClub')}
               </a>
-            ) : (
-              <button className="club-action-btn club-action-btn--join" disabled title={t('clubs.noWebsite')}>
+            ) : display.join_instructions ? (
+              <button
+                className="club-action-btn club-action-btn--join"
+                onClick={() => instructionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+              >
                 {t('clubs.joinClub')}
               </button>
+            ) : display.website_url ? (
+              <a
+                href={display.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="club-action-btn club-action-btn--join"
+                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                {t('clubs.joinClub')}
+              </a>
+                ) : (
+                  <button className="club-action-btn club-action-btn--join" disabled title={t('clubs.noWebsite')}>
+                    {t('clubs.joinClub')}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -330,7 +356,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
           )}
 
           {display.join_instructions && (
-            <section className="club-drawer__section">
+            <section ref={instructionsRef} className="club-drawer__section">
               <h3 className="club-drawer__section-title"><FaUserPlus size={12} /> {t('clubs.howToJoin')}</h3>
               <p className="club-drawer__desc" style={{ whiteSpace: 'pre-line' }}>{display.join_instructions}</p>
               {display.application_url && (
@@ -403,10 +429,11 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   )
 }
 
-function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, isAdmin, clubLoading, t }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, isAdmin, clubLoading, t, userId }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
+  const isOwner = userId && club.created_by === userId
 
   const handleJoin = async (e) => {
     e.stopPropagation()
@@ -446,7 +473,13 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
         </div>
       </div>
       <div className="club-card__footer" onClick={e => e.stopPropagation()}>
-        {joined ? (
+        {isOwner ? (
+          <div className="club-card__footer-joined">
+            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 600, padding: '4px 8px' }}>
+              ✓ Manager
+            </span>
+          </div>
+        ) : joined ? (
           <div className="club-card__footer-joined">
             <button
               className={`club-cal-chip ${calSynced ? 'active' : ''}`}
@@ -483,9 +516,28 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
             >
               {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
             </button>
-            {(club.application_url || club.website_url) ? (
+            {club.application_url ? (
               <a
-                href={club.application_url || club.website_url}
+                href={club.application_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="club-join-btn"
+                onClick={e => e.stopPropagation()}
+                style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+              >
+                {t('clubs.joinClub')}
+              </a>
+            ) : club.join_instructions ? (
+              <button
+                className="club-join-btn"
+                onClick={e => { e.stopPropagation(); onOpen(club) }}
+                style={{ flex: 1 }}
+              >
+                {t('clubs.joinClub')}
+              </button>
+            ) : club.website_url ? (
+              <a
+                href={club.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="club-join-btn"
@@ -1216,6 +1268,9 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
     const e = {}
     if (!form.name.trim()) e.name = t('clubs.required')
     if (!form.description.trim()) e.description = t('clubs.required')
+    if (!form.application_url.trim() && !form.join_instructions.trim() && !form.website_url.trim()) {
+      e.joinMethod = t('clubs.joinMethodRequired') || 'Please provide at least one: Application URL, Join Instructions, or Website URL so members know how to join.'
+    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -1298,13 +1353,19 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
               <label>{t('clubs.fieldUrl')}</label>
               <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://..." />
             </div>
-            <div className="clubs-field">
-              <label>{t('clubs.fieldApplicationUrl')}</label>
+            {errors.joinMethod && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#b91c1c', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ flexShrink: 0 }}>⚠</span>
+                <span>{errors.joinMethod}</span>
+              </div>
+            )}
+            <div className={`clubs-field ${errors.joinMethod ? 'error' : ''}`}>
+              <label>{t('clubs.fieldApplicationUrl')} <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>(required if no instructions)</span></label>
               <input type="url" value={form.application_url} onChange={e => set('application_url')(e.target.value)} placeholder="https://..." />
               <span className="clubs-field-hint">{t('clubs.fieldApplicationUrlHint')}</span>
             </div>
-            <div className="clubs-field">
-              <label>{t('clubs.fieldJoinInstructions')}</label>
+            <div className={`clubs-field ${errors.joinMethod ? 'error' : ''}`}>
+              <label>{t('clubs.fieldJoinInstructions')} <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>(required if no link)</span></label>
               <textarea value={form.join_instructions} onChange={e => set('join_instructions')(e.target.value)} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
               <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
             </div>
@@ -1734,6 +1795,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onEdit={setEditingClub}
                     isAdmin={isAdmin}
                     clubLoading={clubLoading}
+                    userId={user?.id}
                     t={t}
                   />
                 ))}

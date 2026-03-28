@@ -7,6 +7,11 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* When the edit form is open, allow form-section cards to render their full borders */
+.personal-info-card:has(.edit-mode-container) {
+  overflow: visible;
+}
+
 .personal-info-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
@@ -31,6 +36,7 @@
   padding: 24px;
   border-bottom: 1px solid var(--border-primary);
   background: var(--card-bg);
+  border-radius: 16px 16px 0 0;
 }
 
 .header-left {
@@ -418,9 +424,6 @@
 /* Edit Mode */
 .edit-mode-container {
   padding: 24px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 /* Responsive */

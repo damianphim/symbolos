@@ -283,7 +283,9 @@ export default function RightSidebar({
   }, [isDragging])
 
   const hasPinned = !!pinnedCard
-  const showSidebar = activeTab !== 'chat'
+  // When a card is pinned, the sidebar stays visible on every tab (including chat)
+  // so the conversation is never interrupted by switching tabs
+  const showSidebar = activeTab !== 'chat' || hasPinned
   const tabLabel = getTabLabel(activeTab, t)
 
   const suggestionKeys = {
@@ -296,22 +298,12 @@ export default function RightSidebar({
   }
   const suggestions = (suggestionKeys[activeTab] || ['rsb.nav.default.1','rsb.nav.default.2','rsb.nav.default.3']).map(k => t(k))
 
-  // ── Render a message bubble with pin button ─────────────────────────────────
-  const renderMessage = (msg, i, showPin = true) => {
-    const pinned = isMessagePinned(msg)
+  // ── Render a message bubble ──────────────────────────────────────────────────
+  const renderMessage = (msg, i) => {
     return (
       <div key={i} className={`rsb-msg rsb-msg--${msg.role}`}>
         <div className="rsb-msg__bubble-wrap">
           <p className="rsb-msg__text">{renderText(msg.content)}</p>
-          {showPin && (
-            <button
-              className={`rsb-pin-btn ${pinned ? 'rsb-pin-btn--active' : ''}`}
-              onClick={() => togglePin({ role: msg.role, content: msg.content, tab: activeTab })}
-              title={pinned ? t('rsb.unpinMsg') : t('rsb.pinMsg')}
-            >
-              <FaThumbtack size={10} />
-            </button>
-          )}
         </div>
       </div>
     )
@@ -434,24 +426,11 @@ export default function RightSidebar({
                     </div>
                   </div>
                   <div className="rsb-header__actions">
-                    <button
-                      className={`rsb-unpin-btn ${pinnedMessages.length > 0 ? 'rsb-unpin-btn--has-pins' : ''}`}
-                      onClick={() => setPinnedSectionOpen(prev => !prev)}
-                      title={t('rsb.pinnedMessages')}
-                    >
-                      <FaThumbtack size={14} />
-                      {pinnedMessages.length > 0 && (
-                        <span className="rsb-pin-count">{pinnedMessages.length}</span>
-                      )}
-                    </button>
                     <button className="rsb-close-btn" onClick={() => setIsOpen(false)} title={t('rsb.close')}>
                       <FaTimes size={14} />
                     </button>
                   </div>
                 </div>
-
-                {/* Pinned messages section */}
-                {renderPinnedSection()}
 
                 {/* Messages */}
                 <div className="rsb-thread" ref={navScrollRef}>

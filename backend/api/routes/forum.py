@@ -22,10 +22,12 @@ from fastapi import APIRouter, HTTPException, status, Depends, Request, Query
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 import logging
+from html import escape
 
 from ..utils.supabase_client import get_supabase, with_retry
 from ..auth import get_current_user_id
 from ..exceptions import DatabaseException
+from ..config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -454,3 +456,122 @@ async def toggle_reply_like(
     except Exception as e:
         logger.exception(f"Error toggling reply like: {e}")
         raise HTTPException(status_code=500, detail="Failed to toggle like")
+
+
+# ── Helpers: report email ──────────────────────────────────────────────────────
+
+def _send_report_email(content_type: str, content_id: str, reporter_id: str,
+                       author: str, preview: str):
+    """Send a report notification email to all admin addresses."""
+    if not settings.RESEND_API_KEY:
+        return
+    admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",") if e.strip()]
+    if not admin_emails:
+        return
+
+    safe_type    = escape(content_type)
+    safe_id      = escape(content_id)
+    safe_author  = escape(author or "Unknown")
+    safe_preview = escape((preview or "")[:300])
+    safe_reporter = escape(reporter_id)
+
+    subject = f"🚩 Forum {safe_type} reported — Symbolos"
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+        <tr><td style="background:#ED1B2F;border-radius:12px 12px 0 0;padding:20px 28px;">
+          <span style="color:#fff;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Symbolos</span>
+        </td></tr>
+        <tr><td style="background:#ffffff;padding:28px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
+          <span style="display:inline-block;background:#fff7ed;color:#f97316;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;">Content Report</span>
+          <h2 style="margin:16px 0 8px;font-size:20px;font-weight:700;color:#111827;">Forum {safe_type.capitalize()} Reported</h2>
+          <p style="margin:0 0 20px;font-size:14px;color:#6b7280;">A forum {safe_type} has been flagged for review.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:20px;">
+            <tr><td style="padding:4px 0;font-size:13px;color:#374151;"><strong>Type:</strong> {safe_type.capitalize()}</td></tr>
+            <tr><td style="padding:4px 0;font-size:13px;color:#374151;"><strong>Content ID:</strong> {safe_id}</td></tr>
+            <tr><td style="padding:4px 0;font-size:13px;color:#374151;"><strong>Author:</strong> {safe_author}</td></tr>
+            <tr><td style="padding:4px 0;font-size:13px;color:#374151;"><strong>Reported by:</strong> {safe_reporter}</td></tr>
+            <tr><td style="padding:12px 0 4px;font-size:13px;color:#374151;"><strong>Content preview:</strong></td></tr>
+            <tr><td style="padding:8px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;color:#6b7280;font-style:italic;">{safe_preview}</td></tr>
+          </table>
+          <p style="margin:0;font-size:12px;color:#9ca3af;">Please review this content in the Symbolos admin panel.</p>
+        </td></tr>
+        <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;">Symbolos Admin Notification</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    try:
+        import httpx
+        httpx.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={"from": "Symbolos <notifications@symbolos.ca>", "to": admin_emails,
+                  "subject": subject, "html": html},
+            timeout=8,
+        )
+    except Exception as exc:
+        logger.warning(f"Failed to send report email: {exc}")
+
+
+# ── POST /posts/{post_id}/report ───────────────────────────────────────────────
+
+@router.post("/posts/{post_id}/report", response_model=dict)
+async def report_post(
+    post_id: str,
+    req:     Request,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Flag a post for review. Sends an email to admins."""
+    try:
+        supabase = get_supabase()
+        post_res = supabase.table("forum_posts").select("user_id, author, title, body").eq("id", post_id).execute()
+        if not post_res.data:
+            raise HTTPException(status_code=404, detail="Post not found")
+        p = post_res.data[0]
+        if p["user_id"] == current_user_id:
+            raise HTTPException(status_code=400, detail="You cannot report your own post")
+        preview = f"{p.get('title', '')} — {p.get('body', '')}"
+        _send_report_email("post", post_id, current_user_id, p.get("author", ""), preview)
+        logger.info(f"Post {post_id} reported by {current_user_id}")
+        return {"message": "Report submitted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error reporting post {post_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to submit report")
+
+
+# ── POST /replies/{reply_id}/report ───────────────────────────────────────────
+
+@router.post("/replies/{reply_id}/report", response_model=dict)
+async def report_reply(
+    reply_id: str,
+    req:      Request,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Flag a reply for review. Sends an email to admins."""
+    try:
+        supabase = get_supabase()
+        reply_res = supabase.table("forum_replies").select("user_id, author, body").eq("id", reply_id).execute()
+        if not reply_res.data:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        r = reply_res.data[0]
+        if r["user_id"] == current_user_id:
+            raise HTTPException(status_code=400, detail="You cannot report your own reply")
+        _send_report_email("reply", reply_id, current_user_id, r.get("author", ""), r.get("body", ""))
+        logger.info(f"Reply {reply_id} reported by {current_user_id}")
+        return {"message": "Report submitted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error reporting reply {reply_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to submit report")

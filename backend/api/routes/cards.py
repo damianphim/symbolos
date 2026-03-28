@@ -48,7 +48,14 @@ def _lang_instruction(language: str) -> str:
             "Every text field — title, body, actions, label — must be in Chinese. "
             "Do not use any English words except for proper nouns like course codes and names."
         )
-    return ""
+    # Default: English — must be explicit so French/Chinese context in student data
+    # does not cause the model to drift into another language.
+    return (
+        "\n\nCRITICAL: You MUST respond entirely in English. "
+        "Every text field — title, body, actions, label — must be in English. "
+        "Do not use French, Chinese, or any other language, even if the student's "
+        "course names or calendar events are in another language."
+    )
 
 
 _anthropic_client: anthropic.Anthropic | None = None

@@ -3,7 +3,7 @@ import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
-  FaStar, FaBullseye, FaNewspaper
+  FaStar, FaBullseye, FaNewspaper, FaSearch, FaBellSlash
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTimezone } from '../../contexts/TimezoneContext'
@@ -1028,7 +1028,58 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [newsletterEvents, setNewsletterEvents] = useState([])
 
+  // ── Newsletter subscription state ─────────────────────────────
+  const [nlSources, setNlSources] = useState([])
+  const [nlSearch, setNlSearch] = useState('')
+  const [nlLoading, setNlLoading] = useState(false)
+  const [nlExpanded, setNlExpanded] = useState(false)
+
   const isMcGillEmail = authFlags?.is_mcgill_email ?? false
+
+  useEffect(() => {
+    if (!user?.id || !isMcGillEmail) return
+    let cancelled = false
+    setNlLoading(true)
+    newslettersAPI.getSources().then(data => {
+      if (!cancelled) setNlSources(Array.isArray(data) ? data : [])
+    }).catch(() => {}).finally(() => { if (!cancelled) setNlLoading(false) })
+    return () => { cancelled = true }
+  }, [user?.id, isMcGillEmail])
+
+  const handleNlToggle = async (source) => {
+    const prev = [...nlSources]
+    const wasSubscribed = source.subscribed
+    setNlSources(s => s.map(src => src.id === source.id ? { ...src, subscribed: !src.subscribed, email_muted: false } : src))
+    try {
+      if (wasSubscribed) {
+        await newslettersAPI.unsubscribe(source.id)
+      } else {
+        await newslettersAPI.subscribe(source.id, true)
+        if (source.url && window.confirm(
+          language === 'fr'
+            ? `Voulez-vous aussi recevoir les emails de ${source.name} ? Cela ouvrira leur page d'inscription.`
+            : language === 'zh'
+            ? `您还想直接收到 ${source.name} 的邮件吗？这将打开他们的注册页面。`
+            : `Would you also like to receive emails directly from ${source.name}? This will open their signup page.`
+        )) {
+          window.open(source.url, '_blank', 'noopener')
+        }
+      }
+    } catch { setNlSources(prev) }
+  }
+
+  const handleNlMuteToggle = async (source) => {
+    const prev = [...nlSources]
+    const newMuted = !source.email_muted
+    setNlSources(s => s.map(src => src.id === source.id ? { ...src, email_muted: newMuted } : src))
+    try {
+      await newslettersAPI.updateSubscription(source.id, { emailMuted: newMuted })
+    } catch { setNlSources(prev) }
+  }
+
+  const filteredNlSources = nlSearch
+    ? nlSources.filter(s => s.name.toLowerCase().includes(nlSearch.toLowerCase()) || s.category.toLowerCase().includes(nlSearch.toLowerCase()))
+    : nlSources
 
   // ── Load newsletter events (McGill emails only) ────────────────
   useEffect(() => {
@@ -1775,18 +1826,108 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       {/* Newsletters View */}
       {view === 'newsletters' && (
         <div className="cal-announcements">
+          {/* ── Subscription Management ── */}
+          {isMcGillEmail && (
+            <div style={{ marginBottom: 24, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border-primary)' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FaNewspaper size={13} style={{ color: '#0891b2' }} />
+                  {L(language, 'Newsletter Subscriptions', 'Abonnements aux infolettres', '通讯订阅')}
+                </h3>
+                {nlExpanded && nlSources.length > 3 && (
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <FaSearch size={11} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#999', pointerEvents: 'none' }} />
+                    <input
+                      type="text"
+                      placeholder={L(language, 'Search…', 'Rechercher…', '搜索…')}
+                      value={nlSearch}
+                      onChange={e => setNlSearch(e.target.value)}
+                      style={{ paddingLeft: 24, paddingRight: nlSearch ? 24 : 8, paddingTop: 5, paddingBottom: 5, fontSize: '12px', border: '1px solid var(--border-primary)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', width: 140 }}
+                    />
+                    {nlSearch && (
+                      <button onClick={() => setNlSearch('')} style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0, lineHeight: 1 }}>
+                        <FaTimes size={11} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {nlLoading ? (
+                <p style={{ textAlign: 'center', padding: '14px', fontSize: '13px', color: 'var(--text-tertiary)' }}>
+                  {L(language, 'Loading…', 'Chargement…', '加载中…')}
+                </p>
+              ) : filteredNlSources.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '14px', fontSize: '13px', color: 'var(--text-tertiary)' }}>
+                  {nlSearch
+                    ? L(language, 'No results', 'Aucun résultat', '无结果')
+                    : L(language, 'No newsletters available yet', 'Aucune infolettre disponible', '暂无通讯')}
+                </p>
+              ) : (
+                <>
+                  <div style={nlExpanded ? { maxHeight: 280, overflowY: 'auto' } : {}}>
+                    {(nlExpanded || nlSearch ? filteredNlSources : filteredNlSources.slice(0, 3)).map(src => (
+                      <div key={src.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: '1px solid var(--border-primary)' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {src.logo_url && <img src={src.logo_url} alt="" style={{ width: 16, height: 16, borderRadius: 3 }} />}
+                            {src.name}
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>
+                            {src.category}
+                            {src.subscribed && !src.email_muted && <> &middot; <FaCalendarAlt size={9} style={{ verticalAlign: 'middle' }} /> {L(language, 'Calendar + emails', 'Calendrier + emails', '日历 + 邮件')}</>}
+                            {src.subscribed && src.email_muted && <> &middot; <FaCalendarAlt size={9} style={{ verticalAlign: 'middle' }} /> {L(language, 'Calendar only', 'Calendrier uniquement', '仅日历')}</>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                          {src.subscribed && (
+                            <button
+                              onClick={() => handleNlMuteToggle(src)}
+                              title={src.email_muted ? L(language, 'Unmute emails', 'Réactiver emails', '取消静音') : L(language, 'Mute emails', 'Muet emails', '静音邮件')}
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', fontSize: '11px', border: '1px solid var(--border-primary)', borderRadius: 6, background: src.email_muted ? 'var(--bg-tertiary)' : 'none', color: 'var(--text-tertiary)', cursor: 'pointer', opacity: src.email_muted ? 1 : 0.6 }}
+                            >
+                              <FaBellSlash size={10} />
+                              {src.email_muted ? L(language, 'Muted', 'Muet', '已静音') : L(language, 'Mute', 'Muet', '静音')}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleNlToggle(src)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', fontSize: '12px', border: '1px solid', borderColor: src.subscribed ? '#0891b2' : 'var(--border-primary)', borderRadius: 6, background: src.subscribed ? '#ecfeff' : 'none', color: src.subscribed ? '#0891b2' : 'var(--text-secondary)', cursor: 'pointer', minWidth: 88, justifyContent: 'center', fontWeight: 600 }}
+                          >
+                            {src.subscribed
+                              ? <><FaCheck size={9} /> {L(language, 'Subscribed', 'Abonné', '已订阅')}</>
+                              : L(language, 'Subscribe', "S'abonner", '订阅')}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {!nlSearch && filteredNlSources.length > 3 && (
+                    <button
+                      onClick={() => setNlExpanded(p => !p)}
+                      style={{ width: '100%', padding: '8px 16px', fontSize: '12px', background: 'none', border: 'none', borderTop: '1px solid var(--border-primary)', color: '#0891b2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontWeight: 600 }}
+                    >
+                      {nlExpanded
+                        ? L(language, '↑ Show less', '↑ Voir moins', '↑ 收起')
+                        : L(language, `+ ${filteredNlSources.length - 3} more`, `+ ${filteredNlSources.length - 3} de plus`, `+ ${filteredNlSources.length - 3} 个`)}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ── Newsletter Events ── */}
           <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FaNewspaper size={13} style={{ color: '#0891b2' }} /> {L(language, 'Newsletter Events', 'Événements des infolettres', '通讯事件')}
+            <FaCalendarAlt size={13} style={{ color: '#0891b2' }} /> {L(language, 'Upcoming Events', 'Événements à venir', '即将举行的活动')}
           </h3>
           {newsletterEvents.length === 0 ? (
             <div className="cal-empty-state">
               <FaNewspaper size={40} />
-              <p>{L(language, 'No newsletter events. Subscribe to newsletters in Settings to see events here.', 'Aucun événement de bulletin. Abonnez-vous aux bulletins dans Paramètres pour voir les événements ici.', '暂无通讯事件。在设置中订阅通讯以在此处查看事件。')}</p>
+              <p>{L(language, 'No newsletter events yet. Subscribe above to see events here.', 'Aucun événement. Abonnez-vous ci-dessus pour voir les événements.', '暂无活动。在上方订阅通讯以查看活动。')}</p>
             </div>
           ) : (
             <div className="cal-announce-list">
               {newsletterEvents.map(event => {
-                const style = getEventStyle(event, typeConfig)
                 const days = daysUntil(event.date)
                 return (
                   <div key={event.id} className="cal-announce-card" style={{ borderLeftColor: '#0891b2' }}

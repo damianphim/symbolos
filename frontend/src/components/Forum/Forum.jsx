@@ -6,7 +6,7 @@ import {
   FaClock, FaStar, FaPlus, FaTimes, FaChevronDown,
   FaChevronUp, FaBookOpen, FaUsers, FaLightbulb,
   FaBullhorn, FaGraduationCap, FaPaperPlane, FaSpinner,
-  FaTag, FaTrash,
+  FaTag, FaTrash, FaFlag,
 } from 'react-icons/fa'
 import './Forum.css'
 
@@ -226,6 +226,22 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
     } catch (err) { console.error('Delete reply failed:', err) }
   }
 
+  const handleReportPost = async () => {
+    if (!window.confirm('Report this post for inappropriate content?')) return
+    try {
+      await forumAPI.reportPost(post.id)
+      alert('Report submitted. Thank you.')
+    } catch { alert('Could not submit report. Please try again.') }
+  }
+
+  const handleReportReply = async (replyId) => {
+    if (!window.confirm('Report this reply for inappropriate content?')) return
+    try {
+      await forumAPI.reportReply(replyId)
+      alert('Report submitted. Thank you.')
+    } catch { alert('Could not submit report. Please try again.') }
+  }
+
   const replyCount = repliesLoaded ? replies.length : (post.reply_count ?? 0)
 
   return (
@@ -242,10 +258,15 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
         <div className="forum-post-card__cat-badge" style={{ '--cat-color': cat.color }}>
           {cat.icon} {cat.label}
         </div>
-        {isOwn && (
+        {isOwn ? (
           <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
             onClick={() => onDelete(post.id)} title="Delete post">
             <FaTrash />
+          </button>
+        ) : (
+          <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
+            onClick={handleReportPost} title="Report post">
+            <FaFlag />
           </button>
         )}
       </div>
@@ -299,10 +320,15 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
                     onClick={() => handleReplyLike(reply.id)}>
                     <FaThumbsUp /> {reply.like_count ?? 0}
                   </button>
-                  {reply.user_id === currentUserId && (
+                  {reply.user_id === currentUserId ? (
                     <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
                       onClick={() => handleDeleteReply(reply.id)} title="Delete reply">
                       <FaTrash />
+                    </button>
+                  ) : (
+                    <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
+                      onClick={() => handleReportReply(reply.id)} title="Report reply">
+                      <FaFlag />
                     </button>
                   )}
                 </div>

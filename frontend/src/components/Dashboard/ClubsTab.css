@@ -1137,10 +1137,10 @@
   border-radius: 16px;
   width: min(820px, 94vw);
   max-height: 88vh;
-  overflow-y: auto;
   box-shadow: 0 24px 80px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .club-manage__header {
@@ -1149,10 +1149,8 @@
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-primary, #e5e7eb);
-  position: sticky;
-  top: 0;
   background: var(--bg-primary, #fff);
-  z-index: 2;
+  flex-shrink: 0;
   border-radius: 16px 16px 0 0;
 }
 
@@ -1182,6 +1180,7 @@
   border-bottom: 1px solid var(--border-primary, #e5e7eb);
   overflow-x: auto;
   background: var(--bg-secondary, #f9fafb);
+  flex-shrink: 0;
 }
 
 .club-manage__tab {
@@ -1213,6 +1212,8 @@
 .club-manage__content {
   padding: 1.25rem 1.5rem;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Overview */

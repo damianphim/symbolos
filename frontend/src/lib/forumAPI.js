@@ -106,6 +106,26 @@ const forumAPI = {
     if (!res.ok) throw new Error('Failed to toggle like')
     return res.json()   // { liked: bool, like_count: N }
   },
+
+  // ── Reports ──────────────────────────────────────────────────────
+
+  async reportPost(postId) {
+    const res = await fetch(`${BASE_URL}/api/forum/posts/${postId}/report`, {
+      method: 'POST',
+      headers: await authHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to submit report')
+    return res.json()
+  },
+
+  async reportReply(replyId) {
+    const res = await fetch(`${BASE_URL}/api/forum/replies/${replyId}/report`, {
+      method: 'POST',
+      headers: await authHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to submit report')
+    return res.json()
+  },
 }
 
 export default forumAPI

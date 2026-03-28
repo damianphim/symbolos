@@ -6,7 +6,6 @@
   gap: 28px;
   padding: 8px 0;
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 /* Form Sections */
@@ -18,9 +17,10 @@
   border-radius: 16px;
   padding: 28px;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 8px;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -28,7 +28,6 @@
 .form-section:hover {
   border-color: var(--border-secondary);
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 .form-section::before {
@@ -73,7 +72,10 @@
 }
 
 .section-title-group {
+  flex: 1 1 0;
+  min-width: 0;
   margin-bottom: 4px;
+  overflow: hidden;
 }
 
 .section-title {
@@ -406,7 +408,7 @@
   border-radius: 12px;
   border: 1px solid var(--border-primary);
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .advanced-courses-list {
@@ -510,7 +512,7 @@
   display: flex;
   gap: 8px;
   align-items: stretch;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   width: 100%;
 }
 
@@ -761,13 +763,8 @@
     width: 100%;
   }
 
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .toggle-section-btn {
-    width: 100%;
+    flex-shrink: 0;
   }
 }
 

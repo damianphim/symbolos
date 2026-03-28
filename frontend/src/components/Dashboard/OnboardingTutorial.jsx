@@ -8,6 +8,7 @@ import {
   FaUserCog,
   FaRocket,
   FaCommentDots,
+  FaUsers,
 } from 'react-icons/fa'
 
 const STEPS = [
@@ -18,7 +19,7 @@ const STEPS = [
     title: 'Welcome to Symbolos',
     subtitle: 'Your McGill AI Academic Advisor',
     description:
-      'Symbolos helps you navigate every part of your McGill journey — from choosing courses to tracking your degree, all in one place.',
+      'Symbolos helps you navigate every part of your McGill journey, from choosing courses to tracking your degree, all in one place.',
     highlight: null,
     tip: null,
   },
@@ -40,7 +41,7 @@ const STEPS = [
     title: 'Degree Planning',
     subtitle: 'Degree Planning tab',
     description:
-      "Visualize your entire degree at a glance. See which requirements you've completed, what's in progress, and what's left — including transfer credits.",
+      "Visualize your entire degree at a glance. See which requirements you've completed, what's in progress, and what's left, including transfer credits.",
     highlight: 'favorites',
     tip: 'Completed courses automatically update your degree progress.',
   },
@@ -67,13 +68,35 @@ const STEPS = [
     tip: 'Your final exam schedule is always pre-populated each term.',
   },
   {
+    id: 'clubs',
+    Icon: FaUsers,
+    iconColor: '#d97706',
+    title: 'Discover Student Clubs',
+    subtitle: 'Clubs tab',
+    description:
+      'Explore hundreds of McGill student clubs and organizations. Join clubs, get notified about events and announcements, and connect with students who share your interests.',
+    highlight: 'clubs',
+    tip: 'Club events automatically appear in your calendar once you join.',
+  },
+  {
+    id: 'forum',
+    Icon: FaCommentDots,
+    iconColor: '#8b5cf6',
+    title: 'Join the Community Forum',
+    subtitle: 'Forum tab',
+    description:
+      'Ask questions, share advice, and connect with fellow McGill students. Browse posts by category, search for topics, and contribute to the community.',
+    highlight: 'forum',
+    tip: 'Post anonymously or publicly, your choice.',
+  },
+  {
     id: 'profile',
     Icon: FaUserCog,
     iconColor: '#ec4899',
     title: 'Personalize Your Experience',
     subtitle: 'Profile & Settings',
     description:
-      'Set your faculty, program, and year so Symbolos can give you the most relevant advice. Switch between light/dark mode and English/French at any time.',
+      'Set your faculty, program, and year so Symbolos can give you the most relevant advice. Switch between light/dark mode and English, French, or Mandarin at any time.',
     highlight: 'profile',
     tip: 'The more you fill out your profile, the smarter your advisor gets.',
   },
@@ -95,6 +118,8 @@ const NAV_LABELS = {
   favorites: 'Degree Planning',
   courses: 'Courses',
   calendar: 'Calendar',
+  clubs: 'Clubs',
+  forum: 'Forum',
   profile: 'Profile',
 }
 
