@@ -1,9 +1,12 @@
 """
 backend/api/routes/forum.py
+
 Community forum endpoints — posts, replies, and per-user likes.
+
 All endpoints are auth-protected via get_current_user_id().
 Likes use a separate junction table so a user cannot like the same
 post/reply twice (enforced at the DB level by a PRIMARY KEY constraint).
+
 Endpoints:
   GET    /api/forum/posts                   – list posts (filter, sort, paginate)
   POST   /api/forum/posts                   – create a post
@@ -107,6 +110,14 @@ async def list_posts(
     offset:   int            = Query(0,  ge=0),
     current_user_id: str     = Depends(get_current_user_id),
 ):
+    """
+    List forum posts.
+
+    - category: filter by category slug
+    - sort: hot | new | top
+    - search: full-text filter on title + body
+    - limit/offset: pagination
+    """
     if sort not in VALID_SORTS:
         sort = "hot"
 
@@ -127,10 +138,10 @@ async def list_posts(
             q = q.order("created_at", desc=True)
         elif sort == "top":
             q = q.order("like_count", desc=True).order("created_at", desc=True)
-        else:  # hot
+        else:  # hot: like_count + recency hybrid handled in Python below
             q = q.order("created_at", desc=True)
 
-        q = q.limit(limit + offset)
+        q = q.limit(limit + offset)  # fetch enough for offset
         return q.execute().data or []
 
     try:
@@ -139,7 +150,7 @@ async def list_posts(
         logger.error(f"forum list_posts error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch posts")
 
-    # Hot sort: score = like_count * 2 + recency_bonus
+    # Hot sort: score = like_count * 2 + recency_bonus (Python-side for simplicity)
     if sort == "hot":
         import time
         now = time.time()
@@ -161,6 +172,7 @@ async def list_posts(
     if post_ids:
         try:
             supabase = get_supabase()
+            # Supabase doesn't do COUNT per group easily via REST — fetch ids only
             rc_res = (
                 supabase.table("forum_replies")
                 .select("post_id")
@@ -173,6 +185,7 @@ async def list_posts(
         except Exception:
             pass
 
+    # Attach per-user liked status
     liked_ids = _get_liked_post_ids(get_supabase(), current_user_id, post_ids)
 
     for p in posts:
@@ -190,6 +203,7 @@ async def create_post(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Create a new forum post. Auth required."""
     def _run():
         supabase = get_supabase()
         data = {
@@ -227,8 +241,10 @@ async def delete_post(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Delete own forum post."""
     try:
         supabase = get_supabase()
+        # Verify ownership
         existing = supabase.table("forum_posts").select("user_id").eq("id", post_id).execute()
         if not existing.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -251,6 +267,7 @@ async def list_replies(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Fetch all replies for a post, oldest-first."""
     def _run():
         supabase = get_supabase()
         return (
@@ -268,6 +285,7 @@ async def list_replies(
         logger.error(f"forum list_replies error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch replies")
 
+    # Attach per-user liked status
     reply_ids = [r["id"] for r in replies]
     liked_ids = _get_liked_reply_ids(get_supabase(), current_user_id, reply_ids)
     for r in replies:
@@ -285,8 +303,10 @@ async def create_reply(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Add a reply to a post."""
     def _run():
         supabase = get_supabase()
+        # Verify post exists
         post_check = supabase.table("forum_posts").select("id").eq("id", post_id).execute()
         if not post_check.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -324,6 +344,7 @@ async def delete_reply(
     req:      Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Delete own reply."""
     try:
         supabase = get_supabase()
         existing = supabase.table("forum_replies").select("user_id").eq("id", reply_id).execute()
@@ -348,9 +369,14 @@ async def toggle_post_like(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """
+    Toggle like on a post.
+    Returns {liked: bool, like_count: int}.
+    """
     try:
         supabase = get_supabase()
 
+        # Check if already liked
         existing = (
             supabase.table("forum_post_likes")
             .select("user_id")
@@ -363,13 +389,18 @@ async def toggle_post_like(
         if already_liked:
             supabase.table("forum_post_likes").delete() \
                 .eq("user_id", current_user_id).eq("post_id", post_id).execute()
+            # Decrement
             supabase.rpc("decrement_post_like", {"p_post_id": post_id}).execute()
+            delta = -1
         else:
             supabase.table("forum_post_likes").insert(
                 {"user_id": current_user_id, "post_id": post_id}
             ).execute()
+            # Increment — use raw SQL via rpc
             supabase.rpc("increment_post_like", {"p_post_id": post_id}).execute()
+            delta = 1
 
+        # Fetch updated count
         post_res = supabase.table("forum_posts").select("like_count").eq("id", post_id).execute()
         like_count = post_res.data[0]["like_count"] if post_res.data else 0
 
@@ -388,6 +419,7 @@ async def toggle_reply_like(
     req:      Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
+    """Toggle like on a reply."""
     try:
         supabase = get_supabase()
 

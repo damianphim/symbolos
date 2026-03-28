@@ -146,14 +146,14 @@ function ReplyBox({ onSubmit, isSubmitting, onCancel }) {
 
 // ── Post Card ─────────────────────────────────────────────────────
 function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onReplyAdded }) {
-  const [expanded, setExpanded]             = useState(false)
-  const [replies, setReplies]               = useState([])
-  const [repliesLoaded, setRepliesLoaded]   = useState(false)
+  const [expanded, setExpanded]           = useState(false)
+  const [replies, setReplies]             = useState([])
+  const [repliesLoaded, setRepliesLoaded] = useState(false)
   const [loadingReplies, setLoadingReplies] = useState(false)
-  const [showReplyBox, setShowReplyBox]     = useState(false)
-  const [isReplying, setIsReplying]         = useState(false)
-  const [likeCount, setLikeCount]           = useState(post.like_count ?? 0)
-  const [liked, setLiked]                   = useState(post.liked ?? false)
+  const [showReplyBox, setShowReplyBox]   = useState(false)
+  const [isReplying, setIsReplying]       = useState(false)
+  const [likeCount, setLikeCount]         = useState(post.like_count ?? 0)
+  const [liked, setLiked]                 = useState(post.liked ?? false)
 
   const cat   = CATEGORIES.find(c => c.key === post.category) || CATEGORIES[1]
   const isOwn = post.user_id === currentUserId
@@ -324,27 +324,29 @@ function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onRe
 export default function Forum() {
   const { user, profile } = useAuth()
 
-  const [posts, setPosts]                   = useState([])
-  const [loading, setLoading]               = useState(true)
-  const [error, setError]                   = useState(null)
+  const [posts, setPosts]             = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
   const [activeCategory, setActiveCategory] = useState('all')
-  const [sortMode, setSortMode]             = useState('hot')
-  const [search, setSearch]                 = useState('')
+  const [sortMode, setSortMode]       = useState('hot')
+  const [search, setSearch]           = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [showNewPost, setShowNewPost]       = useState(false)
-  const [isPosting, setIsPosting]           = useState(false)
+  const [showNewPost, setShowNewPost] = useState(false)
+  const [isPosting, setIsPosting]     = useState(false)
   const debounceRef = useRef(null)
 
   const myName   = profile?.username || user?.email?.split('@')[0] || 'student'
   const myColor  = '#ed1b2f'
   const myUserId = user?.id
 
+  // Debounce search input
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => setDebouncedSearch(search), 350)
     return () => clearTimeout(debounceRef.current)
   }, [search])
 
+  // Fetch posts whenever filters change
   const fetchPosts = useCallback(async () => {
     setLoading(true)
     setError(null)

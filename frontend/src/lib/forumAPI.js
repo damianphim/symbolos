@@ -1,3 +1,10 @@
+/**
+ * frontend/src/lib/forumAPI.js
+ *
+ * Thin client for /api/forum/* — mirrors the pattern used by
+ * favoritesAPI.js, clubsAPI.js, etc.
+ */
+
 import { BASE_URL } from './apiConfig'
 import { supabase } from './supabase'
 
@@ -23,7 +30,7 @@ const forumAPI = {
       headers: await authHeaders(),
     })
     if (!res.ok) throw new Error('Failed to fetch posts')
-    return res.json()
+    return res.json()   // { posts: [], total: N }
   },
 
   async createPost({ author, avatar_color, category, title, body, tags }) {
@@ -36,7 +43,7 @@ const forumAPI = {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.detail || 'Failed to create post')
     }
-    return res.json()
+    return res.json()   // { post: {...} }
   },
 
   async deletePost(postId) {
@@ -55,7 +62,7 @@ const forumAPI = {
       headers: await authHeaders(),
     })
     if (!res.ok) throw new Error('Failed to fetch replies')
-    return res.json()
+    return res.json()   // { replies: [...] }
   },
 
   async createReply(postId, { author, avatar_color, body }) {
@@ -68,7 +75,7 @@ const forumAPI = {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.detail || 'Failed to create reply')
     }
-    return res.json()
+    return res.json()   // { reply: {...} }
   },
 
   async deleteReply(replyId) {
@@ -88,7 +95,7 @@ const forumAPI = {
       headers: await authHeaders(),
     })
     if (!res.ok) throw new Error('Failed to toggle like')
-    return res.json()
+    return res.json()   // { liked: bool, like_count: N }
   },
 
   async toggleReplyLike(replyId) {
@@ -97,7 +104,7 @@ const forumAPI = {
       headers: await authHeaders(),
     })
     if (!res.ok) throw new Error('Failed to toggle like')
-    return res.json()
+    return res.json()   // { liked: bool, like_count: N }
   },
 }
 
