@@ -43,6 +43,7 @@ class PostCreate(BaseModel):
     title:        str  = Field(..., min_length=1, max_length=120)
     body:         str  = Field(..., min_length=1, max_length=5000)
     tags:         List[str] = Field(default_factory=list)
+    program_info: Optional[str] = Field(None, max_length=200)
 
     @field_validator("category")
     @classmethod
@@ -62,6 +63,7 @@ class ReplyCreate(BaseModel):
     author:       str = Field(..., min_length=1, max_length=80)
     avatar_color: str = Field("#ed1b2f", max_length=20)
     body:         str = Field(..., min_length=1, max_length=2000)
+    program_info: Optional[str] = Field(None, max_length=200)
 
 
 # ── Helper: fetch liked IDs for a user ────────────────────────────────────────
@@ -124,7 +126,7 @@ async def list_posts(
     def _run():
         supabase = get_supabase()
         q = supabase.table("forum_posts").select(
-            "id, user_id, author, avatar_color, category, title, body, tags, like_count, created_at"
+            "id, user_id, author, avatar_color, category, title, body, tags, program_info, like_count, created_at"
         )
 
         if category and category != "all" and category in VALID_CATEGORIES:
@@ -214,6 +216,7 @@ async def create_post(
             "title":        payload.title,
             "body":         payload.body,
             "tags":         payload.tags,
+            "program_info": payload.program_info,
         }
         res = supabase.table("forum_posts").insert(data).execute()
         if not res.data:
@@ -272,7 +275,7 @@ async def list_replies(
         supabase = get_supabase()
         return (
             supabase.table("forum_replies")
-            .select("id, post_id, user_id, author, avatar_color, body, like_count, created_at")
+            .select("id, post_id, user_id, author, avatar_color, body, program_info, like_count, created_at")
             .eq("post_id", post_id)
             .order("created_at", desc=False)
             .execute()
@@ -316,6 +319,7 @@ async def create_reply(
             "author":       payload.author,
             "avatar_color": payload.avatar_color,
             "body":         payload.body,
+            "program_info": payload.program_info,
         }
         res = supabase.table("forum_replies").insert(data).execute()
         if not res.data:

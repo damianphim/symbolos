@@ -850,3 +850,13 @@
     padding: 5px 10px;
   }
 }
+.forum-post-card__program {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #64748b);
+  background: var(--bg-tertiary, #f1f5f9);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}

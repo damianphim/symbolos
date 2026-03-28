@@ -145,7 +145,7 @@ function ReplyBox({ onSubmit, isSubmitting, onCancel }) {
 }
 
 // ── Post Card ─────────────────────────────────────────────────────
-function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onReplyAdded }) {
+function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike, onDelete, onReplyAdded }) {
   const [expanded, setExpanded]           = useState(false)
   const [replies, setReplies]             = useState([])
   const [repliesLoaded, setRepliesLoaded] = useState(false)
@@ -209,7 +209,7 @@ function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onRe
   const handleAddReply = async (text) => {
     setIsReplying(true)
     try {
-      const res = await forumAPI.createReply(post.id, { author: myName, avatar_color: myColor, body: text })
+      const res = await forumAPI.createReply(post.id, { author: myName, avatar_color: myColor, body: text, program_info: myProgramInfo || null })
       setReplies(prev => [...prev, { ...res.reply, liked: false }])
       setRepliesLoaded(true)
       setExpanded(true)
@@ -235,6 +235,7 @@ function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onRe
         <Avatar letter={post.author} color={post.avatar_color} size={36} />
         <div className="forum-post-card__meta">
           <span className="forum-post-card__author">{post.author}</span>
+          {post.program_info && <span className="forum-post-card__program">{post.program_info}</span>}
           <span className="forum-post-card__dot">·</span>
           <span className="forum-post-card__time">{timeAgo(post.created_at)}</span>
         </div>
@@ -288,6 +289,7 @@ function PostCard({ post, currentUserId, myName, myColor, onLike, onDelete, onRe
               <div className="forum-reply__content">
                 <div className="forum-reply__meta">
                   <span className="forum-reply__author">{reply.author}</span>
+                  {reply.program_info && <span className="forum-post-card__program">{reply.program_info}</span>}
                   <span className="forum-reply__time">{timeAgo(reply.created_at)}</span>
                 </div>
                 <p className="forum-reply__text">{reply.body}</p>
@@ -339,6 +341,15 @@ export default function Forum() {
   const myColor  = '#ed1b2f'
   const myUserId = user?.id
 
+  // Privacy settings (read from localStorage, same keys Settings.jsx writes)
+  const isPublic     = (localStorage.getItem('profileVisibility') || 'private') === 'public'
+  const shareProgram = JSON.parse(localStorage.getItem('shareProgress') ?? 'false')
+  const myAuthor     = isPublic ? myName : 'Anonymous'
+  const myProgramInfo = shareProgram && profile
+    ? [profile.year ? `U${profile.year}` : null, profile.faculty || null, profile.major || null]
+        .filter(Boolean).join(' · ') || null
+    : null
+
   // Debounce search input
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -387,7 +398,7 @@ export default function Forum() {
   const handleCreatePost = async ({ title, body, category, tags }) => {
     setIsPosting(true)
     try {
-      const data = await forumAPI.createPost({ author: myName, avatar_color: myColor, category, title, body, tags })
+      const data = await forumAPI.createPost({ author: myAuthor, avatar_color: myColor, category, title, body, tags, program_info: myProgramInfo || null })
       setPosts(prev => [{ ...data.post, reply_count: 0, liked: false }, ...prev])
       setShowNewPost(false)
     } catch (err) { console.error('Create post failed:', err) }
@@ -467,7 +478,8 @@ export default function Forum() {
         <div className="forum-posts">
           {posts.map(post => (
             <PostCard key={post.id} post={post}
-              currentUserId={myUserId} myName={myName} myColor={myColor}
+              currentUserId={myUserId} myName={myAuthor} myColor={myColor}
+              myProgramInfo={myProgramInfo}
               onLike={handleLike} onDelete={handleDelete} onReplyAdded={handleReplyAdded} />
           ))}
         </div>

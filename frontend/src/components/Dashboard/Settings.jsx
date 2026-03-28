@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  FaCog, FaPalette, FaBell, FaLock, FaBolt,
+  FaCog, FaPalette, FaBell, FaLock, FaBolt, FaGlobe,
   FaSun, FaMoon, FaSyncAlt, FaDownload,
   FaEnvelope, FaGraduationCap, FaUsers, FaUser, FaCheck,
   FaTrash, FaExclamationTriangle, FaClipboardList,
@@ -428,16 +428,23 @@ export default function Settings({ user, profile, onUpdateSettings }) {
                 <label className="setting-label">{t('settings.profileVisibility')}</label>
                 <p className="setting-description">{t('settings.profileVisibilityDesc')}</p>
               </div>
-              <select className="setting-select" value={settings.profileVisibility} onChange={e => handleSelect('profileVisibility', e.target.value)}>
-                <option value="private">{t('settings.private')}</option>
-                <option value="friends">{t('settings.friendsOnly')}</option>
-                <option value="public">{t('settings.public')}</option>
-              </select>
+              <div className="clubs-visibility-toggle">
+                <button type="button"
+                  className={`clubs-visibility-option${settings.profileVisibility === 'public' ? ' active' : ''}`}
+                  onClick={() => handleSelect('profileVisibility', 'public')}>
+                  <FaGlobe size={12} /> {t('settings.public')}
+                </button>
+                <button type="button"
+                  className={`clubs-visibility-option${settings.profileVisibility !== 'public' ? ' active' : ''}`}
+                  onClick={() => handleSelect('profileVisibility', 'private')}>
+                  <FaLock size={11} /> {t('settings.private')}
+                </button>
+              </div>
             </div>
             <div className="setting-item">
               <div className="setting-info">
-                <label className="setting-label">{t('settings.shareProgress')}</label>
-                <p className="setting-description">{t('settings.shareProgressDesc')}</p>
+                <label className="setting-label">{t('settings.shareYearAndProgram')}</label>
+                <p className="setting-description">{t('settings.shareYearAndProgramDesc')}</p>
               </div>
               <label className="toggle-switch">
                 <input type="checkbox" checked={settings.shareProgress} onChange={() => handleSelect('shareProgress', !settings.shareProgress)} />
