@@ -920,6 +920,11 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
                 <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
               </div>
               <div className="clubs-field">
+                <label>{t('clubs.fieldExecutiveEmails')}</label>
+                <input value={editForm.executive_emails} onChange={e => setEditForm(f => ({ ...f, executive_emails: e.target.value }))} placeholder="exec1@mail.mcgill.ca, exec2@mail.mcgill.ca" />
+                <span className="clubs-field-hint">{t('clubs.fieldExecutiveEmailsHint')}</span>
+              </div>
+              <div className="clubs-field">
                 <label>{t('clubs.fieldVisibility')}</label>
                 <div className="clubs-visibility-toggle">
                   <button type="button" className={`clubs-visibility-option ${!editForm.is_private ? 'active' : ''}`} onClick={() => setEditForm(f => ({ ...f, is_private: false }))}>

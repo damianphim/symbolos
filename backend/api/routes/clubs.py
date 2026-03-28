@@ -94,6 +94,7 @@ class UpdateClubRequest(BaseModel):
     meeting_schedule:  Optional[str]  = Field(None, max_length=300)
     location:          Optional[str]  = Field(None, max_length=200)
     is_private:        Optional[bool] = None
+    executive_emails:  Optional[str]  = Field(None, max_length=500)
     join_instructions: Optional[str]  = Field(None, max_length=2000)
     application_url:   Optional[str]  = None
 
