@@ -407,16 +407,12 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
-  const isPrivate = club.is_private ?? false
 
   const handleJoin = async (e) => {
     e.stopPropagation()
     await onJoin(club.id)
-    // Don't flash "joined" animation for private clubs (modal opens instead)
-    if (!isPrivate) {
-      setJustJoined(true)
-      setTimeout(() => setJustJoined(false), 2500)
-    }
+    setJustJoined(true)
+    setTimeout(() => setJustJoined(false), 2500)
   }
 
   return (
@@ -429,11 +425,6 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
             <h3 className="club-card__name">{club.name}</h3>
             <div className="club-card__badges">
               <CategoryBadge category={club.category} t={t} />
-              {isPrivate && (
-                <span className="club-visibility-badge club-visibility-badge--private">
-                  <FaLock size={9} /> {t('clubs.private')}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -587,21 +578,10 @@ function CreatedClubRow({ club, onEdit, onManage, onManageRequests, onOpen, pend
       <div className="my-club-row__info">
         <span className="my-club-row__name">{club.name}</span>
         <CategoryBadge category={club.category} t={t} />
-        {club.is_private && (
-          <span className="club-visibility-badge club-visibility-badge--private">
-            <FaLock size={9} /> {t('clubs.private')}
-          </span>
-        )}
       </div>
       <div className="my-club-row__right" onClick={e => e.stopPropagation()}>
         {club.member_count != null && (
           <span className="my-club-row__schedule"><FaUsers size={10} /> {club.member_count} {t('clubs.members').toLowerCase()}</span>
-        )}
-        {club.is_private && (
-          <button className="club-manage-requests-btn" onClick={() => onManageRequests(club)}>
-            <FaUserPlus size={10} /> {t('clubs.requests')}
-            {pendingCount > 0 && <span className="club-request-badge">{pendingCount}</span>}
-          </button>
         )}
         <button className="club-edit-btn club-edit-btn--manage" onClick={() => onManage(club)}>
           <FaCog size={10} /> {t('clubs.manage.btn')}
@@ -1331,24 +1311,13 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
             <div className="clubs-field">
               <label>{t('clubs.fieldVisibility')}</label>
               <div className="clubs-visibility-toggle">
-                <button
-                  type="button"
-                  className={`clubs-visibility-option ${!form.is_private ? 'active' : ''}`}
-                  onClick={() => set('is_private')(false)}
-                >
+                <button type="button" className={`clubs-visibility-option ${!form.is_private ? 'active' : ''}`} onClick={() => set('is_private')(false)}>
                   <FaGlobe size={12} /> {t('clubs.visibilityPublic')}
                 </button>
-                <button
-                  type="button"
-                  className={`clubs-visibility-option ${form.is_private ? 'active' : ''}`}
-                  onClick={() => set('is_private')(true)}
-                >
+                <button type="button" className={`clubs-visibility-option ${form.is_private ? 'active' : ''}`} onClick={() => set('is_private')(true)}>
                   <FaLock size={11} /> {t('clubs.visibilityPrivate')}
                 </button>
               </div>
-              <span className="clubs-field-hint">
-                {form.is_private ? t('clubs.visibilityPrivateHint') : t('clubs.visibilityPublicHint')}
-              </span>
             </div>
             <div className="clubs-modal__footer">
               <button type="button" className="club-action-btn club-action-btn--ghost" onClick={onClose}>{t('clubs.cancel')}</button>

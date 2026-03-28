@@ -1715,6 +1715,10 @@ async def admin_email_action(token: str):
             }
             if submission.get("executive_emails"):
                 club_data["executive_emails"] = submission["executive_emails"]
+            if submission.get("application_url"):
+                club_data["application_url"] = submission["application_url"]
+            if submission.get("join_instructions"):
+                club_data["join_instructions"] = submission["join_instructions"]
             logger.info(f"Inserting club: {club_data}")
             club_result = supabase.table("clubs").insert(club_data).execute()
             new_club = club_result.data[0] if club_result.data else None
@@ -1758,6 +1762,6 @@ async def admin_email_action(token: str):
         logger.exception(f"Error processing email action: {e}")
         return HTMLResponse(_action_result_html(
             "Error",
-            "Something went wrong processing this action. Please try again.",
+            f"Something went wrong: {e}",
             False,
         ))
