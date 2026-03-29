@@ -432,6 +432,7 @@ def _get_stored_cards_language(user_id: str) -> str | None:
         resp = supabase.auth.admin.get_user_by_id(user_id)
         meta = (resp.user.user_metadata or {}) if resp.user else {}
         lang = meta.get("cards_language")
+        # Only return a recognised language code — empty string or anything else → None
         return lang if lang in ("en", "fr", "zh") else None
     except Exception:
         return None
@@ -549,6 +550,11 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
+        # Clear the stored language BEFORE generation so that if the AI call
+        # fails or produces the wrong language, the metadata is null rather
+        # than falsely claiming the new language — forcing a fresh retranslation
+        # on next load instead of silently showing wrong-language cards forever.
+        _set_stored_cards_language(user_id, "")
         ctx = fetch_student_context(user_id)
         # Don't include saved_cards — they may be in a different language
         # which would influence the model to respond in that language instead.

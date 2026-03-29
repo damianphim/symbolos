@@ -267,11 +267,12 @@ SITE FEATURES & NAVIGATION:
 - Profile/Settings is for editing your academic info, theme, and language
 """
 
-    lang_instruction = ""
     if language == "fr":
         lang_instruction = "\n\nIMPORTANT: The student's interface is in French. Respond entirely in French."
     elif language == "zh":
         lang_instruction = "\n\nIMPORTANT: The student's interface is in Chinese. Respond entirely in Simplified Chinese (Mandarin), except for course codes and proper nouns."
+    else:
+        lang_instruction = "\n\nIMPORTANT: The student's interface is in English. Respond entirely in English, even if their course names or calendar events are in another language."
 
     tab_context = TAB_GUIDANCE.get(current_tab, "") if current_tab else ""
     site_knowledge = SITE_KNOWLEDGE
