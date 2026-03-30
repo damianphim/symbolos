@@ -184,7 +184,6 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
       {legalModal === 'privacy' && <PrivacyPolicy onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
       {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
-
       {/* ── Corner controls ── */}
       <div className="auth-corner-controls">
         <button
@@ -237,7 +236,6 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
               </li>
             ))}
           </ul>
-
           {/* Legal links on branding panel (visible on desktop) */}
           <div className="auth-branding-legal">
             <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('about')}>About</button>
@@ -524,14 +522,14 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                     </button>
                   </p>
                 )}
-                {/* Legal links — shown on mobile (branding panel is hidden) */}
-                <div className="auth-legal-links">
-                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>About</button>
-                  <span className="auth-legal-sep">·</span>
-                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
-                  <span className="auth-legal-sep">·</span>
-                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
-                </div>
+              </div>
+              {/* Legal links — shown on mobile (branding panel is hidden) */}
+              <div className="auth-legal-links">
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>About</button>
+                <span className="auth-legal-sep">·</span>
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+                <span className="auth-legal-sep">·</span>
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
               </div>
             </>
           )}

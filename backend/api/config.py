@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # ── Database ─────────────────────────────────────────────────────────
     SUPABASE_URL: str
     SUPABASE_SERVICE_KEY: str
+    SUPABASE_ANON_KEY: str = ""  # Public anon key — safe to expose; RLS enforces access
 
     # ── Notifications ──────────────────────────────────────────────
     RESEND_API_KEY: str = ""
@@ -160,6 +161,15 @@ class Settings(BaseSettings):
                 "SEC-024: DEBUG=true is not allowed in production — forcing DEBUG=false"
             )
             self.DEBUG = False
+
+        # SEC-026: ADMIN_EMAILS must be set in production — without it, forum
+        # reports, club submissions, and other admin notifications fail silently.
+        if self.ENVIRONMENT == "production" and not self.ADMIN_EMAILS.strip():
+            raise ValueError(
+                "ADMIN_EMAILS must be set in production. "
+                "Add a comma-separated list of admin email addresses to your environment variables."
+            )
+
         return self
 
     model_config = SettingsConfigDict(

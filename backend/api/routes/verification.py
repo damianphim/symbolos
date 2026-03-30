@@ -1,8 +1,5 @@
 """
-backend/api/routes/verification.py
-
 Email verification via Resend — bypasses Supabase's rate-limited built-in mailer.
-FIX: Updated email template to use correct brand color (#ED1B2F) and improved styling.
 
 Endpoints:
   POST /api/auth/send-verification  — generate token, store in DB, send Resend email
@@ -64,7 +61,6 @@ async def send_verification(req: SendVerificationRequest):
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);border-radius:12px 12px 0 0;padding:24px 32px;">
           <table width="100%" cellpadding="0" cellspacing="0">
@@ -78,7 +74,6 @@ async def send_verification(req: SendVerificationRequest):
             </tr>
           </table>
         </td></tr>
-
         <!-- Body -->
         <tr><td style="background:#ffffff;padding:36px 32px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
           <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 12px;">Verify your email address</h1>
@@ -88,7 +83,6 @@ async def send_verification(req: SendVerificationRequest):
           <p style="font-size:15px;color:#4b5563;margin:0 0 28px;line-height:1.65;">
             Click the button below to confirm your email address and activate your account.
           </p>
-
           <div style="text-align:center;margin-bottom:28px;">
             <a href="{verify_url}"
                style="display:inline-block;background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);
@@ -98,7 +92,6 @@ async def send_verification(req: SendVerificationRequest):
               Verify email address →
             </a>
           </div>
-
           <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:24px;">
             <p style="font-size:12px;color:#6b7280;margin:0;line-height:1.6;">
               🔒 This link expires in <strong>{TOKEN_TTL_HOURS} hours</strong> and can only be used once.<br>
@@ -106,12 +99,10 @@ async def send_verification(req: SendVerificationRequest):
               <span style="word-break:break-all;color:#ED1B2F;font-size:11px;">{verify_url}</span>
             </p>
           </div>
-
           <p style="font-size:13px;color:#9ca3af;margin:0;line-height:1.6;">
             If you didn't create a Symbolos account, you can safely ignore this email — no action is needed.
           </p>
         </td></tr>
-
         <!-- Footer -->
         <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 32px;text-align:center;">
           <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.7;">
@@ -121,7 +112,6 @@ async def send_verification(req: SendVerificationRequest):
             <a href="https://symbolos.ca/terms" style="color:#9ca3af;">Terms of Service</a>
           </p>
         </td></tr>
-
       </table>
     </td></tr>
   </table>

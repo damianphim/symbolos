@@ -23,7 +23,7 @@ from api.exceptions import (
     DatabaseException
 )
 from ..config import settings
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -165,7 +165,7 @@ class UserUpdate(BaseModel):
 
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_new_user(user: UserCreate, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def create_new_user(user: UserCreate, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     """Create a new user profile"""
     # FIX F-03: Ensure the authenticated user can only create their own profile
     require_self(current_user_id, user.id)
@@ -206,7 +206,7 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
 
 
 @router.get("/{user_id}", response_model=dict)
-async def get_user(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def get_user(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """
     Get user profile by ID
@@ -234,7 +234,7 @@ async def get_user(user_id: str, req: Request, current_user_id: str = Depends(ge
 
 
 @router.patch("/{user_id}", response_model=dict)
-async def update_user(user_id: str, updates: UserUpdate, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def update_user(user_id: str, updates: UserUpdate, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """
     Update user profile

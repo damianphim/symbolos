@@ -12,7 +12,7 @@ from datetime import datetime
 from ..config import settings
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -108,12 +108,11 @@ def _validate_course_data(course: CompletedCourse) -> CompletedCourse:
     return course
 
 
-async def _check_duplicate(user_id: str, course_code: str) -> bool:
+async def _check_duplicate(user_id: str, course_code: str, user_sb) -> bool:
     """Return True if the user already has this course marked complete."""
     try:
-        supabase = get_supabase()
         response = (
-            supabase.table("completed_courses")
+            user_sb.table("completed_courses")
             .select("id")
             .eq("user_id", user_id)
             .eq("course_code", course_code)
@@ -129,6 +128,7 @@ async def get_completed_courses(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
     limit: int = Query(default=50, ge=1, le=200),
     cursor: Optional[str] = Query(None),
 ):
@@ -136,9 +136,8 @@ async def get_completed_courses(
     _validate_user_exists(user_id)
 
     try:
-        supabase = get_supabase()
         query = (
-            supabase.table("completed_courses")
+            user_sb.table("completed_courses")
             .select("*")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
@@ -169,19 +168,18 @@ async def get_completed_courses(
 
 
 @router.post("/{user_id}", response_model=dict)
-async def add_completed_course(user_id: str, course: CompletedCourse, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def add_completed_course(user_id: str, course: CompletedCourse, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course = _validate_course_data(course)
 
-    if await _check_duplicate(user_id, course.course_code):
+    if await _check_duplicate(user_id, course.course_code, user_sb):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Course {course.course_code} is already marked as completed",
         )
 
     try:
-        supabase = get_supabase()
         data = {
             "user_id": user_id,
             "course_code": course.course_code,
@@ -194,7 +192,7 @@ async def add_completed_course(user_id: str, course: CompletedCourse, req: Reque
             "credits": course.credits,
         }
 
-        response = supabase.table("completed_courses").insert(data).execute()
+        response = user_sb.table("completed_courses").insert(data).execute()
 
         if not response.data:
             raise DatabaseException("add_completed", "No data returned")
@@ -223,7 +221,8 @@ async def add_completed_course(user_id: str, course: CompletedCourse, req: Reque
 @router.patch("/{user_id}/{course_code}", response_model=dict)
 async def update_completed_course(
     user_id: str, course_code: str, updates: CompletedCourseUpdate,
-    req: Request, current_user_id: str = Depends(get_current_user_id)
+    req: Request, current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
 ):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
@@ -242,7 +241,6 @@ async def update_completed_course(
         )
 
     try:
-        supabase = get_supabase()
         update_data = {
             k: v for k, v in updates.model_dump().items() if v is not None
         }
@@ -254,7 +252,7 @@ async def update_completed_course(
             )
 
         response = (
-            supabase.table("completed_courses")
+            user_sb.table("completed_courses")
             .update(update_data)
             .eq("user_id", user_id)
             .eq("course_code", course_code)
@@ -282,14 +280,13 @@ async def update_completed_course(
 
 
 @router.delete("/{user_id}/{course_code}", response_model=dict)
-async def remove_completed_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def remove_completed_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course_code = normalize_course_code(course_code)
 
     try:
-        supabase = get_supabase()
-        supabase.table("completed_courses").delete().eq(
+        user_sb.table("completed_courses").delete().eq(
             "user_id", user_id
         ).eq("course_code", course_code).execute()
 

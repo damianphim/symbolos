@@ -14,8 +14,9 @@ SEC-012: Log only exception type, not full message, to avoid leaking
 """
 import logging
 from fastapi import HTTPException, Request, status
+from supabase import Client
 
-from .utils.supabase_client import get_supabase
+from .utils.supabase_client import get_supabase, get_user_supabase
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,30 @@ async def get_current_user_id(request: Request) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token verification failed",
         )
+
+
+async def get_current_jwt(request: Request) -> str:
+    """
+    FastAPI dependency: extract and return the raw Bearer JWT.
+    Use alongside get_current_user_id when you need both the user ID
+    and a user-scoped Supabase client.
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid Authorization header")
+    token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Empty Bearer token")
+    return token
+
+
+async def get_user_db(request: Request) -> Client:
+    """
+    FastAPI dependency: returns a user-scoped Supabase client.
+    Queries through this client enforce Row Level Security.
+    """
+    jwt = await get_current_jwt(request)
+    return get_user_supabase(jwt)
 
 
 def require_self(current_user_id: str, user_id: str) -> None:

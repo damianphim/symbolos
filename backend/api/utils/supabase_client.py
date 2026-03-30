@@ -108,6 +108,23 @@ def get_supabase() -> Client:
     return _supabase_client
 
 
+def get_user_supabase(jwt: str) -> Client:
+    """
+    Create a per-request Supabase client authenticated with the user's JWT.
+    Queries through this client respect Row Level Security — users can only
+    read/write their own rows. Use this for ALL user-data queries.
+    Use get_supabase() (service role) only for auth.admin.* and cron operations.
+    """
+    client = create_client(
+        settings.SUPABASE_URL,
+        settings.SUPABASE_ANON_KEY or settings.SUPABASE_SERVICE_KEY,  # fallback until anon key is configured
+    )
+    # Set the user's JWT so PostgREST enforces RLS via auth.uid()
+    client.postgrest.auth(jwt)
+    _force_http1(client)
+    return client
+
+
 def with_retry(operation: str, fn: Callable[[], T]) -> T:
     """
     Execute fn(), retrying up to MAX_RETRIES times on disconnect errors.

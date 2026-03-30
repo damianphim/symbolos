@@ -11,7 +11,7 @@ import logging
 
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 from .admin import verify_admin_token
 
 router = APIRouter()
@@ -49,6 +49,7 @@ async def submit_suggestion(
     suggestion: ProfSuggestion,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
 ):
     """Submit a professor name correction. Auth required; user can only submit for themselves."""
     require_self(current_user_id, suggestion.user_id)
@@ -59,11 +60,9 @@ async def submit_suggestion(
         except UserNotFoundException:
             raise HTTPException(status_code=404, detail="User not found")
 
-        supabase = get_supabase()
-
         # Prevent duplicate pending suggestions from same user for same course
         existing = (
-            supabase.table("prof_suggestions")
+            user_sb.table("prof_suggestions")
             .select("id")
             .eq("user_id", suggestion.user_id)
             .eq("course_code", suggestion.course_code.upper())
@@ -84,7 +83,7 @@ async def submit_suggestion(
             "status": "pending",
         }
 
-        response = supabase.table("prof_suggestions").insert(data).execute()
+        response = user_sb.table("prof_suggestions").insert(data).execute()
 
         if not response.data:
             raise HTTPException(status_code=500, detail="Failed to save suggestion")

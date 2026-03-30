@@ -5,11 +5,6 @@ SEC-003: Sanitise stored profile data in fallback context builder.
 SEC-005: Replaced local injection filter with shared sanitise module
          (stronger patterns, l33tspeak, French, semantic rephrasing).
 
-LANG FIX: Replaced weak "IMPORTANT" language instruction with a unified
-          _lang_instruction() helper using "CRITICAL" wording — matching
-          cards.py exactly. Prevents Claude from drifting into English when
-          student profile data contains English course names/titles.
-
 CONTEXT FIX (v3):
   Problem 1 — build_system_context() re-fetched favorites/completed/current/calendar
   from Supabase on EVERY message, adding 4-5 DB queries per chat turn.
@@ -46,7 +41,7 @@ from api.utils.supabase_client import (
 )
 from api.config import settings
 from api.exceptions import UserNotFoundException, DatabaseException
-from api.auth import get_current_user_id, require_self
+from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 
 router = APIRouter()
@@ -133,13 +128,11 @@ class ChatResponse(BaseModel):
 
 
 # ── Language instruction helper ────────────────────────────────────────────────
-
 def _lang_instruction(language: str) -> str:
     """
     Returns a strong, CRITICAL-level language instruction.
     Appended LAST in the system prompt so it overrides any language drift
     caused by English course data/titles in the student profile.
-
     Uses the same wording as cards.py for consistency — previously this
     function used the weaker "IMPORTANT:" prefix which Claude would often
     ignore when surrounded by extensive English course data.
@@ -343,16 +336,17 @@ Their question almost certainly relates to it — keep it in mind throughout:
     return base + card_section + tab_context + site_knowledge + lang_instruction
 
 
-def _build_base_context(user: dict) -> str:
+def _build_base_context(user: dict, user_sb=None) -> str:
     """
     Fetches all student data from Supabase and builds the base system prompt.
     Called at most once per 5 minutes per user — result is cached.
+    user_sb: optional user-scoped client; falls back to service role if not provided.
     """
     from api.utils.supabase_client import get_supabase
     from datetime import datetime, timezone
 
     try:
-        supabase = get_supabase()
+        supabase = user_sb if user_sb is not None else get_supabase()
         user_id = user.get("id", "")
 
         favorites = (supabase.table("favorites")
@@ -548,6 +542,7 @@ async def send_message(
     request: ChatRequest,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
 ):
     """
     Send a chat message and get an AI response.
@@ -631,6 +626,7 @@ async def get_history(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
     session_id: Optional[str] = Query(None),
     limit: int = Query(default=50, ge=1, le=200),
 ):
@@ -651,6 +647,7 @@ async def get_sessions(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
     limit: int = Query(default=20, ge=1, le=100),
 ):
     require_self(current_user_id, user_id)
@@ -671,6 +668,7 @@ async def clear_session(
     session_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
 ):
     require_self(current_user_id, user_id)
     try:
@@ -693,6 +691,7 @@ async def clear_history(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
 ):
     require_self(current_user_id, user_id)
     try:

@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { FaExclamationTriangle } from 'react-icons/fa'
 import './ErrorBoundary.css'
 
 class ErrorBoundary extends Component {
@@ -38,7 +39,7 @@ class ErrorBoundary extends Component {
       return (
         <div className="error-boundary">
           <div className="error-container">
-            <div className="error-icon">⚠️</div>
+            <div className="error-icon"><FaExclamationTriangle /></div>
             <h1 className="error-title">Oops! Something went wrong</h1>
             <p className="error-message">
               We're sorry, but something unexpected happened. Don't worry, your data is safe.

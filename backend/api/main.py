@@ -14,6 +14,8 @@ from contextlib import asynccontextmanager
 import time
 import uuid
 import logging
+import base64
+import json as _json
 from datetime import datetime, timezone, timedelta
 
 
@@ -53,6 +55,12 @@ def _validate_startup():
 
     if not settings.SUPABASE_SERVICE_KEY:
         errors.append("SUPABASE_SERVICE_KEY is not set")
+
+    if not settings.SUPABASE_ANON_KEY:
+        logger.warning(
+            "SUPABASE_ANON_KEY is not set — user-scoped queries will fall back to service role key. "
+            "Set SUPABASE_ANON_KEY to enable Row Level Security enforcement."
+        )
 
     if errors:
         for err in errors:
@@ -279,6 +287,33 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _get_user_id_from_token(request: Request) -> str | None:
+    """
+    Extract the user ID (sub claim) from the Bearer JWT without full verification.
+    Auth middleware handles cryptographic verification — this is used ONLY to key
+    per-user rate limit buckets so a shared corporate IP doesn't exhaust one limit
+    for all users, and so a single user can't bypass limits by rotating IPs.
+    """
+    auth = request.headers.get("authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:]
+    try:
+        parts = token.split(".")
+        if len(parts) < 2:
+            return None
+        # JWT payload is base64url-encoded — add padding if needed
+        payload_b64 = parts[1]
+        rem = len(payload_b64) % 4
+        if rem:
+            payload_b64 += "=" * (4 - rem)
+        payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
+        sub = payload.get("sub")
+        return str(sub) if sub else None
+    except Exception:
+        return None
+
+
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = _get_client_ip(request)
@@ -292,7 +327,8 @@ async def rate_limit_middleware(request: Request, call_next):
     # Stricter limit for chat (AI calls are expensive)
     rpm = settings.CHAT_RATE_LIMIT_PER_MINUTE if "/chat" in normalised_path else settings.RATE_LIMIT_PER_MINUTE
 
-    if not _limiter.is_allowed(f"{client_ip}:{normalised_path}", rpm):
+    # ── IP-based check (covers unauthenticated requests + shared-IP DoS) ──────
+    if not _limiter.is_allowed(f"ip:{client_ip}:{normalised_path}", rpm):
         return JSONResponse(
             status_code=429,
             content={
@@ -300,6 +336,20 @@ async def rate_limit_middleware(request: Request, call_next):
                 "details": {"retry_after": 60},
             },
         )
+
+    # ── Per-user check (prevents single user from exhausting the IP bucket) ───
+    # Authenticated routes only — unauthenticated requests have no user ID.
+    user_id = _get_user_id_from_token(request)
+    if user_id:
+        user_rpm = max(rpm // 2, 10)  # per-user limit is half the IP limit, min 10
+        if not _limiter.is_allowed(f"user:{user_id}:{normalised_path}", user_rpm):
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "Too many requests. Please try again later.",
+                    "details": {"retry_after": 60},
+                },
+            )
 
     return await call_next(request)
 

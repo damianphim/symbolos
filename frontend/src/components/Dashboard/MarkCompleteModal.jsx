@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FaTimes } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './MarkCompleteModal.css'
 
@@ -35,7 +36,7 @@ export default function MarkCompleteModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{t('modal.markComplete')}</h2>
-          <button className="modal-close" onClick={onCancel}>✕</button>
+          <button className="modal-close" onClick={onCancel}><FaTimes /></button>
         </div>
 
         <div className="modal-body">

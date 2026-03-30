@@ -10,7 +10,7 @@ import re
 
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -41,13 +41,12 @@ class CurrentCourse(BaseModel):
 
 
 @router.get("/{user_id}")
-async def get_current_courses(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def get_current_courses(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     try:
-        supabase = get_supabase()
         response = (
-            supabase.table("current_courses")
+            user_sb.table("current_courses")
             .select("*")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
@@ -62,7 +61,7 @@ async def get_current_courses(user_id: str, req: Request, current_user_id: str =
 
 
 @router.post("/{user_id}")
-async def add_current_course(user_id: str, course: CurrentCourse, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def add_current_course(user_id: str, course: CurrentCourse, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course.course_code = normalize_course_code(course.course_code)
@@ -72,9 +71,8 @@ async def add_current_course(user_id: str, course: CurrentCourse, req: Request, 
 
     # Check duplicate
     try:
-        supabase = get_supabase()
         existing = (
-            supabase.table("current_courses")
+            user_sb.table("current_courses")
             .select("id")
             .eq("user_id", user_id)
             .eq("course_code", course.course_code)
@@ -91,7 +89,7 @@ async def add_current_course(user_id: str, course: CurrentCourse, req: Request, 
             "catalog": course.catalog,
             "credits": course.credits,
         }
-        response = supabase.table("current_courses").insert(data).execute()
+        response = user_sb.table("current_courses").insert(data).execute()
         if not response.data:
             raise DatabaseException("add_current", "No data returned")
 
@@ -104,13 +102,12 @@ async def add_current_course(user_id: str, course: CurrentCourse, req: Request, 
 
 
 @router.delete("/{user_id}/{course_code}")
-async def remove_current_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def remove_current_course(user_id: str, course_code: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     _validate_user_exists(user_id)
     course_code = normalize_course_code(course_code)
     try:
-        supabase = get_supabase()
-        supabase.table("current_courses").delete().eq("user_id", user_id).eq("course_code", course_code).execute()
+        user_sb.table("current_courses").delete().eq("user_id", user_id).eq("course_code", course_code).execute()
         return {"message": "Course removed", "course_code": course_code}
     except Exception as e:
         logger.exception(f"Error removing current course: {e}")

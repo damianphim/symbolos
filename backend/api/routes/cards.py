@@ -28,7 +28,7 @@ from typing import List, Optional
 from api.utils.supabase_client import get_supabase, get_user_by_id
 from api.config import settings
 from api.exceptions import UserNotFoundException
-from api.auth import get_current_user_id, require_self
+from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 
 router = APIRouter()
@@ -112,26 +112,31 @@ class ReorderRequest(BaseModel):
     order: List[CardOrder] = Field(..., max_length=50)
 
 
-def fetch_student_context(user_id: str) -> dict:
-    supabase = get_supabase()
+def fetch_student_context(user_id: str, user_sb=None) -> dict:
+    """
+    Fetch all student data needed for card generation.
+    user_sb: pass a user-scoped Supabase client to enforce RLS on all queries.
+             Falls back to service role if not provided (e.g. from cron/admin).
+    """
+    sb = user_sb if user_sb is not None else get_supabase()
     user = get_user_by_id(user_id)
 
-    favorites = (supabase.table("favorites")
+    favorites = (sb.table("favorites")
         .select("course_code, course_title, subject, catalog")
         .eq("user_id", user_id).order("created_at", desc=True).limit(30)
         .execute().data or [])
 
-    completed = (supabase.table("completed_courses")
+    completed = (sb.table("completed_courses")
         .select("course_code, course_title, subject, catalog, term, year, grade, credits")
         .eq("user_id", user_id).order("year", desc=True).limit(50)
         .execute().data or [])
 
-    current = (supabase.table("current_courses")
+    current = (sb.table("current_courses")
         .select("course_code, course_title, subject, catalog, credits")
         .eq("user_id", user_id).execute().data or [])
 
     today = datetime.now(timezone.utc).date().isoformat()
-    calendar = (supabase.table("calendar_events")
+    calendar = (sb.table("calendar_events")
         .select("title, date, time, type, description")
         .eq("user_id", user_id).gte("date", today)
         .order("date", desc=False).limit(20)
@@ -139,12 +144,12 @@ def fetch_student_context(user_id: str) -> dict:
 
     joined_clubs, created_clubs = [], []
     try:
-        r = supabase.table("user_clubs").select("clubs(name, category, meeting_schedule)").eq("user_id", user_id).execute()
+        r = sb.table("user_clubs").select("clubs(name, category, meeting_schedule)").eq("user_id", user_id).execute()
         joined_clubs = [x.get("clubs", {}).get("name", "Unknown") for x in (r.data or []) if x.get("clubs")]
     except Exception:
         pass
     try:
-        r = supabase.table("clubs").select("name, category, member_count, is_private").eq("created_by", user_id).execute()
+        r = sb.table("clubs").select("name, category, member_count, is_private").eq("created_by", user_id).execute()
         created_clubs = r.data or []
     except Exception:
         pass
@@ -154,9 +159,9 @@ def fetch_student_context(user_id: str) -> dict:
             "joined_clubs": joined_clubs, "created_clubs": created_clubs}
 
 
-def fetch_saved_cards(user_id: str) -> list:
-    supabase = get_supabase()
-    return (supabase.table("advisor_cards")
+def fetch_saved_cards(user_id: str, user_sb=None) -> list:
+    sb = user_sb if user_sb is not None else get_supabase()
+    return (sb.table("advisor_cards")
         .select("title, body, category").eq("user_id", user_id).eq("is_saved", True)
         .execute().data or [])
 
@@ -450,14 +455,14 @@ def _set_stored_cards_language(user_id: str, language: str) -> None:
         logger.warning(f"Could not persist cards language for {user_id}: {e}")
 
 
-def _fetch_cards_response(user_id: str, confirmed_language: str | None = None) -> dict:
+def _fetch_cards_response(user_id: str, confirmed_language: str | None = None, user_sb=None) -> dict:
     """
     confirmed_language: pass the language when cards were just generated/retranslated.
     When None, reads the previously persisted language from user metadata.
     """
     get_user_by_id(user_id)
-    supabase = get_supabase()
-    resp = (supabase.table("advisor_cards").select("*")
+    sb = user_sb if user_sb is not None else get_supabase()
+    resp = (sb.table("advisor_cards").select("*")
         .eq("user_id", user_id).order("sort_order", desc=False).execute())
     cards = resp.data or []
     for card in cards:
@@ -475,10 +480,10 @@ def _fetch_cards_response(user_id: str, confirmed_language: str | None = None) -
 
 
 @router.get("/{user_id}", response_model=dict)
-async def get_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def get_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     try:
-        return _fetch_cards_response(user_id)
+        return _fetch_cards_response(user_id, user_sb=user_sb)
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
     except Exception as e:
@@ -487,7 +492,7 @@ async def get_cards(user_id: str, req: Request, current_user_id: str = Depends(g
 
 
 @router.post("/generate/{user_id}", response_model=dict)
-async def generate_cards(user_id: str, request: GenerateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def generate_cards(user_id: str, request: GenerateRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """
     Generate AI cards.
@@ -500,17 +505,17 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
             logger.info(f"Cards already fresh for {user_id}, skipping generation")
             # confirmed_language=None: we don't know what language these cached cards are in.
             # The frontend will check and retranslate if needed.
-            return _fetch_cards_response(user_id, confirmed_language=None)
+            return _fetch_cards_response(user_id, confirmed_language=None, user_sb=user_sb)
 
         # Rate limit: max 2 forced regenerations per week
         if request.force:
             gen_count = _count_generations_this_week(user_id)
             if gen_count >= 2:
                 logger.info(f"Rate limit: {user_id} already generated {gen_count} times this week")
-                return _fetch_cards_response(user_id)
+                return _fetch_cards_response(user_id, user_sb=user_sb)
 
-        ctx = fetch_student_context(user_id)
-        saved = fetch_saved_cards(user_id)
+        ctx = fetch_student_context(user_id, user_sb=user_sb)
+        saved = fetch_saved_cards(user_id, user_sb=user_sb)
         prompt = build_rich_context(ctx, saved_cards=saved) + _lang_instruction(request.language)
 
         client = get_anthropic_client()
@@ -533,7 +538,7 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
         save_cards(user_id, cards)
         _set_stored_cards_language(user_id, request.language)
         logger.info(f"Generated {len(cards)} cards for {user_id} in {request.language}")
-        return _fetch_cards_response(user_id, confirmed_language=request.language)
+        return _fetch_cards_response(user_id, confirmed_language=request.language, user_sb=user_sb)
 
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -546,7 +551,7 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
 
 
 @router.post("/retranslate/{user_id}", response_model=dict)
-async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
@@ -555,7 +560,7 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
         # than falsely claiming the new language — forcing a fresh retranslation
         # on next load instead of silently showing wrong-language cards forever.
         _set_stored_cards_language(user_id, "")
-        ctx = fetch_student_context(user_id)
+        ctx = fetch_student_context(user_id, user_sb=user_sb)
         # Don't include saved_cards — they may be in a different language
         # which would influence the model to respond in that language instead.
         prompt = build_rich_context(ctx, saved_cards=None) + _lang_instruction(request.language)
@@ -580,7 +585,7 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
         save_cards(user_id, cards)
         _set_stored_cards_language(user_id, request.language)
         logger.info(f"Retranslated {len(cards)} cards for {user_id} in {request.language}")
-        return _fetch_cards_response(user_id, confirmed_language=request.language)
+        return _fetch_cards_response(user_id, confirmed_language=request.language, user_sb=user_sb)
 
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -593,12 +598,11 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
 
 
 @router.delete("/{user_id}", status_code=204)
-async def delete_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def delete_cards(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
-        supabase = get_supabase()
-        supabase.table("advisor_cards").delete().eq("user_id", user_id).eq("source", "ai").execute()
+        user_sb.table("advisor_cards").delete().eq("user_id", user_id).eq("source", "ai").execute()
         return None
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -608,12 +612,11 @@ async def delete_cards(user_id: str, req: Request, current_user_id: str = Depend
 
 
 @router.delete("/{user_id}/{card_id}", status_code=204)
-async def delete_card(user_id: str, card_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def delete_card(user_id: str, card_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
-        supabase = get_supabase()
-        supabase.table("advisor_cards").delete().eq("id", card_id).eq("user_id", user_id).execute()
+        user_sb.table("advisor_cards").delete().eq("id", card_id).eq("user_id", user_id).execute()
         return None
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
@@ -623,12 +626,12 @@ async def delete_card(user_id: str, card_id: str, req: Request, current_user_id:
 
 
 @router.post("/ask/{user_id}", response_model=dict)
-async def ask_card(user_id: str, request: AskRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def ask_card(user_id: str, request: AskRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     sanitise_user_message(request.question)
     try:
         get_user_by_id(user_id)
-        ctx = fetch_student_context(user_id)
+        ctx = fetch_student_context(user_id, user_sb=user_sb)
         prompt = _build_single_card_prompt(request.question, ctx, request.language)
 
         client = get_anthropic_client()
@@ -659,6 +662,7 @@ async def thread_message(
     request: ThreadRequest,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
 ):
     """
     Follow-up thread on a card.
@@ -670,8 +674,7 @@ async def thread_message(
     sanitise_user_message(request.message)
 
     try:
-        supabase = get_supabase()
-        card_row = (supabase.table("advisor_cards")
+        card_row = (user_sb.table("advisor_cards")
             .select("user_id, source, prompted_language").eq("id", card_id).execute())
         if not card_row.data:
             raise HTTPException(status_code=404, detail="Card not found")
@@ -724,15 +727,14 @@ async def thread_message(
 
 
 @router.patch("/{card_id}/save", response_model=dict)
-async def save_card(card_id: str, request: SaveRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def save_card(card_id: str, request: SaveRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     try:
-        supabase = get_supabase()
-        ownership = supabase.table("advisor_cards").select("user_id").eq("id", card_id).execute()
+        ownership = user_sb.table("advisor_cards").select("user_id").eq("id", card_id).execute()
         if not ownership.data:
             raise HTTPException(status_code=404, detail="Card not found")
         if ownership.data[0]["user_id"] != current_user_id:
             raise HTTPException(status_code=403, detail="Access denied")
-        result = supabase.table("advisor_cards").update({"is_saved": request.is_saved}).eq("id", card_id).execute()
+        result = user_sb.table("advisor_cards").update({"is_saved": request.is_saved}).eq("id", card_id).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="Card not found")
         card = result.data[0]
@@ -747,13 +749,12 @@ async def save_card(card_id: str, request: SaveRequest, req: Request, current_us
 
 
 @router.patch("/{user_id}/reorder", response_model=dict)
-async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
-        supabase = get_supabase()
         payload = [{"id": item.id, "position": item.resolved_position} for item in request.order]
-        supabase.rpc("reorder_advisor_cards", {"payload": payload}).execute()
+        user_sb.rpc("reorder_advisor_cards", {"payload": payload}).execute()
         logger.info(f"Successfully reordered {len(request.order)} cards for user {user_id}")
         return {"reordered": len(request.order)}
     except UserNotFoundException:

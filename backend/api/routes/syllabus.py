@@ -21,7 +21,7 @@ from ..routes.professors import _escape_like
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import UserNotFoundException
 from ..config import settings
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 
 # FIX F-07: PDF magic bytes
 PDF_MAGIC = b'%PDF'
@@ -344,6 +344,7 @@ async def parse_syllabuses(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
     files: List[UploadFile] = File(...),
     dry_run: str = Form(default="false"),
 ):
@@ -366,7 +367,7 @@ async def parse_syllabuses(
             detail=f"Too many files. Maximum {MAX_SYLLABUS_FILES} syllabuses per upload.",
         )
 
-    supabase = get_supabase()
+    supabase = user_sb
     all_results = []
 
     for upload in files:

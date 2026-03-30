@@ -15,7 +15,7 @@ import json
 from ..utils.supabase_client import get_supabase, get_user_by_id, update_user
 from ..exceptions import UserNotFoundException
 from ..config import settings
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 
 # FIX F-07: PDF magic bytes — must appear at offset 0
 PDF_MAGIC = b'%PDF'
@@ -201,6 +201,7 @@ async def parse_transcript(
     user_id: str,
     req: Request,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
     file: UploadFile = File(...),
     dry_run: str = Form(default="false"),
 ):
@@ -266,15 +267,15 @@ async def parse_transcript(
         return {"parsed": extracted, "saved": False}
 
     # Non-dry-run: persist the extracted data
-    results = _persist_transcript_data(user_id, extracted)
+    results = _persist_transcript_data(user_id, extracted, user_sb=user_sb)
     return {"results": results, "saved": True}
 
 
 # ── Persist helper (shared by parse and import endpoints) ────────────────────
 
-def _persist_transcript_data(user_id: str, extracted: dict) -> dict:
+def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dict:
     """Write parsed transcript data to the database. Returns a results summary."""
-    supabase = get_supabase()
+    supabase = user_sb if user_sb is not None else get_supabase()
     results = {
         "completed_added": 0,
         "completed_skipped": 0,
@@ -441,6 +442,7 @@ async def import_transcript(
     user_id: str,
     body: ImportRequest,
     current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
 ):
     """
     Import pre-parsed transcript data (from a previous dry_run parse).
@@ -465,5 +467,5 @@ async def import_transcript(
         if isinstance(course, dict) and course.get("course_code"):
             course["course_code"] = normalize_course_code(course["course_code"])
 
-    results = _persist_transcript_data(user_id, extracted)
+    results = _persist_transcript_data(user_id, extracted, user_sb=user_sb)
     return {"results": results, "saved": True}

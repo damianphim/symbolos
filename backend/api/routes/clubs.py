@@ -17,7 +17,7 @@ from html import escape
 
 from ..utils.supabase_client import get_supabase
 from ..exceptions import DatabaseException
-from ..auth import get_current_user_id, require_self
+from ..auth import get_current_user_id, require_self, get_user_db
 from ..config import settings
 
 router = APIRouter()
@@ -798,13 +798,12 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
 
 
 @router.get("/user/{user_id}")
-async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """Return all clubs a user has joined."""
     try:
-        supabase = get_supabase()
         result = (
-            supabase.table("user_clubs")
+            user_sb.table("user_clubs")
             .select("*, clubs(*)")
             .eq("user_id", user_id)
             .execute()
@@ -823,7 +822,7 @@ async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depe
 
 
 @router.post("/user/{user_id}/join")
-async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """Join a public club directly, or create a join request for a private club."""
     try:
@@ -831,7 +830,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
 
         # Only @mail.mcgill.ca emails can join clubs (admins exempt)
         if not _is_admin_user(user_id):
-            user_row = supabase.table("users").select("email").eq("id", user_id).execute()
+            user_row = user_sb.table("users").select("email").eq("id", user_id).execute()
             user_email = user_row.data[0].get("email", "") if user_row.data else ""
             if not user_email.endswith("@mail.mcgill.ca"):
                 raise HTTPException(status_code=403, detail="Only accounts with a @mail.mcgill.ca email can join clubs.")
@@ -843,7 +842,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
         club = club_result.data[0]
 
         existing = (
-            supabase.table("user_clubs")
+            user_sb.table("user_clubs")
             .select("user_id")
             .eq("user_id", user_id)
             .eq("club_id", body.club_id)
@@ -855,7 +854,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
         if club.get("is_private"):
             # Check for existing pending request
             existing_req = (
-                supabase.table("club_join_requests")
+                user_sb.table("club_join_requests")
                 .select("id")
                 .eq("user_id", user_id)
                 .eq("club_id", body.club_id)
@@ -869,7 +868,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
             from datetime import datetime, timedelta
             one_year_ago = (datetime.utcnow() - timedelta(days=365)).isoformat()
             yearly_requests = (
-                supabase.table("club_join_requests")
+                user_sb.table("club_join_requests")
                 .select("id", count="exact")
                 .eq("user_id", user_id)
                 .eq("club_id", body.club_id)
@@ -898,7 +897,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
             if requester_linkedin:
                 insert_data["requester_linkedin"] = requester_linkedin
 
-            supabase.table("club_join_requests").insert(insert_data).execute()
+            user_sb.table("club_join_requests").insert(insert_data).execute()
 
             # Email club creator at milestone pending counts: 10, 20, 40, 60, 80, 100
             try:
@@ -929,7 +928,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
             return {"success": True, "status": "requested", "message": "Join request sent to club creator"}
         else:
             # Public club — join directly
-            supabase.table("user_clubs").insert({
+            user_sb.table("user_clubs").insert({
                 "user_id": user_id,
                 "club_id": body.club_id,
                 "calendar_synced": True,
@@ -943,12 +942,11 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
 
 
 @router.get("/user/{user_id}/pending-requests")
-async def get_user_pending_requests(user_id: str, current_user_id: str = Depends(get_current_user_id)):
+async def get_user_pending_requests(user_id: str, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     """Get all club IDs where the user has a pending join request."""
     require_self(current_user_id, user_id)
     try:
-        supabase = get_supabase()
-        result = supabase.table("club_join_requests").select("club_id").eq("user_id", user_id).eq("status", "pending").execute()
+        result = user_sb.table("club_join_requests").select("club_id").eq("user_id", user_id).eq("status", "pending").execute()
         club_ids = [r["club_id"] for r in (result.data or [])]
         return {"pending_club_ids": club_ids}
     except Exception as e:
@@ -957,12 +955,11 @@ async def get_user_pending_requests(user_id: str, current_user_id: str = Depends
 
 
 @router.get("/user/{user_id}/subscriptions")
-async def get_user_subscriptions(user_id: str, current_user_id: str = Depends(get_current_user_id)):
+async def get_user_subscriptions(user_id: str, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     """Get all club IDs the user is subscribed to."""
     require_self(current_user_id, user_id)
     try:
-        supabase = get_supabase()
-        result = supabase.table("club_subscriptions").select("club_id").eq("user_id", user_id).execute()
+        result = user_sb.table("club_subscriptions").select("club_id").eq("user_id", user_id).execute()
         club_ids = [r["club_id"] for r in (result.data or [])]
         return {"subscribed_club_ids": club_ids}
     except Exception as e:
@@ -971,12 +968,11 @@ async def get_user_subscriptions(user_id: str, current_user_id: str = Depends(ge
 
 
 @router.delete("/user/{user_id}/leave/{club_id}")
-async def leave_club(user_id: str, club_id: str, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def leave_club(user_id: str, club_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """Remove a club from the user's joined list."""
     try:
-        supabase = get_supabase()
-        supabase.table("user_clubs").delete().eq("user_id", user_id).eq("club_id", club_id).execute()
+        user_sb.table("user_clubs").delete().eq("user_id", user_id).eq("club_id", club_id).execute()
         return {"success": True}
     except Exception as e:
         logger.exception(f"Error leaving club: {e}")
@@ -984,12 +980,11 @@ async def leave_club(user_id: str, club_id: str, req: Request, current_user_id: 
 
 
 @router.patch("/user/{user_id}/calendar/{club_id}")
-async def toggle_calendar_sync(user_id: str, club_id: str, synced: bool, req: Request, current_user_id: str = Depends(get_current_user_id)):
+async def toggle_calendar_sync(user_id: str, club_id: str, synced: bool, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     require_self(current_user_id, user_id)
     """Toggle calendar sync for a club."""
     try:
-        supabase = get_supabase()
-        supabase.table("user_clubs").update({"calendar_synced": synced}).eq("user_id", user_id).eq("club_id", club_id).execute()
+        user_sb.table("user_clubs").update({"calendar_synced": synced}).eq("user_id", user_id).eq("club_id", club_id).execute()
         return {"success": True, "calendar_synced": synced}
     except Exception as e:
         logger.exception(f"Error toggling calendar sync: {e}")

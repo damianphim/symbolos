@@ -804,7 +804,7 @@ function BulkDeleteModal({ userEvents, allEvents = [], onHide, hiddenSlotKeys, o
 
           {Object.keys(classGroups).length === 0 && Object.keys(eventsByType).length === 0 && (
             <div className="mgr-empty">
-              <span style={{ fontSize: '2rem' }}>📅</span>
+              <span style={{ fontSize: '2rem' }}><FaCalendarAlt /></span>
               <p>{L(language, 'No events found.', 'Aucun événement trouvé.', '未找到事件。')}</p>
             </div>
           )}

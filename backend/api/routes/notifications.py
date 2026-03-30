@@ -1,10 +1,15 @@
 """
 backend/api/routes/notifications.py
 
+Handles:
+  POST /api/notifications/schedule  – save event + queue notifications
+  DELETE /api/notifications/{event_id} – remove event + queue
+  GET  /api/notifications/events    – list user's calendar events
+  POST /api/notifications/cron      – daily cron: send due notifications (service key protected)
+
 FIX: Updated _build_html_email() to use Symbolos brand color (#ED1B2F)
      consistently instead of the generic blue/grey palette.
      Also fixes the cron guard to accept both secret formats.
-
 SEC-007: Added E.164 pattern validation to notify_phone field.
 """
 
@@ -23,8 +28,8 @@ from ..auth import get_current_user_id, require_self
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-NOTIFICATIONS_ENABLED = True
 
+# ── Pydantic schemas ─────────────────────────────────────────────────────────
 
 class CalendarEventIn(BaseModel):
     id: Optional[str] = None
@@ -50,6 +55,7 @@ class CalendarEventIn(BaseModel):
     @field_validator("notify_phone", mode="before")
     @classmethod
     def validate_phone(cls, v):
+        """SEC-007: Validate E.164 format, but allow null (most callers don't use SMS)."""
         if v is None or v == "":
             return None
         import re
@@ -71,7 +77,7 @@ class EventDeleteRequest(BaseModel):
     user_id: str
 
 
-# ── Email builder ─────────────────────────────────────────────────────────────
+# ── Email templates ──────────────────────────────────────────────────────────
 
 def _type_meta(event_type: str) -> dict:
     meta = {
@@ -92,16 +98,16 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
     safe_date  = escape(event_date)
 
     if days_before == 0:
-        timing_text = "is <strong>TODAY</strong>"
         subject = f"{m['emoji']} Today: {event_title}"
+        timing_text = "is <strong>TODAY</strong>"
         urgency_color = "#DC2626"
     elif days_before == 1:
-        timing_text = "is <strong>TOMORROW</strong>"
         subject = f"{m['emoji']} Tomorrow: {event_title}"
+        timing_text = "is <strong>TOMORROW</strong>"
         urgency_color = "#D97706"
     else:
-        timing_text = f"is in <strong>{days_before} days</strong>"
         subject = f"{m['emoji']} Reminder: {event_title} — {days_before} days away"
+        timing_text = f"is in <strong>{days_before} days</strong>"
         urgency_color = "#ED1B2F"
 
     html = f"""<!DOCTYPE html>
@@ -111,7 +117,6 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-
         <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);border-radius:12px 12px 0 0;padding:20px 28px;">
           <table width="100%" cellpadding="0" cellspacing="0">
@@ -121,10 +126,8 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
             </tr>
           </table>
         </td></tr>
-
         <!-- Body -->
         <tr><td style="background:#ffffff;padding:32px 28px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
-
           <!-- Event type badge -->
           <div style="margin-bottom:20px;">
             <span style="display:inline-block;background:{m['color']}18;color:{m['color']};
@@ -133,21 +136,18 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
               {m['emoji']} {m['label']}
             </span>
           </div>
-
           <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;line-height:1.3;">
             {safe_title}
           </h1>
           <p style="font-size:16px;color:{urgency_color};font-weight:600;margin:0 0 20px;">
             {timing_text} — {safe_date}
           </p>
-
           <div style="background:#f9fafb;border:1px solid #e5e7eb;border-left:4px solid {m['color']};
                       border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;">
             <p style="font-size:14px;color:#374151;margin:0;line-height:1.6;">
               This is your scheduled reminder from Symbolos. Good luck! 🍀
             </p>
           </div>
-
           <div style="text-align:center;">
             <a href="https://symbolos.ca"
                style="display:inline-block;background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);
@@ -156,9 +156,7 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
               Open Symbolos →
             </a>
           </div>
-
         </td></tr>
-
         <!-- Footer -->
         <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
           <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.7;">
@@ -167,7 +165,6 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
             <a href="https://symbolos.ca" style="color:#ED1B2F;text-decoration:none;">Manage reminders</a>
           </p>
         </td></tr>
-
       </table>
     </td></tr>
   </table>
@@ -176,14 +173,63 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
     return subject, html
 
 
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _queue_notifications(supabase, event_id: str, event: CalendarEventIn):
+    """Delete old queued notifications for this event and re-queue."""
+    try:
+        supabase.table("notification_queue").delete().eq("event_id", event_id).eq("sent", False).execute()
+        today_str = date.today().isoformat()
+        if not event.date or event.date < today_str:
+            return
+        ev_date = date.fromisoformat(event.date)
+        email_addr = str(event.notify_email_addr) if event.notify_email_addr else None
+        rows = []
+        offsets = []
+        if event.notify_7days:    offsets.append(7)
+        if event.notify_1day:     offsets.append(1)
+        if event.notify_same_day: offsets.append(0)
+        for days_before in offsets:
+            send_on = ev_date - timedelta(days=days_before)
+            if send_on < date.today():
+                continue
+            if event.notify_email and email_addr:
+                rows.append({
+                    "user_id":     event.user_id,
+                    "event_id":    event_id,
+                    "event_title": event.title,
+                    "event_date":  event.date,
+                    "event_type":  event.type,
+                    "send_on":     send_on.isoformat(),
+                    "method":      "email",
+                    "email":       email_addr,
+                    "phone":       None,
+                    "sent":        False,
+                })
+            if event.notify_sms and event.notify_phone:
+                rows.append({
+                    "user_id":     event.user_id,
+                    "event_id":    event_id,
+                    "event_title": event.title,
+                    "event_date":  event.date,
+                    "event_type":  event.type,
+                    "send_on":     send_on.isoformat(),
+                    "method":      "sms",
+                    "email":       None,
+                    "phone":       event.notify_phone,
+                    "sent":        False,
+                })
+        if rows:
+            supabase.table("notification_queue").insert(rows).execute()
+            logger.info(f"Queued {len(rows)} notifications for event {event_id}")
+    except Exception as e:
+        logger.error(f"Failed to queue notifications for event {event_id}: {e}")
+
+
 # ── Email / SMS senders ───────────────────────────────────────────────────────
 
 def _send_email(to: str, event_title: str, event_date: str, event_type: str, days_before: int) -> bool:
     """Send reminder email via Resend. Returns True on success."""
-    if not NOTIFICATIONS_ENABLED:
-        logger.info(f"[NOTIFICATIONS DISABLED] Would send email to {to} for '{event_title}'")
-        return True
-
     try:
         subject, html = _build_html_email(event_title, event_date, event_type, days_before)
 
@@ -203,10 +249,6 @@ def _send_email(to: str, event_title: str, event_date: str, event_type: str, day
 
 def _send_sms(to: str, event_title: str, event_date: str, event_type: str, days_before: int) -> bool:
     """Send reminder SMS via Twilio. Returns True on success."""
-    if not NOTIFICATIONS_ENABLED:
-        logger.info(f"[NOTIFICATIONS DISABLED] Would send SMS to {to} for '{event_title}'")
-        return True
-
     try:
         from twilio.rest import Client
         meta = _type_meta(event_type)
@@ -286,62 +328,6 @@ async def schedule_event(event: CalendarEventIn, request: Request, current_user_
     return {"ok": True, "event_id": saved_id}
 
 
-def _queue_notifications(supabase, event_id: str, event: CalendarEventIn):
-    """Delete old queued notifications for this event and re-queue."""
-    try:
-        supabase.table("notification_queue").delete().eq("event_id", event_id).eq("sent", False).execute()
-
-        today_str = date.today().isoformat()
-        if not event.date or event.date < today_str:
-            return
-
-        ev_date = date.fromisoformat(event.date)
-        email_addr = str(event.notify_email_addr) if event.notify_email_addr else None
-        rows = []
-
-        offsets = []
-        if event.notify_7days:  offsets.append(7)
-        if event.notify_1day:   offsets.append(1)
-        if event.notify_same_day: offsets.append(0)
-
-        for days_before in offsets:
-            send_on = ev_date - timedelta(days=days_before)
-            if send_on < date.today():
-                continue
-            if event.notify_email and email_addr:
-                rows.append({
-                    "user_id":     event.user_id,
-                    "event_id":    event_id,
-                    "event_title": event.title,
-                    "event_date":  event.date,
-                    "event_type":  event.type,
-                    "send_on":     send_on.isoformat(),
-                    "method":      "email",
-                    "email":       email_addr,
-                    "phone":       None,
-                    "sent":        False,
-                })
-            if event.notify_sms and event.notify_phone:
-                rows.append({
-                    "user_id":     event.user_id,
-                    "event_id":    event_id,
-                    "event_title": event.title,
-                    "event_date":  event.date,
-                    "event_type":  event.type,
-                    "send_on":     send_on.isoformat(),
-                    "method":      "sms",
-                    "email":       None,
-                    "phone":       event.notify_phone,
-                    "sent":        False,
-                })
-
-        if rows:
-            supabase.table("notification_queue").insert(rows).execute()
-            logger.info(f"Queued {len(rows)} notifications for event {event_id}")
-    except Exception as e:
-        logger.error(f"Failed to queue notifications for event {event_id}: {e}")
-
-
 @router.delete("/{event_id}")
 async def delete_event(event_id: str, body: EventDeleteRequest, current_user_id: str = Depends(get_current_user_id)):
     """Remove a calendar event and its queued notifications."""
@@ -368,6 +354,9 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
     Protected by CRON_SECRET header.
     FIX: Accept both 'Bearer <secret>' and raw '<secret>' formats.
     """
+    if not settings.CRON_SECRET:
+        raise HTTPException(status_code=500, detail="CRON_SECRET not configured")
+
     # Normalise: strip "Bearer " prefix if present
     raw_secret = x_cron_secret or ""
     secret = raw_secret.removeprefix("Bearer ").strip()
@@ -375,8 +364,8 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
     if not hmac.compare_digest(secret, settings.CRON_SECRET):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    supabase = get_supabase()
     today = date.today().isoformat()
+    supabase = get_supabase()
 
     due = (
         supabase.table("notification_queue")

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { FaChartBar } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './GPATrendChart.css'
 
@@ -122,7 +123,7 @@ export default function GPATrendChart({ completedCourses, currentGPA }) {
   if (semesterData.length === 0) {
     return (
       <div className="gpa-trend-empty">
-        <p>📊 {t('gpa.addGradesPrompt')}</p>
+        <p><FaChartBar style={{ marginRight: '6px', verticalAlign: 'middle', color: 'var(--accent-primary, #ED1B2F)' }} />{t('gpa.addGradesPrompt')}</p>
       </div>
     )
   }

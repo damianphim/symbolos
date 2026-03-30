@@ -1,3 +1,4 @@
+import { FaTimes } from 'react-icons/fa'
 import './Legal.css'
 
 export default function PrivacyPolicy({ onClose }) {
@@ -11,20 +12,19 @@ export default function PrivacyPolicy({ onClose }) {
             <p className="legal-subtitle">Last updated: March 2026</p>
           </div>
           {onClose && (
-            <button className="legal-close" onClick={onClose} aria-label="Close">✕</button>
+            <button className="legal-close" onClick={onClose} aria-label="Close">
+              <FaTimes />
+            </button>
           )}
         </div>
-
         <div className="legal-body">
           <div className="legal-disclaimer-banner">
             <strong>Not affiliated with McGill University.</strong> Symbolos is an independent student tool. We are not endorsed by, sponsored by, or connected to McGill University in any official capacity.
           </div>
-
           <section className="legal-section">
             <h2>1. Who We Are</h2>
             <p>Symbolos ("we", "our", "us") is an independent academic planning tool built for McGill University students. We are a student-run project and are not affiliated with, endorsed by, or sponsored by McGill University.</p>
           </section>
-
           <section className="legal-section">
             <h2>2. Information We Collect</h2>
             <h3>Account Information</h3>
@@ -36,7 +36,6 @@ export default function PrivacyPolicy({ onClose }) {
             <h3>AI Conversations</h3>
             <p>Messages you send to our AI advisor are processed by Anthropic's Claude API. Please review <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">Anthropic's Privacy Policy</a> for details on how they handle API data. We do not permanently store your individual chat messages beyond your session history in our database.</p>
           </section>
-
           <section className="legal-section">
             <h2>3. How We Use Your Information</h2>
             <ul>
@@ -48,7 +47,6 @@ export default function PrivacyPolicy({ onClose }) {
             </ul>
             <p>We do not sell, rent, or trade your personal information to third parties for marketing purposes.</p>
           </section>
-
           <section className="legal-section">
             <h2>4. Third-Party Services</h2>
             <p>We use the following third-party services to operate Symbolos:</p>
@@ -61,36 +59,30 @@ export default function PrivacyPolicy({ onClose }) {
             </ul>
             <p>Each of these services has its own privacy policy governing how they handle data.</p>
           </section>
-
           <section className="legal-section">
             <h2>5. Data Retention &amp; Deletion</h2>
             <p>Your account and all associated data (courses, grades, calendar events, preferences) are retained for as long as your account is active. You may delete your account at any time from the Settings tab, which will permanently remove all your data from our systems within 30 days.</p>
             <p>You may also export all your data as a JSON file from the Settings tab before deleting your account.</p>
           </section>
-
           <section className="legal-section">
             <h2>6. Security</h2>
             <p>We implement industry-standard security measures including HTTPS encryption, JWT-based authentication, database row-level security (RLS) via Supabase, and rate limiting. However, no system is perfectly secure. Please use a strong, unique password and do not share your credentials.</p>
           </section>
-
           <section className="legal-section">
             <h2>7. Children's Privacy</h2>
             <p>Symbolos is intended for university students (18+). We do not knowingly collect data from anyone under the age of 13. If you believe we have inadvertently collected such information, please contact us immediately.</p>
           </section>
-
           <section className="legal-section">
             <h2>8. Your Rights</h2>
             <p>Depending on your jurisdiction, you may have rights to access, correct, or delete your personal data. To exercise these rights, please contact us at the email below. We will respond within 30 days.</p>
           </section>
-
           <section className="legal-section">
             <h2>9. Changes to This Policy</h2>
             <p>We may update this Privacy Policy from time to time. We will notify registered users of material changes via email. Continued use of Symbolos after changes constitutes your acceptance of the updated policy.</p>
           </section>
-
           <section className="legal-section">
             <h2>10. Contact</h2>
-            <p>Questions about this Privacy Policy? Reach us at: <a href="mailto:privacy@symbolos.ca">privacy@symbolos.ca</a></p>
+            <p>Questions about this Privacy Policy? Reach us at: <a href="mailto:symbolosadvsry@gmail.com">symbolosadvsry@gmail.com</a></p>
           </section>
         </div>
       </div>

@@ -3,7 +3,8 @@ import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
   FaBullseye, FaFileUpload, FaChevronDown, FaChevronUp,
   FaGraduationCap, FaListAlt, FaLightbulb, FaExternalLinkAlt,
-  FaChevronRight, FaCircle, FaBolt, FaPlane, FaInfoCircle
+  FaChevronRight, FaCircle, FaBolt, FaPlane, FaInfoCircle,
+  FaExclamationTriangle,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { supabase } from '../../lib/supabase'
@@ -489,7 +490,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
         {showRecs && recs && !recsLoading && (
           <>
             {recs.theme && (
-              <p className="dp-electives-theme">💡 {recs.theme}</p>
+              <p className="dp-electives-theme"><FaLightbulb style={{ marginRight: '5px', verticalAlign: 'middle' }} />{recs.theme}</p>
             )}
             <div className="dp-electives-grid">
               {recs.recommendations?.map((c, i) => {
@@ -527,7 +528,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
       {/* ── Taken Electives ─────────────────────────────── */}
       <div className="dp-electives-header">
         <div className="dp-electives-title-row">
-          <span className="dp-electives-spark">📚</span>
+          <span className="dp-electives-spark"><FaBook /></span>
           <div>
             <h3 className="dp-electives-title">My Elective Courses</h3>
             <p className="dp-electives-sub">
@@ -541,7 +542,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
 
       {electiveCourses.length === 0 ? (
         <div className="dp-electives-empty">
-          <span style={{ fontSize: '2rem', opacity: 0.3 }}>🎓</span>
+          <span style={{ fontSize: '2rem', opacity: 0.3 }}><FaGraduationCap /></span>
           <p>No elective courses found yet.</p>
           <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
             Courses you complete outside your major &amp; minor requirements will appear here.
@@ -577,7 +578,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
                     ))}
                   </select>
                   {assignedNote === `${c.subject} ${c.catalog}`.toUpperCase() && (
-                    <p className="dp-elective-assign-note">⚠ Double-check with your academic advisor whether this course actually counts toward this program.</p>
+                    <p className="dp-elective-assign-note"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Double-check with your academic advisor whether this course actually counts toward this program.</p>
                   )}
                 </div>
                 {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
@@ -737,7 +738,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                         </div>
                         {isOverlap && assignCourse && (
                           <div className="dp-req-overlap-assign">
-                            <span className="dp-req-overlap-label">⚠ Overlaps with another program —</span>
+                            <span className="dp-req-overlap-label"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Overlaps with another program —</span>
                             <select
                               className="dp-req-overlap-select"
                               value={allocatedTo || ''}

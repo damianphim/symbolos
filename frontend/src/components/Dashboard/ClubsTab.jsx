@@ -5,7 +5,8 @@ import {
   FaEnvelope, FaCheck, FaBell, FaBullhorn, FaTrash,
   FaChevronDown, FaChevronLeft, FaStar, FaCog, FaCrown,
   FaBook, FaPalette, FaGraduationCap,
-  FaLock, FaGlobe, FaEdit, FaUserPlus, FaUserCheck, FaUserTimes
+  FaLock, FaGlobe, FaEdit, FaUserPlus, FaUserCheck, FaUserTimes,
+  FaExclamationTriangle,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import clubsAPI from '../../lib/clubsAPI'
@@ -1355,7 +1356,7 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
             </div>
             {errors.joinMethod && (
               <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#b91c1c', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <span style={{ flexShrink: 0 }}>⚠</span>
+                <FaExclamationTriangle style={{ flexShrink: 0 }} />
                 <span>{errors.joinMethod}</span>
               </div>
             )}

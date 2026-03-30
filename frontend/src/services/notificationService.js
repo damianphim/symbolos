@@ -77,8 +77,10 @@ function to24h(timeStr) {
 }
 
 export async function queueExamNotification(event, userId, userEmail) {
+  // /queue-exam was removed — route through /schedule which now supports
+  // client_id-based upsert for idempotency. Safe to call on every load.
   const payload = {
-    client_id:        event.id,           // e.g. "exam-COMP251-0" — used for dedup
+    client_id:        event.id,
     user_id:          userId,
     title:            event.title,
     date:             event.date,
@@ -96,7 +98,7 @@ export async function queueExamNotification(event, userId, userEmail) {
     notify_7days:     event.notify7Days  ?? true,
   }
 
-  const res = await fetch(`${BASE}/api/notifications/queue-exam`, {
+  const res = await fetch(`${BASE}/api/notifications/schedule`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await _authHeader()) },
     body: JSON.stringify(payload),
@@ -114,7 +116,7 @@ export async function queueExamNotification(event, userId, userEmail) {
  * Fetch all calendar events for a user from Supabase.
  */
 export async function getUserEvents(userId) {
-  const res = await fetch(`${BASE}/api/notifications/events/${userId}`, {
+  const res = await fetch(`${BASE}/api/notifications/events?user_id=${encodeURIComponent(userId)}`, {
     headers: await _authHeader(),
   })
   if (!res.ok) throw new Error('Failed to fetch events')
@@ -126,9 +128,10 @@ export async function getUserEvents(userId) {
  * Delete an event (cascade removes its notification_queue rows).
  */
 export async function deleteEvent(eventId, userId) {
-  const res = await fetch(`${BASE}/api/notifications/events/${eventId}?user_id=${userId}`, {
+  const res = await fetch(`${BASE}/api/notifications/${eventId}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...(await _authHeader()) },
+    body: JSON.stringify({ user_id: userId }),
   })
   if (!res.ok) throw new Error('Failed to delete event')
   return res.json()

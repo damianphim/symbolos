@@ -36,11 +36,13 @@ export default function Sidebar({
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
 
+  // Handle delayed unmount for exit animation
   useEffect(() => {
     if (sidebarOpen) {
       setIsMounted(true)
     } else {
       setPopupOpen(false)
+      // Keep mounted long enough for the exit animation (200ms)
       const timer = setTimeout(() => setIsMounted(false), 220)
       return () => clearTimeout(timer)
     }
@@ -86,7 +88,6 @@ export default function Sidebar({
       {legalModal === 'privacy' && <PrivacyPolicy onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
       {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
-
       <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : 'sidebar--mini'}`}>
 
         {/* ── OPEN: full sidebar with animated content ── */}
@@ -152,6 +153,7 @@ export default function Sidebar({
                   <div className="sidebar-popup-arrow" />
                 </div>
               )}
+              <div className="sidebar-not-affiliated">{t('rsb.notAffiliated')}</div>
               {/* Legal links row */}
               <div className="sidebar-legal-links">
                 <button className="sidebar-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
@@ -173,7 +175,7 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* ── MINI: icon pills ── */}
+        {/* ── MINI: icon pills inside ONE shared capsule outline ── */}
         {!sidebarOpen && !isMounted && (
           <div className="mini-rail">
             <div className="mini-capsule">
@@ -209,6 +211,12 @@ export default function Sidebar({
           </div>
         )}
       </aside>
+
+      {/* Overlay with fade animation */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'sidebar-overlay--visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
     </>
   )
 }
