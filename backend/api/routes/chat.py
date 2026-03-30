@@ -5,6 +5,11 @@ SEC-003: Sanitise stored profile data in fallback context builder.
 SEC-005: Replaced local injection filter with shared sanitise module
          (stronger patterns, l33tspeak, French, semantic rephrasing).
 
+LANG FIX: Replaced weak "IMPORTANT" language instruction with a unified
+          _lang_instruction() helper using "CRITICAL" wording — matching
+          cards.py exactly. Prevents Claude from drifting into English when
+          student profile data contains English course names/titles.
+
 CONTEXT FIX (v3):
   Problem 1 — build_system_context() re-fetched favorites/completed/current/calendar
   from Supabase on EVERY message, adding 4-5 DB queries per chat turn.
@@ -125,6 +130,42 @@ class ChatResponse(BaseModel):
     user_id: str
     session_id: str
     tokens_used: Optional[int] = None
+
+
+# ── Language instruction helper ────────────────────────────────────────────────
+
+def _lang_instruction(language: str) -> str:
+    """
+    Returns a strong, CRITICAL-level language instruction.
+    Appended LAST in the system prompt so it overrides any language drift
+    caused by English course data/titles in the student profile.
+
+    Uses the same wording as cards.py for consistency — previously this
+    function used the weaker "IMPORTANT:" prefix which Claude would often
+    ignore when surrounded by extensive English course data.
+    """
+    if language == "fr":
+        return (
+            "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in French. "
+            "Every part of your response — advice, explanations, lists, follow-up questions — "
+            "must be in French. Do not switch to English under any circumstance, even if the "
+            "student's course titles, grades, or calendar events are in English. "
+            "Course codes (e.g. COMP 202) and proper nouns (McGill, Minerva) may stay as-is."
+        )
+    if language == "zh":
+        return (
+            "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in Simplified Chinese (Mandarin). "
+            "Every part of your response must be in Chinese. Do not switch to English under any "
+            "circumstance, even if the student's course names, grades, or calendar events are in English. "
+            "Course codes (e.g. COMP 202) and proper nouns (McGill, Minerva) may stay as-is."
+        )
+    # Default English — explicit so French/Chinese data in the student profile
+    # does not cause the model to drift into another language.
+    return (
+        "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in English. "
+        "Do not use French, Chinese, or any other language in your response, "
+        "even if the student's course names, calendar events, or profile data are in another language."
+    )
 
 
 # ── Context builder ────────────────────────────────────────────────────────────
@@ -267,12 +308,10 @@ SITE FEATURES & NAVIGATION:
 - Profile/Settings is for editing your academic info, theme, and language
 """
 
-    if language == "fr":
-        lang_instruction = "\n\nIMPORTANT: The student's interface is in French. Respond entirely in French."
-    elif language == "zh":
-        lang_instruction = "\n\nIMPORTANT: The student's interface is in Chinese. Respond entirely in Simplified Chinese (Mandarin), except for course codes and proper nouns."
-    else:
-        lang_instruction = "\n\nIMPORTANT: The student's interface is in English. Respond entirely in English, even if their course names or calendar events are in another language."
+    # LANG FIX: was a weak inline if/elif block using "IMPORTANT:" prefix.
+    # Now uses the shared _lang_instruction() helper with "CRITICAL LANGUAGE RULE:"
+    # which matches cards.py and reliably prevents language drift.
+    lang_instruction = _lang_instruction(language)
 
     tab_context = TAB_GUIDANCE.get(current_tab, "") if current_tab else ""
     site_knowledge = SITE_KNOWLEDGE

@@ -653,3 +653,110 @@
 
 /* Kill old floating toggle if it ever renders */
 .sidebar-toggle-btn-collapsed { display: none !important; }
+
+/* ══════════════════════════════════════════════════════
+   SIDEBAR.CSS ADDITIONS
+   Paste these rules at the very bottom of Sidebar.css
+   ══════════════════════════════════════════════════════ */
+
+/* ── Legal links row in sidebar footer ──────────────── */
+.sidebar-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3px 8px 5px;
+}
+
+.sidebar-legal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.62rem;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.sidebar-legal-link:hover {
+  color: var(--accent-primary, #ED1B2F);
+  text-decoration: underline;
+}
+
+.sidebar-legal-sep {
+  font-size: 0.62rem;
+  color: var(--text-tertiary, #9ca3af);
+  line-height: 1;
+  user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   AUTH.CSS ADDITIONS
+   Paste these rules at the very bottom of Auth.css
+   ══════════════════════════════════════════════════════ */
+
+/* ── Legal links in auth form footer ────────────────── */
+.auth-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.auth-legal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.auth-legal-link:hover {
+  color: var(--accent-primary, #ED1B2F);
+  text-decoration: underline;
+}
+
+.auth-legal-sep {
+  font-size: 0.72rem;
+  color: var(--text-tertiary, #9ca3af);
+  user-select: none;
+}
+
+/* ── Legal links on the branding panel (left side) ──── */
+.auth-branding-legal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.auth-branding-legal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.auth-branding-legal-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
+
+.auth-branding-legal-sep {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.3);
+  user-select: none;
+}

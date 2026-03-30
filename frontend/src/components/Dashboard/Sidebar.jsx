@@ -2,11 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import {
   FaChevronRight, FaComments, FaBook,
   FaUser, FaCog, FaPalette, FaSignOutAlt, FaCalendarAlt,
-  FaGraduationCap, FaUsers, FaExpandAlt
+  FaGraduationCap, FaUsers, FaExpandAlt, FaInfoCircle, FaShieldAlt, FaFileAlt
 } from 'react-icons/fa'
 import { MdLanguage } from 'react-icons/md'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
+import PrivacyPolicy from '../Legal/PrivacyPolicy'
+import TermsOfService from '../Legal/TOS'
+import AboutUs from '../Legal/AboutUs'
 import './Sidebar.css'
 
 const NAV_ITEMS = (t) => [
@@ -25,21 +28,19 @@ export default function Sidebar({
   user, profile, profileImage, onSignOut,
 }) {
   const [popupOpen, setPopupOpen] = useState(false)
-  // isMounted controls whether the full sidebar content stays in DOM for exit animation
   const [isMounted, setIsMounted] = useState(sidebarOpen)
+  const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const popupRef   = useRef(null)
   const triggerRef = useRef(null)
 
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
 
-  // Handle delayed unmount for exit animation
   useEffect(() => {
     if (sidebarOpen) {
       setIsMounted(true)
     } else {
       setPopupOpen(false)
-      // Keep mounted long enough for the exit animation (200ms)
       const timer = setTimeout(() => setIsMounted(false), 220)
       return () => clearTimeout(timer)
     }
@@ -81,6 +82,11 @@ export default function Sidebar({
 
   return (
     <>
+      {/* ── Legal modals ── */}
+      {legalModal === 'privacy' && <PrivacyPolicy onClose={() => setLegalModal(null)} />}
+      {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
+      {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
+
       <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : 'sidebar--mini'}`}>
 
         {/* ── OPEN: full sidebar with animated content ── */}
@@ -126,6 +132,19 @@ export default function Sidebar({
                     <span className="sidebar-popup-label">{t('sidebar.colorTheme')}: {themeLabel}</span>
                   </button>
                   <div className="sidebar-popup-divider" />
+                  <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('about') }}>
+                    <span className="sidebar-popup-icon"><FaInfoCircle /></span>
+                    <span className="sidebar-popup-label">About Symbolos</span>
+                  </button>
+                  <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('privacy') }}>
+                    <span className="sidebar-popup-icon"><FaShieldAlt /></span>
+                    <span className="sidebar-popup-label">Privacy Policy</span>
+                  </button>
+                  <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('terms') }}>
+                    <span className="sidebar-popup-icon"><FaFileAlt /></span>
+                    <span className="sidebar-popup-label">Terms of Service</span>
+                  </button>
+                  <div className="sidebar-popup-divider" />
                   <button className="sidebar-popup-item sidebar-popup-item--danger" onClick={() => { setPopupOpen(false); onSignOut() }}>
                     <span className="sidebar-popup-icon"><FaSignOutAlt /></span>
                     <span className="sidebar-popup-label">{t('sidebar.logOut')}</span>
@@ -133,7 +152,14 @@ export default function Sidebar({
                   <div className="sidebar-popup-arrow" />
                 </div>
               )}
-              <div className="sidebar-not-affiliated">{t('rsb.notAffiliated')}</div>
+              {/* Legal links row */}
+              <div className="sidebar-legal-links">
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+                <span className="sidebar-legal-sep">·</span>
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+                <span className="sidebar-legal-sep">·</span>
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('about')}>About</button>
+              </div>
               <button className="user-info" ref={triggerRef} onClick={() => setPopupOpen(p => !p)}>
                 <div className="user-avatar">
                   {profileImage ? <img src={profileImage} alt="Profile" className="user-avatar-image" /> : avatarLetter}
@@ -147,7 +173,7 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* ── MINI: icon pills inside ONE shared capsule outline ── */}
+        {/* ── MINI: icon pills ── */}
         {!sidebarOpen && !isMounted && (
           <div className="mini-rail">
             <div className="mini-capsule">
@@ -172,23 +198,17 @@ export default function Sidebar({
                   {language === 'en' ? 'FR' : language === 'fr' ? '中' : 'EN'}
                 </span>
               </button>
-              <button
-                className="mini-pill mini-pill--expand"
-                onClick={() => setSidebarOpen(true)}
-                title="Expand sidebar"
-              >
-                <FaExpandAlt size={13} />
-              </button>
             </div>
+            <button
+              className="mini-expand-btn"
+              onClick={() => setSidebarOpen(true)}
+              title="Expand sidebar"
+            >
+              <FaExpandAlt size={13} />
+            </button>
           </div>
         )}
       </aside>
-
-      {/* Overlay with fade animation */}
-      <div
-        className={`sidebar-overlay ${sidebarOpen ? 'sidebar-overlay--visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
-      />
     </>
   )
 }

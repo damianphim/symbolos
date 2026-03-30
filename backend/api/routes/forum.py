@@ -7,6 +7,10 @@ All endpoints are auth-protected via get_current_user_id().
 Likes use a separate junction table so a user cannot like the same
 post/reply twice (enforced at the DB level by a PRIMARY KEY constraint).
 
+SECURITY FIX: Added _check_report_rate_limit() to report_post and report_reply.
+              Without this, any authenticated user could flood the admin inbox
+              by calling the report endpoint in a tight loop (5 rpm per user).
+
 Endpoints:
   GET    /api/forum/posts                   – list posts (filter, sort, paginate)
   POST   /api/forum/posts                   – create a post
@@ -16,6 +20,8 @@ Endpoints:
   DELETE /api/forum/replies/{reply_id}      – delete own reply
   POST   /api/forum/posts/{post_id}/like    – toggle like on a post
   POST   /api/forum/replies/{reply_id}/like – toggle like on a reply
+  POST   /api/forum/posts/{post_id}/report  – report a post to admins
+  POST   /api/forum/replies/{reply_id}/report – report a reply to admins
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends, Request, Query
@@ -102,6 +108,28 @@ def _get_liked_reply_ids(supabase, user_id: str, reply_ids: List[str]) -> set:
         return set()
 
 
+# ── Report rate-limit helper ───────────────────────────────────────────────────
+
+def _check_report_rate_limit(user_id: str) -> None:
+    """
+    Allow at most 5 forum reports per user per minute.
+    Prevents a malicious user from flooding the admin inbox.
+    Fails open (allows through) if the rate limiter is unavailable.
+    """
+    try:
+        from api.main import _limiter
+        if not _limiter.is_allowed(f"forum_report:{user_id}", rpm=5):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many reports submitted. Please wait a moment before reporting again.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        # Rate limiter unavailable — fail open so reporting still works
+        pass
+
+
 # ── GET /posts ────────────────────────────────────────────────────────────────
 
 @router.get("/posts", response_model=dict)
@@ -176,7 +204,6 @@ async def list_posts(
     if post_ids:
         try:
             supabase = get_supabase()
-            # Supabase doesn't do COUNT per group easily via REST — fetch ids only
             rc_res = (
                 supabase.table("forum_replies")
                 .select("post_id")
@@ -249,7 +276,6 @@ async def delete_post(
     """Delete own forum post."""
     try:
         supabase = get_supabase()
-        # Verify ownership
         existing = supabase.table("forum_posts").select("user_id").eq("id", post_id).execute()
         if not existing.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -311,7 +337,6 @@ async def create_reply(
     """Add a reply to a post."""
     def _run():
         supabase = get_supabase()
-        # Verify post exists
         post_check = supabase.table("forum_posts").select("id").eq("id", post_id).execute()
         if not post_check.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -375,14 +400,10 @@ async def toggle_post_like(
     req:     Request,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    """
-    Toggle like on a post.
-    Returns {liked: bool, like_count: int}.
-    """
+    """Toggle like on a post. Returns {liked: bool, like_count: int}."""
     try:
         supabase = get_supabase()
 
-        # Check if already liked
         existing = (
             supabase.table("forum_post_likes")
             .select("user_id")
@@ -395,18 +416,13 @@ async def toggle_post_like(
         if already_liked:
             supabase.table("forum_post_likes").delete() \
                 .eq("user_id", current_user_id).eq("post_id", post_id).execute()
-            # Decrement
             supabase.rpc("decrement_post_like", {"p_post_id": post_id}).execute()
-            delta = -1
         else:
             supabase.table("forum_post_likes").insert(
                 {"user_id": current_user_id, "post_id": post_id}
             ).execute()
-            # Increment — use raw SQL via rpc
             supabase.rpc("increment_post_like", {"p_post_id": post_id}).execute()
-            delta = 1
 
-        # Fetch updated count
         post_res = supabase.table("forum_posts").select("like_count").eq("id", post_id).execute()
         like_count = post_res.data[0]["like_count"] if post_res.data else 0
 
@@ -469,10 +485,10 @@ def _send_report_email(content_type: str, content_id: str, reporter_id: str,
     if not admin_emails:
         return
 
-    safe_type    = escape(content_type)
-    safe_id      = escape(content_id)
-    safe_author  = escape(author or "Unknown")
-    safe_preview = escape((preview or "")[:300])
+    safe_type     = escape(content_type)
+    safe_id       = escape(content_id)
+    safe_author   = escape(author or "Unknown")
+    safe_preview  = escape((preview or "")[:300])
     safe_reporter = escape(reporter_id)
 
     subject = f"🚩 Forum {safe_type} reported — Symbolos"
@@ -531,6 +547,7 @@ async def report_post(
     current_user_id: str = Depends(get_current_user_id),
 ):
     """Flag a post for review. Sends an email to admins."""
+    _check_report_rate_limit(current_user_id)
     try:
         supabase = get_supabase()
         post_res = supabase.table("forum_posts").select("user_id, author, title, body").eq("id", post_id).execute()
@@ -559,6 +576,7 @@ async def report_reply(
     current_user_id: str = Depends(get_current_user_id),
 ):
     """Flag a reply for review. Sends an email to admins."""
+    _check_report_rate_limit(current_user_id)
     try:
         supabase = get_supabase()
         reply_res = supabase.table("forum_replies").select("user_id, author, body").eq("id", reply_id).execute()

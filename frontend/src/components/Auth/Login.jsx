@@ -8,6 +8,9 @@ import {
   validatePassword,
   validateUsername,
 } from '../../utils/validation'
+import PrivacyPolicy from '../Legal/PrivacyPolicy'
+import TermsOfService from '../Legal/TOS'
+import AboutUs from '../Legal/AboutUs'
 import './Auth.css'
 
 function Login({ forceVerify = false, email: propEmail = '', userId: propUserId = '' }) {
@@ -29,6 +32,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [pendingUserId] = useState(propUserId || storedVerify?.userId || '')
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendLoading, setResendLoading] = useState(false)
+  const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const pollRef = useRef(null)
 
   const { signIn, signUp, needsPasswordReset, clearPasswordReset, resetPasswordForEmail, resendVerificationEmail, updatePassword, error: authError, clearError } = useAuth()
@@ -176,6 +180,11 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
 
   return (
     <div className="auth-page">
+      {/* ── Legal modals ── */}
+      {legalModal === 'privacy' && <PrivacyPolicy onClose={() => setLegalModal(null)} />}
+      {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
+      {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
+
       {/* ── Corner controls ── */}
       <div className="auth-corner-controls">
         <button
@@ -228,6 +237,15 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
               </li>
             ))}
           </ul>
+
+          {/* Legal links on branding panel (visible on desktop) */}
+          <div className="auth-branding-legal">
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('about')}>About</button>
+            <span className="auth-branding-legal-sep">·</span>
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+            <span className="auth-branding-legal-sep">·</span>
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+          </div>
         </div>
       </aside>
 
@@ -506,6 +524,14 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                     </button>
                   </p>
                 )}
+                {/* Legal links — shown on mobile (branding panel is hidden) */}
+                <div className="auth-legal-links">
+                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>About</button>
+                  <span className="auth-legal-sep">·</span>
+                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+                  <span className="auth-legal-sep">·</span>
+                  <button type="button" className="auth-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+                </div>
               </div>
             </>
           )}
