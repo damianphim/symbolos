@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { HiLightBulb } from 'react-icons/hi'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -20,10 +21,8 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [mode, setMode] = useState(forceVerify || storedVerify ? 'verify' : 'login') // 'login' | 'signup' | 'forgot' | 'reset' | 'verify'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
   const [username, setUsername] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -35,7 +34,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const pollRef = useRef(null)
 
-  const { signIn, signUp, needsPasswordReset, clearPasswordReset, resetPasswordForEmail, resendVerificationEmail, updatePassword, error: authError, clearError } = useAuth()
+  const { signIn, signUp, resetPasswordForEmail, resendVerificationEmail, error: authError, clearError } = useAuth()
   const { t, language, setLanguage } = useLanguage()
   const { resolvedTheme, setTheme } = useTheme()
   const cycleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
@@ -43,16 +42,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const isLogin  = mode === 'login'
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
-  const isReset  = mode === 'reset'
   const isVerify = mode === 'verify'
-
-  // Auto-switch to reset form when user clicks password-reset link in email
-  useEffect(() => {
-    if (needsPasswordReset) {
-      setMode('reset')
-      clearPasswordReset()
-    }
-  }, [needsPasswordReset, clearPasswordReset])
 
   useEffect(() => {
     clearError()
@@ -98,21 +88,15 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
 
   const validateForm = () => {
     const newErrors = {}
-    if (!isReset) {
-      const emailError = validateEmail(email)
-      if (emailError) newErrors.email = emailError
-    }
-    if (!isForgot && !isReset && !isVerify) {
+    const emailError = validateEmail(email)
+    if (emailError) newErrors.email = emailError
+    if (!isForgot && !isVerify) {
       const passwordError = validatePassword(password, isSignup)
       if (passwordError) newErrors.password = passwordError
     }
     if (isSignup) {
       const usernameError = validateUsername(username)
       if (usernameError) newErrors.username = usernameError
-    }
-    if (isReset) {
-      const passwordError = validatePassword(newPassword, true)
-      if (passwordError) newErrors.newPassword = passwordError
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -129,15 +113,6 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
         const { error } = await resetPasswordForEmail(email)
         if (error) setErrors({ form: error.message })
         else setMessage(t('auth.resetSent'))
-        return
-      }
-      if (isReset) {
-        const { error } = await updatePassword(newPassword)
-        if (error) setErrors({ form: error.message })
-        else {
-          setMessage(t('auth.passwordUpdated'))
-          setTimeout(() => switchMode('login'), 2000)
-        }
         return
       }
       if (isLogin) {
@@ -175,7 +150,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
     return { level: score, label: t('auth.strengthStrong'), color: 'var(--success-hover)' }
   }
 
-  const strength   = isSignup ? passwordStrength(password) : isReset ? passwordStrength(newPassword) : null
+  const strength   = isSignup ? passwordStrength(password) : null
   const formError  = errors.form || authError?.message
 
   return (
@@ -220,7 +195,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             <h1 className="auth-branding-headline">
               {t('auth.brandHeadline')}
             </h1>
-            <p className="auth-branding-disclaimer">Not affiliated with McGill University</p>
+            <p className="auth-branding-disclaimer">{t('legal.notAffiliatedShort')}</p>
           </div>
 
           <ul className="auth-feature-list">
@@ -238,11 +213,11 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           </ul>
           {/* Legal links on branding panel (visible on desktop) */}
           <div className="auth-branding-legal">
-            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('about')}>About</button>
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('about')}>{t('legal.navAbout')}</button>
             <span className="auth-branding-legal-sep">·</span>
-            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('privacy')}>{t('legal.navPrivacy')}</button>
             <span className="auth-branding-legal-sep">·</span>
-            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+            <button type="button" className="auth-branding-legal-link" onClick={() => setLegalModal('terms')}>{t('legal.navTerms')}</button>
           </div>
         </div>
       </aside>
@@ -284,7 +259,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           )}
 
           {/* Tabs — only for login/signup */}
-          {!isForgot && !isReset && !isVerify && (
+          {!isForgot && !isVerify && (
             <div className="auth-tabs" role="tablist">
               <button
                 role="tab"
@@ -312,11 +287,14 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             <>
               <div className="auth-card-header">
                 <h2 className="auth-card-title">
-                  {isForgot ? t('auth.titleForgot') : isReset ? t('auth.titleReset') : isLogin ? t('auth.titleLogin') : t('auth.titleSignup')}
+                  {isForgot ? t('auth.titleForgot') : isLogin ? t('auth.titleLogin') : t('auth.titleSignup')}
                 </h2>
                 <p className="auth-card-subtitle">
-                  {isForgot ? t('auth.subForgot') : isReset ? t('auth.subReset') : isLogin ? t('auth.subLogin') : t('auth.subSignup')}
+                  {isForgot ? t('auth.subForgot') : isLogin ? t('auth.subLogin') : t('auth.subSignup')}
                 </p>
+                {isLogin && (
+                  <p className="auth-card-tip"><HiLightBulb />{t('auth.mcgillTip')}</p>
+                )}
               </div>
 
               {formError && (
@@ -352,24 +330,22 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                   </div>
                 )}
 
-                {!isReset && (
-                  <div className="auth-field">
-                    <label className="auth-label" htmlFor="email">{t('auth.labelEmail')}</label>
-                    <input
-                      id="email"
-                      type="email"
-                      className={`auth-input ${errors.email ? 'auth-input--error' : ''}`}
-                      placeholder="you@mail.mcgill.ca"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoComplete="email"
-                      disabled={loading}
-                    />
-                    {errors.email && <p className="auth-error-msg">{errors.email}</p>}
-                  </div>
-                )}
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="email">{t('auth.labelEmail')}</label>
+                  <input
+                    id="email"
+                    type="email"
+                    className={`auth-input ${errors.email ? 'auth-input--error' : ''}`}
+                    placeholder={t('auth.emailPlaceholder')}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    disabled={loading}
+                  />
+                  {errors.email && <p className="auth-error-msg">{errors.email}</p>}
+                </div>
 
-                {!isForgot && !isReset && (
+                {!isForgot && (
                   <div className="auth-field">
                     <div className="auth-label-row">
                       <label className="auth-label" htmlFor="password">{t('auth.labelPassword')}</label>
@@ -437,74 +413,20 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                   </div>
                 )}
 
-                {/* New password field for reset mode */}
-                {isReset && (
-                  <div className="auth-field">
-                    <label className="auth-label" htmlFor="new-password">{t('auth.labelNewPassword')}</label>
-                    <div className="auth-input-wrap">
-                      <input
-                        id="new-password"
-                        type={showNewPassword ? 'text' : 'password'}
-                        className={`auth-input auth-input--has-icon ${errors.newPassword ? 'auth-input--error' : ''}`}
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        autoComplete="new-password"
-                        disabled={loading}
-                      />
-                      <button
-                        type="button"
-                        className="auth-pw-toggle"
-                        onClick={() => setShowNewPassword(v => !v)}
-                        aria-label={showNewPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                        tabIndex={-1}
-                      >
-                        {showNewPassword ? (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {errors.newPassword && <p className="auth-error-msg">{errors.newPassword}</p>}
-                    {!errors.newPassword && <p className="auth-hint">{t('auth.passwordHint')}</p>}
-                    {newPassword && (
-                      <div className="auth-strength">
-                        <div className="auth-strength-bar">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <div
-                              key={i}
-                              className="auth-strength-seg"
-                              style={{ background: i <= strength.level ? strength.color : 'var(--border-primary)' }}
-                            />
-                          ))}
-                        </div>
-                        <span className="auth-strength-label" style={{ color: strength.color }}>
-                          {strength.label}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
                   {loading ? (
                     <span className="btn-loading">
                       <span className="spinner" />
-                      {isForgot ? t('auth.loadingForgot') : isReset ? t('auth.loadingReset') : isLogin ? t('auth.loadingLogin') : t('auth.loadingSignup')}
+                      {isForgot ? t('auth.loadingForgot') : isLogin ? t('auth.loadingLogin') : t('auth.loadingSignup')}
                     </span>
                   ) : (
-                    isForgot ? t('auth.btnForgot') : isReset ? t('auth.btnReset') : isLogin ? t('auth.btnLogin') : t('auth.btnSignup')
+                    isForgot ? t('auth.btnForgot') : isLogin ? t('auth.btnLogin') : t('auth.btnSignup')
                   )}
                 </button>
               </form>
 
               <div className="auth-footer">
-                {isForgot || isReset ? (
+                {isForgot ? (
                   <button className="auth-back-btn" onClick={() => switchMode('login')}>
                     {t('auth.backToLogin')}
                   </button>
@@ -525,11 +447,11 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
               </div>
               {/* Legal links — shown on mobile (branding panel is hidden) */}
               <div className="auth-legal-links">
-                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>About</button>
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>{t('legal.navAbout')}</button>
                 <span className="auth-legal-sep">·</span>
-                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('privacy')}>{t('legal.navPrivacy')}</button>
                 <span className="auth-legal-sep">·</span>
-                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+                <button type="button" className="auth-legal-link" onClick={() => setLegalModal('terms')}>{t('legal.navTerms')}</button>
               </div>
             </>
           )}

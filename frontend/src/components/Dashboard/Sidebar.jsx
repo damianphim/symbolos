@@ -135,15 +135,15 @@ export default function Sidebar({
                   <div className="sidebar-popup-divider" />
                   <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('about') }}>
                     <span className="sidebar-popup-icon"><FaInfoCircle /></span>
-                    <span className="sidebar-popup-label">About Symbolos</span>
+                    <span className="sidebar-popup-label">{t('sidebar.aboutSymbolos')}</span>
                   </button>
                   <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('privacy') }}>
                     <span className="sidebar-popup-icon"><FaShieldAlt /></span>
-                    <span className="sidebar-popup-label">Privacy Policy</span>
+                    <span className="sidebar-popup-label">{t('sidebar.privacyPolicy')}</span>
                   </button>
                   <button className="sidebar-popup-item" onClick={() => { setPopupOpen(false); setLegalModal('terms') }}>
                     <span className="sidebar-popup-icon"><FaFileAlt /></span>
-                    <span className="sidebar-popup-label">Terms of Service</span>
+                    <span className="sidebar-popup-label">{t('sidebar.termsOfService')}</span>
                   </button>
                   <div className="sidebar-popup-divider" />
                   <button className="sidebar-popup-item sidebar-popup-item--danger" onClick={() => { setPopupOpen(false); onSignOut() }}>
@@ -156,11 +156,11 @@ export default function Sidebar({
               <div className="sidebar-not-affiliated">{t('rsb.notAffiliated')}</div>
               {/* Legal links row */}
               <div className="sidebar-legal-links">
-                <button className="sidebar-legal-link" onClick={() => setLegalModal('privacy')}>Privacy</button>
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('about')}>{t('legal.navAbout')}</button>
                 <span className="sidebar-legal-sep">·</span>
-                <button className="sidebar-legal-link" onClick={() => setLegalModal('terms')}>Terms</button>
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('privacy')}>{t('legal.navPrivacy')}</button>
                 <span className="sidebar-legal-sep">·</span>
-                <button className="sidebar-legal-link" onClick={() => setLegalModal('about')}>About</button>
+                <button className="sidebar-legal-link" onClick={() => setLegalModal('terms')}>{t('legal.navTerms')}</button>
               </div>
               <button className="user-info" ref={triggerRef} onClick={() => setPopupOpen(p => !p)}>
                 <div className="user-avatar">

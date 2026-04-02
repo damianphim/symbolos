@@ -105,6 +105,23 @@
   border-color: #f97316;
   color: #fed7aa;
 }
+/* ── Translation disclaimer banner ── */
+.legal-translation-banner {
+  background: #eff6ff;
+  border: 1.5px solid #93c5fd;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: #1e40af;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-style: italic;
+}
+[data-theme="dark"] .legal-translation-banner {
+  background: #1e293b;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
 /* ── Warning box ── */
 .legal-warning-box {
   background: #fef2f2;

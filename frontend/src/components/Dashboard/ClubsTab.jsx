@@ -71,6 +71,7 @@ function ClubAvatar({ name, category, size = 'md' }) {
 }
 
 function JoinRequestModal({ club, onSubmit, onClose }) {
+  const { t } = useLanguage()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [linkedin, setLinkedin] = useState('')
@@ -91,24 +92,24 @@ function JoinRequestModal({ club, onSubmit, onClose }) {
     <div className="club-drawer-overlay" onClick={onClose}>
       <div className="club-join-modal" onClick={e => e.stopPropagation()}>
         <div className="club-join-modal__header">
-          <h3 style={{ margin: 0, fontSize: '18px' }}>Request to Join {club?.name}</h3>
+          <h3 style={{ margin: 0, fontSize: '18px' }}>{t('clubs.requestToJoin')} {club?.name}</h3>
           <button className="club-drawer__back" onClick={onClose}><FaTimes size={14} /></button>
         </div>
         <form onSubmit={handleSubmit} className="club-join-modal__form">
           <div className="club-join-modal__field">
-            <label>Name <span style={{ color: '#dc2626' }}>*</span></label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" required />
+            <label>{t('clubs.joinName')} <span style={{ color: '#dc2626' }}>*</span></label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('clubs.joinNamePlaceholder')} required />
           </div>
           <div className="club-join-modal__field">
-            <label>Email <span style={{ color: '#dc2626' }}>*</span></label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email address" required />
+            <label>{t('clubs.joinEmail')} <span style={{ color: '#dc2626' }}>*</span></label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('clubs.joinEmailPlaceholder')} required />
           </div>
           <div className="club-join-modal__field">
-            <label>LinkedIn <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>(optional)</span></label>
-            <input type="url" value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="https://linkedin.com/in/..." />
+            <label>{t('clubs.joinLinkedIn')} <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>{t('clubs.joinOptional')}</span></label>
+            <input type="url" value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder={t('clubs.joinLinkedInPlaceholder')} />
           </div>
           <button type="submit" className="club-action-btn club-action-btn--join" disabled={submitting || !name.trim() || !email.trim()} style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }}>
-            {submitting ? 'Sending...' : 'Submit Request'}
+            {submitting ? t('clubs.joinSending') : t('clubs.joinSubmit')}
           </button>
         </form>
       </div>
@@ -117,6 +118,7 @@ function JoinRequestModal({ club, onSubmit, onClose }) {
 }
 
 function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
+  const { t } = useLanguage()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [callerRole, setCallerRole] = useState('member')
@@ -135,7 +137,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   useEffect(() => { fetchMembers() }, [fetchMembers, refreshKey])
 
   const handleRemove = async (userId, name) => {
-    if (!window.confirm(`Remove ${name || 'this member'} from the club?`)) return
+    if (!window.confirm(t('clubs.confirmRemoveMember').replace('{name}', name || t('clubs.roleMember')))) return
     try {
       await clubsAPI.removeClubMember(clubId, userId)
       setMembers(prev => prev.filter(m => m.id !== userId))
@@ -143,8 +145,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   }
 
   const handleSetRole = async (userId, newRole) => {
-    const label = newRole === 'owner' ? 'Transfer ownership to this member? You will become an admin.' : null
-    if (newRole === 'owner' && !window.confirm(label)) return
+    if (newRole === 'owner' && !window.confirm(t('clubs.confirmTransferOwnership'))) return
     try {
       const result = await clubsAPI.updateMemberRole(clubId, userId, newRole)
       // If ownership transferred, refresh entire list to get updated roles
@@ -153,8 +154,8 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
     } catch (e) { alert(e.message) }
   }
 
-  if (loading) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>Loading members...</p>
-  if (!members.length) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>No members yet.</p>
+  if (loading) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>{t('clubs.membersLoading')}</p>
+  if (!members.length) return <p style={{ fontSize: '13px', color: '#9ca3af', padding: '8px 0' }}>{t('clubs.membersNone')}</p>
 
   const canManage = callerRole === 'owner' || callerRole === 'admin'
   const roleOrder = { owner: 0, admin: 1, member: 2 }
@@ -172,15 +173,15 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
           <input
             type="text"
             className="club-members-search"
-            placeholder="Search members..."
+            placeholder={t('clubs.membersSearch')}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
       )}
       <div className="club-members-count" style={{ fontSize: '11px', color: 'var(--text-tertiary, #9ca3af)', padding: '4px 0' }}>
-        {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''}
-        {searchTerm && ` matching "${searchTerm}"`}
+        {filteredMembers.length} {filteredMembers.length !== 1 ? t('clubs.membersPlural') : t('clubs.membersSingular')}
+        {searchTerm && ` ${t('clubs.membersMatching')} "${searchTerm}"`}
       </div>
       {filteredMembers.map(m => {
         const isOwner = m.role === 'owner'
@@ -194,9 +195,9 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
           <div key={m.id} className="club-member-row">
             <div className="club-member-info">
               <span className="club-member-name">
-                {m.name || 'Unknown'}
+                {m.name || t('clubs.roleUnknown')}
                 <span className={`club-member-role-badge club-member-role-badge--${role}`}>
-                  {role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Member'}
+                  {role === 'owner' ? t('clubs.roleOwner') : role === 'admin' ? t('clubs.roleAdmin') : t('clubs.roleMember')}
                 </span>
               </span>
               {canManage && m.email && <span className="club-member-email">{m.email}</span>}
@@ -205,21 +206,21 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
               {canAffect && (
                 <>
                   {role === 'member' && (
-                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'admin')} title="Promote to admin">
-                      ↑ Admin
+                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'admin')} title={t('clubs.promoteToAdmin')}>
+                      ↑ {t('clubs.roleAdmin')}
                     </button>
                   )}
                   {role === 'admin' && (
-                    <button className="club-member-role-toggle club-member-role-toggle--demote" onClick={() => handleSetRole(m.id, 'member')} title="Demote to member">
-                      ↓ Demote
+                    <button className="club-member-role-toggle club-member-role-toggle--demote" onClick={() => handleSetRole(m.id, 'member')} title={t('clubs.demoteToMember')}>
+                      ↓ {t('clubs.demoteToMember')}
                     </button>
                   )}
                   {callerRole === 'owner' && !isOwner && (
-                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'owner')} title="Transfer ownership" style={{ color: '#b45309', fontSize: '11px' }}>
-                      ♛ Owner
+                    <button className="club-member-role-toggle" onClick={() => handleSetRole(m.id, 'owner')} title={t('clubs.transferOwnership')} style={{ color: '#b45309', fontSize: '11px' }}>
+                      ♛ {t('clubs.roleOwner')}
                     </button>
                   )}
-                  <button className="club-member-remove" onClick={() => handleRemove(m.id, m.name)} title="Remove member">
+                  <button className="club-member-remove" onClick={() => handleRemove(m.id, m.name)} title={t('clubs.removeMember')}>
                     <FaTimes size={10} />
                   </button>
                 </>
@@ -477,7 +478,7 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
         {isOwner ? (
           <div className="club-card__footer-joined">
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 600, padding: '4px 8px' }}>
-              ✓ Manager
+              {t('clubs.managerBadge')}
             </span>
           </div>
         ) : joined ? (
@@ -559,21 +560,21 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
             <button
               className="club-edit-btn"
               onClick={(e) => { e.stopPropagation(); onEdit(club) }}
-              title="Edit club"
+              title={t('clubs.editClub')}
               style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--card-bg)', cursor: 'pointer' }}
             >
               <FaEdit size={10} />
             </button>
             <button
               className="club-delete-chip"
-              onClick={(e) => { e.stopPropagation(); const v = window.prompt(`Type "delete" to permanently remove "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
-              title="Delete club"
+              onClick={(e) => { e.stopPropagation(); const v = window.prompt(`${t('clubs.confirmDeleteClub')} "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
+              title={t('clubs.deleteClub')}
             >
               <FaTimes size={10} />
             </button>
           </>
         )}
-        <button className="club-card__open-btn" onClick={() => onOpen(club)} title="View details">
+        <button className="club-card__open-btn" onClick={() => onOpen(club)} title={t('clubs.viewDetails')}>
           <FaChevronRight size={11} />
         </button>
       </div>
@@ -609,8 +610,8 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, onDelet
         {isAdmin && (
           <button
             className="club-delete-chip"
-            onClick={() => { const v = window.prompt(`Type "delete" to permanently remove "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
-            title="Delete club"
+            onClick={() => { const v = window.prompt(`${t('clubs.confirmDeleteClub')} "${club.name}"`); if (v && v.toLowerCase().trim() === 'delete') onDelete(club.id) }}
+            title={t('clubs.deleteClub')}
           >
             <FaTimes size={10} />
           </button>
@@ -697,11 +698,11 @@ function JoinRequestsModal({ club, onClose, onAction, t }) {
               {requests.map(req => (
                 <div key={req.id} className="join-request-row">
                   <div className="join-request-info">
-                    <span className="join-request-name">{req.requester_name || 'Unknown'}</span>
+                    <span className="join-request-name">{req.requester_name || t('clubs.roleUnknown')}</span>
                     {req.requester_email && <span className="join-request-email">{req.requester_email}</span>}
                     {req.requester_linkedin && (
                       <a className="join-request-linkedin" href={req.requester_linkedin} target="_blank" rel="noopener noreferrer">
-                        LinkedIn Profile
+                        {t('clubs.linkedInProfile')}
                       </a>
                     )}
                     <span className="join-request-date">{new Date(req.created_at).toLocaleDateString()}</span>
@@ -1825,7 +1826,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
               {createdClubs.length > 0 && (
                 <div className="clubs-mine__section">
                   <h3 className="clubs-mine__section-title">
-                    <FaStar size={13} /> {isAdmin ? 'Manage Clubs' : t('clubs.createdByYou')}
+                    <FaStar size={13} /> {isAdmin ? t('clubs.manageClubs') : t('clubs.createdByYou')}
                     <span className="clubs-mine__section-count">{createdClubs.length}</span>
                   </h3>
                   <div className="clubs-mine__list">

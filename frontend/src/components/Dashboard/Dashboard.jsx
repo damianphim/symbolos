@@ -37,8 +37,27 @@ export default function Dashboard() {
   languageRef.current = language
 
   // ── Layout ─────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('chat')
+  const [activeTab, setActiveTab] = useState(() =>
+    localStorage.getItem('symbolos_open_pw_change') ? 'profile' : 'chat'
+  )
+
   const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  // ── Dynamic browser tab title ────────────────────────
+  useEffect(() => {
+    const tabNameKey = {
+      chat:      'nav.chat',
+      favorites: 'nav.degreePlanning',
+      courses:   'nav.courses',
+      calendar:  'nav.calendar',
+      clubs:     'nav.clubs',
+      forum:     'nav.forum',
+      profile:   'nav.profile',
+    }[activeTab]
+    document.title = tabNameKey ? `${t(tabNameKey)} — Symbolos` : 'Symbolos'
+    return () => { document.title = 'Symbolos' }
+  }, [activeTab, t])
+
   const tourKey = `symbolos_tour_done_${user?.id}`
   const [showTutorial, setShowTutorial] = useState(
     () => !!user?.id && !localStorage.getItem(`symbolos_tour_done_${user?.id}`)

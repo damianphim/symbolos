@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   FaCog, FaPalette, FaBell, FaLock, FaBolt, FaGlobe,
   FaSun, FaMoon, FaSyncAlt, FaDownload,
@@ -38,7 +39,37 @@ export default function Settings({ user, profile, onUpdateSettings }) {
   const [deleteError, setDeleteError] = useState('')
 
   // ── Change password state ─────────────────────────────────────────
-  const [showPwModal, setShowPwModal] = useState(false)
+  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false)
+  const [showPwModal, setShowPwModal] = useState(() => {
+    // Auto-open if user arrived via a password-reset email link
+    if (localStorage.getItem('symbolos_open_pw_change')) {
+      localStorage.removeItem('symbolos_open_pw_change')
+      return true
+    }
+    return false
+  })
+
+  // Mark as recovery flow so modal can't be dismissed until password is set
+  useEffect(() => {
+    if (showPwModal && !isRecoveryFlow) {
+      const flag = sessionStorage.getItem('symbolos_recovery_flow')
+      if (flag) {
+        setIsRecoveryFlow(true)
+        sessionStorage.removeItem('symbolos_recovery_flow')
+      }
+    }
+  }, [showPwModal, isRecoveryFlow])
+
+  // Lock body scroll while any modal is open (prevents scrollbar-width layout shift)
+  const anyModalOpen = showPwModal || showExportModal || showDeleteModal
+  useEffect(() => {
+    if (anyModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [anyModalOpen])
   const [pwNew, setPwNew] = useState('')
   const [pwConfirm, setPwConfirm] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
@@ -47,8 +78,8 @@ export default function Settings({ user, profile, onUpdateSettings }) {
 
   const handleChangePassword = async () => {
     setPwError('')
-    if (pwNew.length < 8) { setPwError('Password must be at least 8 characters.'); return }
-    if (pwNew !== pwConfirm) { setPwError('Passwords do not match.'); return }
+    if (pwNew.length < 8) { setPwError(t('settings.passwordTooShort')); return }
+    if (pwNew !== pwConfirm) { setPwError(t('settings.passwordMismatch')); return }
     setPwLoading(true)
     try {
       const { error } = await updatePassword(pwNew)
@@ -348,11 +379,11 @@ export default function Settings({ user, profile, onUpdateSettings }) {
           <div className="section-content">
             <div className="setting-item">
               <div className="setting-info">
-                <label className="setting-label">Change Password</label>
-                <p className="setting-description">Update your account password. You'll need to confirm the new password.</p>
+                <label className="setting-label">{t('settings.changePassword')}</label>
+                <p className="setting-description">{t('settings.changePasswordDesc')}</p>
               </div>
               <button className="delete-account-btn settings-btn--primary" onClick={() => { setShowPwModal(true); setPwNew(''); setPwConfirm(''); setPwError(''); setPwSuccess(false) }}>
-                <FaLock size={12} /> Change Password
+                <FaLock size={12} /> {t('settings.changePassword')}
               </button>
             </div>
             <div className="setting-item">
@@ -370,7 +401,7 @@ export default function Settings({ user, profile, onUpdateSettings }) {
       </div>
 
       {/* Export Modal */}
-      {showExportModal && (
+      {showExportModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3 className="modal-title">{t('settings.exportYourData')}</h3>
@@ -380,11 +411,12 @@ export default function Settings({ user, profile, onUpdateSettings }) {
               <button className="modal-btn confirm-btn" onClick={handleExportData}>{t('settings.downloadJson')}</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Account Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && createPortal(
         <div className="modal-overlay" onClick={() => !deleting && setShowDeleteModal(false)}>
           <div className="modal-content modal-content--danger" onClick={e => e.stopPropagation()}>
             <div className="modal-danger-icon"><FaTrash size={22} /></div>
@@ -414,24 +446,30 @@ export default function Settings({ user, profile, onUpdateSettings }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Change Password Modal */}
-      {showPwModal && (
-        <div className="modal-overlay" onClick={() => !pwLoading && setShowPwModal(false)}>
+      {showPwModal && createPortal(
+        <div className="modal-overlay" onClick={() => !isRecoveryFlow && !pwLoading && setShowPwModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="modal-title">Change Password</h3>
+            <h3 className="modal-title">{t('settings.changePasswordTitle')}</h3>
+            {isRecoveryFlow && (
+              <p className="modal-text" style={{ marginBottom: 12, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {t('settings.recoveryFlowNote')}
+              </p>
+            )}
             {pwSuccess ? (
-              <p className="modal-text" style={{ color: 'var(--success-primary)' }}>✓ Password updated successfully!</p>
+              <p className="modal-text" style={{ color: 'var(--success-primary)' }}><FaCheck /> {t('settings.passwordUpdateSuccess')}</p>
             ) : (
               <>
                 <div className="modal-confirm-field">
-                  <label className="modal-confirm-label">New password</label>
+                  <label className="modal-confirm-label">{t('settings.newPasswordLabel')}</label>
                   <input
                     className="modal-confirm-input"
                     type="password"
-                    placeholder="At least 8 characters"
+                    placeholder={t('settings.passwordPlaceholder')}
                     value={pwNew}
                     onChange={e => setPwNew(e.target.value)}
                     disabled={pwLoading}
@@ -439,11 +477,11 @@ export default function Settings({ user, profile, onUpdateSettings }) {
                   />
                 </div>
                 <div className="modal-confirm-field" style={{ marginTop: 12 }}>
-                  <label className="modal-confirm-label">Confirm new password</label>
+                  <label className="modal-confirm-label">{t('settings.confirmPasswordLabel')}</label>
                   <input
                     className="modal-confirm-input"
                     type="password"
-                    placeholder="Re-enter password"
+                    placeholder={t('settings.confirmPasswordPlaceholder')}
                     value={pwConfirm}
                     onChange={e => setPwConfirm(e.target.value)}
                     disabled={pwLoading}
@@ -451,15 +489,18 @@ export default function Settings({ user, profile, onUpdateSettings }) {
                 </div>
                 {pwError && <p className="modal-error">{pwError}</p>}
                 <div className="modal-actions">
-                  <button className="modal-btn cancel-btn" onClick={() => setShowPwModal(false)} disabled={pwLoading}>Cancel</button>
+                  {!isRecoveryFlow && (
+                    <button className="modal-btn cancel-btn" onClick={() => setShowPwModal(false)} disabled={pwLoading}>{t('common.cancel')}</button>
+                  )}
                   <button className="modal-btn confirm-btn" onClick={handleChangePassword} disabled={pwLoading || !pwNew || !pwConfirm}>
-                    {pwLoading ? 'Updating…' : 'Update Password'}
+                    {pwLoading ? t('settings.passwordUpdating') : t('settings.updatePasswordBtn')}
                   </button>
                 </div>
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

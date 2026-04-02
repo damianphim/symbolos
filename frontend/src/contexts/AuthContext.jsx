@@ -20,14 +20,13 @@ export const AuthProvider = ({ children }) => {
   // even though a minimal profile already exists in the DB.
   // Cleared by completeOnboarding() when the user finishes or skips.
   const [needsOnboarding, setNeedsOnboarding]       = useState(false)
-  const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
   const [authFlags, setAuthFlags]                   = useState({ is_admin: false, is_mcgill_email: false })
 
-  const mountedRef         = useRef(true)
-  const loadingProfile     = useRef(false)
-  const justSignedUp       = useRef(false)
-  const justUpdatedProfile = useRef(false)
-  const loadedForUserId    = useRef(null)
+  const mountedRef          = useRef(true)
+  const loadingProfile      = useRef(false)
+  const justSignedUp        = useRef(false)
+  const justUpdatedProfile  = useRef(false)
+  const loadedForUserId     = useRef(null)
 
   const loadProfile = useCallback(async (userId) => {
     if (!mountedRef.current) return
@@ -86,30 +85,11 @@ export const AuthProvider = ({ children }) => {
     mountedRef.current = true
     let authSubscription = null
 
-    const initialize = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-
-        if (mountedRef.current) {
-          setUser(session?.user ?? null)
-          // Pre-seed the token so the axios interceptor doesn't race on cold load
-          if (session?.access_token) {
-            api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
-          }
-          // Non-blocking — don't await so loading state clears fast
-          if (session?.user) loadProfile(session.user.id)
-        }
-      } catch (err) {
-        console.error('Auth initialization error:', err)
-        if (mountedRef.current) setError({ type: 'AUTH_INIT_FAILED', message: 'Unable to initialize authentication' })
-      } finally {
-        if (mountedRef.current) setLoading(false)
-      }
-    }
-
-    initialize()
-
+    // ── Register onAuthStateChange FIRST ─────────────────────────────
+    // With Supabase v2 PKCE flow, recovery links redirect with ?code=xxx.
+    // onAuthStateChange fires PASSWORD_RECOVERY when the code is exchanged.
+    // We MUST register the listener before getSession()/initialize() so we
+    // don't miss the event.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mountedRef.current) return
@@ -121,12 +101,18 @@ export const AuthProvider = ({ children }) => {
         setUser(session?.user ?? null)
 
         if (event === 'PASSWORD_RECOVERY') {
-          // User clicked a password-reset link — signal the UI to show the reset form
+          // User clicked a password-reset link — log them in automatically,
+          // flag that the Settings password-change modal should open, then
+          // load their profile to reach the dashboard.
+          localStorage.setItem('symbolos_open_pw_change', '1')
+          sessionStorage.setItem('symbolos_recovery_flow', '1')
           if (session?.access_token) {
             api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
           }
-          // Store recovery flag so Login.jsx can switch to 'reset' mode
-          if (mountedRef.current) setNeedsPasswordReset(true)
+          if (session?.user && mountedRef.current) {
+            setUser(session.user)
+            loadProfile(session.user.id)
+          }
           return
         }
 
@@ -167,6 +153,43 @@ export const AuthProvider = ({ children }) => {
     )
 
     authSubscription = subscription
+
+    // ── Initialize session ────────────────────────────────────────────
+    // If a PKCE ?code= is present in the URL, Supabase will exchange it
+    // and fire PASSWORD_RECOVERY (or SIGNED_IN for email confirm) via
+    // onAuthStateChange above. Calling getSession() here would race with
+    // that exchange and route the user to the dashboard before the
+    // PASSWORD_RECOVERY event fires. So we skip initialize() entirely
+    // and let onAuthStateChange handle it.
+    const hasPkceCode = new URLSearchParams(window.location.search).has('code')
+
+    const initialize = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+
+        if (mountedRef.current) {
+          setUser(session?.user ?? null)
+          if (session?.access_token) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+          }
+          if (session?.user) loadProfile(session.user.id)
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err)
+        if (mountedRef.current) setError({ type: 'AUTH_INIT_FAILED', message: 'Unable to initialize authentication' })
+      } finally {
+        if (mountedRef.current) setLoading(false)
+      }
+    }
+
+    if (hasPkceCode) {
+      // A PKCE code exchange is in progress — onAuthStateChange will handle
+      // the session once it resolves. Just drop the loading spinner.
+      if (mountedRef.current) setLoading(false)
+    } else {
+      initialize()
+    }
 
     return () => {
       mountedRef.current = false
@@ -349,9 +372,7 @@ export const AuthProvider = ({ children }) => {
     await loadProfile(user.id)
   }, [user?.id, loadProfile])
 
-  const clearPasswordReset = useCallback(() => setNeedsPasswordReset(false), [])
-
-  const value = { user, profile, loading, error, needsOnboarding, needsPasswordReset, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError, clearPasswordReset, resetPasswordForEmail, resendVerificationEmail, updatePassword }
+  const value = { user, profile, loading, error, needsOnboarding, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError, resetPasswordForEmail, resendVerificationEmail, updatePassword }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import forumAPI from '../../lib/forumAPI'
 import {
   FaComments, FaThumbsUp, FaReply, FaSearch, FaFire,
@@ -10,31 +11,35 @@ import {
 } from 'react-icons/fa'
 import './Forum.css'
 
-// ── Constants ────────────────────────────────────────────────────
-const CATEGORIES = [
-  { key: 'all',      label: 'All Posts',      icon: <FaComments />,      color: '#ed1b2f' },
-  { key: 'courses',  label: 'Courses',         icon: <FaBookOpen />,      color: '#3b82f6' },
-  { key: 'study',    label: 'Study Groups',    icon: <FaUsers />,         color: '#10b981' },
-  { key: 'advice',   label: 'Advice',          icon: <FaLightbulb />,     color: '#f59e0b' },
-  { key: 'general',  label: 'General',         icon: <FaBullhorn />,      color: '#8b5cf6' },
-  { key: 'planning', label: 'Degree Planning', icon: <FaGraduationCap />, color: '#ed1b2f' },
-]
+// ── Category / sort helpers (call with t inside components) ───────
+function getCategories(t) {
+  return [
+    { key: 'all',      label: t('forum.catAll'),      icon: <FaComments />,      color: '#ed1b2f' },
+    { key: 'courses',  label: t('forum.catCourses'),   icon: <FaBookOpen />,      color: '#3b82f6' },
+    { key: 'study',    label: t('forum.catStudy'),     icon: <FaUsers />,         color: '#10b981' },
+    { key: 'advice',   label: t('forum.catAdvice'),    icon: <FaLightbulb />,     color: '#f59e0b' },
+    { key: 'general',  label: t('forum.catGeneral'),   icon: <FaBullhorn />,      color: '#8b5cf6' },
+    { key: 'planning', label: t('forum.catPlanning'),  icon: <FaGraduationCap />, color: '#ed1b2f' },
+  ]
+}
 
-const SORT_OPTIONS = [
-  { key: 'hot', label: 'Hot', icon: <FaFire /> },
-  { key: 'new', label: 'New', icon: <FaClock /> },
-  { key: 'top', label: 'Top', icon: <FaStar /> },
-]
+function getSortOptions(t) {
+  return [
+    { key: 'hot', label: t('forum.sortHot'), icon: <FaFire /> },
+    { key: 'new', label: t('forum.sortNew'), icon: <FaClock /> },
+    { key: 'top', label: t('forum.sortTop'), icon: <FaStar /> },
+  ]
+}
 
 // ── Utility ──────────────────────────────────────────────────────
-function timeAgo(ts) {
+function timeAgo(ts, t) {
   const diff = Date.now() - new Date(ts).getTime()
   const m = Math.floor(diff / 60000)
-  if (m < 1) return 'just now'
-  if (m < 60) return `${m}m ago`
+  if (m < 1) return t('forum.timeJustNow')
+  if (m < 60) return `${m}${t('forum.timeMin')}`
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
+  if (h < 24) return `${h}${t('forum.timeHour')}`
+  return `${Math.floor(h / 24)}${t('forum.timeDay')}`
 }
 
 function Avatar({ letter, color, size = 32 }) {
@@ -52,6 +57,8 @@ function Avatar({ letter, color, size = 32 }) {
 
 // ── New Post Modal ────────────────────────────────────────────────
 function NewPostModal({ onClose, onSubmit, isSubmitting }) {
+  const { t } = useLanguage()
+  const CATEGORIES = getCategories(t)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [category, setCategory] = useState('general')
@@ -62,7 +69,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting }) {
     if (!title.trim() || !body.trim()) return
     onSubmit({
       title: title.trim(), body: body.trim(), category,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
     })
   }
 
@@ -70,12 +77,12 @@ function NewPostModal({ onClose, onSubmit, isSubmitting }) {
     <div className="forum-modal-overlay" onClick={onClose}>
       <div className="forum-modal" onClick={e => e.stopPropagation()}>
         <div className="forum-modal__header">
-          <h2 className="forum-modal__title">Create a Post</h2>
+          <h2 className="forum-modal__title">{t('forum.modalCreateTitle')}</h2>
           <button className="forum-modal__close" onClick={onClose}><FaTimes /></button>
         </div>
         <form className="forum-modal__body" onSubmit={handleSubmit}>
           <div className="forum-modal__field">
-            <label className="forum-modal__label">Category</label>
+            <label className="forum-modal__label">{t('forum.modalCategory')}</label>
             <div className="forum-modal__cat-grid">
               {CATEGORIES.filter(c => c.key !== 'all').map(cat => (
                 <button key={cat.key} type="button"
@@ -89,28 +96,28 @@ function NewPostModal({ onClose, onSubmit, isSubmitting }) {
             </div>
           </div>
           <div className="forum-modal__field">
-            <label className="forum-modal__label">Title</label>
-            <input className="forum-modal__input" placeholder="What's your question or topic?"
+            <label className="forum-modal__label">{t('forum.modalTitleLabel')}</label>
+            <input className="forum-modal__input" placeholder={t('forum.modalTitlePlaceholder')}
               value={title} onChange={e => setTitle(e.target.value)} maxLength={120} required autoFocus />
             <span className="forum-modal__char">{title.length}/120</span>
           </div>
           <div className="forum-modal__field">
-            <label className="forum-modal__label">Body</label>
-            <textarea className="forum-modal__textarea" placeholder="Share details, context, or your experience…"
+            <label className="forum-modal__label">{t('forum.modalBodyLabel')}</label>
+            <textarea className="forum-modal__textarea" placeholder={t('forum.modalBodyPlaceholder')}
               value={body} onChange={e => setBody(e.target.value)} rows={5} required />
           </div>
           <div className="forum-modal__field">
             <label className="forum-modal__label">
-              Tags <span className="forum-modal__optional">(optional, comma-separated)</span>
+              {t('forum.modalTagsLabel')} <span className="forum-modal__optional">{t('forum.modalTagsOptional')}</span>
             </label>
-            <input className="forum-modal__input" placeholder="e.g. COMP 302, U2, advice"
+            <input className="forum-modal__input" placeholder={t('forum.modalTagsPlaceholder')}
               value={tags} onChange={e => setTags(e.target.value)} />
           </div>
           <div className="forum-modal__footer">
-            <button type="button" className="forum-btn forum-btn--ghost" onClick={onClose}>Cancel</button>
+            <button type="button" className="forum-btn forum-btn--ghost" onClick={onClose}>{t('forum.cancel')}</button>
             <button type="submit" className="forum-btn forum-btn--primary"
               disabled={isSubmitting || !title.trim() || !body.trim()}>
-              {isSubmitting ? <><FaSpinner className="forum-spin" /> Posting…</> : <><FaPaperPlane /> Post</>}
+              {isSubmitting ? <><FaSpinner className="forum-spin" /> {t('forum.posting')}</> : <><FaPaperPlane /> {t('forum.post')}</>}
             </button>
           </div>
         </form>
@@ -121,6 +128,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting }) {
 
 // ── Reply Box ─────────────────────────────────────────────────────
 function ReplyBox({ onSubmit, isSubmitting, onCancel }) {
+  const { t } = useLanguage()
   const [text, setText] = useState('')
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -130,14 +138,14 @@ function ReplyBox({ onSubmit, isSubmitting, onCancel }) {
   }
   return (
     <form className="forum-reply-box" onSubmit={handleSubmit}>
-      <textarea className="forum-reply-box__input" placeholder="Write a reply…"
+      <textarea className="forum-reply-box__input" placeholder={t('forum.replyPlaceholder')}
         value={text} onChange={e => setText(e.target.value)} rows={3} autoFocus />
       <div className="forum-reply-box__actions">
-        <button type="button" className="forum-btn forum-btn--ghost forum-btn--sm" onClick={onCancel}>Cancel</button>
+        <button type="button" className="forum-btn forum-btn--ghost forum-btn--sm" onClick={onCancel}>{t('forum.cancel')}</button>
         <button type="submit" className="forum-btn forum-btn--primary forum-btn--sm"
           disabled={isSubmitting || !text.trim()}>
           {isSubmitting ? <FaSpinner className="forum-spin" /> : <FaPaperPlane />}
-          {isSubmitting ? 'Posting…' : 'Reply'}
+          {isSubmitting ? t('forum.posting') : t('forum.replyBtn')}
         </button>
       </div>
     </form>
@@ -146,6 +154,9 @@ function ReplyBox({ onSubmit, isSubmitting, onCancel }) {
 
 // ── Post Card ─────────────────────────────────────────────────────
 function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike, onDelete, onReplyAdded }) {
+  const { t } = useLanguage()
+  const CATEGORIES = getCategories(t)
+
   const [expanded, setExpanded]           = useState(false)
   const [replies, setReplies]             = useState([])
   const [repliesLoaded, setRepliesLoaded] = useState(false)
@@ -227,19 +238,19 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
   }
 
   const handleReportPost = async () => {
-    if (!window.confirm('Report this post for inappropriate content?')) return
+    if (!window.confirm(t('forum.confirmReportPost'))) return
     try {
       await forumAPI.reportPost(post.id)
-      alert('Report submitted. Thank you.')
-    } catch { alert('Could not submit report. Please try again.') }
+      alert(t('forum.reportSuccess'))
+    } catch { alert(t('forum.reportError')) }
   }
 
   const handleReportReply = async (replyId) => {
-    if (!window.confirm('Report this reply for inappropriate content?')) return
+    if (!window.confirm(t('forum.confirmReportReply'))) return
     try {
       await forumAPI.reportReply(replyId)
-      alert('Report submitted. Thank you.')
-    } catch { alert('Could not submit report. Please try again.') }
+      alert(t('forum.reportSuccess'))
+    } catch { alert(t('forum.reportError')) }
   }
 
   const replyCount = repliesLoaded ? replies.length : (post.reply_count ?? 0)
@@ -253,19 +264,19 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
           <span className="forum-post-card__author">{post.author}</span>
           {post.program_info && <span className="forum-post-card__program">{post.program_info}</span>}
           <span className="forum-post-card__dot">·</span>
-          <span className="forum-post-card__time">{timeAgo(post.created_at)}</span>
+          <span className="forum-post-card__time">{timeAgo(post.created_at, t)}</span>
         </div>
         <div className="forum-post-card__cat-badge" style={{ '--cat-color': cat.color }}>
           {cat.icon} {cat.label}
         </div>
         {isOwn ? (
           <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
-            onClick={() => onDelete(post.id)} title="Delete post">
+            onClick={() => onDelete(post.id)} title={t('forum.deletePost')}>
             <FaTrash />
           </button>
         ) : (
           <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
-            onClick={handleReportPost} title="Report post">
+            onClick={handleReportPost} title={t('forum.reportPost')}>
             <FaFlag />
           </button>
         )}
@@ -290,11 +301,11 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
           <FaThumbsUp /> {likeCount}
         </button>
         <button className={`forum-action-btn ${expanded ? 'forum-action-btn--active' : ''}`} onClick={handleToggleExpand}>
-          <FaComments /> {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+          <FaComments /> {replyCount} {replyCount === 1 ? t('forum.replySingular') : t('forum.replyPlural')}
           {replyCount > 0 && (expanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />)}
         </button>
         <button className="forum-action-btn" onClick={() => setShowReplyBox(v => !v)}>
-          <FaReply /> Reply
+          <FaReply /> {t('forum.replyBtn')}
         </button>
       </div>
 
@@ -302,7 +313,7 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
       {expanded && (
         <div className="forum-replies">
           {loadingReplies && (
-            <div className="forum-replies__loading"><FaSpinner className="forum-spin" /> Loading replies…</div>
+            <div className="forum-replies__loading"><FaSpinner className="forum-spin" /> {t('forum.loadingReplies')}</div>
           )}
           {replies.map(reply => (
             <div key={reply.id} className="forum-reply">
@@ -311,7 +322,7 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
                 <div className="forum-reply__meta">
                   <span className="forum-reply__author">{reply.author}</span>
                   {reply.program_info && <span className="forum-post-card__program">{reply.program_info}</span>}
-                  <span className="forum-reply__time">{timeAgo(reply.created_at)}</span>
+                  <span className="forum-reply__time">{timeAgo(reply.created_at, t)}</span>
                 </div>
                 <p className="forum-reply__text">{reply.body}</p>
                 <div className="forum-reply__actions">
@@ -322,12 +333,12 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
                   </button>
                   {reply.user_id === currentUserId ? (
                     <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
-                      onClick={() => handleDeleteReply(reply.id)} title="Delete reply">
+                      onClick={() => handleDeleteReply(reply.id)} title={t('forum.deleteReply')}>
                       <FaTrash />
                     </button>
                   ) : (
                     <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
-                      onClick={() => handleReportReply(reply.id)} title="Report reply">
+                      onClick={() => handleReportReply(reply.id)} title={t('forum.reportReply')}>
                       <FaFlag />
                     </button>
                   )}
@@ -351,6 +362,10 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
 // ── Main ──────────────────────────────────────────────────────────
 export default function Forum() {
   const { user, profile } = useAuth()
+  const { t } = useLanguage()
+
+  const CATEGORIES   = getCategories(t)
+  const SORT_OPTIONS = getSortOptions(t)
 
   const [posts, setPosts]             = useState([])
   const [loading, setLoading]         = useState(true)
@@ -397,23 +412,23 @@ export default function Forum() {
       setPosts(data.posts || [])
     } catch (err) {
       console.error('Forum fetch error:', err)
-      setError('Could not load posts. Please try again.')
+      setError(t('forum.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [activeCategory, sortMode, debouncedSearch])
+  }, [activeCategory, sortMode, debouncedSearch, t])
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
   const handleLike = useCallback((postId) => forumAPI.togglePostLike(postId), [])
 
   const handleDelete = useCallback(async (postId) => {
-    if (!window.confirm('Delete this post?')) return
+    if (!window.confirm(t('forum.confirmDeletePost'))) return
     try {
       await forumAPI.deletePost(postId)
       setPosts(prev => prev.filter(p => p.id !== postId))
     } catch (err) { console.error('Delete failed:', err) }
-  }, [])
+  }, [t])
 
   const handleReplyAdded = useCallback((postId) => {
     setPosts(prev => prev.map(p =>
@@ -443,12 +458,12 @@ export default function Forum() {
         <div className="forum-header__left">
           <div className="forum-header__icon"><FaComments size={22} /></div>
           <div>
-            <h1 className="forum-header__title">McGill Community Forum</h1>
-            <p className="forum-header__sub">Ask questions, share experiences, connect with classmates</p>
+            <h1 className="forum-header__title">{t('forum.header')}</h1>
+            <p className="forum-header__sub">{t('forum.subheader')}</p>
           </div>
         </div>
         <button className="forum-new-btn" onClick={() => setShowNewPost(true)}>
-          <FaPlus size={12} /> New Post
+          <FaPlus size={12} /> {t('forum.newPostBtn')}
         </button>
       </div>
 
@@ -456,7 +471,7 @@ export default function Forum() {
       <div className="forum-toolbar">
         <div className="forum-search-wrap">
           <FaSearch className="forum-search-ico" />
-          <input className="forum-search" placeholder="Search posts, tags, topics…"
+          <input className="forum-search" placeholder={t('forum.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="forum-search-clear" onClick={() => setSearch('')}><FaTimes size={11} /></button>}
         </div>
@@ -486,18 +501,18 @@ export default function Forum() {
 
       {/* Content */}
       {loading ? (
-        <div className="forum-loading-bar"><FaSpinner className="forum-spin" /> Loading posts…</div>
+        <div className="forum-loading-bar"><FaSpinner className="forum-spin" /> {t('forum.loadingPosts')}</div>
       ) : error ? (
         <div className="forum-error-bar">
           {error}
-          <button className="forum-btn forum-btn--ghost forum-btn--sm" onClick={fetchPosts}>Retry</button>
+          <button className="forum-btn forum-btn--ghost forum-btn--sm" onClick={fetchPosts}>{t('forum.retry')}</button>
         </div>
       ) : posts.length === 0 ? (
         <div className="forum-empty">
           <FaComments size={32} />
-          <p>{debouncedSearch || activeCategory !== 'all' ? 'No posts match your filters.' : 'No posts yet — be the first!'}</p>
+          <p>{debouncedSearch || activeCategory !== 'all' ? t('forum.noPostsFiltered') : t('forum.noPostsYet')}</p>
           <button className="forum-btn forum-btn--primary" onClick={() => setShowNewPost(true)}>
-            <FaPlus /> Create Post
+            <FaPlus /> {t('forum.createPostBtn')}
           </button>
         </div>
       ) : (

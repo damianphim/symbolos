@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
+import { FaHeart, FaRegHeart, FaCheckCircle, FaCheck, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './SavedCoursesView.css'
 
@@ -48,7 +48,7 @@ export default function SavedCoursesView({
           className={`saved-tab ${activeView === 'completed' ? 'active' : ''}`}
           onClick={() => setActiveView('completed')}
         >
-          <span className="tab-icon">✓</span>
+          <span className="tab-icon"><FaCheck /></span>
           <span className="tab-label">{t('saved.completed')}</span>
           {completedCourses.length > 0 && <span className="tab-count">{completedCourses.length}</span>}
         </button>
@@ -197,7 +197,7 @@ export default function SavedCoursesView({
         <div className="completed-courses-content">
           {completedCourses.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">✓</div>
+              <div className="empty-icon"><FaCheck /></div>
               <h3>No Completed Courses Yet</h3>
               <p>Mark courses as completed to track your progress</p>
             </div>
