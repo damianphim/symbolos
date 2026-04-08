@@ -37,13 +37,36 @@ class AdvancedStandingItem(BaseModel):
     credits: float = Field(..., ge=0, le=20)
 
 
+class NotificationTiming(BaseModel):
+    """Timing sub-object for notification preferences."""
+    sameDay: bool = False
+    oneDay: bool = True
+    oneWeek: bool = True
+
+    model_config = ConfigDict(extra="allow")
+
+
+class NotificationEventTypes(BaseModel):
+    """Event-type toggles for notification preferences."""
+    exam: bool = True
+    academic: bool = True
+    union: bool = True
+    club: bool = True
+    personal: bool = True
+    newsletter: bool = True
+
+    model_config = ConfigDict(extra="allow")
+
+
 class NotificationPrefs(BaseModel):
-    """User notification preferences."""
-    email_enabled: bool = True
-    sms_enabled: bool = False
-    notify_1day: bool = True
-    notify_7days: bool = True
-    notify_same_day: bool = False
+    """User notification preferences — matches the frontend schema."""
+    method: str = "email"
+    email: str = ""
+    phone: str = ""
+    timing: NotificationTiming = NotificationTiming()
+    eventTypes: NotificationEventTypes = NotificationEventTypes()
+
+    model_config = ConfigDict(extra="allow")
 
 
 class UserCreate(BaseModel):
