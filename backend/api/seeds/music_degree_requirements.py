@@ -79,13 +79,13 @@ MUTH_350 = {"subject": "MUTH", "catalog": "350", "title": "Theory and Analysis 5
 
 # Upper-year practical lessons (Years 3–4) used by most performance programs
 UPPER_LESSONS = [
-    {"subject": "MUIN", "catalog": "380", "title": "BMus Practical Lessons 5",  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 3 Fall"},
-    {"subject": "MUIN", "catalog": "381", "title": "BMus Practical Lessons 6",  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 3 Winter"},
-    {"subject": "MUIN", "catalog": "480", "title": "BMus Practical Lessons 7",  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 4 Fall"},
-    {"subject": "MUIN", "catalog": "481", "title": "BMus Practical Lessons 8",  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 4 Winter"},
-    {"subject": "MUIN", "catalog": "282", "title": "BMus Perf Practical Exam 1", "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Applied for separately; Year 2 jury exam"},
-    {"subject": "MUIN", "catalog": "382", "title": "BMus Perf Practical Exam 2", "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Applied for separately; Year 3 jury exam"},
-    {"subject": "MUIN", "catalog": "482", "title": "BMus Perf Practical Exam 3", "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Final jury / recital exam; Year 4"},
+    {"subject": "MUIN", "catalog": "380", "title": "BMus Practical Lessons 5",  "credits": 2.5, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 3 Fall"},
+    {"subject": "MUIN", "catalog": "381", "title": "BMus Practical Lessons 6",  "credits": 2.5, "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 3 Winter"},
+    {"subject": "MUIN", "catalog": "480", "title": "BMus Practical Lessons 7",  "credits": 2,   "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 4 Fall"},
+    {"subject": "MUIN", "catalog": "481", "title": "BMus Practical Lessons 8",  "credits": 2,   "is_required": True, "recommended": True, "recommendation_reason": "Private instruction Year 4 Winter"},
+    {"subject": "MUIN", "catalog": "282", "title": "BMus Perf Practical Exam 1", "credits": 1,  "is_required": True, "recommended": True, "recommendation_reason": "Applied for separately; Year 2 jury exam"},
+    {"subject": "MUIN", "catalog": "382", "title": "BMus Perf Practical Exam 2", "credits": 1,  "is_required": True, "recommended": True, "recommendation_reason": "Applied for separately; Year 3 jury exam"},
+    {"subject": "MUIN", "catalog": "482", "title": "BMus Perf Practical Exam 3", "credits": 2,  "is_required": True, "recommended": True, "recommendation_reason": "Final jury / recital exam; Year 4"},
 ]
 
 
@@ -238,13 +238,30 @@ MUSIC_PROGRAMS = [
         ],
       },
       {
+        "block_key": "piano_specific_required",
+        "title": "Piano-Specific Required Courses",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Courses specific to the Piano Performance major including advanced seminars, repertoire studies, piano techniques, concerto, and Theory 5. Pass/fail courses (0 credits) are graded P/F and do not count toward credit totals.",
+        "sort_order": 4,
+        "courses": [
+          {"subject": "MUPG", "catalog": "357",  "title": "Piano Repertoire Studies 2",  "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Piano repertoire survey; Year 3"},
+          {"subject": "MUPG", "catalog": "541",  "title": "Senior Piano Seminar 1",      "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Advanced seminar for senior piano students; Year 4 Fall"},
+          {"subject": "MUPG", "catalog": "542",  "title": "Senior Piano Seminar 2",      "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 4 Winter"},
+          {"subject": "MUTH", "catalog": "350",  "title": "Theory and Analysis 5",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Post-tonal theory and analysis; required for Piano Performance major"},
+          {"subject": "MUIN", "catalog": "333",  "title": "Piano Techniques 2",          "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Pass/fail; piano technique seminar; Year 2–3"},
+          {"subject": "MUIN", "catalog": "369",  "title": "Concerto",                    "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Pass/fail; concerto performance requirement; Year 3–4"},
+          {"subject": "MUIN", "catalog": "433",  "title": "Piano Techniques 3",          "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Pass/fail; advanced piano technique seminar; Year 3–4"},
+        ],
+      },
+      {
         "block_key": "piano_history_electives",
         "title": "Music History / Performance Practice (upper-level)",
         "block_type": "choose_credits",
         "credits_needed": 6,
         "courses_needed": None, "group_name": None,
         "notes": "6 credits from MUHL or MUPP at 300-level or above, selected in consultation with adviser.",
-        "sort_order": 4,
+        "sort_order": 5,
         "courses": [
           {"subject": "MUHL", "catalog": "366", "title": "Era of the Fortepiano",       "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6, "recommendation_reason": "Directly relevant to piano performance history"},
           {"subject": "MUHL", "catalog": "382", "title": "Baroque Music",               "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6},
@@ -399,13 +416,13 @@ MUSIC_PROGRAMS = [
           {"subject": "MUIN", "catalog": "181",  "title": "BMus Practical Lessons 2",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 1 Winter"},
           {"subject": "MUIN", "catalog": "280",  "title": "BMus Practical Lessons 3",    "credits": 2.5,"is_required": True, "recommended": True, "recommendation_reason": "Year 2 Fall"},
           {"subject": "MUIN", "catalog": "281",  "title": "BMus Practical Lessons 4",    "credits": 2.5,"is_required": True, "recommended": True, "recommendation_reason": "Year 2 Winter"},
-          {"subject": "MUIN", "catalog": "380",  "title": "BMus Practical Lessons 5",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 Fall"},
-          {"subject": "MUIN", "catalog": "381",  "title": "BMus Practical Lessons 6",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 Winter"},
-          {"subject": "MUIN", "catalog": "480",  "title": "BMus Practical Lessons 7",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 4 Fall"},
-          {"subject": "MUIN", "catalog": "481",  "title": "BMus Practical Lessons 8",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 4 Winter"},
-          {"subject": "MUIN", "catalog": "282",  "title": "BMus Perf Practical Exam 1",  "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Year 2 jury exam"},
-          {"subject": "MUIN", "catalog": "382",  "title": "BMus Perf Practical Exam 2",  "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 jury exam"},
-          {"subject": "MUIN", "catalog": "482",  "title": "BMus Perf Practical Exam 3",  "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Final recital exam; Year 4"},
+          {"subject": "MUIN", "catalog": "380",  "title": "BMus Practical Lessons 5",    "credits": 2.5, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 Fall"},
+          {"subject": "MUIN", "catalog": "381",  "title": "BMus Practical Lessons 6",    "credits": 2.5, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 Winter"},
+          {"subject": "MUIN", "catalog": "480",  "title": "BMus Practical Lessons 7",    "credits": 2,   "is_required": True, "recommended": True, "recommendation_reason": "Year 4 Fall"},
+          {"subject": "MUIN", "catalog": "481",  "title": "BMus Practical Lessons 8",    "credits": 2,   "is_required": True, "recommended": True, "recommendation_reason": "Year 4 Winter"},
+          {"subject": "MUIN", "catalog": "282",  "title": "BMus Perf Practical Exam 1",  "credits": 1,   "is_required": True, "recommended": True, "recommendation_reason": "Year 2 jury exam"},
+          {"subject": "MUIN", "catalog": "382",  "title": "BMus Perf Practical Exam 2",  "credits": 1,   "is_required": True, "recommended": True, "recommendation_reason": "Year 3 jury exam"},
+          {"subject": "MUIN", "catalog": "482",  "title": "BMus Perf Practical Exam 3",  "credits": 2,   "is_required": True, "recommended": True, "recommendation_reason": "Final recital exam; Year 4"},
           {"subject": "MUIN", "catalog": "283",  "title": "BMus Concentration Final Exam","credits": 1,"is_required": True, "recommended": True, "recommendation_reason": "Applied for separately"},
         ],
       },
@@ -512,7 +529,131 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  6. COMPOSITION MAJOR – B.MUS. (124 credits)
+  #  6. EARLY MUSIC PERFORMANCE – VOICE – B.MUS. (126 credits)
+  # ══════════════════════════════════════════════════════════════════════════
+  {
+    "program_key":   "performance_early_music_voice_bmus",
+    "name":          "Early Music Performance – Voice (B.Mus.) (126 credits)",
+    "program_type":  "major",
+    "faculty":       "Schulich School of Music",
+    "total_credits": 126,
+    "description": (
+      "The B.Mus. in Early Music Performance – Voice trains singers in historical vocal "
+      "styles from the medieval through baroque periods. Students receive private voice "
+      "instruction and coaching (MUIN 300/301), participate in Cappella Antica and Early "
+      "Music Ensemble, and complete comprehensive lyric diction in Italian, French, English, "
+      "and German (MUPG 209–213). The program requires Theory and Analysis 5 (MUTH 350), "
+      "Topics in Early Music Analysis (MUTH 426), Topics in Performance Practice (MUPP 381), "
+      "and three practical jury examinations across Years 2–4. The voice variant carries "
+      "126 credits due to diction and voice coaching requirements beyond the instruments variant."
+    ),
+    "ecalendar_url": "https://coursecatalogue.mcgill.ca/en/undergraduate/music/programs/performance/early-music-performance-voice-major-bmus/",
+    "blocks": [
+      {
+        "block_key": "early_music_voice_core",
+        "title": "Core Music Requirements (all B.Mus. programs)",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Shared BMus foundation: theory, musicianship, keyboard proficiency, music history, practical lessons (Years 1–2), and professional development.",
+        "sort_order": 1,
+        "courses": BMUS_CORE,
+      },
+      {
+        "block_key": "early_music_voice_upper",
+        "title": "Upper-Year Practical Instruction & Exams (Years 3–4)",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Private voice lessons on historical repertoire (MUIN 380/381/480/481) plus three required jury/performance examinations (MUIN 282/382/482).",
+        "sort_order": 2,
+        "courses": UPPER_LESSONS,
+      },
+      {
+        "block_key": "early_music_voice_specific",
+        "title": "Early Music Voice Required Courses",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": (
+          "Voice-specific required courses: voice coaching (Years 2–4), lyric diction in four "
+          "languages, Theory and Analysis 5, Topics in Early Music Analysis, and Topics in "
+          "Performance Practice. Source: mcgill.ca/music/programs/bmus/early-music-voice/requirements"
+        ),
+        "sort_order": 3,
+        "courses": [
+          # Voice coaching – required for early music voice (Years 2 and 3)
+          {"subject": "MUIN", "catalog": "300", "title": "Voice Coaching 1",                    "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "Voice coaching in historical vocal styles; Year 2"},
+          {"subject": "MUIN", "catalog": "301", "title": "Voice Coaching 2",                    "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "Continuation of voice coaching; Year 3"},
+          # Lyric diction (MUPG prefix) – all five are required
+          {"subject": "MUPG", "catalog": "209", "title": "Introduction to Lyric Diction",       "credits": 1, "is_required": True,  "recommended": True,  "recommendation_reason": "Foundational IPA and lyric diction survey; Year 1 or 2"},
+          {"subject": "MUPG", "catalog": "210", "title": "Italian Diction",                     "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "Italian lyric diction; essential for Italian early and baroque repertoire"},
+          {"subject": "MUPG", "catalog": "211", "title": "French Diction",                      "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "French lyric diction; required for French baroque and mélodie repertoire"},
+          {"subject": "MUPG", "catalog": "212", "title": "English Diction",                     "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "English lyric diction; required for English song and lute-song repertoire"},
+          {"subject": "MUPG", "catalog": "213", "title": "German Diction",                      "credits": 2, "is_required": True,  "recommended": True,  "recommendation_reason": "German lyric diction; required for Lied and German baroque repertoire"},
+          # Theory
+          {"subject": "MUTH", "catalog": "350", "title": "Theory and Analysis 5",               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Post-tonal theory and analysis; required for Early Music Voice program"},
+          {"subject": "MUTH", "catalog": "426", "title": "Topics in Early Music Analysis",      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Analysis of medieval, Renaissance, and baroque repertoire using period-appropriate methods"},
+          # Performance practice
+          {"subject": "MUPP", "catalog": "381", "title": "Topics in Performance Practice",      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Historical performance practice: tuning, ornamentation, rhetoric; required"},
+        ],
+      },
+      {
+        "block_key": "early_music_voice_complementary_musicianship",
+        "title": "Complementary Musicianship (choose 2 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 2,
+        "courses_needed": None, "group_name": None,
+        "notes": "2 credits from approved MUSP musicianship courses; MUSP 354 and MUSP 381 are highly recommended for early music vocalists.",
+        "sort_order": 4,
+        "courses": [
+          {"subject": "MUSP", "catalog": "354", "title": "Introduction to Improvisation and Ornamentation", "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_musp", "choose_n_credits": 2, "recommendation_reason": "Historical improvisation and ornamentation; strongly recommended for early music vocalists"},
+          {"subject": "MUSP", "catalog": "381", "title": "Singing Renaissance Notation",                    "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_musp", "choose_n_credits": 2, "recommendation_reason": "Reading mensural notation; essential for performing Renaissance vocal repertoire"},
+          {"subject": "MUSP", "catalog": "353", "title": "Musicianship for Voice",                          "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_musp", "choose_n_credits": 2},
+          {"subject": "MUSP", "catalog": "346", "title": "Post-Tonal Musicianship",                         "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_musp", "choose_n_credits": 2},
+          {"subject": "MUSP", "catalog": "361", "title": "Topics in Musicianship",                          "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_musp", "choose_n_credits": 2},
+        ],
+      },
+      {
+        "block_key": "early_music_voice_ensembles",
+        "title": "Performance Ensembles (choose 10 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 10,
+        "courses_needed": None, "group_name": None,
+        "notes": "10 credits from approved MUEN ensembles. Voice students in Early Music primarily participate in Cappella Antica (MUEN 572) and Early Music Ensemble (MUEN 580).",
+        "sort_order": 5,
+        "courses": [
+          {"subject": "MUEN", "catalog": "572", "title": "Cappella Antica",              "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10, "recommendation_reason": "Primary choral ensemble for early music voice students"},
+          {"subject": "MUEN", "catalog": "580", "title": "Early Music Ensemble",         "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10, "recommendation_reason": "Small ensemble for early music vocalists"},
+          {"subject": "MUEN", "catalog": "553", "title": "Vocal Chamber Ensemble",       "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10, "recommendation_reason": "Chamber ensemble for voice students"},
+          {"subject": "MUEN", "catalog": "578", "title": "Song Interpretation 1",        "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10, "recommendation_reason": "Song interpretation masterclass/ensemble"},
+          {"subject": "MUEN", "catalog": "579", "title": "Song Interpretation 2",        "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10},
+          {"subject": "MUEN", "catalog": "454", "title": "Introductory Opera Repertoire Experience", "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10},
+          {"subject": "MUEN", "catalog": "496", "title": "Opera Studio",                 "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10},
+          {"subject": "MUEN", "catalog": "587", "title": "Cappella McGill",              "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10},
+          {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",             "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "em_voice_ensembles", "choose_n_credits": 10},
+        ],
+      },
+      {
+        "block_key": "early_music_voice_history",
+        "title": "Complementary Music History (choose 3 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 3,
+        "courses_needed": None, "group_name": None,
+        "notes": "3 credits from MUHL courses at 300-level or above, or MUHL 591D1/D2 Paleography.",
+        "sort_order": 6,
+        "courses": [
+          {"subject": "MUHL", "catalog": "377", "title": "Baroque Opera",         "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_history", "choose_n_credits": 3, "recommendation_reason": "Directly relevant for early music vocalists"},
+          {"subject": "MUHL", "catalog": "380", "title": "Medieval Music",        "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_history", "choose_n_credits": 3, "recommendation_reason": "Context for early vocal repertoire"},
+          {"subject": "MUHL", "catalog": "381", "title": "Renaissance Music",     "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_history", "choose_n_credits": 3, "recommendation_reason": "Core historical context for early music vocalists"},
+          {"subject": "MUHL", "catalog": "382", "title": "Baroque Music",         "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "em_voice_history", "choose_n_credits": 3, "recommendation_reason": "Core historical context for baroque vocal performance"},
+          {"subject": "MUHL", "catalog": "383", "title": "Classical Music",       "credits": 3, "is_required": False, "recommended": False, "choose_from_group": "em_voice_history", "choose_n_credits": 3},
+          {"subject": "MUHL", "catalog": "591D1","title": "Paleography (Part 1)", "credits": 1.5,"is_required": False,"recommended": False, "choose_from_group": "em_voice_history", "choose_n_credits": 3},
+          {"subject": "MUHL", "catalog": "591D2","title": "Paleography (Part 2)", "credits": 1.5,"is_required": False,"recommended": False, "choose_from_group": "em_voice_history", "choose_n_credits": 3},
+        ],
+      },
+    ],
+  },
+
+  # ══════════════════════════════════════════════════════════════════════════
+  #  7. COMPOSITION MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "composition_major_bmus",
@@ -542,19 +683,25 @@ MUSIC_PROGRAMS = [
         "block_key": "comp_required",
         "title": "Required Composition Courses",
         "block_type": "required",
-        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "credits_needed": 39, "courses_needed": None, "group_name": None,
         "notes": "All MUCO courses require minimum grade of B- to continue in the program.",
         "sort_order": 2,
         "courses": [
-          {"subject": "MUCO", "catalog": "220D1", "title": "Composition 1",              "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "First semester private composition tutorial; Year 2"},
-          {"subject": "MUCO", "catalog": "220D2", "title": "Composition 1",              "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 2"},
-          {"subject": "MUCO", "catalog": "260",   "title": "Instruments of the Orchestra","credits": 3,"is_required": True, "recommended": True, "recommendation_reason": "Orchestration fundamentals; Year 2"},
+          {"subject": "MUCO", "catalog": "241",   "title": "Tonal Composition 1A",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Tonal composition fundamentals; Year 2 Fall"},
+          {"subject": "MUCO", "catalog": "242",   "title": "Tonal Composition 1B",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 2 Winter"},
+          {"subject": "MUCO", "catalog": "245",   "title": "Composition 1A",             "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Private composition tutorial; Year 2 Fall"},
+          {"subject": "MUCO", "catalog": "246",   "title": "Composition 1B",             "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 2 Winter"},
           {"subject": "MUCO", "catalog": "261",   "title": "Orchestration 1",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Writing for orchestral sections; Year 2–3"},
-          {"subject": "MUCO", "catalog": "320D1", "title": "Composition 2",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 private composition tutorial"},
-          {"subject": "MUCO", "catalog": "320D2", "title": "Composition 2",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 3"},
-          {"subject": "MUCO", "catalog": "340D1", "title": "Composition 3",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Year 4 advanced composition tutorial"},
-          {"subject": "MUCO", "catalog": "340D2", "title": "Composition 3",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 4"},
-          {"subject": "MUCO", "catalog": "230",   "title": "The Art of Composition",     "credits": 3, "is_required": False,"recommended": True, "recommendation_reason": "Survey of compositional techniques; open to BMus U2/U3"},
+          {"subject": "MUCO", "catalog": "340D1", "title": "Composition 2 (Part 1)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 private composition tutorial Part 1"},
+          {"subject": "MUCO", "catalog": "340D2", "title": "Composition 2 (Part 2)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 3 Part 2"},
+          {"subject": "MUCO", "catalog": "341",   "title": "Digital Studio 1",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Electronic and computer music composition; Year 3"},
+          {"subject": "MUCO", "catalog": "342",   "title": "Digital Studio 2",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced digital studio; Year 3–4"},
+          {"subject": "MUCO", "catalog": "360",   "title": "Orchestration 2",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced orchestration; Year 3"},
+          {"subject": "MUCO", "catalog": "440D1", "title": "Composition 3 (Part 1)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Year 4 advanced composition tutorial Part 1"},
+          {"subject": "MUCO", "catalog": "440D2", "title": "Composition 3 (Part 2)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 4 Part 2"},
+          {"subject": "MUCO", "catalog": "460",   "title": "Orchestration 3",            "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Advanced orchestration; Year 4"},
+          {"subject": "MUCO", "catalog": "541",   "title": "Advanced Digital Studio",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Senior digital studio; Year 4"},
+          {"subject": "MUCO", "catalog": "575",   "title": "Topics in Composition",      "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced seminar on special composition topics; Year 4"},
         ],
       },
       {
@@ -590,7 +737,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  7. MUSIC HISTORY MAJOR – B.MUS. (124 credits)
+  #  8. MUSIC HISTORY MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_history_major_bmus",
@@ -663,7 +810,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  8. MUSIC THEORY MAJOR – B.MUS. (124 credits)
+  #  9. MUSIC THEORY MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_theory_major_bmus",
@@ -737,7 +884,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  9. MUSIC STUDIES MAJOR – B.MUS. (123 credits) [Fall 2025+]
+  # 10. MUSIC STUDIES MAJOR – B.MUS. (123 credits) [Fall 2025+]
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_studies_major_bmus",
@@ -840,7 +987,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 10. FACULTY PROGRAM – GENERAL B.MUS. (123 credits) [pre-2025 / still active]
+  # 11. FACULTY PROGRAM – GENERAL B.MUS. (123 credits) [pre-2025 / still active]
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "faculty_program_bmus",
@@ -862,9 +1009,9 @@ MUSIC_PROGRAMS = [
         "title": "Core Music Requirements (all B.Mus. programs)",
         "block_type": "required",
         "credits_needed": None, "courses_needed": None, "group_name": None,
-        "notes": None,
+        "notes": "Faculty Program requires MUTH 350 Theory and Analysis 5 in addition to the shared BMus core. Source: mcgill.ca/music/programs/bmus/faculty-program/requirements",
         "sort_order": 1,
-        "courses": BMUS_CORE,
+        "courses": BMUS_CORE + [MUTH_350],
       },
       {
         "block_key": "faculty_prog_upper_history",
@@ -900,7 +1047,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 11. FACULTY PROGRAM – JAZZ B.MUS. (123 credits)
+  # 12. FACULTY PROGRAM – JAZZ B.MUS. (123 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "faculty_program_jazz_bmus",
@@ -976,7 +1123,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 12. CONCURRENT B.MUS. / B.ED. – MUSIC EDUCATION (170 credits)
+  # 13. CONCURRENT B.MUS. / B.ED. – MUSIC EDUCATION (170 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "bmus_bed_music_education",

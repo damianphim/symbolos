@@ -5,8 +5,8 @@ https://www.mcgill.ca/study/2024-2025/faculties/spot/
 https://www.mcgill.ca/spot/programs/
 
 This file covers the two undergraduate rehabilitation science programs:
-  1. B.Sc.(Rehab.Sc.) – Major in Physical Therapy   (90 credits)
-  2. B.Sc.(Rehab.Sc.) – Major in Occupational Therapy (90 credits)
+  1. B.Sc.(Rehab.Sc.) – Major in Physical Therapy   (90 credits: 81 required + 6-9 complementary + 0-3 elective)
+  2. B.Sc.(Rehab.Sc.) – Major in Occupational Therapy (90 credits: 75 required + 15 complementary)
 
 Accuracy notes:
   - Both programs are 90-credit, 3-year programs (for CEGEP entrants).
@@ -16,7 +16,7 @@ Accuracy notes:
   - Both programs are FULL-TIME ONLY due to the sequential, clinical nature of coursework.
   - Graduates MUST continue to the professional master's (M.Sc.A.PT. or M.Sc.A.OT.)
     to be eligible for licensure. Entry to MScA requires a minimum CGPA of 3.0.
-  - IPEA courses (500, 501, 502, 503) are interprofessional education activities worth
+  - IPEA courses (500, 501) are interprofessional education activities worth
     0 credits, mandatory for graduation.
   - French B2 proficiency is required for clinical placements in Quebec institutions.
   - Intrafaculty transfers between PT and OT are not available once admitted.
@@ -25,8 +25,9 @@ Accuracy notes:
     such students must take an additional 3-credit complementary course instead.
   - Complementary courses may be chosen from: Psychology (lifespan development recommended),
     Management (personnel/private practice), Academic Writing, Sociology/Anthropology,
-    French/English second language (max 6 credits), Sports Medicine Practicum (3 credits),
-    or one personal interest course (max 3 credits).
+    French/English second language (max 6 credits), Sports Medicine Practicum (3 credits,
+    PT only: PHTH 301), or one personal interest course (max 3 credits).
+  - Verified against eCalendar 2024-2025 (January 2026).
 
 Course prefix key:
   POTH  Physical & Occupational Therapy (shared by both programs)
@@ -70,100 +71,82 @@ SPOT_PROGRAMS = [
     ),
     "blocks": [
 
-      # ── U1 Year (Shared Core) ─────────────────────────────────────────
+      # ── Required Core Courses ─────────────────────────────────────────
+      # Source: eCalendar 2024-2025, verified January 2026
+      # 81 required credits total (plus 6-9 complementary, 0-3 elective = 90 cr)
       {
-        "block_key":      "pt_u1_core",
-        "title":          "Year 1 (U1) – Core Sciences",
+        "block_key":      "pt_required_core",
+        "title":          "Required Core Courses (81 credits)",
         "block_type":     "required",
-        "credits_needed": 27,
+        "credits_needed": 81,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Courses shared between PT and OT programs in U1.",
+        "notes": (
+          "All courses are required. For ANAT 321/323, students choose one but not both. "
+          "IPEA 500 and 501 are 0-credit interprofessional activities (mandatory). "
+          "Full-time study only."
+        ),
         "courses": [
-          {"subject": "ANAT", "catalog": "315",  "title": "Anatomy of the Limbs and Back", "credits": 3, "is_required": True},
-          {"subject": "ANAT", "catalog": "316",  "title": "Anatomy of the Head and Trunk", "credits": 3, "is_required": True},
+          {"subject": "ANAT", "catalog": "315",  "title": "Clinical Human Musculoskeletal Anatomy", "credits": 3, "is_required": True},
+          {"subject": "ANAT", "catalog": "316",  "title": "Clinical Human Visceral Anatomy", "credits": 3, "is_required": True},
+          {"subject": "ANAT", "catalog": "321",  "title": "Circuitry of the Human Brain", "credits": 3, "is_required": False,
+           "notes": "Choose ANAT 321 or ANAT 323 (not both)."},
+          {"subject": "ANAT", "catalog": "323",  "title": "Clinical Neuroanatomy", "credits": 3, "is_required": False,
+           "notes": "Choose ANAT 321 or ANAT 323 (not both)."},
+          {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
           {"subject": "PHGY", "catalog": "209",  "title": "Mammalian Physiology 1", "credits": 3, "is_required": True},
           {"subject": "PHGY", "catalog": "210",  "title": "Mammalian Physiology 2", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "245",  "title": "Introduction to Professional Practice 1", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "440",  "title": "Clinical Exercise Physiology", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "450",  "title": "Introduction to PT Clinical Practice", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "460",  "title": "Introduction to Functional Movement", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "482",  "title": "Introduction to Health, Fitness and Lifestyle", "credits": 3, "is_required": True},
+          {"subject": "PHTH", "catalog": "550",  "title": "Physical Therapy Orthopedic Management", "credits": 7, "is_required": True},
+          {"subject": "PHTH", "catalog": "551",  "title": "Physical Therapy Neurological Rehabilitation", "credits": 4, "is_required": True},
+          {"subject": "PHTH", "catalog": "554",  "title": "PT Cardiorespiratory Rehabilitation", "credits": 2, "is_required": True},
+          {"subject": "PHTH", "catalog": "560",  "title": "Integrated Orthopedic Management", "credits": 6, "is_required": True},
+          {"subject": "PHTH", "catalog": "561",  "title": "Integrated Neurological Rehabilitation", "credits": 5, "is_required": True},
+          {"subject": "PHTH", "catalog": "564",  "title": "Integrated Cardiorespiratory Rehabilitation", "credits": 3, "is_required": True},
           {"subject": "POTH", "catalog": "204",  "title": "Introduction to Statistics for OT/PT", "credits": 3, "is_required": True,
            "notes": "Waived if CEGEP stats ≥75%; replace with an additional 3-credit complementary course."},
           {"subject": "POTH", "catalog": "225",  "title": "Introduction to Biomechanics in Rehabilitation Sciences", "credits": 3, "is_required": True},
           {"subject": "POTH", "catalog": "250",  "title": "Introduction to Professional Practice 2", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "245",  "title": "Introduction to Professional Practice 1 (PT)", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "500",  "title": "Interprofessional Education Activity 1 (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "POTH", "catalog": "305",  "title": "Statistics for Experimental Design OT/PT", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "401",  "title": "Research Methods", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "434",  "title": "Musculoskeletal Biomechanics", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "455",  "title": "Neurophysiology", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "563",  "title": "Foundations of Professional Practice", "credits": 3, "is_required": True},
         ],
       },
 
-      # ── U1 Complementary Courses ──────────────────────────────────────
+      # ── Complementary Courses ─────────────────────────────────────────
       {
-        "block_key":      "pt_u1_complementary",
-        "title":          "Year 1 (U1) – Complementary Courses",
-        "block_type":     "choose_credits",
-        "credits_needed": 3,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": (
-          "1 complementary course chosen from: Psychology (lifespan development recommended), "
-          "Management (private practice), Academic Writing, Sociology/Anthropology, "
-          "French/English second language (max 6 cr.), or Sports Medicine Practicum."
-        ),
-        "courses": [],
-      },
-
-      # ── U2 Year (PT Core) ─────────────────────────────────────────────
-      {
-        "block_key":      "pt_u2_required",
-        "title":          "Year 2 (U2) – Physical Therapy Core",
-        "block_type":     "required",
-        "credits_needed": 33,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": "U2 PT-specific and shared required courses.",
-        "courses": [
-          {"subject": "ANAT", "catalog": "321",  "title": "Functional Neuroanatomy", "credits": 3, "is_required": False,
-           "notes": "Students choose ANAT 321 or ANAT 323 (not both)."},
-          {"subject": "ANAT", "catalog": "323",  "title": "Introduction to Neuroanatomy", "credits": 3, "is_required": False},
-          {"subject": "POTH", "catalog": "455",  "title": "Evidence-Based Practice in Rehabilitation Sciences", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "340",  "title": "Assessment in Physical Therapy 1", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "341",  "title": "Assessment in Physical Therapy 2", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "450",  "title": "Introduction to PT Clinical Practice", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "482",  "title": "Introduction to Health, Fitness, and Lifestyle", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "551",  "title": "Therapeutic Exercise", "credits": 3, "is_required": True},
-          {"subject": "POTH", "catalog": "305",  "title": "Statistics for Experimental Design", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "501",  "title": "Interprofessional Education Activity 2 (0 credits)", "credits": 0, "is_required": True},
-          {"subject": "IPEA", "catalog": "502",  "title": "Interprofessional Education Activity 3 (0 credits)", "credits": 0, "is_required": True},
-        ],
-      },
-
-      # ── U2 Complementary ──────────────────────────────────────────────
-      {
-        "block_key":      "pt_u2_complementary",
-        "title":          "Year 2 (U2) – Complementary Courses",
+        "block_key":      "pt_complementary",
+        "title":          "Complementary Courses (6–9 credits)",
         "block_type":     "choose_credits",
         "credits_needed": 6,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "2 complementary courses from approved areas (see U1 note above).",
+        "notes": (
+          "6–9 complementary credits chosen from: Psychology (lifespan development recommended), "
+          "Management (private practice), Academic Writing, Sociology/Anthropology, "
+          "French/English second language (max 6 cr.), or PHTH 301 Sports Medicine Practicum (3 cr.). "
+          "POTH 204 exemption replaces waived stats with an extra 3-credit complementary."
+        ),
         "courses": [],
       },
 
-      # ── U3 Year (Advanced PT) ─────────────────────────────────────────
+      # ── Elective ──────────────────────────────────────────────────────
       {
-        "block_key":      "pt_u3_required",
-        "title":          "Year 3 (U3) – Advanced Physical Therapy",
-        "block_type":     "required",
-        "credits_needed": 21,
+        "block_key":      "pt_elective",
+        "title":          "Elective Courses (0–3 credits)",
+        "block_type":     "choose_credits",
+        "credits_needed": 3,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Advanced PT courses plus integration seminar and PT research project.",
-        "courses": [
-          {"subject": "PHTH", "catalog": "552",  "title": "Neurorehabilitation in PT", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "553",  "title": "Musculoskeletal and Sports Rehabilitation", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "554",  "title": "PT Cardiorespiratory Rehabilitation", "credits": 2, "is_required": True},
-          {"subject": "PHTH", "catalog": "570",  "title": "Integration Seminar in PT", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "571",  "title": "Research Methods in PT", "credits": 3, "is_required": True},
-          {"subject": "PHTH", "catalog": "572",  "title": "PT Clinical Placement", "credits": 4, "is_required": True},
-          {"subject": "IPEA", "catalog": "503",  "title": "Interprofessional Education Activity 4 (0 credits)", "credits": 0, "is_required": True},
-        ],
+        "notes": "Maximum one 3-credit elective course.",
+        "courses": [],
       },
 
     ],
@@ -196,98 +179,70 @@ SPOT_PROGRAMS = [
     ),
     "blocks": [
 
-      # ── U1 Year (Shared Core) ─────────────────────────────────────────
+      # ── Required Core Courses ─────────────────────────────────────────
+      # Source: eCalendar 2024-2025, verified January 2026
+      # 75 required credits total (plus 15 complementary = 90 cr)
       {
-        "block_key":      "ot_u1_core",
-        "title":          "Year 1 (U1) – Core Sciences",
+        "block_key":      "ot_required_core",
+        "title":          "Required Core Courses (75 credits)",
         "block_type":     "required",
-        "credits_needed": 27,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": "Courses shared between OT and PT programs in U1.",
-        "courses": [
-          {"subject": "ANAT", "catalog": "315",  "title": "Anatomy of the Limbs and Back", "credits": 3, "is_required": True},
-          {"subject": "ANAT", "catalog": "316",  "title": "Anatomy of the Head and Trunk", "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "209",  "title": "Mammalian Physiology 1", "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "210",  "title": "Mammalian Physiology 2", "credits": 3, "is_required": True},
-          {"subject": "POTH", "catalog": "204",  "title": "Introduction to Statistics for OT/PT", "credits": 3, "is_required": True,
-           "notes": "Waived if CEGEP stats ≥75%."},
-          {"subject": "POTH", "catalog": "225",  "title": "Introduction to Biomechanics in Rehabilitation Sciences", "credits": 3, "is_required": True},
-          {"subject": "POTH", "catalog": "250",  "title": "Introduction to Professional Practice 2", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "245",  "title": "Introduction to Professional Practice 1 (OT)", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "500",  "title": "Interprofessional Education Activity 1 (0 credits)", "credits": 0, "is_required": True},
-        ],
-      },
-
-      # ── U1 Complementary ──────────────────────────────────────────────
-      {
-        "block_key":      "ot_u1_complementary",
-        "title":          "Year 1 (U1) – Complementary Courses",
-        "block_type":     "choose_credits",
-        "credits_needed": 3,
+        "credits_needed": 75,
         "courses_needed": None,
         "group_name":     None,
         "notes": (
-          "1 complementary course: Psychology (lifespan development), Management, "
-          "Academic Writing, Sociology/Anthropology, or second language (max 6 cr.)."
+          "All courses are required. For ANAT 321/323, students choose one but not both. "
+          "IPEA 500 and 501 are 0-credit interprofessional activities (mandatory). "
+          "OCC1 500 is a D1/D2 split course taken over consecutive terms. "
+          "Full-time study only."
+        ),
+        "courses": [
+          {"subject": "ANAT", "catalog": "315",  "title": "Clinical Human Musculoskeletal Anatomy", "credits": 3, "is_required": True},
+          {"subject": "ANAT", "catalog": "316",  "title": "Clinical Human Visceral Anatomy", "credits": 3, "is_required": True},
+          {"subject": "ANAT", "catalog": "321",  "title": "Circuitry of the Human Brain", "credits": 3, "is_required": False,
+           "notes": "Choose ANAT 321 or ANAT 323 (not both)."},
+          {"subject": "ANAT", "catalog": "323",  "title": "Clinical Neuroanatomy", "credits": 3, "is_required": False,
+           "notes": "Choose ANAT 321 or ANAT 323 (not both)."},
+          {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "OCC1", "catalog": "245",  "title": "Introduction to Professional Practice 1 (OT)", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "443",  "title": "Constructing Mental Health", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "450",  "title": "Enabling Leisure Occupations", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "500",  "title": "Pre-Clinical Practicum Seminar (D1/D2)", "credits": 3, "is_required": True,
+           "notes": "OCC1 500D1 followed by OCC1 500D2 in consecutive terms."},
+          {"subject": "OCC1", "catalog": "545",  "title": "Therapeutic Strategies in OT 1", "credits": 8, "is_required": True},
+          {"subject": "OCC1", "catalog": "547",  "title": "Occupational Solutions 1", "credits": 6, "is_required": True},
+          {"subject": "OCC1", "catalog": "548",  "title": "Holistic Approaches in OT", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "549",  "title": "Therapeutic Strategies in OT 2", "credits": 4, "is_required": True},
+          {"subject": "OCC1", "catalog": "550",  "title": "Enabling Human Occupation", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "551",  "title": "Psychosocial Practice in OT", "credits": 3, "is_required": True},
+          {"subject": "PHGY", "catalog": "209",  "title": "Mammalian Physiology 1", "credits": 3, "is_required": True},
+          {"subject": "PHGY", "catalog": "210",  "title": "Mammalian Physiology 2", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "204",  "title": "Introduction to Statistics for OT/PT", "credits": 3, "is_required": True,
+           "notes": "Waived if CEGEP stats ≥75%; replace with additional complementary course."},
+          {"subject": "POTH", "catalog": "225",  "title": "Introduction to Biomechanics in Rehabilitation Sciences", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "250",  "title": "Introduction to Professional Practice 2", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "305",  "title": "Statistics for Experimental Design OT/PT", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "401",  "title": "Research Methods", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "434",  "title": "Musculoskeletal Biomechanics", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "455",  "title": "Neurophysiology", "credits": 3, "is_required": True},
+          {"subject": "POTH", "catalog": "563",  "title": "Foundations of Professional Practice", "credits": 3, "is_required": True},
+        ],
+      },
+
+      # ── Complementary Courses ─────────────────────────────────────────
+      {
+        "block_key":      "ot_complementary",
+        "title":          "Complementary Courses (15 credits)",
+        "block_type":     "choose_credits",
+        "credits_needed": 15,
+        "courses_needed": None,
+        "group_name":     None,
+        "notes": (
+          "15 complementary credits from: Psychology (lifespan development recommended), "
+          "Management, Academic Writing, Sociology/Anthropology, or second language (max 6 cr.). "
+          "POTH 204 exemption adds 3 credits to this requirement."
         ),
         "courses": [],
-      },
-
-      # ── U2 Year (OT Core) ─────────────────────────────────────────────
-      {
-        "block_key":      "ot_u2_required",
-        "title":          "Year 2 (U2) – Occupational Therapy Core",
-        "block_type":     "required",
-        "credits_needed": 33,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": None,
-        "courses": [
-          {"subject": "ANAT", "catalog": "323",  "title": "Introduction to Neuroanatomy", "credits": 3, "is_required": False,
-           "notes": "Students choose ANAT 321 or ANAT 323 (not both)."},
-          {"subject": "ANAT", "catalog": "321",  "title": "Functional Neuroanatomy", "credits": 3, "is_required": False},
-          {"subject": "POTH", "catalog": "455",  "title": "Evidence-Based Practice in Rehabilitation Sciences", "credits": 3, "is_required": True},
-          {"subject": "POTH", "catalog": "305",  "title": "Statistics for Experimental Design", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "443",  "title": "Occupation, Aging, and Disability", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "450",  "title": "Occupational Performance and Participation 1", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "451",  "title": "Occupational Performance and Participation 2", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "452",  "title": "Mental Health Occupational Therapy", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "453",  "title": "Pediatric Occupational Therapy", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "501",  "title": "Interprofessional Education Activity 2 (0 credits)", "credits": 0, "is_required": True},
-          {"subject": "IPEA", "catalog": "502",  "title": "Interprofessional Education Activity 3 (0 credits)", "credits": 0, "is_required": True},
-        ],
-      },
-
-      # ── U2 Complementary ──────────────────────────────────────────────
-      {
-        "block_key":      "ot_u2_complementary",
-        "title":          "Year 2 (U2) – Complementary Courses",
-        "block_type":     "choose_credits",
-        "credits_needed": 6,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": "2 complementary courses from approved areas.",
-        "courses": [],
-      },
-
-      # ── U3 Year (Advanced OT) ─────────────────────────────────────────
-      {
-        "block_key":      "ot_u3_required",
-        "title":          "Year 3 (U3) – Advanced Occupational Therapy",
-        "block_type":     "required",
-        "credits_needed": 21,
-        "courses_needed": None,
-        "group_name":     None,
-        "notes": "Advanced OT courses, therapeutic strategies practicum, and research methods.",
-        "courses": [
-          {"subject": "OCC1", "catalog": "500",  "title": "Therapeutic Strategies in OT 1 (D1/D2 series)", "credits": 8, "is_required": True,
-           "notes": "OCC1 500D1 followed by OCC1 500D2 in consecutive terms."},
-          {"subject": "OCC1", "catalog": "545",  "title": "Therapeutic Strategies in OT 2", "credits": 8, "is_required": True},
-          {"subject": "OCC1", "catalog": "546",  "title": "OT Integration Seminar", "credits": 3, "is_required": True},
-          {"subject": "OCC1", "catalog": "550",  "title": "Research Methods in OT", "credits": 2, "is_required": True},
-          {"subject": "IPEA", "catalog": "503",  "title": "Interprofessional Education Activity 4 (0 credits)", "credits": 0, "is_required": True},
-        ],
       },
 
     ],

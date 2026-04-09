@@ -30,32 +30,11 @@ from api.config import settings
 from api.exceptions import UserNotFoundException
 from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
+from api.utils.lang import lang_instruction as _lang_instruction
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-def _lang_instruction(language: str) -> str:
-    if language == "fr":
-        return (
-            "\n\nCRITICAL: You MUST respond entirely in French. "
-            "Every text field — title, body, actions, label — must be in French. "
-            "Do not use any English words."
-        )
-    if language == "zh":
-        return (
-            "\n\nCRITICAL: You MUST respond entirely in Simplified Chinese (Mandarin). "
-            "Every text field — title, body, actions, label — must be in Chinese. "
-            "Do not use any English words except for proper nouns like course codes and names."
-        )
-    # Default: English — must be explicit so French/Chinese context in student data
-    # does not cause the model to drift into another language.
-    return (
-        "\n\nCRITICAL: You MUST respond entirely in English. "
-        "Every text field — title, body, actions, label — must be in English. "
-        "Do not use French, Chinese, or any other language, even if the student's "
-        "course names or calendar events are in another language."
-    )
 
 
 _anthropic_client: anthropic.Anthropic | None = None

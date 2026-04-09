@@ -67,22 +67,23 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Covers child development and learning theory—foundational for planning K-6 lessons."},
           {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential for all Quebec classrooms; covers differentiated instruction for diverse learners."},
+          {"subject": "EDEC", "catalog": "405", "title": "Fourth Year Professional Seminar (K/Elementary)", "credits": 3, "is_required": True},
         ],
       },
       {
         "block_key": "bed_ke_field_experiences",
         "title": "Field Experiences (Practicums)",
         "block_type": "required",
-        "credits_needed": 26,
+        "credits_needed": 20,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Four progressively intensive school-based practicums. EDFE 200 in U1; EDFE 256 in U2; EDFE 350 and EDFE 450 in U3/U4.",
+        "notes": "Four progressively intensive school-based practicums. EDFE 200 in U1; EDFE 256 in U2; EDFE 306 and EDFE 406 in U3/U4.",
         "sort_order": 2,
         "courses": [
-          {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2,  "is_required": True},
-          {"subject": "EDFE", "catalog": "256", "title": "Second Field Experience (K/Elementary)",         "credits": 4,  "is_required": True},
-          {"subject": "EDFE", "catalog": "350", "title": "Third Field Experience (K/Elementary)",          "credits": 6,  "is_required": True},
-          {"subject": "EDFE", "catalog": "450", "title": "Fourth Field Experience (K/Elementary)",         "credits": 14, "is_required": True},
+          {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
+          {"subject": "EDFE", "catalog": "256", "title": "Second Field Experience (K/Elementary)",         "credits": 3, "is_required": True},
+          {"subject": "EDFE", "catalog": "306", "title": "Third Field Experience (K/Elementary)",          "credits": 8, "is_required": True},
+          {"subject": "EDFE", "catalog": "406", "title": "Fourth Field Experience (K/Elementary)",         "credits": 7, "is_required": True},
         ],
       },
       {
@@ -142,8 +143,9 @@ EDUCATION_PROGRAMS = [
     "total_credits": 120,
     "description": (
       "The B.Ed. Secondary English program prepares teachers for Grades 7–11 in Quebec secondary "
-      "schools. Students complete 36 credits in English literature/language, 48+ credits of Education "
-      "professional courses and practicums, and 6 credits of free electives (120 total)."
+      "schools. Students complete 51 credits in English (literature, language/linguistics, cultural "
+      "studies, and drama) under a stream structure, alongside Education professional courses, "
+      "practicums, and electives (120 total)."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-secondary-english",
     "blocks": [
@@ -165,10 +167,11 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDEC", "catalog": "254", "title": "Second Professional Seminar (Secondary)",        "credits": 1, "is_required": True},
           {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 2, "is_required": True},
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
+          {"subject": "EDPE", "catalog": "304", "title": "Measurement and Evaluation",                     "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
+          {"subject": "EDEC", "catalog": "404", "title": "Fourth Year Professional Seminar (Secondary)", "credits": 3, "is_required": True},
         ],
       },
       {
@@ -182,9 +185,9 @@ EDUCATION_PROGRAMS = [
         "sort_order": 2,
         "courses": [
           {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
-          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 4, "is_required": True},
+          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 3, "is_required": True},
           {"subject": "EDFE", "catalog": "351", "title": "Third Field Experience (Secondary)",             "credits": 8, "is_required": True},
-          {"subject": "EDFE", "catalog": "455", "title": "Fourth Field Experience (Secondary)",            "credits": 6, "is_required": True},
+          {"subject": "EDFE", "catalog": "451", "title": "Fourth Field Experience (Secondary)",            "credits": 7, "is_required": True},
         ],
       },
       {
@@ -207,23 +210,26 @@ EDUCATION_PROGRAMS = [
         "block_key": "bed_seng_teachable_english",
         "title": "Teachable Subject Area – English",
         "block_type": "required",
-        "credits_needed": 36,
+        "credits_needed": 51,
         "courses_needed": None,
         "group_name": None,
         "notes": (
-          "Option 1: 36 credits in English. "
-          "Option 2: 21 credits in English + 15 credits in a second teachable area "
-          "(Math, Social Sciences, or Science & Technology). "
-          "Minimum 24 credits with C or higher required before 3rd Field Experience."
+          "Option 1: 51 credits in English (Stream 1: 48 cr in subject area + 3 cr EDES methods = 51). "
+          "Option 2 (Stream 2): 33 credits in English + 15 credits in a second teachable area "
+          "(Math, Social Sciences, or Science & Technology) + 3 cr EDES methods for second teachable. "
+          "Structure: 6 cr Language/Linguistics + 30 cr Literature (min 15 at 300+) + 9 cr Cultural Studies (min 3 at 300+) + 3 cr Drama — Option 1. "
+          "At least one Shakespeare course required. Minimum 24 credits with C or higher required before 3rd Field Experience."
         ),
         "sort_order": 4,
         "courses": [
-          {"subject": "ENGL", "catalog": "200", "title": "Approaches to Literature",                       "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Strong foundation for the teachable subject area in English."},
+          {"subject": "EDES", "catalog": "366", "title": "Literature for Young Adults",                    "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required core course for Secondary English; directly applicable to Sec. III–V English curriculum."},
+          {"subject": "LING", "catalog": "201", "title": "Introduction to Linguistics",                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Recommended Language/Linguistics component course."},
+          {"subject": "ENGL", "catalog": "200", "title": "Approaches to Literature",                       "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Strong foundation for the Literature component."},
           {"subject": "ENGL", "catalog": "215", "title": "Introduction to Poetry",                         "credits": 3, "is_required": False, "recommended": True},
           {"subject": "ENGL", "catalog": "224", "title": "Introduction to Fiction",                        "credits": 3, "is_required": False, "recommended": True},
           {"subject": "ENGL", "catalog": "234", "title": "Canadian Literature",                            "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Highly relevant to Quebec English curriculum focus on Canadian identity."},
-          {"subject": "ENGL", "catalog": "243", "title": "Introduction to Drama",                          "credits": 3, "is_required": False},
-          {"subject": "ENGL", "catalog": "314", "title": "Shakespeare",                                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Shakespeare is part of the secondary English curriculum."},
+          {"subject": "ENGL", "catalog": "243", "title": "Introduction to Drama",                          "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Drama/Theatre is a required sub-component of the English subject area."},
+          {"subject": "ENGL", "catalog": "314", "title": "Shakespeare",                                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "At least one Shakespeare course is required within the subject area."},
           {"subject": "ENGL", "catalog": "340", "title": "Children's Literature",                          "credits": 3, "is_required": False},
           {"subject": "ENGL", "catalog": "380", "title": "Creative Writing",                               "credits": 3, "is_required": False},
           {"subject": "ENGL", "catalog": "426", "title": "Contemporary Literature",                        "credits": 3, "is_required": False},
@@ -257,8 +263,8 @@ EDUCATION_PROGRAMS = [
     "description": (
       "The B.Ed. Secondary Mathematics program prepares teachers for Grades 7–11 in Quebec. "
       "Students must complete MATH 133, 140, and 141 in their Freshman year. The main program "
-      "includes 36 credits in Mathematics, 48 credits of Education professional courses and "
-      "practicums, and 6 free electives (120 total)."
+      "includes 51 credits in Mathematics (7 required courses + complementary electives), "
+      "Education professional courses and practicums, and electives (120 total)."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-secondary-mathematics",
     "blocks": [
@@ -295,11 +301,12 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDEC", "catalog": "254", "title": "Second Professional Seminar (Secondary)",        "credits": 1, "is_required": True},
           {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 2, "is_required": True},
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
+          {"subject": "EDPE", "catalog": "304", "title": "Measurement and Evaluation",                     "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
           {"subject": "EDTL", "catalog": "520", "title": "Perspectives on Knowledge in Mathematics and Science", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Specialized philosophy of math/science required for Secondary Math & Science teachers."},
+          {"subject": "EDEC", "catalog": "404", "title": "Fourth Year Professional Seminar (Secondary)", "credits": 3, "is_required": True},
         ],
       },
       {
@@ -313,9 +320,9 @@ EDUCATION_PROGRAMS = [
         "sort_order": 3,
         "courses": [
           {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
-          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 4, "is_required": True},
+          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 3, "is_required": True},
           {"subject": "EDFE", "catalog": "351", "title": "Third Field Experience (Secondary)",             "credits": 8, "is_required": True},
-          {"subject": "EDFE", "catalog": "455", "title": "Fourth Field Experience (Secondary)",            "credits": 6, "is_required": True},
+          {"subject": "EDFE", "catalog": "451", "title": "Fourth Field Experience (Secondary)",            "credits": 7, "is_required": True},
         ],
       },
       {
@@ -336,23 +343,26 @@ EDUCATION_PROGRAMS = [
         "block_key": "bed_smath_teachable",
         "title": "Teachable Subject Area – Mathematics",
         "block_type": "required",
-        "credits_needed": 36,
+        "credits_needed": 51,
         "courses_needed": None,
         "group_name": None,
         "notes": (
-          "Option 1: 36 credits in Mathematics. "
-          "Option 2: 21 credits Mathematics + 15 credits in a second teachable "
+          "Option 1: 51 credits in Mathematics (21 required + 30 complementary). "
+          "Option 2: 21 required credits + 15 complementary Mathematics credits + 15 credits in a second teachable "
           "(English, Social Sciences, or Science & Technology). "
           "Minimum 24 credits with C or higher required before 3rd Field Experience."
         ),
         "sort_order": 5,
         "courses": [
-          {"subject": "MATH", "catalog": "222", "title": "Calculus 3",                                     "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "MATH", "catalog": "235", "title": "Algebra 1",                                      "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "MATH", "catalog": "242", "title": "Analysis 1",                                     "credits": 3, "is_required": True},
-          {"subject": "MATH", "catalog": "315", "title": "Ordinary Differential Equations",                "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "MATH", "catalog": "323", "title": "Probability",                                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Statistics and probability are in the secondary math curriculum."},
-          {"subject": "MATH", "catalog": "324", "title": "Statistics",                                     "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "MATH", "catalog": "222", "title": "Calculus 3",                                     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students."},
+          {"subject": "MATH", "catalog": "223", "title": "Linear Algebra",                                 "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students."},
+          {"subject": "MATH", "catalog": "228", "title": "Classical Geometry",                             "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students; geometry is a major strand in the Quebec secondary math curriculum."},
+          {"subject": "MATH", "catalog": "315", "title": "Ordinary Differential Equations",                "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students."},
+          {"subject": "MATH", "catalog": "323", "title": "Probability",                                    "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students; statistics and probability are in the secondary math curriculum."},
+          {"subject": "MATH", "catalog": "324", "title": "Statistics",                                     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students."},
+          {"subject": "MATH", "catalog": "338", "title": "History and Philosophy of Mathematics",          "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for all Secondary Mathematics students."},
+          {"subject": "MATH", "catalog": "235", "title": "Algebra 1",                                      "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Recommended complementary mathematics course."},
+          {"subject": "MATH", "catalog": "242", "title": "Analysis 1",                                     "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Recommended complementary mathematics course."},
           {"subject": "MATH", "catalog": "340", "title": "Discrete Structures 1",                          "credits": 3, "is_required": False},
           {"subject": "MATH", "catalog": "346", "title": "Number Theory",                                  "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Number theory is integral to the secondary and CÉGEP math curriculum."},
           {"subject": "MATH", "catalog": "348", "title": "Euclidean Geometry",                             "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Geometry is a major strand in the Quebec secondary math curriculum."},
@@ -386,9 +396,9 @@ EDUCATION_PROGRAMS = [
     "total_credits": 120,
     "description": (
       "The B.Ed. Secondary Science and Technology program prepares teachers for Grades 7–11 in Quebec. "
-      "Students complete foundation science courses (Biology, Chemistry, Physics), complementary "
-      "science electives across the four Quebec S&T curriculum domains, Education professional "
-      "courses, and practicums (120 total)."
+      "Students complete 51 credits in science courses across four Quebec S&T curriculum domains "
+      "(Living World, Material World, Earth & Space, Technological World), alongside Education "
+      "professional courses and practicums (120 total)."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-secondary-science-and-technology",
     "blocks": [
@@ -410,11 +420,12 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDEC", "catalog": "254", "title": "Second Professional Seminar (Secondary)",        "credits": 1, "is_required": True},
           {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 2, "is_required": True},
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
+          {"subject": "EDPE", "catalog": "304", "title": "Measurement and Evaluation",                     "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
           {"subject": "EDTL", "catalog": "520", "title": "Perspectives on Knowledge in Mathematics and Science", "credits": 3, "is_required": True, "recommended": True},
+          {"subject": "EDEC", "catalog": "404", "title": "Fourth Year Professional Seminar (Secondary)", "credits": 3, "is_required": True},
         ],
       },
       {
@@ -428,9 +439,9 @@ EDUCATION_PROGRAMS = [
         "sort_order": 2,
         "courses": [
           {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
-          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 4, "is_required": True},
+          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 3, "is_required": True},
           {"subject": "EDFE", "catalog": "351", "title": "Third Field Experience (Secondary)",             "credits": 8, "is_required": True},
-          {"subject": "EDFE", "catalog": "455", "title": "Fourth Field Experience (Secondary)",            "credits": 6, "is_required": True},
+          {"subject": "EDFE", "catalog": "451", "title": "Fourth Field Experience (Secondary)",            "credits": 7, "is_required": True},
         ],
       },
       {
@@ -451,36 +462,43 @@ EDUCATION_PROGRAMS = [
         "block_key": "bed_ssci_teachable_required",
         "title": "Required Science Courses",
         "block_type": "required",
-        "credits_needed": 18,
+        "credits_needed": 15,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Required foundation courses. Minimum 24 credits with C or higher required before 3rd Field Experience.",
+        "notes": (
+          "Required foundation courses across four Quebec S&T curriculum domains. "
+          "Minimum 24 credits with C or higher required before 3rd Field Experience."
+        ),
         "sort_order": 4,
         "courses": [
-          {"subject": "BIOL", "catalog": "111", "title": "Principles: Organismal Biology",                 "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "BIOL", "catalog": "112", "title": "Cell and Molecular Biology",                     "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "CHEM", "catalog": "110", "title": "General Chemistry 1",                            "credits": 4, "is_required": True,  "recommended": True},
-          {"subject": "PHYS", "catalog": "101", "title": "Introductory Physics – Mechanics",               "credits": 4, "is_required": True,  "recommended": True},
+          {"subject": "MATH", "catalog": "203", "title": "Principles of Statistics 1",                     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required Statistics course for Secondary Science & Technology program."},
+          {"subject": "EDTL", "catalog": "520", "title": "Perspectives on Knowledge in Mathematics and Science", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required History of Science course for Secondary Science & Technology."},
+          {"subject": "CHEM", "catalog": "281", "title": "Inorganic Chemistry 1",                          "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required Material World course."},
+          {"subject": "BIOL", "catalog": "206", "title": "Methods in Biology",                             "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required Living World course."},
+          {"subject": "EDTL", "catalog": "525", "title": "Teaching Science and Technology",                "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required Technological World course."},
         ],
       },
       {
         "block_key": "bed_ssci_teachable_complementary",
         "title": "Complementary Science Courses",
         "block_type": "choose_credits",
-        "credits_needed": 18,
+        "credits_needed": 36,
         "courses_needed": None,
         "group_name": None,
         "notes": (
-          "Choose from Living World, Earth & Space, Material World, or Technological World course lists. "
-          "At least 9 credits must be at the 300-level or above."
+          "Core complementary (10 cr): Living World (3 cr from BIOL 200 or LSCI 202), "
+          "Material World (3 cr from CHEM 203 or CHEM 213), Material World (4 cr CHEM 212). "
+          "Additional complementary (26 cr): choose from Living World, Earth & Space, Environmental, "
+          "Material World, and Technological World course lists. At least 9 credits must be at the 300-level or above."
         ),
         "sort_order": 5,
         "courses": [
-          {"subject": "BIOL", "catalog": "200", "title": "Molecular Biology",                              "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "BIOL", "catalog": "200", "title": "Molecular Biology",                              "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Core complementary Living World course."},
+          {"subject": "LSCI", "catalog": "202", "title": "Biochemistry: Principles and Applications",     "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Alternative core complementary Living World course."},
+          {"subject": "CHEM", "catalog": "203", "title": "Organic Chemistry – Reactivity and Mechanism",  "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Core complementary Material World course (alternative to CHEM 213)."},
+          {"subject": "CHEM", "catalog": "213", "title": "Organic Chemistry: Reactivity and Mechanism",   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Core complementary Material World course (alternative to CHEM 203)."},
+          {"subject": "CHEM", "catalog": "212", "title": "Introductory Organic Chemistry 1",              "credits": 4, "is_required": False, "recommended": True,  "recommendation_reason": "Core complementary Material World course (4 credits)."},
           {"subject": "BIOL", "catalog": "202", "title": "Basic Genetics",                                 "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "CHEM", "catalog": "120", "title": "General Chemistry 2",                            "credits": 4, "is_required": False, "recommended": True},
-          {"subject": "CHEM", "catalog": "212", "title": "Organic Chemistry 1",                            "credits": 4, "is_required": False, "recommended": True},
-          {"subject": "PHYS", "catalog": "102", "title": "Introductory Physics – Electromagnetism",        "credits": 4, "is_required": False, "recommended": True},
           {"subject": "EPSC", "catalog": "180", "title": "Earthquakes, Volcanoes and Other Hazards",       "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Earth sciences are a key strand in the Quebec S&T curriculum."},
           {"subject": "EPSC", "catalog": "220", "title": "Climate Change Science",                         "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Climate change is central to the Quebec S&T Earth & Space domain."},
           {"subject": "COMP", "catalog": "202", "title": "Foundations of Programming",                     "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Computational thinking and coding are part of the Technology strand."},
@@ -513,8 +531,8 @@ EDUCATION_PROGRAMS = [
     "total_credits": 120,
     "description": (
       "Prepares teachers to deliver History & Citizenship and Geography courses in Quebec secondary "
-      "schools (Grades 7–11). Students complete 36 credits split between History and Geography "
-      "alongside Education professional courses and practicums (120 total)."
+      "schools (Grades 7–11). Students complete 51 credits split between History (9 required + 24 complementary) "
+      "and Geography (18 complementary) alongside Education professional courses and practicums (120 total)."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-secondary-social-sciences-history-and-citizenship-geography",
     "blocks": [
@@ -536,10 +554,11 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDEC", "catalog": "254", "title": "Second Professional Seminar (Secondary)",        "credits": 1, "is_required": True},
           {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 2, "is_required": True},
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
+          {"subject": "EDPE", "catalog": "304", "title": "Measurement and Evaluation",                     "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
+          {"subject": "EDEC", "catalog": "404", "title": "Fourth Year Professional Seminar (Secondary)", "credits": 3, "is_required": True},
         ],
       },
       {
@@ -553,9 +572,9 @@ EDUCATION_PROGRAMS = [
         "sort_order": 2,
         "courses": [
           {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
-          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 4, "is_required": True},
+          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 3, "is_required": True},
           {"subject": "EDFE", "catalog": "351", "title": "Third Field Experience (Secondary)",             "credits": 8, "is_required": True},
-          {"subject": "EDFE", "catalog": "455", "title": "Fourth Field Experience (Secondary)",            "credits": 6, "is_required": True},
+          {"subject": "EDFE", "catalog": "451", "title": "Fourth Field Experience (Secondary)",            "credits": 7, "is_required": True},
         ],
       },
       {
@@ -575,16 +594,21 @@ EDUCATION_PROGRAMS = [
       },
       {
         "block_key": "bed_ssoc_geo_teachable_history",
-        "title": "Teachable – History (18+ credits)",
+        "title": "Teachable – History (33 credits: 9 required + 24 complementary)",
         "block_type": "required",
-        "credits_needed": 18,
+        "credits_needed": 33,
         "courses_needed": None,
         "group_name": None,
-        "notes": "History courses for teaching the History & Citizenship strand.",
+        "notes": (
+          "9 credits required from HIST 202, 203, or 303 (survey History of Canada/Quebec courses). "
+          "24 additional complementary History credits: min 9 at 300/400 level; "
+          "3–9 cr European history, 3–9 cr Asian/African/American history, 6 cr thematic history; "
+          "6–12 cr interdisciplinary (min 3 from ECON, min 3 from POLI)."
+        ),
         "sort_order": 4,
         "courses": [
-          {"subject": "HIST", "catalog": "202", "title": "History of Canada",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core content for the Quebec History & Citizenship curriculum."},
-          {"subject": "HIST", "catalog": "219", "title": "History of Quebec",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential for teaching Quebec history and citizenship."},
+          {"subject": "HIST", "catalog": "202", "title": "History of Canada",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core required content for the Quebec History & Citizenship curriculum."},
+          {"subject": "HIST", "catalog": "219", "title": "History of Quebec",                              "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Essential for teaching Quebec history and citizenship."},
           {"subject": "HIST", "catalog": "217", "title": "The World at War, 1914–1945",                    "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "218", "title": "History of the Contemporary World since 1945",   "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "340", "title": "Indigenous Peoples of Canada",                   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Increasingly important component of the History & Citizenship curriculum."},
@@ -660,10 +684,11 @@ EDUCATION_PROGRAMS = [
           {"subject": "EDEC", "catalog": "254", "title": "Second Professional Seminar (Secondary)",        "credits": 1, "is_required": True},
           {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "351", "title": "Third Professional Seminar (Secondary)",         "credits": 2, "is_required": True},
           {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
+          {"subject": "EDPE", "catalog": "304", "title": "Measurement and Evaluation",                     "credits": 3, "is_required": True},
           {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
+          {"subject": "EDEC", "catalog": "404", "title": "Fourth Year Professional Seminar (Secondary)", "credits": 3, "is_required": True},
         ],
       },
       {
@@ -677,9 +702,9 @@ EDUCATION_PROGRAMS = [
         "sort_order": 2,
         "courses": [
           {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2, "is_required": True},
-          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 4, "is_required": True},
+          {"subject": "EDFE", "catalog": "254", "title": "Second Field Experience (Secondary)",            "credits": 3, "is_required": True},
           {"subject": "EDFE", "catalog": "351", "title": "Third Field Experience (Secondary)",             "credits": 8, "is_required": True},
-          {"subject": "EDFE", "catalog": "455", "title": "Fourth Field Experience (Secondary)",            "credits": 6, "is_required": True},
+          {"subject": "EDFE", "catalog": "451", "title": "Fourth Field Experience (Secondary)",            "credits": 7, "is_required": True},
         ],
       },
       {
@@ -759,84 +784,108 @@ EDUCATION_PROGRAMS = [
     "total_credits": 120,
     "description": (
       "The B.Ed. TESL program certifies teachers to teach English as a Second Language at both the "
-      "elementary and secondary levels in Quebec. Students complete 36 credits in Applied Linguistics "
-      "and ESL methodology along with Education professional courses and four practicums (120 total). "
+      "elementary and secondary levels in Quebec. Students complete approximately 48 credits in EDSL "
+      "subject content courses covering L2 education, linguistics, literacy, oral skills, grammar, "
+      "assessment, and TESL methods, alongside Education professional courses and four practicums (120 total). "
       "Admission requires a separate application and selection process."
     ),
-    "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/ug_edu_integrated_studies_education",
+    "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-teaching-english-second-language-tesl-elementary-and-secondary",
     "blocks": [
       {
         "block_key": "bed_tesl_professional_core",
         "title": "Professional Core – Education Courses",
         "block_type": "required",
-        "credits_needed": 27,
+        "credits_needed": 30,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Required professional education courses shared across all B.Ed. programs.",
+        "notes": (
+          "TESL program uses EDSL-numbered professional seminars rather than EDEC. "
+          "Shared Education courses (EDEC 215, 233, 247, 260, 262; EDPE 300; EDPI 309, 341) "
+          "are combined with TESL-specific seminars (EDSL 210, 215, 254, 315, 415) and EDES methods."
+        ),
         "sort_order": 1,
         "courses": [
-          {"subject": "EDEC", "catalog": "201", "title": "First Year Professional Seminar",                "credits": 1, "is_required": True},
-          {"subject": "EDEC", "catalog": "203", "title": "Communication in Education",                     "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "215", "title": "English Exam for Teacher Certification (EETC)",  "credits": 0, "is_required": True},
-          {"subject": "EDEC", "catalog": "233", "title": "Indigenous Education",                           "credits": 3, "is_required": True},
+          {"subject": "EDSL", "catalog": "210", "title": "First Professional Seminar (TESL)",             "credits": 1, "is_required": True},
+          {"subject": "EDSL", "catalog": "215", "title": "Communication in Education for TESL in Quebec", "credits": 3, "is_required": True},
+          {"subject": "EDEC", "catalog": "215", "title": "English Exam for Teacher Certification (EETC)", "credits": 0, "is_required": True},
+          {"subject": "EDEC", "catalog": "233", "title": "Indigenous Education",                          "credits": 3, "is_required": True},
           {"subject": "EDEC", "catalog": "247", "title": "Policy Issues in Quebec and Indigenous Education","credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",                "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",         "credits": 3, "is_required": True},
-          {"subject": "EDPE", "catalog": "400", "title": "Assessment in Education",                        "credits": 3, "is_required": True},
-          {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",               "credits": 3, "is_required": True},
+          {"subject": "EDSL", "catalog": "254", "title": "Second Professional Seminar (TESL)",            "credits": 1, "is_required": True},
+          {"subject": "EDEC", "catalog": "260", "title": "Philosophical Foundations of Education",        "credits": 3, "is_required": True},
+          {"subject": "EDEC", "catalog": "262", "title": "Media, Technology and Education",               "credits": 3, "is_required": True},
+          {"subject": "EDSL", "catalog": "315", "title": "Third Year Professional Seminar (TESL)",        "credits": 2, "is_required": True},
+          {"subject": "EDPE", "catalog": "300", "title": "Psychological Foundations of Education",        "credits": 3, "is_required": True},
+          {"subject": "EDPI", "catalog": "309", "title": "Diverse Learners",                              "credits": 3, "is_required": True},
+          {"subject": "EDPI", "catalog": "341", "title": "Instruction in Inclusive Schools",              "credits": 3, "is_required": True},
+          {"subject": "EDES", "catalog": "350", "title": "Classroom Practices (TESL)",                   "credits": 3, "is_required": True},
+          {"subject": "EDES", "catalog": "361", "title": "Teaching Secondary English 1",                  "credits": 3, "is_required": True},
+          {"subject": "EDSL", "catalog": "415", "title": "Fourth Professional Seminar (TESL)",            "credits": 3, "is_required": True},
         ],
       },
       {
         "block_key": "bed_tesl_field_experiences",
         "title": "Field Experiences (Practicums)",
         "block_type": "required",
-        "credits_needed": 24,
+        "credits_needed": 20,
         "courses_needed": None,
         "group_name": None,
         "notes": "Four practicums covering ESL instruction at both elementary and secondary levels.",
         "sort_order": 2,
         "courses": [
-          {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2,  "is_required": True},
-          {"subject": "EDFE", "catalog": "246", "title": "Second Field Experience (TESL)",                 "credits": 4,  "is_required": True},
-          {"subject": "EDFE", "catalog": "346", "title": "Third Field Experience (TESL)",                  "credits": 8,  "is_required": True},
-          {"subject": "EDFE", "catalog": "446", "title": "Fourth Field Experience (TESL)",                 "credits": 10, "is_required": True},
+          {"subject": "EDFE", "catalog": "209", "title": "First Field Experience",                         "credits": 2,  "is_required": True},
+          {"subject": "EDFE", "catalog": "255", "title": "Second Field Experience (TESL)",                 "credits": 3,  "is_required": True},
+          {"subject": "EDFE", "catalog": "359", "title": "Third Field Experience (TESL)",                  "credits": 8,  "is_required": True},
+          {"subject": "EDFE", "catalog": "459", "title": "Fourth Field Experience (TESL)",                 "credits": 7,  "is_required": True},
         ],
       },
       {
         "block_key": "bed_tesl_esl_methods",
         "title": "ESL Methodology and Curriculum",
         "block_type": "required",
-        "credits_needed": 21,
+        "credits_needed": 48,
         "courses_needed": None,
         "group_name": None,
-        "notes": "TESL-specific methods and curriculum courses.",
+        "notes": (
+          "TESL-specific required courses covering foundations of L2 education, sociolinguistics, "
+          "classroom settings, grammar, literacy (reading and writing), oral skills, assessment, "
+          "and TESL methods. LING 200 or 201 also required. "
+          "Professional seminars EDSL 210, 215, 254, 315, 415 are included in the professional core."
+        ),
         "sort_order": 3,
         "courses": [
-          {"subject": "EDSL", "catalog": "300", "title": "Introduction to TESL",                           "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDSL", "catalog": "315", "title": "Language Analysis for ESL Teachers",             "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core course in grammar and language structure for ESL instruction."},
-          {"subject": "EDSL", "catalog": "341", "title": "ESL Curriculum Design",                          "credits": 3, "is_required": True},
-          {"subject": "EDSL", "catalog": "343", "title": "Assessment in ESL Contexts",                     "credits": 3, "is_required": True},
-          {"subject": "EDSL", "catalog": "345", "title": "ESL Methods – Elementary",                       "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDSL", "catalog": "435", "title": "ESL Methods – Secondary",                        "credits": 3, "is_required": True},
-          {"subject": "LING", "catalog": "201", "title": "Introduction to Linguistics",                    "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential foundation for understanding how language works."},
+          {"subject": "EDSL", "catalog": "300", "title": "Foundations of L2 Education",                   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core foundations course for TESL program."},
+          {"subject": "EDSL", "catalog": "304", "title": "Sociolinguistics and L2 Education",              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required sociolinguistics course."},
+          {"subject": "EDSL", "catalog": "305", "title": "L2 Learning: Classroom Settings",               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required language acquisition in classroom contexts course."},
+          {"subject": "EDSL", "catalog": "311", "title": "Pedagogical Grammar",                           "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core course in grammar and language structure for ESL instruction."},
+          {"subject": "EDSL", "catalog": "330", "title": "Literacy 1: Teaching Reading in ESL",           "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required reading instruction course."},
+          {"subject": "EDSL", "catalog": "332", "title": "Literacy 2: Teaching Writing in ESL",           "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required writing instruction course."},
+          {"subject": "EDSL", "catalog": "334", "title": "Teaching Oral Skills in ESL",                   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required oral skills instruction course."},
+          {"subject": "EDSL", "catalog": "350", "title": "Essentials of English Grammar",                 "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required grammar reference course for ESL teachers."},
+          {"subject": "EDSL", "catalog": "412", "title": "Assessment in TESL",                            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required assessment course for TESL."},
+          {"subject": "EDSL", "catalog": "447", "title": "Methods in TESL 1",                             "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required TESL methods course."},
+          {"subject": "EDSL", "catalog": "458", "title": "Methods in TESL 2",                             "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required TESL methods course."},
+          {"subject": "LING", "catalog": "201", "title": "Introduction to Linguistics",                   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential foundation for understanding how language works (LING 200 accepted as alternative)."},
         ],
       },
       {
         "block_key": "bed_tesl_linguistics",
-        "title": "Applied Linguistics Electives",
+        "title": "Complementary Courses",
         "block_type": "choose_credits",
-        "credits_needed": 15,
+        "credits_needed": 12,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Choose from Linguistics, Applied Linguistics, and related language courses.",
+        "notes": (
+          "3 cr equity education (EDEC 248 or 249); 3 cr arts education (EDEA 332, 342, 345, or EDKP 332); "
+          "3–6 cr ENGL courses; 3–6 cr foreign language, FRSL, or other complementary electives."
+        ),
         "sort_order": 4,
         "courses": [
-          {"subject": "LING", "catalog": "260", "title": "Language Acquisition",                           "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "EDEC", "catalog": "248", "title": "Anti-Racism Education",                         "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Required equity education component (alternative to EDEC 249)."},
+          {"subject": "EDEC", "catalog": "249", "title": "Global Education and Social Justice",            "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Required equity education component (alternative to EDEC 248)."},
           {"subject": "LING", "catalog": "330", "title": "Phonetics",                                      "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Pronunciation and phonetics are critical for ESL instruction."},
-          {"subject": "LING", "catalog": "360", "title": "Bilingualism",                                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Directly relevant to Quebec's bilingual educational context."},
-          {"subject": "LING", "catalog": "440", "title": "Discourse Analysis",                             "credits": 3, "is_required": False},
+          {"subject": "LING", "catalog": "360", "title": "Bilingualism",                                   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Directly relevant to Quebec's bilingual educational context."},
           {"subject": "ENGL", "catalog": "234", "title": "Canadian Literature",                            "credits": 3, "is_required": False},
+          {"subject": "FRSL", "catalog": "211", "title": "Oral and Written French 1",                      "credits": 6, "is_required": False, "recommended": True,  "recommendation_reason": "French proficiency strongly recommended for teaching in Quebec."},
         ],
       },
       {
@@ -846,11 +895,9 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 6,
         "courses_needed": None,
         "group_name": None,
-        "notes": "6 free elective credits.",
+        "notes": "6 unrestricted elective credits.",
         "sort_order": 5,
-        "courses": [
-          {"subject": "FRSL", "catalog": "211", "title": "Oral and Written French 1",                      "credits": 6, "is_required": False, "recommended": True},
-        ],
+        "courses": [],
       },
     ],
   },
@@ -971,16 +1018,16 @@ EDUCATION_PROGRAMS = [
         "block_key": "bed_phe_field_experiences",
         "title": "Field Experiences (Practicums)",
         "block_type": "required",
-        "credits_needed": 26,
+        "credits_needed": 20,
         "courses_needed": None,
         "group_name": None,
         "notes": "Four progressive P.E. teaching practicums in schools.",
         "sort_order": 2,
         "courses": [
-          {"subject": "EDFE", "catalog": "200", "title": "First Field Experience",                         "credits": 2,  "is_required": True},
-          {"subject": "EDFE", "catalog": "205", "title": "Second Field Experience (P.E.)",                 "credits": 4,  "is_required": True},
-          {"subject": "EDFE", "catalog": "305", "title": "Third Field Experience (P.E.)",                  "credits": 6,  "is_required": True},
-          {"subject": "EDFE", "catalog": "405", "title": "Fourth Field Experience (P.E.)",                 "credits": 14, "is_required": True},
+          {"subject": "EDFE", "catalog": "246", "title": "First Field Experience",                         "credits": 3,  "is_required": True},
+          {"subject": "EDFE", "catalog": "373", "title": "Second Field Experience (P.E.)",                 "credits": 3,  "is_required": True},
+          {"subject": "EDFE", "catalog": "380", "title": "Third Field Experience (P.E.)",                  "credits": 7,  "is_required": True},
+          {"subject": "EDFE", "catalog": "480", "title": "Fourth Field Experience (P.E.)",                 "credits": 7,  "is_required": True},
         ],
       },
       {
@@ -1071,24 +1118,26 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 51,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Core required courses for the B.Sc.(Kinesiology) program.",
+        "notes": "Core required courses for the B.Sc.(Kinesiology) program. EDKP 215 (Standard First Aid/CPR Level C) is also required as a 0-credit certification.",
         "sort_order": 2,
         "courses": [
           {"subject": "ANAT", "catalog": "315", "title": "Clinical Human Musculoskeletal Anatomy",         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential anatomy; taken in U1 and used in all physiology/biomechanics courses."},
           {"subject": "ANAT", "catalog": "316", "title": "Clinical Human Visceral Anatomy",                "credits": 3, "is_required": True},
           {"subject": "EDKP", "catalog": "206", "title": "Biomechanics of Human Movement",                "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Foundational biomechanics; required prereq for most upper-year EDKP courses."},
           {"subject": "EDKP", "catalog": "250", "title": "Introductory Principles in Applied Kinesiology", "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDKP", "catalog": "280", "title": "Motor Development",                              "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "320", "title": "Nutrition and Physical Activity",                "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDKP", "catalog": "340", "title": "Psychology of Physical Activity",                "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "261", "title": "Motor Development",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required core course covering lifespan motor development."},
+          {"subject": "EDKP", "catalog": "292", "title": "Nutrition and Wellness",                         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required nutrition course for the B.Sc. Kinesiology program."},
+          {"subject": "EDKP", "catalog": "330", "title": "Physical Activity and Public Health",            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required public health and physical activity course."},
           {"subject": "EDKP", "catalog": "350", "title": "Physical Fitness Evaluation Methods",            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Hands-on fitness assessment skills directly used in professional kinesiology practice."},
           {"subject": "EDKP", "catalog": "395", "title": "Exercise Physiology",                            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core physiology of exercise; prerequisite for most 400-level EDKP courses."},
-          {"subject": "EDKP", "catalog": "420", "title": "Measurement and Evaluation in Kinesiology",     "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "396", "title": "Adapted Physical Activity",                      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required adapted physical activity course."},
+          {"subject": "EDKP", "catalog": "443", "title": "Research Methods",                               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required research methods course for understanding kinesiology evidence base."},
+          {"subject": "EDKP", "catalog": "447", "title": "Motor Control",                                  "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required motor control course covering neuroscience of movement."},
+          {"subject": "EDKP", "catalog": "448", "title": "Exercise and Health Psychology",                 "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required psychological aspects of exercise and health."},
           {"subject": "EDKP", "catalog": "450", "title": "Advanced Principles in Applied Kinesiology",    "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Capstone applied kinesiology course integrating program knowledge."},
-          {"subject": "EDKP", "catalog": "480", "title": "Sociology of Sport and Physical Activity",       "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "498", "title": "Sport Psychology",                               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required sport psychology course."},
           {"subject": "PHGY", "catalog": "209", "title": "Mammalian Physiology 1",                         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential physiology; covers cardiovascular and respiratory systems."},
           {"subject": "PHGY", "catalog": "210", "title": "Mammalian Physiology 2",                         "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "490", "title": "History and Philosophy of Sport",                "credits": 3, "is_required": False},
         ],
       },
       {
@@ -1138,7 +1187,7 @@ EDUCATION_PROGRAMS = [
     "description": (
       "The Honours B.Sc.(Kinesiology) requires a CGPA of 3.3 after two years in Kinesiology, "
       "maintained until graduation. Students complete all requirements of the regular Kinesiology "
-      "program plus an Honours thesis (EDKP 491/492, 6 credits). Prepares students for graduate "
+      "program plus an Honours thesis (EDKP 454 + EDKP 499, 9 credits). Prepares students for graduate "
       "study in exercise science, physiotherapy, or medicine."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-science-kinesiology-bsckinesiology-kinesiology-honours",
@@ -1174,14 +1223,14 @@ EDUCATION_PROGRAMS = [
         "block_key": "bsc_kin_hon_thesis",
         "title": "Honours Thesis",
         "block_type": "required",
-        "credits_needed": 6,
+        "credits_needed": 9,
         "courses_needed": None,
         "group_name": None,
         "notes": "Required independent research thesis supervised by a faculty member. Requires CGPA of 3.3 maintained throughout.",
         "sort_order": 2,
         "courses": [
-          {"subject": "EDKP", "catalog": "491", "title": "Honours Research in Kinesiology 1",              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "First half of the Honours thesis; begin in U3 fall."},
-          {"subject": "EDKP", "catalog": "492", "title": "Honours Research in Kinesiology 2",              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Completion and defence of Honours thesis; taken in U3 winter."},
+          {"subject": "EDKP", "catalog": "454", "title": "Honours Research Practicum",              "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "499", "title": "Undergraduate Honours Research Project",  "credits": 6, "is_required": True},
         ],
       },
       {

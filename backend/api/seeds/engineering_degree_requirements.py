@@ -60,8 +60,8 @@ ENGINEERING_PROGRAMS = [
           {"subject": "MATH", "catalog": "141",  "title": "Calculus 2",                     "credits": 4, "is_required": True},
           {"subject": "PHYS", "catalog": "131",  "title": "Mechanics and Waves",            "credits": 3, "is_required": True},
           {"subject": "PHYS", "catalog": "142",  "title": "Electromagnetism and Optics",    "credits": 3, "is_required": True},
-          {"subject": "BIOL", "catalog": "111",  "title": "Cell and Molecular Biology",     "credits": 3, "is_required": True},
-          {"subject": "BIOL", "catalog": "112",  "title": "Organismal Biology",             "credits": 3, "is_required": True},
+          {"subject": "BIOL", "catalog": "111",  "title": "Principles: Organismal Biology",  "credits": 3, "is_required": True},
+          {"subject": "BIOL", "catalog": "112",  "title": "Cell and Molecular Biology",     "credits": 3, "is_required": True},
         ],
       },
       {

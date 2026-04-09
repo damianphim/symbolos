@@ -22,6 +22,14 @@ CONTEXT FIX (v3):
   appended to the system prompt so Claude knows exactly which card is active.
 
   Problem 4 — Session history was capped at 8 messages. Raised to 20 (10 turns).
+
+TOKEN EFFICIENCY (v4):
+  - Static prompt content (SITE_KNOWLEDGE, MCGILL ADVISING KNOWLEDGE, tab guidance)
+    extracted to backend/api/prompts/*.md — loaded once at module startup, not
+    rebuilt on every call.
+  - Completed courses use compact format (saves ~700 tokens for a 60-course history).
+  - History now respects settings.CHAT_CONTEXT_MESSAGES instead of hardcoded 20.
+  - _lang_instruction moved to api.utils.lang so cards.py shares the same function.
 """
 from fastapi import APIRouter, HTTPException, status, Query, Depends, Request
 from pydantic import BaseModel, Field, field_validator
@@ -30,6 +38,7 @@ import anthropic
 import logging
 import uuid
 import time
+from pathlib import Path
 
 from api.utils.supabase_client import (
     get_user_by_id,
@@ -43,6 +52,23 @@ from api.config import settings
 from api.exceptions import UserNotFoundException, DatabaseException
 from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
+from api.utils.lang import lang_instruction as _lang_instruction
+
+# ── Load static prompt content once at startup ────────────────────────────────
+_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+
+def _load(relative_path: str) -> str:
+    try:
+        return (_PROMPTS_DIR / relative_path).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+
+_SITE_KNOWLEDGE = _load("site_knowledge.md")
+_MCGILL_ADVISING = _load("mcgill_advising.md")
+_TAB_GUIDANCE: dict[str, str] = {
+    name: _load(f"tab_guidance/{name}.md")
+    for name in ("chat", "calendar", "favorites", "profile", "courses", "clubs", "forum")
+}
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -127,38 +153,7 @@ class ChatResponse(BaseModel):
     tokens_used: Optional[int] = None
 
 
-# ── Language instruction helper ────────────────────────────────────────────────
-def _lang_instruction(language: str) -> str:
-    """
-    Returns a strong, CRITICAL-level language instruction.
-    Appended LAST in the system prompt so it overrides any language drift
-    caused by English course data/titles in the student profile.
-    Uses the same wording as cards.py for consistency — previously this
-    function used the weaker "IMPORTANT:" prefix which Claude would often
-    ignore when surrounded by extensive English course data.
-    """
-    if language == "fr":
-        return (
-            "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in French. "
-            "Every part of your response — advice, explanations, lists, follow-up questions — "
-            "must be in French. Do not switch to English under any circumstance, even if the "
-            "student's course titles, grades, or calendar events are in English. "
-            "Course codes (e.g. COMP 202) and proper nouns (McGill, Minerva) may stay as-is."
-        )
-    if language == "zh":
-        return (
-            "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in Simplified Chinese (Mandarin). "
-            "Every part of your response must be in Chinese. Do not switch to English under any "
-            "circumstance, even if the student's course names, grades, or calendar events are in English. "
-            "Course codes (e.g. COMP 202) and proper nouns (McGill, Minerva) may stay as-is."
-        )
-    # Default English — explicit so French/Chinese data in the student profile
-    # does not cause the model to drift into another language.
-    return (
-        "\n\nCRITICAL LANGUAGE RULE: You MUST respond entirely in English. "
-        "Do not use French, Chinese, or any other language in your response, "
-        "even if the student's course names, calendar events, or profile data are in another language."
-    )
+# _lang_instruction is imported from api.utils.lang and used directly below.
 
 
 # ── Context builder ────────────────────────────────────────────────────────────
@@ -172,143 +167,10 @@ def build_system_context(
     """
     Build a rich system context for Claude.
     The base (student data) is cached per user for 5 minutes.
-    card_context and tab/language instructions are appended fresh each call.
+    Static sections (site knowledge, tab guidance, McGill advising) are loaded
+    once at module startup from backend/api/prompts/*.md.
+    card_context and lang instruction are appended fresh each call.
     """
-
-    TAB_GUIDANCE = {
-        "courses": """
-The student is currently on the **Courses tab** — they can search for courses, view professor ratings, add courses to their saved/current/completed lists, and see grade averages and prerequisites.
-Navigation tips:
-- Search by course name or code (e.g. "COMP 202")
-- Click any course card to see full details, grade history, instructor ratings, prerequisites, and corequisites
-- Use the ✓ button to mark completed, ❤ to save, 🔵 to mark as current
-- Sort by Rating to find the highest-rated professors
-""",
-        "calendar": """
-The student is currently on the **Calendar tab** — they can view their class schedule, assignment deadlines, exam dates. Events come from imported syllabi. They can add custom events.
-Navigation tips:
-- Click any day to see events or add a new one
-- Toggle filter chips to show/hide event types
-- Switch to Announcements view for upcoming events with countdowns
-- Syllabus upload is on the **Degree Planning tab**, not here
-""",
-        "favorites": """
-The student is currently on the **Degree Planning tab** — they can track progress toward their degree, upload transcripts and syllabi, explore study abroad options, view advising resources, and get AI elective recommendations.
-Navigation tips:
-- **Degree Progress Tracker** — shows credits completed vs required for their major. Green = completed, blue = in-progress, grey = not yet taken.
-- **Transcript Upload** — upload unofficial McGill transcript PDF to auto-import courses, grades, GPA
-- **Syllabus Upload** — upload course syllabi PDFs to extract deadlines and add them to the calendar
-- **Study Abroad** — information about exchange programs with destinations, deadlines, and credit transfer info
-- **Advising Resources** — 25+ curated McGill advising links across 8 categories (Academic Advising, Prerequisites, International Students, Registration, Financial Aid, Graduation, Student Services, Important Dates)
-- **Elective Recommendations** — AI-powered course suggestions based on the student's interests, completed courses, and degree requirements
-""",
-        "profile": """
-The student is currently on the **Settings/Profile tab** — they can manage their academic profile and configure settings.
-Navigation tips:
-- Update faculty, major, minor, concentration, and honours status
-- Add advanced standing (AP/IB/transfer) in the Advanced Standing section
-- Set interests to get better AI recommendations
-- Change theme (light/dark/auto), language (EN/FR/中文)
-- NOTE: Transcript and syllabus upload are on the **Degree Planning tab**, not here
-""",
-        "clubs": """
-The student is currently on the **Clubs tab** — they can browse McGill student clubs, subscribe to club events/news, and submit new clubs.
-Navigation tips:
-- Browse clubs by category or search by name
-- Click a club card to see details, events, and social media links
-- Use "Subscribe" to get updates from a club in your calendar
-- Submit a new club using the "Submit Club" button (requires McGill email)
-- Club submissions are reviewed by admins before appearing publicly
-""",
-        "forum": """
-The student is currently on the **Forum tab** — they can participate in academic discussions with other McGill students.
-Navigation tips:
-- Browse discussion threads by category or search
-- Start a new discussion thread
-- Reply to existing threads
-- Upvote helpful responses
-""",
-        "chat": """
-The student is currently on the **Academic Brief tab** — this is the main dashboard showing AI-generated advisor cards with personalized insights.
-Navigation tips:
-- Cards are auto-generated based on the student's profile, courses, deadlines, and GPA
-- Cards can be filtered by category: Deadlines, Degree, Courses, Grades, Planning, Opportunities
-- Click the expand arrow on any card to see the full advice
-- Use the action buttons on cards to get more details or take action
-- Pin a card to open a focused chat thread about it in the right sidebar
-- Bookmark cards to save them
-- Drag cards to reorder them
-- Use the refresh button to regenerate cards (limited to 2x per week for non-admins)
-- Type a question in the chat bar at the bottom to create a new AI-generated card
-""",
-    }
-
-    # Comprehensive site knowledge — appended to ALL tabs so assistant
-    # can always answer "how do I..." questions about any part of the site.
-    SITE_KNOWLEDGE = """
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SYMBOLOS PLATFORM — FULL FEATURE GUIDE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-You are the assistant for Symbolos, a McGill student advisor platform. You can help users navigate ANY part of the site. Here is a complete feature guide:
-
-SITE FEATURES & NAVIGATION:
-
-**Dashboard / Academic Brief:**
-- AI-generated advisor cards with insights about your academics, deadlines, grades, opportunities
-- Cards auto-translate when you change language
-- Cards can be pinned, bookmarked, expanded, or drag-reordered
-- Card categories: Deadlines, Degree, Courses, Grades, Planning, Opportunities
-- Use the chat bar at the bottom to ask questions and generate new advisor cards
-- Cards refresh limit: 2x per week for regular users, unlimited for admins
-
-**Calendar Tab:**
-- View your class schedule, assignment deadlines, exam dates
-- Events come from imported syllabi
-- You can add custom events
-- Toggle filter chips to show/hide event types
-- Announcements view shows upcoming events with countdown timers
-
-**Degree Planning Tab:**
-- Degree Progress Tracker — shows credits completed vs required for your major
-- Transcript Upload — upload your UNOFFICIAL McGill transcript PDF to auto-import courses, grades, GPA
-- Syllabus Upload — upload course syllabi PDFs to extract deadlines and add them to your calendar
-- Study Abroad — information about exchange programs
-- Advising Resources — curated McGill advising links across 8 categories
-- Elective Recommendations — AI-powered course suggestions based on your profile
-
-**Courses Tab:**
-- Search McGill courses by code or name (e.g. "COMP 202" or "algorithms")
-- Each course card shows: title, credits, faculty, term availability, average GPA, professor ratings
-- Click a course for full details: prerequisites, corequisites, grade distribution history, RateMyProfessors ratings
-- Action buttons: ✓ = mark completed, ❤ = save/bookmark, 🔵 = mark as currently taking
-
-**Clubs Tab:**
-- Browse McGill clubs, subscribe to club events/news, submit new clubs for admin review
-
-**Settings:**
-- Update your profile (faculty, major, year, GPA), change language (EN/FR/ZH), change theme (light/dark/auto)
-
-**This Sidebar Chat:**
-- Ask questions about McGill academics, site features, or get personalized advice
-- Available on every tab except Academic Brief
-- Context-aware: knows which tab you're on
-- Pin messages to save them across tabs
-
-**IMPORTANT CORRECTIONS — do not confuse these:**
-- Transcript Upload is on the **Degree Planning tab**, NOT on Profile or Calendar
-- Syllabus Upload is on the **Degree Planning tab**, NOT on Calendar
-- Profile/Settings is for editing your academic info, theme, and language
-"""
-
-    # LANG FIX: was a weak inline if/elif block using "IMPORTANT:" prefix.
-    # Now uses the shared _lang_instruction() helper with "CRITICAL LANGUAGE RULE:"
-    # which matches cards.py and reliably prevents language drift.
-    lang_instruction = _lang_instruction(language)
-
-    tab_context = TAB_GUIDANCE.get(current_tab, "") if current_tab else ""
-    site_knowledge = SITE_KNOWLEDGE
-
     # ── Base context: cached per user ─────────────────────────────────────────
     user_id = user.get("id", "")
     base = _get_cached_context(user_id)
@@ -323,17 +185,25 @@ SITE FEATURES & NAVIGATION:
     card_section = ""
     if card_context:
         safe_card = sanitise_context_field(card_context, max_length=800)
-        card_section = f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACTIVE ADVISOR CARD
-The student opened this chat from the following card.
-Their question almost certainly relates to it — keep it in mind throughout:
+        card_section = (
+            "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "ACTIVE ADVISOR CARD\n"
+            "The student opened this chat from the following card. "
+            "Their question almost certainly relates to it:\n\n"
+            f"{safe_card}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        )
 
-{safe_card}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
+    tab_context = _TAB_GUIDANCE.get(current_tab, "") if current_tab else ""
 
-    return base + card_section + tab_context + site_knowledge + lang_instruction
+    return (
+        base
+        + card_section
+        + tab_context
+        + "\n" + _SITE_KNOWLEDGE
+        + "\n" + _MCGILL_ADVISING
+        + _lang_instruction(language)
+    )
 
 
 def _build_base_context(user: dict, user_sb=None) -> str:
@@ -378,11 +248,16 @@ def _build_base_context(user: dict, user_sb=None) -> str:
         ) or "None"
 
         def fmt_completed():
-            return "\n".join(
-                f"  - {c['course_code']} ({sanitise_context_field(c.get('course_title',''))}) | "
-                f"Grade: {c.get('grade') or 'N/A'} | Term: {c.get('term','?')} {c.get('year','')}"
-                for c in completed
-            ) or "  None recorded"
+            # Compact format: "COMP 202 (A-) F2023, MATH 222 (B+) W2024"
+            # Saves ~700 tokens vs verbose format for a 60-course history.
+            parts = []
+            for c in completed:
+                code = c['course_code']
+                grade = c.get('grade') or '?'
+                term = (c.get('term') or '?')[0].upper() if c.get('term') else '?'
+                year = str(c.get('year') or '')[2:] if c.get('year') else '??'
+                parts.append(f"{code}({grade}){term}{year}")
+            return ", ".join(parts) if parts else "None recorded"
 
         def fmt_list(items, code_key="course_code", title_key="course_title"):
             return "\n".join(
@@ -566,8 +441,10 @@ async def send_message(
     user = get_user_by_id(request.user_id)
     save_message(request.user_id, "user", request.message, session_id)
 
-    # Fetch session history (raised from 8 → 20 messages = 10 full turns)
-    history = get_chat_history(request.user_id, session_id=session_id, limit=22)
+    # Fetch session history — limit to settings.CHAT_CONTEXT_MESSAGES (default 6)
+    # to control token usage. Fetch one extra to exclude the message we just saved.
+    ctx_limit = settings.CHAT_CONTEXT_MESSAGES
+    history = get_chat_history(request.user_id, session_id=session_id, limit=ctx_limit + 2)
 
     system_context = build_system_context(
         user,
@@ -578,7 +455,7 @@ async def send_message(
 
     # Build message list: history minus the just-saved user message + current message
     prior_history = history[:-1]  # everything except the message we just saved
-    recent = prior_history[-20:] if len(prior_history) > 20 else prior_history
+    recent = prior_history[-ctx_limit:] if len(prior_history) > ctx_limit else prior_history
     formatted = format_chat_history(recent)
     formatted.append({"role": "user", "content": request.message})
 

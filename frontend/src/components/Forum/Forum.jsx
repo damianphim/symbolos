@@ -387,8 +387,17 @@ export default function Forum() {
   const shareProgram = JSON.parse(localStorage.getItem('shareProgress') ?? 'false')
   const myAuthor     = isPublic ? myName : 'Anonymous'
   const myProgramInfo = shareProgram && profile
-    ? [profile.year ? `U${profile.year}` : null, profile.faculty || null, profile.major || null]
-        .filter(Boolean).join(' · ') || null
+    ? (() => {
+        const majors = [profile.major, ...(profile.other_majors || [])].filter(Boolean)
+        const minors = [profile.minor, ...(profile.other_minors || [])].filter(Boolean)
+        const parts = [
+          profile.year ? `U${profile.year}` : null,
+          profile.faculty || null,
+          ...majors,
+          ...minors.map(m => `${m} (minor)`),
+        ].filter(Boolean)
+        return parts.length ? parts.join(' · ') : null
+      })()
     : null
 
   // Debounce search input

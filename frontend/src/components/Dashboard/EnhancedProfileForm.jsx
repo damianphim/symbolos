@@ -308,6 +308,13 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
             </div>
           </div>
 
+          {/* Faculty of Arts info message */}
+          {formData.faculty === 'Faculty of Arts' && (
+            <div className="helper-text" style={{ background: 'var(--bg-secondary, #f3f4f6)', border: '1px solid var(--border-color, #e5e7eb)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              <strong>Faculty of Arts degree structure:</strong> A B.A. requires at least one major and one minor. You don't need to decide on your exact combination right away — you have until you apply to graduate. What matters most is accumulating the required credits for each program you choose.
+            </div>
+          )}
+
           {/* B.A. & Sc. specific program selection */}
           {isBasc(formData.faculty) ? (
             <>
@@ -431,7 +438,7 @@ export default function EnhancedProfileForm({ profile, onSave, onCancel }) {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="major">
-                    Primary Major <span className="required-star">*</span>
+                    Major <span className="required-star">*</span>
                   </label>
                   <select
                     id="major"

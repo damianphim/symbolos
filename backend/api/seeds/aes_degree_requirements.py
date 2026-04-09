@@ -91,13 +91,15 @@ AES_PROGRAMS = [
         "notes":          "Select 6 credits from the approved complementary list below.",
         "sort_order": 2,
         "courses": [
-          {"subject": "ENTO", "catalog": "330", "title": "Insect Biology",               "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Excellent complement to ecology; covers insect morphology, diversity, and metamorphosis"},
-          {"subject": "ENVB", "catalog": "301", "title": "Meteorology",                  "credits": 3, "is_required": False, "recommended": False, "notes": "Not always scheduled; check eCalendar"},
-          {"subject": "ENVB", "catalog": "313", "title": "Phylogeny and Biogeography",   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Topics in evolution, phylogenetics, and biogeography; prereq AEBI 212"},
-          {"subject": "ENVB", "catalog": "437", "title": "Assessing Environmental Impact","credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Applied senior course on environmental impact assessment"},
-          {"subject": "NRSC", "catalog": "333", "title": "Pollution and Bioremediation", "credits": 3, "is_required": False, "recommended": False},
-          {"subject": "PLNT", "catalog": "304", "title": "Biology of Fungi",             "credits": 3, "is_required": False, "recommended": False},
-          {"subject": "WILD", "catalog": "350", "title": "Wildlife Ecology and Management","credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Highly recommended if pairing with Wildlife Biology specialization"},
+          {"subject": "ENTO", "catalog": "330", "title": "Insect Biology",                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Excellent complement to ecology; covers insect morphology, diversity, and metamorphosis"},
+          {"subject": "ENVB", "catalog": "437", "title": "Assessing Environmental Impact",    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Applied senior course on environmental impact assessment"},
+          {"subject": "FAES", "catalog": "300", "title": "Internship 2",                      "credits": 3, "is_required": False, "recommended": False},
+          {"subject": "NRSC", "catalog": "333", "title": "Pollution and Bioremediation",      "credits": 3, "is_required": False, "recommended": False},
+          {"subject": "PLNT", "catalog": "358", "title": "Flowering Plant Diversity",         "credits": 3, "is_required": False, "recommended": False},
+          {"subject": "WILD", "catalog": "302", "title": "Fish Ecology",                      "credits": 3, "is_required": False, "recommended": False},
+          {"subject": "WILD", "catalog": "307", "title": "Natural History of Vertebrates",    "credits": 3, "is_required": False, "recommended": False},
+          {"subject": "WILD", "catalog": "350", "title": "Wildlife Ecology and Management",   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Highly recommended if pairing with Wildlife Biology specialization"},
+          {"subject": "WOOD", "catalog": "441", "title": "Integrated Forest Management",      "credits": 3, "is_required": False, "recommended": False},
         ],
       },
       {
@@ -169,7 +171,9 @@ AES_PROGRAMS = [
         "group_name":     None,
         "notes":          (
           "12 credits of Honours research in the subject area of the student's Major, "
-          "chosen in consultation with the Programme Director and the research supervisor."
+          "chosen in consultation with the Programme Director and the research supervisor. "
+          "Plan A: Two 6-credit research courses. "
+          "Plan B (shown): ENVB 497 + ENVB 498 project courses plus additional 400/500-level coursework."
         ),
         "sort_order": 1,
         "courses": [
@@ -431,17 +435,18 @@ AES_PROGRAMS = [
     "blocks": [
       {
         "block_key":      "bree_required_core",
-        "title":          "Required Core Courses (62 credits)",
+        "title":          "Required Core Courses (62.5 credits)",
         "block_type":     "required",
-        "credits_needed": 62,
+        "credits_needed": 62.5,
         "courses_needed": None,
         "group_name":     None,
         "notes":          (
-          "All courses are required. Note: BREE 451/452/453/485 are 1-credit seminars. "
+          "All 25 courses are required. Note: BREE 451/452/453/485 are 1-credit seminars; "
+          "FACC 250 is a 0.5-credit course. "
           "BREE 490 requires CHEE 315 or MECH 346, and BREE 415 as prerequisites. "
           "Note that a B+ must be obtained in BREE 252 to register in BREE 504. "
           "BREE 205 and BREE 216 are restricted to students enrolled in a Bioresource "
-          "Engineering program."
+          "Engineering program. FACC 300 is a prerequisite for BREE 420."
         ),
         "sort_order": 1,
         "courses": [
@@ -453,6 +458,10 @@ AES_PROGRAMS = [
           {"subject": "BREE", "catalog": "205", "title": "Engineering Design 1",            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Introduction to engineering design, ethics, and law; take in U1 Fall"},
           {"subject": "BREE", "catalog": "490", "title": "Engineering Design 2",            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Design project proposal; prereqs CHEE 315 or MECH 346, BREE 415; take in U3"},
           {"subject": "BREE", "catalog": "495", "title": "Engineering Design 3",            "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Final capstone design; take in U3 with BREE 490"},
+          # --- Professional engineering (FACC) ---
+          {"subject": "FACC", "catalog": "250", "title": "Responsibilities of the Professional Engineer", "credits": 0.5, "is_required": True,  "recommended": True,  "recommendation_reason": "Required professional ethics course; take in U1"},
+          {"subject": "FACC", "catalog": "300", "title": "Engineering Economy",             "credits": 3,   "is_required": True,  "recommended": True,  "recommendation_reason": "Engineering economics and cost analysis; prerequisite for BREE 420"},
+          {"subject": "FACC", "catalog": "400", "title": "Engineering Professional Practice","credits": 1,   "is_required": True,  "recommended": True,  "recommendation_reason": "Professional practice and law; take in U3"},
           # --- Core engineering sciences ---
           {"subject": "BREE", "catalog": "210", "title": "Mechanical Analysis and Design",  "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Non-concurrent force systems, trusses, beams; take in U1 Fall"},
           {"subject": "BREE", "catalog": "216", "title": "Bioresource Engineering Materials","credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Materials science for biological systems; take in U1 Fall"},
@@ -461,10 +470,12 @@ AES_PROGRAMS = [
           {"subject": "BREE", "catalog": "305", "title": "Fluid Mechanics",                 "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Fluid properties and flow; prereqs BREE 210, AEMA 202; take in U2 Fall"},
           {"subject": "BREE", "catalog": "312", "title": "Electric Circuits and Machines",  "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "DC/AC circuits and motors; prereq AEMA 305; take in U2 Fall"},
           {"subject": "BREE", "catalog": "341", "title": "Mechanics of Materials",          "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Stress, strain, beam deflections; prereq BREE 210; take in U2 Winter"},
+          {"subject": "MECH", "catalog": "289", "title": "Design Graphics",                 "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Engineering drawing and CAD; take in U1 or U2"},
           {"subject": "BREE", "catalog": "415", "title": "Design of Machines and Structural Elements","credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Machine element design and FEM; prereqs BREE 210, 216, 341; take in U3 Fall"},
           {"subject": "BREE", "catalog": "420", "title": "Engineering for Sustainability",  "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Sustainability principles in engineering; prereq FACC 300; take in U3 Winter"},
           # --- Environment & biological systems ---
           {"subject": "BREE", "catalog": "327", "title": "Bio-Environmental Engineering",   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Human impact on ecosystems; biofuels, bioprocessing, waste management; U2 students and above"},
+          {"subject": "BREE", "catalog": "504", "title": "Instrumentation and Control",     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Sensors, data acquisition, and control systems; prereq B+ in BREE 252"},
           # --- Seminars (1 credit each) ---
           {"subject": "BREE", "catalog": "451", "title": "Undergraduate Seminar 1 – Oral Presentation", "credits": 1, "is_required": True,  "recommended": True,  "recommendation_reason": "Seminar series; oral presentation; take in U2"},
           {"subject": "BREE", "catalog": "452", "title": "Undergraduate Seminar 2 – Poster Presentation","credits": 1, "is_required": True,  "recommended": False, "notes": "Prereq: BREE 451"},

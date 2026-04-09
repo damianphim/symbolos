@@ -5,23 +5,26 @@ https://www.mcgill.ca/study/2024-2025/faculties/nursing/
 https://www.mcgill.ca/nursing/programs/bachelor-programs/
 
 This file covers the two undergraduate nursing programs:
-  1. Bachelor of Science (Nursing) – B.Sc.(N.)  (103 credits)
-  2. Bachelor of Nursing (Integrated) – B.N.I.   ( 65 credits, 92 total with 27 advanced standing)
+  1. Bachelor of Science (Nursing) – B.Sc.(N.)  (103 credits for CEGEP entrants;
+     136–137 credits for high-school / out-of-province entrants including U0 science year)
+  2. Bachelor of Nursing (Integrated) – B.N.I.   (65 credits at McGill; 92 total with
+     27 credits advanced standing for 180.A.0 DEC holders)
 
 Accuracy notes:
-  - The B.Sc.(N.) is a 3-year degree (103 credits) for CEGEP entrants, or 4 years
-    (136–137 credits) for high-school/out-of-province entrants who complete a U0 science year.
+  - The B.Sc.(N.) is structured as U0 (science prerequisites, non-CEGEP only),
+    U1 (36 cr), U2 (34 cr), U3 (26 cr + 5 cr complementary NUR1 530/531).
   - The B.N.I. is for holders of the 180.A.0 DEC in Nursing from a Quebec CEGEP;
     students receive 27 credits of advanced standing and complete 65 credits at McGill.
   - The B.N.I. is offered in two delivery modes: on-campus and fully online.
-  - IPEA courses (500, 501, 502, 503) are interprofessional education activities worth
-    0 credits but mandatory for graduation – they appear on the transcript as Pass/Fail.
+  - IPEA courses (500–503) are interprofessional education activities, appear on
+    transcript as Pass/Fail. In the B.Sc.(N.) all four IPEAs are taken in U1.
   - French language proficiency (B2 level) is required for full nursing licensure in Quebec.
   - Both programs are accredited by the Canadian Association of Schools of Nursing (CASN).
   - Completion of B.Sc.(N.) or B.N.I. entitles graduates to sit licensure examinations
     in Quebec (OIIQ) and across Canada.
-  - 9 elective credits required for B.Sc.(N.) U1 entrants (3 credits at 300-level or above);
-    6 elective credits for U0 high-school entrants (3 credits at 300-level or above).
+  - Electives: 9 credits for B.Sc.(N.) CEGEP entrants (min 3 cr at 300+ level);
+    6 credits for U0 high-school entrants (min 3 cr at 300+ level).
+  - Verified against eCalendar 2024-2025 (January 2026).
 
 Course prefix key:
   NUR1  Nursing (Ingram School of Nursing)
@@ -72,26 +75,23 @@ NURSING_PROGRAMS = [
         "block_key":      "bscn_u0_prerequisites",
         "title":          "U0 Science Prerequisites (for high school / out-of-province entrants only)",
         "block_type":     "required",
-        "credits_needed": 33,
+        "credits_needed": 27,
         "courses_needed": None,
         "group_name":     None,
         "notes": (
           "CEGEP entrants are exempt from U0 and begin directly in U1. "
           "High school, out-of-province, mature, and IB students typically need all of these. "
-          "All math and science courses must have been completed within the last five years."
+          "All math and science courses must have been completed within the last five years. "
+          "CHEM 110/120/212 are each 4 credits; PHYS 101/102 are each 4 credits."
         ),
         "courses": [
           {"subject": "BIOL", "catalog": "112",  "title": "Cell and Molecular Biology", "credits": 3, "is_required": True},
-          {"subject": "CHEM", "catalog": "110",  "title": "General Chemistry 1", "credits": 3, "is_required": True},
-          {"subject": "CHEM", "catalog": "120",  "title": "General Chemistry 2", "credits": 3, "is_required": True},
-          {"subject": "CHEM", "catalog": "212",  "title": "Organic Chemistry", "credits": 3, "is_required": True},
-          {"subject": "PHYS", "catalog": "101",  "title": "Introductory Physics – Mechanics", "credits": 3, "is_required": True},
-          {"subject": "PHYS", "catalog": "102",  "title": "Introductory Physics – Electromagnetism & Optics", "credits": 3, "is_required": True},
-          {"subject": "ANAT", "catalog": "261",  "title": "Introduction to Human Anatomy", "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "209",  "title": "Mammalian Physiology 1", "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "210",  "title": "Mammalian Physiology 2", "credits": 3, "is_required": True},
-          {"subject": "PSYC", "catalog": "204",  "title": "Basic Statistical Methods (or EDPE 375)", "credits": 3, "is_required": False,
-           "notes": "PSYC 204 or EDPE 375 accepted. Counts toward program electives."},
+          {"subject": "CHEM", "catalog": "110",  "title": "General Chemistry 1", "credits": 4, "is_required": True},
+          {"subject": "CHEM", "catalog": "120",  "title": "General Chemistry 2", "credits": 4, "is_required": True},
+          {"subject": "CHEM", "catalog": "212",  "title": "Introductory Organic Chemistry 1", "credits": 4, "is_required": True},
+          {"subject": "MATH", "catalog": "141",  "title": "Calculus 2", "credits": 4, "is_required": True},
+          {"subject": "PHYS", "catalog": "101",  "title": "Introductory Physics – Mechanics", "credits": 4, "is_required": True},
+          {"subject": "PHYS", "catalog": "102",  "title": "Introductory Physics – Electromagnetism & Optics", "credits": 4, "is_required": True},
         ],
       },
 
@@ -103,24 +103,28 @@ NURSING_PROGRAMS = [
         "credits_needed": 36,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Taken over Fall, Winter, and Summer terms of U1.",
+        "notes": (
+          "Taken over Fall, Winter, and Summer terms of U1. "
+          "All four IPEA courses (500–503) are completed in U1. "
+          "IPEA courses are non-credit, Pass/Fail, mandatory for graduation."
+        ),
         "courses": [
-          {"subject": "NUR1", "catalog": "200",  "title": "Introduction to the Nursing Profession", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "209",  "title": "Pathophysiology for Nursing 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "210",  "title": "Pathophysiology for Nursing 2", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "222",  "title": "Foundations of Nursing Practice", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "221",  "title": "Introduction to Professional Practice", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "224",  "title": "Individual and Family Development Across Lifespans 1", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "225",  "title": "Individual and Family Development Across Lifespans 2", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "230",  "title": "Supporting Health and Healing Capacities 1", "credits": 2, "is_required": True},
+          {"subject": "NUR1", "catalog": "230",  "title": "Supporting Health and Healing Capacities 1", "credits": 1, "is_required": True},
           {"subject": "NUR1", "catalog": "231",  "title": "Supporting Health and Healing Capacities 2", "credits": 1, "is_required": True},
-          {"subject": "NUR1", "catalog": "234",  "title": "Promoting Adult Health Development (Clinical)", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "235",  "title": "Health Assessment Across the Lifespan", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "233",  "title": "Promoting Young Family Development (Clinical)", "credits": 2, "is_required": True},
-          {"subject": "IPEA", "catalog": "500",  "title": "Interprofessional Education Activity 1 (0 credits, Pass/Fail)", "credits": 0, "is_required": True,
+          {"subject": "NUR1", "catalog": "234",  "title": "Nursing Older Adults (Clinical)", "credits": 2, "is_required": True},
+          {"subject": "NUR1", "catalog": "235",  "title": "Health and Physical Assessment/Anatomy 1", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "236",  "title": "Health and Physical Assessment/Anatomy 2", "credits": 3, "is_required": True},
+          {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits, Pass/Fail)", "credits": 0, "is_required": True,
            "notes": "Mandatory IPE workshop – non-credit, appears on transcript."},
-          {"subject": "IPEA", "catalog": "501",  "title": "Interprofessional Education Activity 2 (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
-          {"subject": "PSYC", "catalog": "204",  "title": "Basic Statistical Methods (or EDPE 375)", "credits": 3, "is_required": True,
-           "notes": "PSYC 204 or EDPE 375. Required unless exempted by prior CEGEP stats (≥75%)."},
+          {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "502",  "title": "Patient-Centred Care in Action (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "503",  "title": "Managing Interprofessional Conflict (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
         ],
       },
 
@@ -129,21 +133,23 @@ NURSING_PROGRAMS = [
         "block_key":      "bscn_u2_required",
         "title":          "Year 2 (U2) – Required Courses",
         "block_type":     "required",
-        "credits_needed": 32,
+        "credits_needed": 34,
         "courses_needed": None,
         "group_name":     None,
         "notes": "Taken over Fall and Winter terms of U2.",
         "courses": [
-          {"subject": "NUR1", "catalog": "300",  "title": "Pharmacology for Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "301",  "title": "Nursing Science and Research", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "312",  "title": "Mental Health Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "318",  "title": "Advanced Clinical Nursing: Complex Medical-Surgical", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "320",  "title": "Nursing in Community Health", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "327",  "title": "Nursing Clinical Practicum (U2)", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "329",  "title": "Integrated Seminar in Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "338",  "title": "Health and Illness Across the Lifespan: Advanced Topics", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "339",  "title": "Interprofessional Dimensions of Health Care", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "502",  "title": "Interprofessional Education Activity 3 (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
+          {"subject": "NUR1", "catalog": "300",  "title": "Pharmacology for Nursing 1", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "301",  "title": "Pharmacology for Nursing 2", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "311",  "title": "Infection Prevention and Control", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "323",  "title": "Illness Management 1", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "324",  "title": "Illness Management 2", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "325",  "title": "Acute, Chronic, and Palliative Health Challenges 1", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "326",  "title": "Acute, Chronic, and Palliative Health Challenges 2", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "329",  "title": "Skin Integrity and Wound Care", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "331",  "title": "Nursing in Illness 1 (Clinical)", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "332",  "title": "Nursing in Illness 2 (Clinical)", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "335",  "title": "Illness Management Clinical Skills Laboratory 1", "credits": 1, "is_required": True},
+          {"subject": "NUR1", "catalog": "336",  "title": "Illness Management Clinical Skills Laboratory 2", "credits": 1, "is_required": True},
         ],
       },
 
@@ -157,16 +163,28 @@ NURSING_PROGRAMS = [
         "group_name":     None,
         "notes": "Taken over Fall and Winter terms of U3. Includes capstone clinical placements.",
         "courses": [
-          {"subject": "NUR1", "catalog": "423",  "title": "Advanced Nursing Practice – Critical Care or Community", "credits": 4, "is_required": False,
-           "notes": "Students choose NUR1 423 or NUR1 424 (community or critical care consolidation)."},
-          {"subject": "NUR1", "catalog": "424",  "title": "Advanced Nursing Practice – Acute Care Consolidation", "credits": 4, "is_required": False},
-          {"subject": "NUR1", "catalog": "432",  "title": "Health Systems and Professional Practice", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "434",  "title": "Capstone Consolidation Clinical 1", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "435",  "title": "Capstone Consolidation Clinical 2", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "529",  "title": "Transition to Practice 1", "credits": 3, "is_required": True,
-           "notes": "NUR1 529 section 001 paired with NUR1 530 section 002, or vice versa."},
-          {"subject": "NUR1", "catalog": "530",  "title": "Transition to Practice 2", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "503",  "title": "Interprofessional Education Activity 4 (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
+          {"subject": "NUR1", "catalog": "333",  "title": "Nursing in Illness 3 (Clinical)", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "423",  "title": "Leading Change: Policy and Practice", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "424",  "title": "Legal, Ethical, and Professional Practice Issues", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "431",  "title": "Community Health Nursing Practicum", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "432",  "title": "Community Health Nursing Project", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "529",  "title": "Critical Care Nursing", "credits": 4, "is_required": True},
+        ],
+      },
+
+      # ── U3 Complementary ──────────────────────────────────────────────
+      {
+        "block_key":      "bscn_u3_complementary",
+        "title":          "Year 3 (U3) – Complementary Course (choose one, 5 credits)",
+        "block_type":     "choose_courses",
+        "credits_needed": 5,
+        "courses_needed": 1,
+        "group_name":     None,
+        "notes": "Choose one of NUR1 530 or NUR1 531.",
+        "courses": [
+          {"subject": "NUR1", "catalog": "530",  "title": "Nursing Practice Consolidation", "credits": 5, "is_required": False,
+           "recommended": True, "recommendation_reason": "Standard nursing practice consolidation placement."},
+          {"subject": "NUR1", "catalog": "531",  "title": "Ambassador Nursing Practice Consolidation", "credits": 5, "is_required": False},
         ],
       },
 
@@ -182,9 +200,15 @@ NURSING_PROGRAMS = [
           "9 elective credits (for CEGEP/U1 entrants), at the 200–500 level, "
           "with at least 3 credits at the 300-level or above. "
           "Students entering at U0 need only 6 elective credits. "
-          "Upper-level courses (300+) are advised for students planning graduate studies."
+          "Includes the required statistics course: PSYC 204 or EDPE 375 (3 credits)."
         ),
-        "courses": [],
+        "courses": [
+          {"subject": "PSYC", "catalog": "204",  "title": "Introduction to Psychological Statistics (or EDPE 375)", "credits": 3,
+           "is_required": False, "recommended": True,
+           "recommendation_reason": "Required statistics course; counts as one of the elective credits."},
+          {"subject": "EDPE", "catalog": "375",  "title": "Introduction to Statistics (or PSYC 204)", "credits": 3,
+           "is_required": False, "notes": "Alternative to PSYC 204 for the required stats elective."},
+        ],
       },
 
     ],
@@ -216,51 +240,60 @@ NURSING_PROGRAMS = [
     ),
     "blocks": [
 
-      # ── BNI Year 1 (U2) ───────────────────────────────────────────────
+      # ── BNI Required Courses ──────────────────────────────────────────
+      # Source: eCalendar 2024-2025, verified January 2026. 55 required credits.
       {
-        "block_key":      "bni_u2_required",
-        "title":          "BNI Year 1 (U2) – Required Courses",
+        "block_key":      "bni_required",
+        "title":          "BNI Required Courses (55 credits)",
         "block_type":     "required",
-        "credits_needed": 36,
+        "credits_needed": 55,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Delivered over Fall, Winter, and Summer terms.",
+        "notes": (
+          "All courses are required. IPEA 500–503 are 0-credit interprofessional "
+          "education activities (mandatory, Pass/Fail). PSYC 204 is the required "
+          "statistics course. Program delivered over 5 semesters (2 years). "
+          "Online students register in 020-series sections."
+        ),
         "courses": [
           {"subject": "NUR1", "catalog": "209",  "title": "Pathophysiology for Nursing 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "210",  "title": "Pathophysiology for Nursing 2", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "222",  "title": "Foundations of Nursing Practice", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "312",  "title": "Mental Health Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "318",  "title": "Advanced Clinical Nursing: Complex Medical-Surgical", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "320",  "title": "Nursing in Community Health", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "327",  "title": "Nursing Clinical Practicum", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "338",  "title": "Health and Illness Across the Lifespan: Advanced Topics", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "339",  "title": "Interprofessional Dimensions of Health Care", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "434",  "title": "Capstone Consolidation Clinical 1 (or NUR1 435 equivalent)", "credits": 4, "is_required": True},
-          {"subject": "EDPE", "catalog": "375",  "title": "Introduction to Statistics (or PSYC 204)", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "500",  "title": "Interprofessional Education Activity 1 (0 credits)", "credits": 0, "is_required": True},
-          {"subject": "IPEA", "catalog": "501",  "title": "Interprofessional Education Activity 2 (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "NUR1", "catalog": "222",  "title": "Strengths-Based Nursing and Healthcare and Professional Practice", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "300",  "title": "Pharmacology for Nursing 1", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "301",  "title": "Pharmacology for Nursing 2", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "312",  "title": "Research in Nursing", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "318",  "title": "Chronic Illness and Palliative Health Challenges", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "320",  "title": "Critical Care Nursing Theory", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "327",  "title": "Critical Health Challenges", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "329",  "title": "Skin Integrity and Wound Care", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "338",  "title": "Applied Health and Physical Assessment/Anatomy 1", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "339",  "title": "Applied Health and Physical Assessment/Anatomy 2", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "423",  "title": "Leading Change: Policy and Practice", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "424",  "title": "Legal, Ethical, and Professional Practice Issues", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "431",  "title": "Community Health Nursing Practicum", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "432",  "title": "Community Health Nursing Project", "credits": 3, "is_required": True},
+          {"subject": "PSYC", "catalog": "204",  "title": "Introduction to Psychological Statistics", "credits": 3, "is_required": True,
+           "notes": "Required statistics course."},
+          {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "502",  "title": "Patient-Centred Care in Action (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "IPEA", "catalog": "503",  "title": "Managing Interprofessional Conflict (0 credits)", "credits": 0, "is_required": True},
         ],
       },
 
-      # ── BNI Year 2 (U3) ───────────────────────────────────────────────
+      # ── BNI Complementary (choose one) ────────────────────────────────
       {
-        "block_key":      "bni_u3_required",
-        "title":          "BNI Year 2 (U3) – Required Courses",
-        "block_type":     "required",
-        "credits_needed": 23,
-        "courses_needed": None,
+        "block_key":      "bni_complementary",
+        "title":          "BNI Complementary Course (choose one, 4 credits)",
+        "block_type":     "choose_courses",
+        "credits_needed": 4,
+        "courses_needed": 1,
         "group_name":     None,
-        "notes": "Delivered over Fall and Winter terms.",
+        "notes": "Choose one of NUR1 434 or NUR1 435.",
         "courses": [
-          {"subject": "NUR1", "catalog": "300",  "title": "Pharmacology for Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "301",  "title": "Nursing Science and Research", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "329",  "title": "Integrated Seminar in Nursing", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "423",  "title": "Advanced Nursing Practice – Critical Care or Community", "credits": 4, "is_required": False,
-           "notes": "Choose NUR1 423 or NUR1 424 for consolidation clinical."},
-          {"subject": "NUR1", "catalog": "424",  "title": "Advanced Nursing Practice – Acute Care Consolidation", "credits": 4, "is_required": False},
-          {"subject": "NUR1", "catalog": "432",  "title": "Health Systems and Professional Practice", "credits": 3, "is_required": True},
-          {"subject": "IPEA", "catalog": "502",  "title": "Interprofessional Education Activity 3 (0 credits)", "credits": 0, "is_required": True},
-          {"subject": "IPEA", "catalog": "503",  "title": "Interprofessional Education Activity 4 (0 credits)", "credits": 0, "is_required": True},
+          {"subject": "NUR1", "catalog": "434",  "title": "Critical Care Nursing Practicum", "credits": 4, "is_required": False,
+           "recommended": True, "recommendation_reason": "Regularly scheduled; NUR1 435 is offered less frequently."},
+          {"subject": "NUR1", "catalog": "435",  "title": "Ambassador Critical Care Practicum", "credits": 4, "is_required": False},
         ],
       },
 

@@ -359,15 +359,20 @@ ARTS_SCIENCE_PROGRAMS = [
       },
       {
         "block_key": "cogs_ifp_research",
-        "title": "Research Course",
-        "block_type": "required",
-        "credits_needed": 6,
+        "title": "Optional Research Course",
+        "block_type": "group",
+        "credits_needed": None,
         "courses_needed": None,
         "group_name": None,
-        "notes": None,
+        "notes": (
+          "COGS 401 Research Cognitive Science 1 (6 credits) is an optional supervised research "
+          "project for Interfaculty Program students (prerequisites: 30 credits of COGS program "
+          "coursework, Program Director approval, CGPA > 3.00). It counts toward the 30 "
+          "complementary credits if taken. COGS 444 is the required research course for Honours only."
+        ),
         "sort_order": 14,
         "courses": [
-          {"subject": "COGS", "catalog": "401", "title": "Research Cognitive Science 1", "credits": 6, "is_required": True},
+          {"subject": "COGS", "catalog": "401", "title": "Research Cognitive Science 1", "credits": 6, "is_required": False},
         ],
       },
     ],
@@ -830,12 +835,12 @@ ARTS_SCIENCE_PROGRAMS = [
     "blocks": [
       {
         "block_key": "env_core",
-        "title": "Core Courses (21 credits)",
+        "title": "Core Courses (18 credits)",
         "block_type": "required",
-        "credits_needed": 21,
+        "credits_needed": 18,
         "courses_needed": None,
         "group_name": None,
-        "notes": "All 7 core ENVR courses are required.",
+        "notes": "All 6 core ENVR courses are required.",
         "sort_order": 1,
         "courses": [
           {"subject": "ENVR", "catalog": "200", "title": "The Global Environment", "credits": 3, "is_required": True},
@@ -844,7 +849,23 @@ ARTS_SCIENCE_PROGRAMS = [
           {"subject": "ENVR", "catalog": "203", "title": "Knowledge, Ethics and Environment", "credits": 3, "is_required": True},
           {"subject": "ENVR", "catalog": "301", "title": "Environmental Research Design", "credits": 3, "is_required": True},
           {"subject": "ENVR", "catalog": "400", "title": "Environmental Thought", "credits": 3, "is_required": True},
-          {"subject": "ENVR", "catalog": "401", "title": "Environmental Research", "credits": 3, "is_required": True},
+        ],
+      },
+      {
+        "block_key": "env_research",
+        "title": "Senior Research Project (3 credits)",
+        "block_type": "choose_courses",
+        "credits_needed": 3,
+        "courses_needed": 1,
+        "group_name": None,
+        "notes": "Choose one senior research project (3 credits). Extra credits from 6-credit options count as electives.",
+        "sort_order": 2,
+        "courses": [
+          {"subject": "AEBI", "catalog": "427", "title": "Barbados Interdisciplinary Project", "credits": 6, "is_required": False},
+          {"subject": "ENVR", "catalog": "401", "title": "Environmental Research", "credits": 3, "is_required": False},
+          {"subject": "ENVR", "catalog": "451", "title": "Research in Panama", "credits": 6, "is_required": False},
+          {"subject": "FSCI", "catalog": "444", "title": "Barbados Research Project", "credits": 6, "is_required": False},
+          {"subject": "GEOG", "catalog": "451", "title": "Research in Society and Development in Africa", "credits": 3, "is_required": False},
         ],
       },
       {
@@ -855,7 +876,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": 1,
         "group_name": None,
         "notes": "Choose one statistics course. Only 3 credits will be applied to the program.",
-        "sort_order": 2,
+        "sort_order": 3,
         "courses": [
           {"subject": "AEMA", "catalog": "310", "title": "Statistical Methods 1", "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "202", "title": "Statistics and Spatial Analysis", "credits": 3, "is_required": False},
@@ -875,7 +896,7 @@ ARTS_SCIENCE_PROGRAMS = [
           "(from any area list or approved by Program Adviser). "
           "May take BIOL 308 or ENVB 305, not both."
         ),
-        "sort_order": 3,
+        "sort_order": 4,
         "courses": [
           {"subject": "BIOL", "catalog": "308", "title": "Ecological Dynamics", "credits": 3, "is_required": False, "notes": "Or ENVB 305, not both."},
           {"subject": "BIOL", "catalog": "342", "title": "Global Change Biology of Aquatic Ecosystems", "credits": 3, "is_required": False},
@@ -895,7 +916,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 2 – Earth & Atmospheric Science",
         "notes": "Note: may take only one of GEOG 322, BREE 217, or CIVE 323 (Hydrology options).",
-        "sort_order": 4,
+        "sort_order": 5,
         "courses": [
           {"subject": "ATOC", "catalog": "214", "title": "Introduction: Physics of the Atmosphere", "credits": 3, "is_required": False},
           {"subject": "ATOC", "catalog": "215", "title": "Oceans, Weather and Climate", "credits": 3, "is_required": False},
@@ -922,7 +943,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 3 – Environmental Geography & Remote Sensing",
         "notes": None,
-        "sort_order": 5,
+        "sort_order": 6,
         "courses": [
           {"subject": "GEOG", "catalog": "201", "title": "Introductory Geo-Information Science", "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "302", "title": "Environmental Management 1", "credits": 3, "is_required": False},
@@ -944,7 +965,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 4 – Resource & Environmental Economics",
         "notes": "May take AGEC 200 or ECON 208 (microeconomics), not both.",
-        "sort_order": 6,
+        "sort_order": 7,
         "courses": [
           {"subject": "AGEC", "catalog": "200", "title": "Principles of Microeconomics", "credits": 3, "is_required": False, "notes": "Or ECON 208, not both."},
           {"subject": "ECON", "catalog": "208", "title": "Microeconomic Analysis and Applications", "credits": 3, "is_required": False, "notes": "Or AGEC 200, not both."},
@@ -963,7 +984,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 5 – Environmental Policy & Law",
         "notes": None,
-        "sort_order": 7,
+        "sort_order": 8,
         "courses": [
           {"subject": "GEOG", "catalog": "316", "title": "Political Geography", "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "408", "title": "Geography of Development", "credits": 3, "is_required": False},
@@ -980,7 +1001,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 6 – Environment and Society",
         "notes": None,
-        "sort_order": 8,
+        "sort_order": 9,
         "courses": [
           {"subject": "ANTH", "catalog": "206", "title": "Environment and Culture", "credits": 3, "is_required": False},
           {"subject": "ANTH", "catalog": "339", "title": "Ecological Anthropology", "credits": 3, "is_required": False},
@@ -1001,7 +1022,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 7 – Environment and Health",
         "notes": None,
-        "sort_order": 9,
+        "sort_order": 10,
         "courses": [
           {"subject": "BIOL", "catalog": "465", "title": "Conservation Biology", "credits": 3, "is_required": False},
           {"subject": "BIOL", "catalog": "310", "title": "Biodiversity and Ecosystems", "credits": 3, "is_required": False},
@@ -1018,7 +1039,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 8 – Development & Underdevelopment",
         "notes": None,
-        "sort_order": 10,
+        "sort_order": 11,
         "courses": [
           {"subject": "AGRI", "catalog": "411", "title": "Global Issues on Development, Food and Agriculture", "credits": 3, "is_required": False},
           {"subject": "ANTH", "catalog": "212", "title": "Anthropology of Development", "credits": 3, "is_required": False},
@@ -1041,7 +1062,7 @@ ARTS_SCIENCE_PROGRAMS = [
         "courses_needed": None,
         "group_name": "Area 9 – Cultures & Peoples",
         "notes": None,
-        "sort_order": 11,
+        "sort_order": 12,
         "courses": [
           {"subject": "ANTH", "catalog": "206", "title": "Environment and Culture", "credits": 3, "is_required": False},
           {"subject": "ANTH", "catalog": "339", "title": "Ecological Anthropology", "credits": 3, "is_required": False},

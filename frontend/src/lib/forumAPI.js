@@ -33,11 +33,11 @@ const forumAPI = {
     return res.json()   // { posts: [], total: N }
   },
 
-  async createPost({ author, avatar_color, category, title, body, tags }) {
+  async createPost({ author, avatar_color, category, title, body, tags, program_info }) {
     const res = await fetch(`${BASE_URL}/api/forum/posts`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ author, avatar_color, category, title, body, tags }),
+      body: JSON.stringify({ author, avatar_color, category, title, body, tags, program_info }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
@@ -65,11 +65,11 @@ const forumAPI = {
     return res.json()   // { replies: [...] }
   },
 
-  async createReply(postId, { author, avatar_color, body }) {
+  async createReply(postId, { author, avatar_color, body, program_info }) {
     const res = await fetch(`${BASE_URL}/api/forum/posts/${postId}/replies`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ author, avatar_color, body }),
+      body: JSON.stringify({ author, avatar_color, body, program_info }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
