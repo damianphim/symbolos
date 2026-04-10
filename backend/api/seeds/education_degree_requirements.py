@@ -600,19 +600,19 @@ EDUCATION_PROGRAMS = [
         "courses_needed": None,
         "group_name": None,
         "notes": (
-          "9 credits required from HIST 202, 203, or 303 (survey History of Canada/Quebec courses). "
+          "9 credits required from HIST 202, 203, and 303 (survey History of Canada/Quebec courses). "
           "24 additional complementary History credits: min 9 at 300/400 level; "
           "3–9 cr European history, 3–9 cr Asian/African/American history, 6 cr thematic history; "
           "6–12 cr interdisciplinary (min 3 from ECON, min 3 from POLI)."
         ),
         "sort_order": 4,
         "courses": [
-          {"subject": "HIST", "catalog": "202", "title": "History of Canada",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core required content for the Quebec History & Citizenship curriculum."},
-          {"subject": "HIST", "catalog": "219", "title": "History of Quebec",                              "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Essential for teaching Quebec history and citizenship."},
+          {"subject": "HIST", "catalog": "202", "title": "Survey: Canada to 1867",                         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core required content for the Quebec History & Citizenship curriculum."},
+          {"subject": "HIST", "catalog": "203", "title": "Survey: Canada since 1867",                      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required survey of Canadian history since Confederation; essential for Quebec History & Citizenship curriculum."},
+          {"subject": "HIST", "catalog": "303", "title": "History of Quebec",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential for teaching Quebec history and citizenship."},
           {"subject": "HIST", "catalog": "217", "title": "The World at War, 1914–1945",                    "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "218", "title": "History of the Contemporary World since 1945",   "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "340", "title": "Indigenous Peoples of Canada",                   "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Increasingly important component of the History & Citizenship curriculum."},
-          {"subject": "HIST", "catalog": "303", "title": "Europe: Renaissance to Revolution",              "credits": 3, "is_required": False},
           {"subject": "HIST", "catalog": "304", "title": "Europe in the Modern World",                     "credits": 3, "is_required": False},
         ],
       },
@@ -623,15 +623,16 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 18,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Geography courses required for teaching the Geography strand.",
+        "notes": "18 credits of Geography courses chosen in consultation with Program Adviser from courses that comprise the B.A. Minor Concentration in Geography.",
         "sort_order": 5,
         "courses": [
-          {"subject": "GEOG", "catalog": "201", "title": "Human Environment",                              "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "GEOG", "catalog": "203", "title": "Introduction to Physical Geography",             "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "GEOG", "catalog": "210", "title": "World Regions",                                  "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "GEOG", "catalog": "316", "title": "Urban and Regional Geography",                   "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "GEOG", "catalog": "350", "title": "Environmental Problems",                         "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "GEOG", "catalog": "415", "title": "Political Geography",                            "credits": 3, "is_required": False},
+          {"subject": "GEOG", "catalog": "205", "title": "Global Change: Past, Present and Future",        "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "GEOG", "catalog": "216", "title": "Geography of the World Economy",                 "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "GEOG", "catalog": "217", "title": "Cities in the Modern World",                     "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "GEOG", "catalog": "272", "title": "Earth's Changing Surface",                       "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "GEOG", "catalog": "311", "title": "Economic Geography",                             "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "GEOG", "catalog": "331", "title": "Urban Social Geography",                         "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "ENVR", "catalog": "202", "title": "The Evolving Earth",                             "credits": 3, "is_required": False},
         ],
       },
       {
@@ -661,8 +662,8 @@ EDUCATION_PROGRAMS = [
     "total_credits": 120,
     "description": (
       "Prepares teachers to deliver History & Citizenship and Culture & Citizenship in Quebec courses "
-      "in Quebec secondary schools. Combines History courses with Ethics, Religious Studies, and "
-      "Cultural Studies to cover both curriculum strands."
+      "in Quebec secondary schools. Combines History courses with Canadian Studies, Quebec Studies, "
+      "and Education courses to cover both curriculum strands (120 total)."
     ),
     "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/education/undergraduate/programs/bachelor-education-bed-secondary-social-sciences-history-and-citizenship-culture-and-citizenship",
     "blocks": [
@@ -724,37 +725,48 @@ EDUCATION_PROGRAMS = [
       },
       {
         "block_key": "bed_ssoc_cq_teachable_history",
-        "title": "Teachable – History (18 credits)",
+        "title": "Teachable – History (24 credits: 9 required + 15 complementary)",
         "block_type": "required",
-        "credits_needed": 18,
+        "credits_needed": 24,
         "courses_needed": None,
         "group_name": None,
-        "notes": "History courses for the History & Citizenship curriculum strand.",
+        "notes": (
+          "9 credits required from HIST 202, 203, and 303. "
+          "15 additional complementary History credits at 200–400 level, min 9 at 300/400 level."
+        ),
         "sort_order": 4,
         "courses": [
-          {"subject": "HIST", "catalog": "202", "title": "History of Canada",                              "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "HIST", "catalog": "219", "title": "History of Quebec",                              "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "HIST", "catalog": "202", "title": "Survey: Canada to 1867",                         "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "HIST", "catalog": "203", "title": "Survey: Canada since 1867",                      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required survey of Canadian history since Confederation."},
+          {"subject": "HIST", "catalog": "303", "title": "History of Quebec",                              "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for teaching Quebec history and citizenship."},
           {"subject": "HIST", "catalog": "217", "title": "The World at War, 1914–1945",                    "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "218", "title": "History of the Contemporary World since 1945",   "credits": 3, "is_required": False, "recommended": True},
           {"subject": "HIST", "catalog": "340", "title": "Indigenous Peoples of Canada",                   "credits": 3, "is_required": False, "recommended": True},
         ],
       },
       {
-        "block_key": "bed_ssoc_cq_teachable_relg",
-        "title": "Teachable – Ethics, Religion & Cultural Studies (18 credits)",
-        "block_type": "required",
-        "credits_needed": 18,
+        "block_key": "bed_ssoc_cq_teachable_culture",
+        "title": "Teachable – Culture & Citizenship in Quebec (up to 9 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 9,
         "courses_needed": None,
         "group_name": None,
-        "notes": "Ethics, Religious Studies, and Cultural Studies courses for the Culture & Citizenship in QC strand.",
+        "notes": (
+          "Up to 9 credits from Culture and Citizenship course lists (no more than 3 credits from each subsection). "
+          "Culture subsection (up to 6 cr): CANS 413, CANS 415, QCST 200, QCST 300, QCST 440. "
+          "Citizenship subsection (up to 6 cr): CANS 413, EDEC 374, EDER 252, EDER 536, ENVR 201."
+        ),
         "sort_order": 5,
         "courses": [
-          {"subject": "RELG", "catalog": "203", "title": "Introduction to World Religions",                "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Essential background for the Culture & Citizenship in Quebec curriculum."},
-          {"subject": "RELG", "catalog": "204", "title": "Judaism, Christianity and Islam",                "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "RELG", "catalog": "207", "title": "Introduction to the Study of Religions",         "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "PHIL", "catalog": "210", "title": "Ethics and Politics",                            "credits": 3, "is_required": False, "recommended": True},
-          {"subject": "PHIL", "catalog": "242", "title": "Ethics",                                         "credits": 3, "is_required": False},
-          {"subject": "ANTH", "catalog": "203", "title": "Anthropology of Culture",                        "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "CANS", "catalog": "413", "title": "Canada and Quebec Seminar",                      "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Counts in both Culture and Citizenship subsections; highly relevant to teaching Quebec identity."},
+          {"subject": "CANS", "catalog": "415", "title": "Black Canada",                                   "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "QCST", "catalog": "200", "title": "Introduction to the Study of Quebec",            "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Core Quebec Studies course; essential background for the Culture & Citizenship in QC curriculum."},
+          {"subject": "QCST", "catalog": "300", "title": "Quebec Culture and Society",                     "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "QCST", "catalog": "440", "title": "Contemporary Issues in Quebec",                  "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "EDEC", "catalog": "374", "title": "Education and the Environment",                  "credits": 3, "is_required": False},
+          {"subject": "EDER", "catalog": "252", "title": "Understanding and Teaching Jewish Life",          "credits": 3, "is_required": False},
+          {"subject": "EDER", "catalog": "536", "title": "Critical and Ethical Dimensions of Sexualities Education", "credits": 3, "is_required": False},
+          {"subject": "ENVR", "catalog": "201", "title": "Society, Environment and Sustainability",        "credits": 3, "is_required": False},
         ],
       },
       {
@@ -1037,21 +1049,35 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 42,
         "courses_needed": None,
         "group_name": None,
-        "notes": "EDKP and anatomy courses specific to Physical and Health Education teacher preparation.",
+        "notes": "EDKP content and methods courses specific to Physical and Health Education teacher preparation.",
         "sort_order": 3,
         "courses": [
-          {"subject": "ANAT", "catalog": "315", "title": "Clinical Human Musculoskeletal Anatomy",         "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDKP", "catalog": "250", "title": "Introductory Principles in Applied Kinesiology", "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core kinesiology foundations course required for all P.E. teachers."},
-          {"subject": "EDKP", "catalog": "280", "title": "Motor Development",                              "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "293", "title": "Introduction to Teaching Physical Education",    "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDKP", "catalog": "308", "title": "Physical Education Curriculum",                  "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "320", "title": "Nutrition and Physical Activity",                "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Nutrition is part of the Health Education strand in Quebec."},
-          {"subject": "EDKP", "catalog": "360", "title": "Teaching Team Sports",                           "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "365", "title": "Teaching Individual Activities",                 "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "370", "title": "Teaching Gymnastics and Movement Arts",          "credits": 3, "is_required": True},
-          {"subject": "EDKP", "catalog": "395", "title": "Exercise Physiology",                            "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDKP", "catalog": "460", "title": "Adapted Physical Education",                     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for Quebec P.E. teachers; covers inclusive sport for students with disabilities."},
-          {"subject": "EDKP", "catalog": "206", "title": "Biomechanics of Human Movement",                "credits": 3, "is_required": False, "recommended": True},
+          {"subject": "EDKP", "catalog": "100", "title": "Introduction to Physical and Health Education in Quebec", "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Foundational overview of PHE teaching in Quebec; taken in U1."},
+          {"subject": "EDKP", "catalog": "204", "title": "Health Education",                               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Health Education is a core strand of the Quebec PHE curriculum."},
+          {"subject": "EDKP", "catalog": "208", "title": "Biomechanics and Motor Learning",                "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "213", "title": "Aquatics",                                       "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "215", "title": "Standard First Aid/Cardio-Pulmonary Resuscitation Level C", "credits": 0, "is_required": True},
+          {"subject": "EDKP", "catalog": "217", "title": "Track and Field",                                "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "223", "title": "Games 1: Elementary Physical Education",         "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "225", "title": "Games 2: Secondary Physical Education",          "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "232", "title": "Health-Related Fitness",                         "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "235", "title": "Non-Traditional Physical Activities",            "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "237", "title": "Outdoor Education",                              "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "253", "title": "Movement Education",                             "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "261", "title": "Motor Development",                              "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "292", "title": "Nutrition and Wellness",                         "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Nutrition and wellness is part of the Health Education strand in Quebec."},
+          {"subject": "EDKP", "catalog": "293", "title": "Anatomy and Physiology",                         "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "307", "title": "Evaluation in Physical Education",               "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "330", "title": "Physical Activity and Public Health",            "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "342", "title": "Physical Education Methods",                     "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Core methods course for PHE teacher preparation."},
+          {"subject": "EDKP", "catalog": "391", "title": "Physiology in Sport and Exercise",               "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "394", "title": "Historical Perspectives",                        "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "396", "title": "Adapted Physical Activity",                      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for Quebec P.E. teachers; covers inclusive physical activity for students with disabilities."},
+          {"subject": "EDKP", "catalog": "442", "title": "Physical Education Pedagogy",                    "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "443", "title": "Research Methods",                               "credits": 3, "is_required": True},
+          {"subject": "EDKP", "catalog": "448", "title": "Exercise and Health Psychology",                 "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDKP", "catalog": "494", "title": "Physical Education Curriculum Development",      "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Curriculum development course directly relevant to Quebec PHE program planning."},
+          {"subject": "EDKP", "catalog": "498", "title": "Sport Psychology",                               "credits": 3, "is_required": True,  "recommended": True},
         ],
       },
       {
