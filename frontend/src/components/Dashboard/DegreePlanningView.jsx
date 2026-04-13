@@ -7,6 +7,7 @@ import {
   FaExclamationTriangle,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { supabase } from '../../lib/supabase'
 import DegreeProgressTracker from './DegreeProgressTracker'
 import DegreeRequirementsView from './DegreeRequirementsView'
@@ -272,6 +273,7 @@ function CourseRow({ course, onClick, actions }) {
 // ── Electives Panel ────────────────────────────────────────────────────────────
 function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData, allProgramData, courseAllocations, assignCourse }) {
   const { t } = useLanguage()
+  const { openCourse } = useCourseDetail()
   const [recs, setRecs]           = useState(null)
   const [recsLoading, setRecsLoading] = useState(false)
   const [recsError, setRecsError] = useState(null)
@@ -499,7 +501,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
                 )
                 const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
                 return (
-                  <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`}>
+                  <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`} onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
                     <div className="dp-elective-top">
                       <span className="dp-elective-code">{c.subject} {c.catalog}</span>
                       <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>
@@ -553,7 +555,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
           {electiveCourses.map((c, i) => {
             const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
             return (
-              <div key={i} className="dp-elective-card dp-elective-card--taken">
+              <div key={i} className="dp-elective-card dp-elective-card--taken" onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
                 <div className="dp-elective-top">
                   <span className="dp-elective-code">{c.subject} {c.catalog}</span>
                   <span
@@ -594,6 +596,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
 // ── My Program Requirements card ──────────────────────────────────────────────
 function ProgramSection({ prog, completedCourses, currentCourses, advStanding, openBlocks, setOpenBlocks, courseAllocations = {}, assignCourse, overlapKeys = new Set(), allProgramData = [] }) {
   const { t } = useLanguage()
+  const { openCourse } = useCourseDetail()
   if (!prog) return null
 
   const progKey = prog.program_key
@@ -684,8 +687,26 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
             creditsEarned += parseFloat(uc.credits || 3)
           }
         }
-        const blockMatched = exactMatched
-        const blockDone = creditsNeeded > 0 && creditsEarned >= creditsNeeded
+        const blockDone     = creditsNeeded > 0 && creditsEarned >= creditsNeeded
+        const hasProgress   = creditsEarned > 0
+
+        // Pill label when not done
+        const reqCourses = blockCourses.filter(c => c.is_required)
+        let pillText
+        if (reqCourses.length > 0) {
+          const doneReq = reqCourses.filter(c => {
+            const k = `${c.subject} ${c.catalog}`.toUpperCase()
+            return matchTransfer(c, advStanding) ||
+              completedCourses.some(u => `${u.subject} ${u.catalog}`.toUpperCase() === k) ||
+              currentCourses.some(u => `${u.subject} ${u.catalog}`.toUpperCase() === k)
+          })
+          pillText = `${reqCourses.length - doneReq.length} left`
+        } else {
+          const crLeft = Math.max(0, creditsNeeded - creditsEarned)
+          pillText = `${Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1)}cr left`
+        }
+
+        const pillMod = blockDone ? 'dp-req-pill--done' : hasProgress ? 'dp-req-pill--partial' : 'dp-req-pill--none'
 
         return (
           <div key={block.id} className={`dp-req-block ${blockDone ? 'dp-req-block--done' : ''}`}>
@@ -699,8 +720,8 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                 {block.credits_needed && <span className="dp-req-block-cr">{block.credits_needed}cr</span>}
               </div>
               <div className="dp-req-block-right">
-                <span className={`dp-req-pill ${blockDone ? 'dp-req-pill--done' : ''}`}>
-                  {blockDone ? '✓ Done' : `${creditsEarned}/${creditsNeeded}cr`}
+                <span className={`dp-req-pill ${pillMod}`}>
+                  {blockDone ? <FaCheckCircle /> : pillText}
                 </span>
               </div>
             </button>
@@ -728,7 +749,11 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                           : <FaCircle className="dp-req-course-icon dp-req-course-icon--empty" />
                       }
                       <div className="dp-req-course-main">
-                        <div className="dp-req-course-row">
+                        <div
+                          className="dp-req-course-row"
+                          onClick={() => c.subject && c.catalog && openCourse(c.subject, c.catalog)}
+                          style={c.subject && c.catalog ? { cursor: 'pointer' } : undefined}
+                        >
                           <span className="dp-req-course-code">{c.subject} {c.catalog || '•••'}</span>
                           <span className="dp-req-course-title">{c.title}</span>
                           {done && isTransfer  && <span className="dp-req-transfer-tag">{t('dp.statusTransfer')} · {t('dp.transferExempt')}</span>}

@@ -1478,3 +1478,36 @@
     padding: 0.4rem 0.65rem;
   }
 }
+
+/* ── Join required disclaimer + error ── */
+.clubs-join-required-note {
+  font-size: 12.5px;
+  color: var(--warning-text, #92400e);
+  background: var(--warning-light, #fef9c3);
+  border-left: 3px solid var(--warning-primary, #f59e0b);
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .clubs-join-required-note {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fde68a;
+}
+
+.clubs-edit-error {
+  font-size: 12.5px;
+  color: var(--error-text, #dc2626);
+  background: var(--error-light, #fee2e2);
+  border-left: 3px solid var(--error-primary, #dc2626);
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .clubs-edit-error {
+  background: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
+}

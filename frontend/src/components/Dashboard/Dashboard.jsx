@@ -24,6 +24,8 @@ import clubsAPI from '../../lib/clubsAPI'
 import TranscriptUpload from './TranscriptUpload'
 
 import OnboardingTutorial from './OnboardingTutorial'
+import { CourseDetailProvider } from '../../contexts/CourseDetailContext'
+import CourseDetailModal from '../shared/CourseDetailModal'
 import './Dashboard.css'
 
 export default function Dashboard() {
@@ -736,6 +738,7 @@ export default function Dashboard() {
 
   // ── Render ─────────────────────────────────────────────
   return (
+    <CourseDetailProvider>
     <div className="dashboard">
       <Sidebar
         sidebarOpen={sidebarOpen}
@@ -849,16 +852,7 @@ export default function Dashboard() {
               onToggleCurrent={handleToggleCurrent}
               onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
               onImportSyllabus={() => { setTranscriptUploadTab('syllabus'); setShowTranscriptUpload(true) }}
-              onCourseClick={async (course) => {
-                setActiveTab('courses')
-                setTimeout(async () => {
-                  await handleCourseClick({
-                    subject: course.subject,
-                    catalog: course.catalog,
-                    title: course.course_title,
-                  })
-                }, 100)
-              }}
+              onCourseClick={undefined}
             />
           )}
 
@@ -930,5 +924,15 @@ export default function Dashboard() {
         />
       )}
     </div>
+
+    <CourseDetailModal
+      isFavorited={isFavorited}
+      isCompleted={isCompleted}
+      isCurrent={isCurrent}
+      onToggleFavorite={handleToggleFavorite}
+      onToggleCompleted={handleToggleCompleted}
+      onToggleCurrent={handleToggleCurrent}
+    />
+    </CourseDetailProvider>
   )
 }

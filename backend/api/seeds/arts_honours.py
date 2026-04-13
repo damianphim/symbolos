@@ -831,9 +831,10 @@ ARTS_HONOURS = [
           {"subject":"HIST","catalog":"209","title":"Introduction to South Asian History","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"309","title":"History of Latin America to 1825","credits":3,"is_required":False},
           # Political Science
-          {"subject":"POLI","catalog":"318","title":"International Organizations","credits":3,"is_required":False},
-          {"subject":"POLI","catalog":"340","title":"Human Rights","credits":3,"is_required":False,"recommended":True},
-          {"subject":"POLI","catalog":"347","title":"Politics of the Developing World","credits":3,"is_required":False},
+          {"subject":"POLI","catalog":"318","title":"Comparative Local Government","credits":3,"is_required":False},
+          {"subject":"POLI","catalog":"340","title":"Comparative Politics of the Middle East","credits":3,"is_required":False,"recommended":True},
+          {"subject":"POLI","catalog":"345","title":"International Organizations","credits":3,"is_required":False,"recommended":True},
+          {"subject":"POLI","catalog":"347","title":"Arab-Israel Conflict, Crisis, Peace","credits":3,"is_required":False},
           {"subject":"POLI","catalog":"418","title":"Global Environment and World Politics","credits":3,"is_required":False},
           # Sociology
           {"subject":"SOCI","catalog":"335","title":"Environmental Sociology","credits":3,"is_required":False},

@@ -1174,7 +1174,6 @@ async def admin_review_submission(submission_id: str, req: Request):
                 "is_verified": True,
                 "created_by": submission.get("submitted_by"),
                 "executive_emails": submission.get("executive_emails"),
-                "member_count": 1,
             }).execute()
             new_club = club_result.data[0] if club_result.data else None
             if new_club and submission.get("submitted_by"):
@@ -1283,7 +1282,6 @@ async def admin_email_action(token: str):
                     "role": "owner",
                     "calendar_synced": True,
                 }).execute()
-                supabase.table("clubs").update({"member_count": 1}).eq("id", new_club["id"]).execute()
                 logger.info(f"Owner auto-added as member for club: {submission['name']}")
 
         # Update status only after successful club creation

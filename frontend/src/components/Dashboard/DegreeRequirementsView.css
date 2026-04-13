@@ -354,12 +354,19 @@
 /* ─── Progress bar ─────────────────────────────────────────── */
 .drv-progress-wrap {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 16px;
 }
 
-.drv-progress-bar {
+.drv-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drv-progress-bar,
+.drv-progress-track {
   flex: 1;
   height: 7px;
   background: var(--border-primary);
@@ -378,6 +385,22 @@
   font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.drv-transfer-note {
+  font-size: 12px;
+  color: var(--warning-text);
+  background: var(--warning-light);
+  border-left: 3px solid var(--warning-primary);
+  padding: 6px 10px;
+  border-radius: 0 6px 6px 0;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .drv-transfer-note {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fde68a;
 }
 
 /* ─── Recommended toggle ──────────────────────────────────── */
@@ -444,6 +467,34 @@
   border-radius: 12px;
   background: var(--bg-tertiary);
   color: var(--text-muted);
+}
+
+.drv-block-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.drv-block-pill--done {
+  background: var(--success-light, #dcfce7);
+  color: var(--success-text, #15803d);
+  font-size: 13px;
+  padding: 3px 7px;
+}
+
+.drv-block-pill--partial {
+  background: var(--warning-light, #fef9c3);
+  color: var(--warning-text, #92400e);
+}
+
+.drv-block-pill--none {
+  background: var(--bg-tertiary, #e5e7eb);
+  color: var(--text-muted, #9ca3af);
 }
 
 .drv-block-progress {
@@ -713,28 +764,57 @@
 }
 /* ─── Foundation Year Waived Banner ───────────────────────── */
 .drv-foundation-waived-banner {
-  background: #e8f5e9;
-  border: 1px solid #a5d6a7;
+  background: var(--accent-lighter);
+  border: 1px solid var(--accent-light);
+  border-left: 3px solid var(--accent-primary);
   border-radius: 8px;
-  padding: 10px 14px;
+  padding: 10px 12px 10px 14px;
   margin: 0 0 12px 0;
   font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #2e7d32;
+  gap: 10px;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .drv-foundation-waived-banner {
-  background: #1b5e20;
-  border-color: #2e7d32;
-  color: #ffffff;
+  background: rgba(var(--accent-rgb, 220, 38, 38), 0.08);
+  border-color: rgba(var(--accent-rgb, 220, 38, 38), 0.25);
+  border-left-color: var(--accent-primary);
 }
 
-.drv-foundation-waived-banner strong {
-  color: inherit;
+.drv-foundation-icon {
+  color: var(--accent-primary);
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
-[data-theme="dark"] .drv-foundation-waived-banner strong {
-  color: #e8f5e9;
+.drv-foundation-text {
+  flex: 1;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.drv-foundation-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.drv-foundation-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.drv-foundation-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
 }

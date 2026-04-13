@@ -287,36 +287,26 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
                 >
                   {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
                 </button>
-                {/* Join button — application_url → join_instructions (scroll) → website_url */}
+                {/* Join button — application_url first, then join_instructions */}
                 {display.application_url ? (
-              <a
-                href={display.application_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="club-action-btn club-action-btn--join"
-                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                {t('clubs.joinClub')}
-              </a>
-            ) : display.join_instructions ? (
-              <button
-                className="club-action-btn club-action-btn--join"
-                onClick={() => instructionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
-              >
-                {t('clubs.joinClub')}
-              </button>
-            ) : display.website_url ? (
-              <a
-                href={display.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="club-action-btn club-action-btn--join"
-                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                {t('clubs.joinClub')}
-              </a>
+                  <a
+                    href={display.application_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="club-action-btn club-action-btn--join"
+                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    {t('clubs.joinClub')}
+                  </a>
+                ) : display.join_instructions ? (
+                  <button
+                    className="club-action-btn club-action-btn--join"
+                    onClick={() => instructionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+                  >
+                    {t('clubs.joinClub')}
+                  </button>
                 ) : (
-                  <button className="club-action-btn club-action-btn--join" disabled title={t('clubs.noWebsite')}>
+                  <button className="club-action-btn club-action-btn--join" disabled title={t('clubs.noJoinInfo')}>
                     {t('clubs.joinClub')}
                   </button>
                 )}
@@ -537,19 +527,8 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
               >
                 {t('clubs.joinClub')}
               </button>
-            ) : club.website_url ? (
-              <a
-                href={club.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="club-join-btn"
-                onClick={e => e.stopPropagation()}
-                style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-              >
-                {t('clubs.joinClub')}
-              </a>
             ) : (
-              <button className="club-join-btn" onClick={e => e.stopPropagation()} disabled style={{ flex: 1, opacity: 0.5 }}>
+              <button className="club-join-btn" onClick={e => e.stopPropagation()} disabled style={{ flex: 1, opacity: 0.5 }} title={t('clubs.noJoinInfo')}>
                 {t('clubs.joinClub')}
               </button>
             )}
@@ -759,6 +738,7 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
   })
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editSuccess, setEditSuccess] = useState(false)
+  const [editError, setEditError] = useState('')
   const meta = getCat(club?.category)
 
   useEffect(() => {
@@ -798,13 +778,19 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault()
+    if (!editForm.application_url?.trim() && !editForm.join_instructions?.trim()) {
+      setEditError(t('clubs.joinRequiredError') || 'Please fill in either the Application URL or How to Join instructions.')
+      return
+    }
+    setEditError('')
     setEditSubmitting(true)
     try {
       await onSave(club.id, editForm)
       setEditSuccess(true)
       setTimeout(() => setEditSuccess(false), 3000)
-    } catch {}
-    finally { setEditSubmitting(false) }
+    } catch (err) {
+      setEditError(err?.message || 'Failed to save changes.')
+    } finally { setEditSubmitting(false) }
   }
 
   const handleCreateAnnouncement = async (e) => {
@@ -963,16 +949,20 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
                 <label>{t('clubs.fieldUrl')}</label>
                 <input value={editForm.website_url} onChange={e => setEditForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://..." />
               </div>
+              <div className="clubs-join-required-note">
+                <strong>⚠ Required:</strong> Fill in at least one of the two fields below. When a student clicks "Join Club", they'll be sent to the Application URL first, or shown the How to Join instructions if no URL is set.
+              </div>
               <div className="clubs-field">
                 <label>{t('clubs.fieldApplicationUrl')}</label>
-                <input value={editForm.application_url} onChange={e => setEditForm(f => ({ ...f, application_url: e.target.value }))} placeholder="https://..." />
+                <input value={editForm.application_url} onChange={e => { setEditForm(f => ({ ...f, application_url: e.target.value })); setEditError('') }} placeholder="https://..." />
                 <span className="clubs-field-hint">{t('clubs.fieldApplicationUrlHint')}</span>
               </div>
               <div className="clubs-field">
                 <label>{t('clubs.fieldJoinInstructions')}</label>
-                <textarea value={editForm.join_instructions} onChange={e => setEditForm(f => ({ ...f, join_instructions: e.target.value }))} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
+                <textarea value={editForm.join_instructions} onChange={e => { setEditForm(f => ({ ...f, join_instructions: e.target.value })); setEditError('') }} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
                 <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
               </div>
+              {editError && <div className="clubs-edit-error">{editError}</div>}
               <div className="clubs-field">
                 <label>{t('clubs.fieldExecutiveEmails')}</label>
                 <input value={editForm.executive_emails} onChange={e => setEditForm(f => ({ ...f, executive_emails: e.target.value }))} placeholder="exec1@mail.mcgill.ca, exec2@mail.mcgill.ca" />
@@ -1355,6 +1345,9 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
               <label>{t('clubs.fieldUrl')}</label>
               <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://..." />
             </div>
+            <div className="clubs-join-required-note">
+              <strong>⚠ Required:</strong> Fill in at least one of the two fields below. When a student clicks "Join Club", they'll be sent to the Application URL first, or shown the How to Join instructions if no URL is set.
+            </div>
             {errors.joinMethod && (
               <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#b91c1c', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <FaExclamationTriangle style={{ flexShrink: 0 }} />
@@ -1362,17 +1355,17 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
               </div>
             )}
             <div className={`clubs-field ${errors.joinMethod ? 'error' : ''}`}>
-              <label>{t('clubs.fieldApplicationUrl')} <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>(required if no instructions)</span></label>
+              <label>{t('clubs.fieldApplicationUrl')}</label>
               <input type="url" value={form.application_url} onChange={e => set('application_url')(e.target.value)} placeholder="https://..." />
               <span className="clubs-field-hint">{t('clubs.fieldApplicationUrlHint')}</span>
             </div>
             <div className={`clubs-field ${errors.joinMethod ? 'error' : ''}`}>
-              <label>{t('clubs.fieldJoinInstructions')} <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '12px' }}>(required if no link)</span></label>
+              <label>{t('clubs.fieldJoinInstructions')}</label>
               <textarea value={form.join_instructions} onChange={e => set('join_instructions')(e.target.value)} rows={3} placeholder={t('clubs.fieldJoinInstructionsPlaceholder')} />
               <span className="clubs-field-hint">{t('clubs.fieldJoinInstructionsHint')}</span>
             </div>
             <div className="clubs-field">
-              <label>{t('clubs.fieldExecEmails')}</label>
+              <label>{t('clubs.fieldExecEmails')} <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
               <textarea value={form.executive_emails} onChange={e => set('executive_emails')(e.target.value)} rows={2} placeholder={t('clubs.fieldExecEmailsPlaceholder')} />
               <span className="clubs-field-hint">{t('clubs.fieldExecEmailsHint')}</span>
             </div>
@@ -1648,7 +1641,11 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   }
 
   const handleEditClub = async (clubId, formData) => {
-    await clubsAPI.editClub(clubId, formData)
+    const result = await clubsAPI.editClub(clubId, formData)
+    const updated = result?.club
+    if (updated) {
+      setClubs(prev => prev.map(c => c.id === clubId ? { ...c, ...updated } : c))
+    }
     await fetchCreatedClubs()
   }
 

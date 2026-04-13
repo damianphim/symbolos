@@ -197,12 +197,11 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 6,
         "courses_needed": None,
         "group_name": None,
-        "notes": "EDES 334 or 361 must be completed before the 3rd Field Experience.",
+        "notes": "EDES 361 must be completed before the 3rd Field Experience.",
         "sort_order": 3,
         "courses": [
-          {"subject": "EDES", "catalog": "334", "title": "Teaching Secondary English 1",                   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Must be completed before 3rd Field Experience; core methods course."},
-          {"subject": "EDES", "catalog": "350", "title": "Teaching Secondary English 2",                   "credits": 3, "is_required": True},
-          {"subject": "EDES", "catalog": "361", "title": "Teaching Secondary English 1 (Option 2)",        "credits": 3, "is_required": False},
+          {"subject": "EDES", "catalog": "361", "title": "Teaching Secondary English 1",                   "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Must be completed before 3rd Field Experience; core methods course."},
+          {"subject": "EDES", "catalog": "461", "title": "Teaching Secondary English 2",                   "credits": 3, "is_required": True},
           {"subject": "EDES", "catalog": "366", "title": "Literature for Young Adults",                    "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Directly applicable to Sec. III–V English curriculum."},
         ],
       },
@@ -332,11 +331,11 @@ EDUCATION_PROGRAMS = [
         "credits_needed": 6,
         "courses_needed": None,
         "group_name": None,
-        "notes": "EDES 335 must be completed before 3rd Field Experience.",
+        "notes": "EDES 353 must be completed before 3rd Field Experience.",
         "sort_order": 4,
         "courses": [
-          {"subject": "EDES", "catalog": "335", "title": "Teaching Secondary Mathematics 1",               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Must be completed before 3rd Field Experience."},
-          {"subject": "EDES", "catalog": "350", "title": "Teaching Secondary Mathematics 2",               "credits": 3, "is_required": True},
+          {"subject": "EDES", "catalog": "353", "title": "Teaching Secondary Mathematics 1",               "credits": 3, "is_required": True,  "recommended": True,  "recommendation_reason": "Must be completed before 3rd Field Experience."},
+          {"subject": "EDES", "catalog": "453", "title": "Teaching Secondary Mathematics 2",               "credits": 3, "is_required": True},
         ],
       },
       {
@@ -454,8 +453,8 @@ EDUCATION_PROGRAMS = [
         "notes": "Methods courses for teaching Science and Technology at the secondary level.",
         "sort_order": 3,
         "courses": [
-          {"subject": "EDES", "catalog": "353", "title": "Teaching Secondary Science and Technology 1",    "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDES", "catalog": "350", "title": "Teaching Secondary Science and Technology 2",    "credits": 3, "is_required": True},
+          {"subject": "EDES", "catalog": "335", "title": "Teaching Secondary Science 1",                    "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDES", "catalog": "435", "title": "Teaching Secondary Science 2",                    "credits": 3, "is_required": True},
         ],
       },
       {
@@ -587,8 +586,8 @@ EDUCATION_PROGRAMS = [
         "notes": "Methods courses for teaching Social Sciences at the secondary level.",
         "sort_order": 3,
         "courses": [
-          {"subject": "EDES", "catalog": "334", "title": "Teaching Secondary Social Sciences 1",           "credits": 3, "is_required": True,  "recommended": True},
-          {"subject": "EDES", "catalog": "350", "title": "Teaching Secondary Social Sciences 2",           "credits": 3, "is_required": True},
+          {"subject": "EDES", "catalog": "334", "title": "Teaching Secondary Social Studies 1",            "credits": 3, "is_required": True,  "recommended": True},
+          {"subject": "EDES", "catalog": "434", "title": "Teaching Secondary Social Studies 2",            "credits": 3, "is_required": True},
           {"subject": "EDER", "catalog": "372", "title": "Culture and Citizenship in Quebec Context",      "credits": 3, "is_required": False, "recommended": True,  "recommendation_reason": "Directly relevant to teaching History & Citizenship in Quebec."},
         ],
       },

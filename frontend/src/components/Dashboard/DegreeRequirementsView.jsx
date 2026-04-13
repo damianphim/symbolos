@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { supabase } from '../../lib/supabase'
 import {
   FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight,
@@ -107,6 +108,7 @@ function matchTransfer(req, advancedStanding = [], { requireMajorCredit = false 
 
 export default function DegreeRequirementsView({ completedCourses = [], currentCourses = [], profile = {} }) {
   const { t, language } = useLanguage()
+  const { openCourse } = useCourseDetail()
   const [programs, setPrograms]           = useState([])
   const [selectedKey, setSelectedKey]     = useState(null)
   const [programDetail, setProgramDetail] = useState(null)
@@ -127,6 +129,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   const transferCredits = advStanding.reduce((s, c) => s + (c.credits || 0), 0)
   const foundationWaived = transferCredits >= 24 &&
     (profile?.faculty === 'Faculty of Arts' || profile?.faculty === 'Bachelor of Arts and Science')
+  const [foundationDismissed, setFoundationDismissed] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState({})
   const toggleGroup = (key) => setCollapsedGroups(prev => ({ ...prev, [key]: !prev[key] }))
 
@@ -266,18 +269,21 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
 
   const progress = useMemo(() => {
     if (!programDetail) return null
-    let required = 0, completed = 0
+    let required = 0, completed = 0, transferBlockedCredits = 0
     programDetail.blocks?.forEach(block => {
       block.courses?.forEach(c => {
         if (c.is_required) {
           required += parseFloat(c.credits || 3)
           const transferCountsMajor = matchTransfer(c, advStanding, { requireMajorCredit: true })
-          if (transferCountsMajor || (!matchTransfer(c, advStanding) && matchCourse(c, allUserCourses)))
+          const isTransferAtAll = matchTransfer(c, advStanding)
+          if (transferCountsMajor || (!isTransferAtAll && matchCourse(c, allUserCourses)))
             completed += parseFloat(c.credits || 3)
+          else if (isTransferAtAll && !transferCountsMajor)
+            transferBlockedCredits += parseFloat(c.credits || 3)
         }
       })
     })
-    return { required, completed, pct: required > 0 ? Math.round((completed / required) * 100) : 0 }
+    return { required, completed, pct: required > 0 ? Math.round((completed / required) * 100) : 0, transferBlockedCredits }
   }, [programDetail, allUserCourses, advStanding])
 
   const toggleBlock   = id => setOpenBlocks(p => ({ ...p, [id]: !p[id] }))
@@ -508,13 +514,16 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
         )}
 
         {/* Foundation year waived banner */}
-        {foundationWaived && selectedKey && (
+        {foundationWaived && selectedKey && !foundationDismissed && (
           <div className="drv-foundation-waived-banner">
-            <span>✓</span>
-            <span>
-              <strong style={{ color: 'var(--text-primary)' }}>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
+            <FaCheckCircle className="drv-foundation-icon" />
+            <span className="drv-foundation-text">
+              <strong>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
               {transferCredits < 30 ? ` ${t('dp.foundationWaivedNote')}` : ''}.
             </span>
+            <button className="drv-foundation-close" onClick={() => setFoundationDismissed(true)} aria-label="Dismiss">
+              <FaTimes />
+            </button>
           </div>
         )}
 
@@ -542,12 +551,6 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                   <span className="drv-meta-label">{language === 'zh' ? '学分：' : language === 'fr' ? 'Crédits :' : 'Credits:'}</span>
                   <span className="drv-meta-val">{programDetail.total_credits}</span>
                 </div>
-                {progress && progress.required > 0 && (
-                  <div className="drv-meta-card drv-meta-card--green">
-                    <span className="drv-meta-label">{language === 'zh' ? '已完成必修：' : language === 'fr' ? 'Requis complété :' : 'Required done:'}</span>
-                    <span className="drv-meta-val">{progress.pct}%</span>
-                  </div>
-                )}
                 {programDetail.ecalendar_url && (
                   <a
                     href={language === 'fr'
@@ -563,25 +566,13 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               </div>
             </div>
 
-            {progress && progress.required > 0 && (
+            {progress && progress.transferBlockedCredits > 0 && (
               <div className="drv-progress-wrap">
-                <div className="drv-progress-track">
-                  <div className="drv-progress-fill" style={{ width: `${progress.pct}%` }} />
-                </div>
-                <span className="drv-progress-label">
-                  {progress.completed}/{progress.required} required credits completed
+                <span className="drv-transfer-note">
+                  {progress.transferBlockedCredits}cr from transfer credits don't count toward this major requirement, which means that you will have to make up the credits for this program elsewhere — visit <strong>Degree Planning → Electives</strong> to change that.
                 </span>
               </div>
             )}
-
-            <div className="drv-controls">
-              <button
-                className={`drv-rec-toggle ${showRecommended ? 'drv-rec-toggle--active' : ''}`}
-                onClick={() => setShowRecommended(v => !v)}
-              >
-                <FaLightbulb /> {showRecommended ? 'All Courses' : 'Recommended Only'}
-              </button>
-            </div>
 
             <div className="drv-blocks">
               {programDetail.blocks?.map(block => {
@@ -592,12 +583,31 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                   : block.courses
 
                 const PREVIEW = 5
-                const visible      = showAll ? courses : courses?.slice(0, PREVIEW)
-                const required     = block.courses?.filter(c => c.is_required) || []
-                const completedReq = required.filter(c =>
-                  matchTransfer(c, advStanding) || matchCourse(c, allUserCourses)
-                )
-                const blockDone    = required.length > 0 && completedReq.length === required.length
+                const visible         = showAll ? courses : courses?.slice(0, PREVIEW)
+                const required        = block.courses?.filter(c => c.is_required) || []
+                const allCatalog      = block.courses?.filter(c => c.catalog) || []
+                const completedReq    = required.filter(c => matchCourse(c, allUserCourses) || matchTransfer(c, advStanding))
+                const completedAny    = allCatalog.filter(c => matchCourse(c, allUserCourses) || matchTransfer(c, advStanding))
+
+                // Determine completion for both required-list and choose-credits blocks
+                let blockDone, hasProgress, pillText
+                if (required.length > 0) {
+                  blockDone   = completedReq.length === required.length
+                  hasProgress = completedReq.length > 0
+                  pillText    = `${required.length - completedReq.length} left`
+                } else if (block.credits_needed) {
+                  const earned = completedAny.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
+                  blockDone   = earned >= block.credits_needed
+                  hasProgress = earned > 0
+                  const crLeft = Math.max(0, block.credits_needed - earned)
+                  pillText    = `${Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1)}cr left`
+                } else {
+                  blockDone   = false
+                  hasProgress = completedAny.length > 0
+                  pillText    = `${completedAny.length} done`
+                }
+
+                const pillMod = blockDone ? 'drv-block-pill--done' : hasProgress ? 'drv-block-pill--partial' : 'drv-block-pill--none'
 
                 return (
                   <div key={block.id} className={`drv-block ${blockDone ? 'drv-block--done' : ''}`}>
@@ -614,12 +624,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                         </div>
                       </div>
                       <div className="drv-block-header-right">
-                        {required.length > 0 && (
-                          <span className={`drv-block-pill ${blockDone ? 'drv-block-pill--done' : ''}`}>
-                            {blockDone ? '✓ Complete' : `${completedReq.length}/${required.length} req`}
-                          </span>
-                        )}
-                        <span className="drv-block-count">{block.courses?.length}</span>
+                        <span className={`drv-block-pill ${pillMod}`}>
+                          {blockDone ? <FaCheckCircle /> : pillText}
+                        </span>
                       </div>
                     </button>
 
@@ -655,6 +662,8 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                                   isCompleted        ? 'drv-course-row--done'     : '',
                                   isCurrent          ? 'drv-course-row--current'  : '',
                                 ].filter(Boolean).join(' ')}
+                                onClick={() => course.subject && course.catalog && openCourse(course.subject, course.catalog)}
+                                style={course.subject && course.catalog ? { cursor: 'pointer' } : undefined}
                               >
                                 <div className="drv-course-status">
                                   {isCompleted

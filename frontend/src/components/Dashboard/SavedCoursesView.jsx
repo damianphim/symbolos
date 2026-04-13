@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FaHeart, FaRegHeart, FaCheckCircle, FaCheck, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import './SavedCoursesView.css'
 
 export default function SavedCoursesView({ 
@@ -16,6 +17,7 @@ export default function SavedCoursesView({
   onCourseClick,
 }) {
   const { t, language } = useLanguage()
+  const { openCourse } = useCourseDetail()
   const [activeView, setActiveView] = useState('saved')
 
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
@@ -84,7 +86,7 @@ export default function SavedCoursesView({
             <div className="course-list">
               {favorites.map((course, idx) => (
                 <div key={idx} className="course-card">
-                  <div className="course-card-content" onClick={() => onCourseClick?.(course)}>
+                  <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
                     </div>
@@ -144,7 +146,7 @@ export default function SavedCoursesView({
             <div className="course-list">
               {currentCourses.map((course, idx) => (
                 <div key={idx} className="course-card">
-                  <div className="course-card-content" onClick={() => onCourseClick?.(course)}>
+                  <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
                       <div className="course-grade-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>Current</div>
@@ -205,7 +207,7 @@ export default function SavedCoursesView({
             <div className="course-list">
               {completedCourses.map((course, idx) => (
                 <div key={idx} className="course-card completed-course-card">
-                  <div className="course-card-content" onClick={() => onCourseClick?.(course)}>
+                  <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
                       {course.grade && <div className="course-grade-badge">{course.grade}</div>}
@@ -237,6 +239,15 @@ export default function SavedCoursesView({
                     >
                       <FaCheckCircle className="completed-icon" />
                     </button>
+                    {onToggleCurrent && (
+                      <button
+                        className={`current-btn ${isCurrent(course.subject, course.catalog) ? 'current' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleCurrent({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
+                        title={isCurrent(course.subject, course.catalog) ? 'Remove from current courses' : 'Mark as current'}
+                      >
+                        <FaBook className="current-icon" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

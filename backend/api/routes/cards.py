@@ -128,7 +128,7 @@ def fetch_student_context(user_id: str, user_sb=None) -> dict:
     except Exception:
         pass
     try:
-        r = sb.table("clubs").select("name, category, member_count, is_private").eq("created_by", user_id).execute()
+        r = sb.table("clubs").select("name, category, is_private").eq("created_by", user_id).execute()
         created_clubs = r.data or []
     except Exception:
         pass

@@ -12,7 +12,7 @@ This file covers all undergraduate B.Mus. programs plus the concurrent B.Mus./B.
     3. Orchestral Instruments (B.Mus.)      – 125 credits
     4. Organ / Guitar (B.Mus.)              – 125 credits
     5. Early Music Performance (B.Mus.)     – 125 credits
-    6. Early Music Voice (B.Mus.)           – 125 credits
+    6. Early Music Voice (B.Mus.)           – 126 credits
     7. Jazz Performance (B.Mus.)            – 126 credits
 
   Music Research Department:

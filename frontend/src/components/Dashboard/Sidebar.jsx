@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import {
   FaChevronRight, FaComments, FaBook,
   FaUser, FaCog, FaPalette, FaSignOutAlt, FaCalendarAlt,
-  FaGraduationCap, FaUsers, FaExpandAlt, FaInfoCircle, FaShieldAlt, FaFileAlt
+  FaGraduationCap, FaUsers, FaExpandAlt, FaInfoCircle, FaShieldAlt, FaFileAlt,
+  FaSun, FaMoon
 } from 'react-icons/fa'
 import { MdLanguage } from 'react-icons/md'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -191,6 +192,13 @@ export default function Sidebar({
                 </button>
               ))}
               <div className="mini-capsule-divider" />
+              <button
+                className="mini-pill mini-pill--theme"
+                onClick={cycleTheme}
+                title={theme === 'light' ? 'Switch to dark mode' : theme === 'dark' ? 'Switch to auto mode' : 'Switch to light mode'}
+              >
+                {theme === 'dark' ? <FaMoon size={13} /> : theme === 'auto' ? <FaPalette size={13} /> : <FaSun size={13} />}
+              </button>
               <button
                 className="mini-pill mini-pill--lang"
                 onClick={handleLanguageToggle}

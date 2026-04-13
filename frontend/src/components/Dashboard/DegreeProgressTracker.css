@@ -250,28 +250,45 @@
 .milestone.completed .milestone-check { color: white; }
 
 .milestone-text {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--text-secondary);
   flex: 1;
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.milestone-credits {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.milestone-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  line-height: 1.3;
 }
 
-.milestone.completed .milestone-text {
-  color: var(--success-text);
-  font-weight: 600;
-}
+.milestone.completed .milestone-credits { color: var(--success-text); }
+.milestone.completed .milestone-label   { color: var(--success-text); font-weight: 600; }
 
-[data-theme="dark"] .milestone.completed .milestone-text {
-  color: #6ee7b7;
-}
+[data-theme="dark"] .milestone.completed .milestone-credits,
+[data-theme="dark"] .milestone.completed .milestone-label { color: #6ee7b7; }
 
-/* Celebration icons */
-.milestone-graduation-icon { color: var(--warning-primary); display: inline-block; font-size: 15px; }
-.milestone-party-icon      { color: var(--accent-primary);  display: inline-block; font-size: 15px; }
-.milestone-biceps-icon     { color: var(--accent-primary);  display: inline-block; font-size: 15px; }
+/* Inline milestone icon */
+.milestone-icon-inline {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.milestone.completed .milestone-icon-inline { color: var(--success-text); }
 
 /* ── Info Note ── */
 .info-note {

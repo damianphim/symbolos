@@ -908,7 +908,7 @@ ARTS_SOCIAL_SCIENCES = [
         "courses": [
           {"subject":"SOCI","catalog":"210","title":"Sociological Perspectives","credits":3,"is_required":True,"recommended":True,"recommendation_reason":"Take U1 Fall; foundational intro"},
           {"subject":"SOCI","catalog":"211","title":"Sociological Inquiry","credits":3,"is_required":True,"recommended":True,"recommendation_reason":"Methods core; take alongside 210"},
-          {"subject":"SOCI","catalog":"330","title":"Classical Sociological Theory","credits":3,"is_required":True,"recommended":True,"recommendation_reason":"Marx, Weber, Durkheim — essential"},
+          {"subject":"SOCI","catalog":"330","title":"Sociological Theory","credits":3,"is_required":True,"recommended":True,"recommendation_reason":"Marx, Weber, Durkheim — essential"},
           {"subject":"SOCI","catalog":"350","title":"Statistics in Social Research","credits":3,"is_required":True,"notes":"Equivalents: ECON 227D, PSYC 204, MATH 203, MGCR 271 etc."},
         ],
       },
@@ -957,7 +957,7 @@ ARTS_SOCIAL_SCIENCES = [
           {"subject":"SOCI","catalog":"362","title":"Sociology of Ethnic Relations","credits":3,"is_required":False},
           {"subject":"SOCI","catalog":"363","title":"Gender and the State","credits":3,"is_required":False},
           {"subject":"SOCI","catalog":"364","title":"Gender and Globalization","credits":3,"is_required":False},
-          {"subject":"SOCI","catalog":"365","title":"Gender and Work","credits":3,"is_required":False},
+          {"subject":"SOCI","catalog":"365","title":"Health and Development","credits":3,"is_required":False},
           {"subject":"SOCI","catalog":"367","title":"Sociology of Population","credits":3,"is_required":False},
           {"subject":"SOCI","catalog":"368","title":"Migration Governance and Stratification","credits":3,"is_required":False},
           {"subject":"SOCI","catalog":"370","title":"Social Stratification","credits":3,"is_required":False},

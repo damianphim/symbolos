@@ -827,7 +827,7 @@ SCIENCE_PROGRAMS_PART2 = [
         "notes": "One statistics course from the approved list.",
         "sort_order": 3,
         "courses": [
-          {"subject": "BIOL", "catalog": "373", "title": "Neurobiology",                         "credits": 3, "is_required": False},
+          {"subject": "BIOL", "catalog": "373", "title": "Biometry",                             "credits": 3, "is_required": False},
           {"subject": "MATH", "catalog": "203", "title": "Statistics for Life Sciences",         "credits": 3, "is_required": False},
           {"subject": "PSYC", "catalog": "204", "title": "Statistics for Experimental Design",   "credits": 3, "is_required": False},
         ],
@@ -981,7 +981,7 @@ SCIENCE_PROGRAMS_PART2 = [
         "notes": "One statistics course from the approved list.",
         "sort_order": 2,
         "courses": [
-          {"subject": "BIOL", "catalog": "373", "title": "Neurobiology",                         "credits": 3, "is_required": False},
+          {"subject": "BIOL", "catalog": "373", "title": "Biometry",                             "credits": 3, "is_required": False},
           {"subject": "MATH", "catalog": "203", "title": "Statistics for Life Sciences",         "credits": 3, "is_required": False},
           {"subject": "PSYC", "catalog": "204", "title": "Statistics for Experimental Design",   "credits": 3, "is_required": False},
         ],
