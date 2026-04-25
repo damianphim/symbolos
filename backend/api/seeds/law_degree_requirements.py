@@ -116,7 +116,7 @@ LAW_PROGRAMS = [
           {"subject": "LAWG", "catalog": "506",   "title": "Advanced Civil Law Property",          "credits": 3, "notes": "Civil law reasoning and methodology through property concepts."},
           {"subject": "PROC", "catalog": "200",   "title": "Advanced Civil Law Obligations",       "credits": 3, "notes": "General theory of obligations in the Civil Law tradition. Includes unjust enrichment."},
           {"subject": "PRV2", "catalog": "270",   "title": "Law of Persons",                       "credits": 3, "notes": "Existence and attributes of physical and legal persons in the Civil Law of Quebec.", "recommended": True, "recommendation_reason": "Foundational civil law course, frequently offered."},
-          {"subject": "PRV4", "catalog": "548",   "title": "Administration of Property of Another and Trusts", "credits": 3, "notes": "Basic law on administration of property of another. Not open to students who took PRV4 448."},
+          {"subject": "PRV4", "catalog": "548",   "title": "Administration Property of Another and Trusts", "credits": 3, "notes": "Basic law on administration of property of another. Not open to students who took PRV4 448."},
         ],
       },
 

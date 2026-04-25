@@ -10,21 +10,22 @@ This file covers all undergraduate B.Mus. programs plus the concurrent B.Mus./B.
     1. Voice Performance (B.Mus.)           – 123 credits
     2. Piano Performance (B.Mus.)           – 125 credits
     3. Orchestral Instruments (B.Mus.)      – 125 credits
-    4. Organ / Guitar (B.Mus.)              – 125 credits
-    5. Early Music Performance (B.Mus.)     – 125 credits
-    6. Early Music Voice (B.Mus.)           – 126 credits
-    7. Jazz Performance (B.Mus.)            – 126 credits
+    4. Jazz Performance (B.Mus.)            – 126 credits
+    5. Organ / Guitar (B.Mus.)              – 125 credits
+    6. (renumbered – see below)
+    7. Early Music Performance (B.Mus.)     – 125 credits
+    8. Early Music Voice (B.Mus.)           – 126 credits
 
   Music Research Department:
-    8.  Composition Major (B.Mus.)          – 124 credits
-    9.  Music History Major (B.Mus.)        – 124 credits
-   10.  Music Theory Major (B.Mus.)         – 124 credits
-   11.  Music Studies Major (B.Mus.)        – 123 credits  [Fall 2025+]
-   12.  Faculty Program – General (B.Mus.) – 123 credits  [pre-2025]
-   13.  Faculty Program – Jazz (B.Mus.)    – 123 credits
+    9.  Composition Major (B.Mus.)          – 124 credits
+   10.  Music History Major (B.Mus.)        – 124 credits
+   11.  Music Theory Major (B.Mus.)         – 124 credits
+   12.  Music Studies Major (B.Mus.)        – 123 credits  [Fall 2025+]
+   13.  Faculty Program – General (B.Mus.) – 123 credits  [pre-2025]
+   14.  Faculty Program – Jazz (B.Mus.)    – 123 credits
 
   Concurrent:
-   14.  B.Mus. / B.Ed. Music Education      – 170 credits
+   15.  B.Mus. / B.Ed. Music Education      – 170 credits
 
 Accuracy notes:
   - All programs require an audition for admission into Schulich.
@@ -251,7 +252,7 @@ MUSIC_PROGRAMS = [
           {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",       "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",            "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "560", "title": "Piano Ensemble",              "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Chamber music credit for pianists"},
-          {"subject": "MUEN", "catalog": "564", "title": "Piano Accompaniment Lab",     "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Collaborative piano skills"},
+          {"subject": "MUEN", "catalog": "556", "title": "Introduction to Collaborative Piano 1", "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Collaborative piano skills"},
         ],
       },
       {
@@ -339,7 +340,7 @@ MUSIC_PROGRAMS = [
           {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",            "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Primary large ensemble for wind and brass students"},
           {"subject": "MUEN", "catalog": "565", "title": "String Quartet Seminar",          "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Required for violin, viola, cello majors (2 terms minimum)"},
           {"subject": "MUEN", "catalog": "560", "title": "Chamber Music",                   "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Chamber music training for string players"},
-          {"subject": "MUEN", "catalog": "591", "title": "Contemporary Music Ensemble",     "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "594", "title": "Contemporary Music Ensemble",     "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
         ],
       },
       {
@@ -395,6 +396,8 @@ MUSIC_PROGRAMS = [
           {"subject": "MUJZ", "catalog": "170",  "title": "Jazz Keyboard Proficiency 1", "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Jazz voicings, comping basics; waived for guitar/piano majors"},
           {"subject": "MUJZ", "catalog": "171",  "title": "Jazz Keyboard Proficiency 2", "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Advanced jazz keyboard; waived for guitar/piano majors"},
           {"subject": "MUJZ", "catalog": "187",  "title": "Jazz History Survey",                 "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Overview of jazz from its origins to the present; Year 1"},
+          {"subject": "MUSP", "catalog": "123",  "title": "Jazz Ear Training 1",                "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Jazz-specific ear training replacing MUSP 140 for Jazz majors; Year 1 Fall"},
+          {"subject": "MUSP", "catalog": "124",  "title": "Jazz Ear Training 2",                "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation of jazz ear training replacing MUSP 141; Year 1 Winter"},
           {"subject": "MUJZ", "catalog": "223",  "title": "Jazz Improvisation/Musicianship 1",   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Jazz improvisation foundations and ear training for instrumental majors; Year 2 Fall"},
           {"subject": "MUJZ", "catalog": "224",  "title": "Jazz Improvisation/Musicianship 2",   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 2 Winter. Vocal majors substitute MUJZ 225/226."},
           {"subject": "MUJZ", "catalog": "260",  "title": "Jazz Arranging 1",                    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Introduction to jazz arranging; Year 2 Fall"},
@@ -403,6 +406,7 @@ MUSIC_PROGRAMS = [
           {"subject": "MUJZ", "catalog": "341",  "title": "Jazz Composition 2",                  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 3 Winter"},
           {"subject": "MUJZ", "catalog": "423",  "title": "Jazz Improvisation/Musicianship 3",   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced improvisation and ear training for instrumental majors; Year 3 Fall"},
           {"subject": "MUJZ", "catalog": "424",  "title": "Jazz Improvisation/Musicianship 4",   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 3 Winter. Vocal majors substitute MUJZ 325/326."},
+          {"subject": "MUHL", "catalog": "286",  "title": "Critical Thinking About Music",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required for all BMus programs; Year 2 or 3"},
           {"subject": "MUJZ", "catalog": "493",  "title": "Jazz Performance Practice",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Jazz history and performance practice seminar; required; Year 3 Winter"},
         ],
       },
@@ -455,7 +459,7 @@ MUSIC_PROGRAMS = [
         "sort_order": 4,
         "courses": [
           {"subject": "MUEN", "catalog": "570", "title": "Jazz Combo",          "credits": 1, "is_required": True,  "recommended": True,  "recommendation_reason": "Required for 6 semesters (6 credits)"},
-          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop", "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "jazz_large_ensemble"},
+          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop", "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "jazz_large_ensemble"},
           {"subject": "MUEN", "catalog": "595", "title": "Jazz Ensembles",      "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "jazz_large_ensemble", "recommendation_reason": "Primary large jazz ensemble"},
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra", "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "jazz_large_ensemble"},
         ],
@@ -478,7 +482,96 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  5. EARLY MUSIC PERFORMANCE – B.MUS. (125 credits)
+  #  5. ORGAN / GUITAR PERFORMANCE – B.MUS. (125 credits)
+  # ══════════════════════════════════════════════════════════════════════════
+  {
+    "program_key":   "performance_organ_guitar_bmus",
+    "name":          "Organ and Guitar Performance – B.Mus. (Major) (125 credits)",
+    "program_type":  "major",
+    "faculty":       "Schulich School of Music",
+    "total_credits": 125,
+    "description": (
+      "The B.Mus. in Organ and Guitar Performance provides intensive private instruction "
+      "combined with chamber music and ensemble participation. Organ students access McGill's "
+      "collection of historic and modern instruments; guitar students study classical repertoire "
+      "and chamber literature. Both guitar and organ principals are automatically exempt from "
+      "MUSP 170/171 keyboard proficiency. Three jury examinations (MUIN 282, 382, 482) are "
+      "required across Years 2–4. A minimum grade of B- is required in all practical instruction, "
+      "exams, and ensembles."
+    ),
+    "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/music/undergraduate/programs/bachelor-music-bmus-major-performance-organ-and-guitar",
+    "blocks": [
+      {
+        "block_key": "organ_guitar_core",
+        "title": "Core Music Requirements (all B.Mus. programs)",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Organ and guitar principals are automatically exempt from MUSP 170 and MUSP 171 keyboard proficiency.",
+        "sort_order": 1,
+        "courses": BMUS_CORE,
+      },
+      {
+        "block_key": "organ_guitar_upper_lessons",
+        "title": "Upper-Year Practical Instruction & Exams (Years 3–4)",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Private organ or guitar lessons Years 3–4 plus three required jury examinations.",
+        "sort_order": 2,
+        "courses": UPPER_LESSONS,
+      },
+      {
+        "block_key": "organ_guitar_specific",
+        "title": "Required Theory & Musicianship Courses",
+        "block_type": "required",
+        "credits_needed": None, "courses_needed": None, "group_name": None,
+        "notes": "Theory and Analysis 3–5 and Musicianship Training 3–4 are required in addition to the shared BMus core.",
+        "sort_order": 3,
+        "courses": [
+          {"subject": "MUTH", "catalog": "250",  "title": "Theory and Analysis 3",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Chromatic harmony and modulation; Year 2 Fall"},
+          {"subject": "MUTH", "catalog": "251",  "title": "Theory and Analysis 4",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced chromatic harmony; Year 2 Winter"},
+          {"subject": "MUTH", "catalog": "350",  "title": "Theory and Analysis 5",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Post-tonal theory; required for Organ/Guitar major"},
+          {"subject": "MUSP", "catalog": "240",  "title": "Musicianship Training 3",  "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Advanced musicianship; Year 2 Fall"},
+          {"subject": "MUSP", "catalog": "241",  "title": "Musicianship Training 4",  "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Advanced musicianship; Year 2 Winter"},
+          {"subject": "MUPD", "catalog": "235",  "title": "Music as a Profession 2",  "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Advanced professional development; Year 2"},
+        ],
+      },
+      {
+        "block_key": "organ_guitar_ensembles",
+        "title": "Ensembles",
+        "block_type": "required",
+        "credits_needed": 8,
+        "courses_needed": None, "group_name": None,
+        "notes": "8 credits of ensemble courses. Small ensemble (2 cr) and large ensemble (4 cr) required in Years 1–2; additional chamber credits in Years 3–4.",
+        "sort_order": 4,
+        "courses": [
+          {"subject": "MUEN", "catalog": "560",  "title": "Chamber Music",              "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Small ensemble requirement for guitar students"},
+          {"subject": "MUEN", "catalog": "564",  "title": "Piano Accompaniment Lab",    "credits": 1, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Collaborative skills for guitar students"},
+          {"subject": "MUEN", "catalog": "597",  "title": "McGill Symphony Orchestra",  "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles", "recommendation_reason": "Large ensemble requirement; organ students typically assigned here"},
+          {"subject": "MUEN", "catalog": "590",  "title": "McGill Wind Orchestra",      "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "593",  "title": "Choral Ensembles",           "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+        ],
+      },
+      {
+        "block_key": "organ_guitar_history",
+        "title": "Music History / Performance Practice (6 credits)",
+        "block_type": "choose_credits",
+        "credits_needed": 6,
+        "courses_needed": None, "group_name": None,
+        "notes": "6 credits from MUHL or MUPP at 300-level or above, selected in consultation with adviser.",
+        "sort_order": 5,
+        "courses": [
+          {"subject": "MUHL", "catalog": "382", "title": "Baroque Music",               "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6, "recommendation_reason": "Directly relevant for organ students and baroque guitar repertoire"},
+          {"subject": "MUHL", "catalog": "380", "title": "Medieval Music",              "credits": 3, "is_required": False, "recommended": False, "choose_from_group": "music_history_300", "choose_n_credits": 6},
+          {"subject": "MUHL", "catalog": "381", "title": "Renaissance Music",           "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6, "recommendation_reason": "Important historical context for lute and early guitar repertoire"},
+          {"subject": "MUHL", "catalog": "383", "title": "Classical Music",             "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6},
+          {"subject": "MUPP", "catalog": "381", "title": "Topics in Performance Practice","credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "music_history_300", "choose_n_credits": 6, "recommendation_reason": "Historical performance practice relevant for both organ and guitar"},
+        ],
+      },
+    ],
+  },
+
+  # ══════════════════════════════════════════════════════════════════════════
+  #  7. EARLY MUSIC PERFORMANCE – B.MUS. (125 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "performance_early_music_bmus",
@@ -538,8 +631,8 @@ MUSIC_PROGRAMS = [
         "notes": "8 credits of MUEN ensembles including Baroque Orchestra and Cappella Antica.",
         "sort_order": 4,
         "courses": [
-          {"subject": "MUEN", "catalog": "583", "title": "Baroque Orchestra",  "credits": 1, "is_required": True,  "recommended": True, "recommendation_reason": "Primary ensemble for early music instrumentalists"},
-          {"subject": "MUEN", "catalog": "584", "title": "Cappella Antica",    "credits": 1, "is_required": False, "recommended": True, "recommendation_reason": "Early choral ensemble; open to early music voice and some instrumentalists"},
+          {"subject": "MUEN", "catalog": "573", "title": "Baroque Orchestra",  "credits": 2, "is_required": True,  "recommended": True, "recommendation_reason": "Primary ensemble for early music instrumentalists"},
+          {"subject": "MUEN", "catalog": "572", "title": "Cappella Antica",    "credits": 2, "is_required": False, "recommended": True, "recommendation_reason": "Early choral ensemble; open to early music voice and some instrumentalists"},
           {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",   "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra", "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
         ],
@@ -548,7 +641,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  6. EARLY MUSIC PERFORMANCE – VOICE – B.MUS. (126 credits)
+  #  8. EARLY MUSIC PERFORMANCE – VOICE – B.MUS. (126 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "performance_early_music_voice_bmus",
@@ -672,7 +765,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  7. COMPOSITION MAJOR – B.MUS. (124 credits)
+  #  9. COMPOSITION MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "composition_major_bmus",
@@ -713,13 +806,13 @@ MUSIC_PROGRAMS = [
           {"subject": "MUCO", "catalog": "261",   "title": "Orchestration 1",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Writing for orchestral sections; Year 2–3"},
           {"subject": "MUCO", "catalog": "340D1", "title": "Composition 2 (Part 1)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Year 3 private composition tutorial Part 1"},
           {"subject": "MUCO", "catalog": "340D2", "title": "Composition 2 (Part 2)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 3 Part 2"},
-          {"subject": "MUCO", "catalog": "341",   "title": "Digital Studio 1",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Electronic and computer music composition; Year 3"},
-          {"subject": "MUCO", "catalog": "342",   "title": "Digital Studio 2",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced digital studio; Year 3–4"},
+          {"subject": "MUCO", "catalog": "341",   "title": "Digital Studio Composition 1", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Electronic and computer music composition; Year 3"},
+          {"subject": "MUCO", "catalog": "342",   "title": "Digital Studio Composition 2", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced digital studio; Year 3–4"},
           {"subject": "MUCO", "catalog": "360",   "title": "Orchestration 2",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced orchestration; Year 3"},
           {"subject": "MUCO", "catalog": "440D1", "title": "Composition 3 (Part 1)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Year 4 advanced composition tutorial Part 1"},
           {"subject": "MUCO", "catalog": "440D2", "title": "Composition 3 (Part 2)",     "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Continuation; Year 4 Part 2"},
           {"subject": "MUCO", "catalog": "460",   "title": "Orchestration 3",            "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Advanced orchestration; Year 4"},
-          {"subject": "MUCO", "catalog": "541",   "title": "Advanced Digital Studio",    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Senior digital studio; Year 4"},
+          {"subject": "MUCO", "catalog": "541",   "title": "Advanced Digital Studio Composition 1", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Senior digital studio; Year 4"},
           {"subject": "MUCO", "catalog": "575",   "title": "Topics in Composition",      "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Advanced seminar on special composition topics; Year 4"},
         ],
       },
@@ -733,7 +826,7 @@ MUSIC_PROGRAMS = [
         "sort_order": 3,
         "courses": [
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra",    "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles", "recommendation_reason": "Provides orchestral listening experience for composers"},
-          {"subject": "MUEN", "catalog": "591", "title": "Contemporary Music Ensemble",  "credits": 1, "is_required": False, "recommended": True, "choose_from_group": "ensembles", "recommendation_reason": "Ideal for new-music composers"},
+          {"subject": "MUEN", "catalog": "594", "title": "Contemporary Music Ensemble",  "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles", "recommendation_reason": "Ideal for new-music composers"},
           {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",        "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
         ],
       },
@@ -756,7 +849,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  8. MUSIC HISTORY MAJOR – B.MUS. (124 credits)
+  # 10. MUSIC HISTORY MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_history_major_bmus",
@@ -802,7 +895,7 @@ MUSIC_PROGRAMS = [
           # Group II – 1750–1900
           {"subject": "MUHL", "catalog": "383",  "title": "Classical Music",           "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "hist_group_II",  "choose_n_credits": 6},
           {"subject": "MUHL", "catalog": "366",  "title": "Era of the Fortepiano",     "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "hist_group_II",  "choose_n_credits": 6},
-          {"subject": "MUHL", "catalog": "365",  "title": "Opera after 1900",          "credits": 3, "is_required": False, "recommended": False, "choose_from_group": "hist_group_II",  "choose_n_credits": 6},
+          {"subject": "MUHL", "catalog": "387",  "title": "Opera from Mozart to Puccini","credits": 3,"is_required": False, "recommended": True,  "choose_from_group": "hist_group_II",  "choose_n_credits": 6, "recommendation_reason": "Group II – 19th-century opera"},
           # Group III – 1900–present
           {"subject": "MUHL", "catalog": "370",  "title": "Early 20th-Century Music",  "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "hist_group_III", "choose_n_credits": 6},
           {"subject": "MUHL", "catalog": "371",  "title": "Music since 1945",           "credits": 3, "is_required": False, "recommended": True,  "choose_from_group": "hist_group_III", "choose_n_credits": 6},
@@ -822,14 +915,14 @@ MUSIC_PROGRAMS = [
         "courses": [
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra", "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",          "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "591", "title": "Contemporary Music Ensemble","credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "594", "title": "Contemporary Music Ensemble","credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
         ],
       },
     ],
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  #  9. MUSIC THEORY MAJOR – B.MUS. (124 credits)
+  # 11. MUSIC THEORY MAJOR – B.MUS. (124 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_theory_major_bmus",
@@ -918,7 +1011,7 @@ MUSIC_PROGRAMS = [
         "sort_order": 4,
         "courses": [
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra",    "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "591", "title": "Contemporary Music Ensemble",  "credits": 1, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "594", "title": "Contemporary Music Ensemble",  "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",             "credits": 2, "is_required": False, "recommended": False,"choose_from_group": "ensembles"},
         ],
       },
@@ -926,7 +1019,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 10. MUSIC STUDIES MAJOR – B.MUS. (123 credits) [Fall 2025+]
+  # 12. MUSIC STUDIES MAJOR – B.MUS. (123 credits) [Fall 2025+]
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "music_studies_major_bmus",
@@ -975,13 +1068,13 @@ MUSIC_PROGRAMS = [
         "notes": "6 credits from MUEN-prefix ensemble courses.",
         "sort_order": 3,
         "courses": [
-          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop",           "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "584", "title": "Cappella Antica",               "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "585", "title": "Baroque Orchestra",             "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "586", "title": "Cappella McGill",               "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop",           "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "572", "title": "Cappella Antica",               "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "573", "title": "Baroque Orchestra",             "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "587", "title": "Cappella McGill",               "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",         "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",              "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "595", "title": "Jazz Ensembles",                "credits": 1, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "595", "title": "Jazz Ensembles",                "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
           {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra",     "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
         ],
       },
@@ -1029,7 +1122,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 11. FACULTY PROGRAM – GENERAL B.MUS. (123 credits) [pre-2025 / still active]
+  # 13. FACULTY PROGRAM – GENERAL B.MUS. (123 credits) [pre-2025 / still active]
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "faculty_program_bmus",
@@ -1089,7 +1182,7 @@ MUSIC_PROGRAMS = [
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 12. FACULTY PROGRAM – JAZZ B.MUS. (123 credits)
+  # 14. FACULTY PROGRAM – JAZZ B.MUS. (123 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "faculty_program_jazz_bmus",
@@ -1111,7 +1204,7 @@ MUSIC_PROGRAMS = [
         "title": "Core & Jazz Theory Requirements",
         "block_type": "required",
         "credits_needed": None, "courses_needed": None, "group_name": None,
-        "notes": "Jazz-specific substitutions: MUJZ 170/171 replaces MUSP 170/171; MUJZ 160/161 and 186 replace some MUTH/MUHL core courses.",
+        "notes": "Jazz-specific substitutions: MUJZ 170/171 replaces MUSP 170/171; MUJZ 160/161 and MUJZ 187 replace some MUTH/MUHL core courses; MUSP 123/124 replace MUSP 140/141 ear training.",
         "sort_order": 1,
         "courses": [
           {"subject": "MUPD", "catalog": "135",  "title": "Music as a Profession 1",    "credits": 1, "is_required": True, "recommended": True},
@@ -1126,11 +1219,11 @@ MUSIC_PROGRAMS = [
           {"subject": "MUJZ", "catalog": "161",  "title": "Jazz Materials 2",           "credits": 3, "is_required": True, "recommended": True},
           {"subject": "MUJZ", "catalog": "170",  "title": "Jazz Keyboard Proficiency 1","credits": 1, "is_required": True, "recommended": True},
           {"subject": "MUJZ", "catalog": "171",  "title": "Jazz Keyboard Proficiency 2","credits": 1, "is_required": True, "recommended": True},
-          {"subject": "MUJZ", "catalog": "186",  "title": "Jazz History Survey",        "credits": 3, "is_required": True, "recommended": True},
-          {"subject": "MUJZ", "catalog": "223",  "title": "Jazz Ear Training 1",        "credits": 2, "is_required": True, "recommended": True},
-          {"subject": "MUJZ", "catalog": "224",  "title": "Jazz Ear Training 2",        "credits": 2, "is_required": True, "recommended": True},
-          {"subject": "MUJZ", "catalog": "260",  "title": "Jazz Arranging 1",           "credits": 2, "is_required": True, "recommended": True},
-          {"subject": "MUJZ", "catalog": "261",  "title": "Jazz Arranging 2",           "credits": 2, "is_required": True, "recommended": True},
+          {"subject": "MUJZ", "catalog": "187",  "title": "Jazz History Survey",        "credits": 3, "is_required": True, "recommended": True},
+          {"subject": "MUSP", "catalog": "123",  "title": "Jazz Ear Training 1",        "credits": 2, "is_required": True, "recommended": True},
+          {"subject": "MUSP", "catalog": "124",  "title": "Jazz Ear Training 2",        "credits": 2, "is_required": True, "recommended": True},
+          {"subject": "MUJZ", "catalog": "260",  "title": "Jazz Arranging 1",           "credits": 3, "is_required": True, "recommended": True},
+          {"subject": "MUJZ", "catalog": "261",  "title": "Jazz Arranging 2",           "credits": 3, "is_required": True, "recommended": True},
         ],
       },
       {
@@ -1158,14 +1251,14 @@ MUSIC_PROGRAMS = [
         "courses": [
           {"subject": "MUEN", "catalog": "570", "title": "Jazz Combo",          "credits": 1, "is_required": True,  "recommended": True, "recommendation_reason": "Required for multiple semesters"},
           {"subject": "MUEN", "catalog": "595", "title": "Jazz Ensembles",      "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop", "credits": 1, "is_required": False, "recommended": False,"choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop", "credits": 2, "is_required": False, "recommended": False,"choose_from_group": "ensembles"},
         ],
       },
     ],
   },
 
   # ══════════════════════════════════════════════════════════════════════════
-  # 13. CONCURRENT B.MUS. / B.ED. – MUSIC EDUCATION (170 credits)
+  # 15. CONCURRENT B.MUS. / B.ED. – MUSIC EDUCATION (170 credits)
   # ══════════════════════════════════════════════════════════════════════════
   {
     "program_key":   "bmus_bed_music_education",
@@ -1196,51 +1289,67 @@ MUSIC_PROGRAMS = [
       },
       {
         "block_key": "bmus_bed_music_ed_courses",
-        "title": "Music Education Courses (B.Mus. component)",
+        "title": "Music Education Courses (B.Mus. component – required)",
         "block_type": "required",
         "credits_needed": None, "courses_needed": None, "group_name": None,
-        "notes": "Instrumental and vocal techniques, conducting, and music education laboratory courses required in the B.Mus. Music Education component.",
+        "notes": "Required Music Education technique and pedagogy courses in the B.Mus. Music Education component. Source: mcgill.ca/music/programs/bmus/bmus-bed/requirements",
         "sort_order": 2,
         "courses": [
-          {"subject": "MUCO", "catalog": "260",  "title": "Instruments of the Orchestra",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required for developing pedagogy of orchestral instruments"},
-          {"subject": "MUCT", "catalog": "310",  "title": "Choral Conducting 1",                "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Conducting fundamentals required for music educators"},
-          {"subject": "MUGT", "catalog": "211",  "title": "Guitar Techniques",                  "credits": 2, "is_required": False,"recommended": True, "recommendation_reason": "Class guitar for music educators"},
-          {"subject": "MUIT", "catalog": "200",  "title": "Brass Techniques",                   "credits": 2, "is_required": False,"recommended": True, "recommendation_reason": "Required instrument technique courses"},
-          {"subject": "MUIT", "catalog": "201",  "title": "Woodwind Techniques",                "credits": 2, "is_required": False,"recommended": True},
-          {"subject": "MUIT", "catalog": "202",  "title": "String Techniques",                  "credits": 2, "is_required": False,"recommended": True},
-          {"subject": "MUIT", "catalog": "203",  "title": "Percussion Techniques",              "credits": 2, "is_required": False,"recommended": True},
-          {"subject": "MUGT", "catalog": "320",  "title": "Group Voice for Music Educators",    "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "Vocal techniques for music educators"},
+          {"subject": "MUCT", "catalog": "235",  "title": "Vocal Techniques",                        "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required vocal techniques course for music educators"},
+          {"subject": "MUGT", "catalog": "215",  "title": "Basic Conducting Techniques",             "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Conducting fundamentals required for music educators"},
+          {"subject": "MUGT", "catalog": "354",  "title": "Music for Children",                      "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Elementary music education methods required course"},
+          {"subject": "MUGT", "catalog": "358",  "title": "General Music for Adults and Teenagers",  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Secondary music education methods required course"},
+          {"subject": "MUGT", "catalog": "401",  "title": "Issues in Music Education",               "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Music education theory and current issues; required"},
+          {"subject": "MUIT", "catalog": "202",  "title": "Woodwind Techniques",                     "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required woodwind pedagogy for music educators"},
+          {"subject": "MUIT", "catalog": "203",  "title": "Brass Techniques",                        "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required brass pedagogy for music educators"},
+          {"subject": "MUIT", "catalog": "204",  "title": "Percussion Techniques",                   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required percussion pedagogy for music educators"},
+          {"subject": "MUIT", "catalog": "356",  "title": "Jazz Instruction: Philosophy and Techniques", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Jazz pedagogy required for music educators"},
         ],
       },
       {
         "block_key": "bmus_bed_education",
-        "title": "B.Ed. Education Component",
+        "title": "B.Ed. Education Component – Required Courses",
         "block_type": "required",
         "credits_needed": None, "courses_needed": None, "group_name": None,
-        "notes": "Education courses from the Faculty of Education: foundations, pedagogy, and four field-experience practica. Refer to the Faculty of Education for full course listings.",
+        "notes": "Required Education courses from the Faculty of Education: professional seminars (EDEA), Music Education methods (EDEA 442/472), foundations, and four music field-experience practica (EDFE). Source: mcgill.ca/music/programs/bmus/bmus-bed/requirements",
         "sort_order": 3,
         "courses": [
-          {"subject": "EDEE", "catalog": "280",  "title": "Music Education: Elementary",           "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Elementary music teaching methods"},
-          {"subject": "EDEE", "catalog": "380",  "title": "Music Education: Secondary",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Secondary music teaching methods"},
-          {"subject": "EDEE", "catalog": "310",  "title": "Foundations of Education",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Educational theory required in B.Ed. component"},
-          {"subject": "EDEE", "catalog": "420",  "title": "Field Experience Practicum 1",          "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "First supervised teaching practicum"},
-          {"subject": "EDEE", "catalog": "421",  "title": "Field Experience Practicum 2",          "credits": 6, "is_required": True, "recommended": True, "recommendation_reason": "Second supervised teaching practicum"},
-          {"subject": "EDEE", "catalog": "422",  "title": "Field Experience Practicum 3",          "credits": 6, "is_required": True, "recommended": True, "recommendation_reason": "Third supervised teaching practicum"},
-          {"subject": "EDEE", "catalog": "490",  "title": "Student Teaching",                      "credits": 9, "is_required": True, "recommended": True, "recommendation_reason": "Final full-time student teaching placement; Year 5"},
+          {"subject": "EDEA", "catalog": "206",  "title": "First Year Professional Seminar (Music)", "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Professional orientation for concurrent music education students; Year 1"},
+          {"subject": "EDEA", "catalog": "208",  "title": "Second Professional Seminar (Music)",     "credits": 1, "is_required": True, "recommended": True, "recommendation_reason": "Continued professional development for music education students"},
+          {"subject": "EDEA", "catalog": "407",  "title": "Final Year Professional Seminar Music",   "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Capstone professional seminar; Year 4–5"},
+          {"subject": "EDEA", "catalog": "442",  "title": "Methods in Music Education 1",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Elementary music teaching methods; required B.Ed. course"},
+          {"subject": "EDEA", "catalog": "472",  "title": "Methods in Music Education 2",            "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Secondary music teaching methods; required B.Ed. course"},
+          {"subject": "EDEC", "catalog": "215",  "title": "English Exam for Teacher Certification (EETC)", "credits": 0, "is_required": True, "recommended": True, "recommendation_reason": "Required for Quebec teacher certification"},
+          {"subject": "EDEC", "catalog": "247",  "title": "Policy Issues in Quebec and Indigenous Education", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required for Quebec teacher certification"},
+          {"subject": "EDEC", "catalog": "260",  "title": "Philosophical Foundations of Education", "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required educational theory course"},
+          {"subject": "EDEC", "catalog": "262",  "title": "Media, Technology and Education",        "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required educational technology course"},
+          {"subject": "EDES", "catalog": "350",  "title": "Classroom Practices",                    "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required classroom management and instructional strategies"},
+          {"subject": "EDFE", "catalog": "205",  "title": "First Field Experience (Music)",         "credits": 2, "is_required": True, "recommended": True, "recommendation_reason": "First music teaching practicum; Year 1–2"},
+          {"subject": "EDFE", "catalog": "208",  "title": "Second Field Experience (Music)",        "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Second music teaching practicum; Year 2–3"},
+          {"subject": "EDFE", "catalog": "308",  "title": "Third Field Experience (Music)",         "credits": 8, "is_required": True, "recommended": True, "recommendation_reason": "Extended music teaching practicum; Year 3–4"},
+          {"subject": "EDFE", "catalog": "407",  "title": "Fourth Field Experience (Music)",        "credits": 7, "is_required": True, "recommended": True, "recommendation_reason": "Final supervised student teaching placement; Year 5"},
+          {"subject": "EDPI", "catalog": "341",  "title": "Instruction in Inclusive Schools",       "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Required inclusive education course for Quebec certification"},
         ],
       },
       {
         "block_key": "bmus_bed_ensembles",
-        "title": "Ensembles",
-        "block_type": "required",
-        "credits_needed": 6,
+        "title": "Ensembles (Performance component)",
+        "block_type": "choose_credits",
+        "credits_needed": 4,
         "courses_needed": None, "group_name": None,
-        "notes": "6 credits of MUEN ensembles across the program.",
+        "notes": "4 credits from approved MUEN ensemble courses. Students choose based on their principal instrument/voice.",
         "sort_order": 4,
         "courses": [
-          {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra", "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",          "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
-          {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",     "credits": 2, "is_required": False, "recommended": True, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "563", "title": "Jazz Vocal Workshop",           "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "572", "title": "Cappella Antica",               "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "573", "title": "Baroque Orchestra",             "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "587", "title": "Cappella McGill",               "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "590", "title": "McGill Wind Orchestra",         "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "592", "title": "Chamber Jazz Ensemble",         "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "593", "title": "Choral Ensembles",              "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "594", "title": "Contemporary Music Ensemble",   "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "595", "title": "Jazz Ensembles",                "credits": 2, "is_required": False, "recommended": False, "choose_from_group": "ensembles"},
+          {"subject": "MUEN", "catalog": "597", "title": "McGill Symphony Orchestra",     "credits": 2, "is_required": False, "recommended": True,  "choose_from_group": "ensembles"},
         ],
       },
     ],

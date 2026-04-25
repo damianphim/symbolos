@@ -204,7 +204,7 @@ SPOT_PROGRAMS = [
            "notes": "Choose ANAT 321 or ANAT 323 (not both)."},
           {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
           {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits)", "credits": 0, "is_required": True},
-          {"subject": "OCC1", "catalog": "245",  "title": "Introduction to Professional Practice 1 (OT)", "credits": 3, "is_required": True},
+          {"subject": "OCC1", "catalog": "245",  "title": "Introduction to Professional Practice 1", "credits": 3, "is_required": True},
           {"subject": "OCC1", "catalog": "443",  "title": "Constructing Mental Health", "credits": 3, "is_required": True},
           {"subject": "OCC1", "catalog": "450",  "title": "Enabling Leisure Occupations", "credits": 3, "is_required": True},
           {"subject": "OCC1", "catalog": "500",  "title": "Pre-Clinical Practicum Seminar (D1/D2)", "credits": 3, "is_required": True,

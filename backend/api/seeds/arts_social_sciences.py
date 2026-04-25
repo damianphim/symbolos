@@ -997,7 +997,7 @@ ARTS_SOCIAL_SCIENCES = [
         "courses": [
           {"subject":"SOCI","catalog":"210","title":"Sociological Perspectives","credits":3,"is_required":True,"recommended":True},
           {"subject":"SOCI","catalog":"211","title":"Sociological Inquiry","credits":3,"is_required":True,"recommended":True},
-          {"subject":"SOCI","catalog":"330","title":"Classical Sociological Theory OR","credits":3,"is_required":False,"choose_from_group":"theory_or_stats","choose_n_credits":3,"recommended":True},
+          {"subject":"SOCI","catalog":"330","title":"Sociological Theory","credits":3,"is_required":False,"choose_from_group":"theory_or_stats","choose_n_credits":3,"recommended":True},
           {"subject":"SOCI","catalog":"350","title":"Statistics in Social Research","credits":3,"is_required":False,"choose_from_group":"theory_or_stats","choose_n_credits":3},
         ],
       },

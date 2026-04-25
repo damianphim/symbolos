@@ -87,17 +87,17 @@ ENVIRONMENT_PROGRAMS = [
       },
       {
         "block_key":      "eco_det_ba_health_env_required",
-        "title":          "Concentration: Required – Health and Environment (6 credits)",
-        "block_type":     "required",
-        "credits_needed": 6,
-        "courses_needed": None,
+        "title":          "Concentration: Health and Environment (3 credits, choose one)",
+        "block_type":     "choose_courses",
+        "credits_needed": 3,
+        "courses_needed": 1,
         "group_name":     None,
-        "notes":          "Both GEOG/NRSC 221 (3 cr) AND GEOG 303 (3 cr) are required.",
+        "notes":          "Choose ONE of GEOG 221, GEOG 303, or NRSC 221 (3 credits). Note: GEOG 303 may be taken as a second Health and Environment course under List A or List B if desired.",
         "sort_order": 3,
         "courses": [
-          {"subject": "GEOG", "catalog": "221",  "title": "Environment and Health",   "credits": 3, "is_required": True,  "recommended": True, "recommendation_reason": "Required; equivalent: NRSC 221 (Mac)"},
-          {"subject": "NRSC", "catalog": "221",  "title": "Environment and Health",   "credits": 3, "is_required": False, "notes": "Macdonald campus equivalent of GEOG 221. Take one or the other."},
-          {"subject": "GEOG", "catalog": "303",  "title": "Health Geography",         "credits": 3, "is_required": True,  "recommended": True, "recommendation_reason": "Required concentration course"},
+          {"subject": "GEOG", "catalog": "221",  "title": "Environment and Health",   "credits": 3, "is_required": False, "recommended": True, "recommendation_reason": "Downtown campus option for Health and Environment"},
+          {"subject": "GEOG", "catalog": "303",  "title": "Health Geography",         "credits": 3, "is_required": False, "recommended": True, "recommendation_reason": "Downtown campus Health Geography option"},
+          {"subject": "NRSC", "catalog": "221",  "title": "Environment and Health",   "credits": 3, "is_required": False, "notes": "Macdonald campus equivalent of GEOG 221."},
         ],
       },
       {
@@ -111,6 +111,7 @@ ENVIRONMENT_PROGRAMS = [
         "sort_order": 4,
         "courses": [
           # Health and Infection
+          {"subject": "GEOG", "catalog": "403",  "title": "Global Health and Environmental Change",     "credits": 3, "is_required": False, "choose_from_group": "Health and Infection"},
           {"subject": "GEOG", "catalog": "493",  "title": "Health and Environment in Africa",           "credits": 3, "is_required": False, "choose_from_group": "Health and Infection"},
           {"subject": "GEOG", "catalog": "503",  "title": "Advanced Topics in Health Geography",        "credits": 3, "is_required": False, "choose_from_group": "Health and Infection"},
           {"subject": "PARA", "catalog": "410",  "title": "Environment and Infection",                  "credits": 3, "is_required": False, "choose_from_group": "Health and Infection", "notes": "Macdonald campus"},
@@ -146,6 +147,7 @@ ENVIRONMENT_PROGRAMS = [
           {"subject": "SOCI", "catalog": "331",  "title": "Population and Environment",                  "credits": 3, "is_required": False, "choose_from_group": "Health and Society"},
           {"subject": "SOCI", "catalog": "515",  "title": "Medicine and Society",                        "credits": 3, "is_required": False, "choose_from_group": "Health and Society"},
           # Hydrology and Climate
+          {"subject": "AGRI", "catalog": "452",  "title": "Water Resources in Barbados",                 "credits": 3, "is_required": False, "choose_from_group": "Hydrology and Climate", "notes": "Field: Barbados."},
           {"subject": "BREE", "catalog": "217",  "title": "Hydrology and Water Resources",               "credits": 3, "is_required": False, "choose_from_group": "Hydrology and Climate", "notes": "Macdonald campus. Cannot take both BREE 217 and GEOG 322."},
           {"subject": "GEOG", "catalog": "321",  "title": "Climatic Environments",                       "credits": 3, "is_required": False, "choose_from_group": "Hydrology and Climate"},
           {"subject": "GEOG", "catalog": "322",  "title": "Environmental Hydrology",                     "credits": 3, "is_required": False, "choose_from_group": "Hydrology and Climate", "notes": "Cannot take both BREE 217 and GEOG 322."},
@@ -172,6 +174,8 @@ ENVIRONMENT_PROGRAMS = [
           {"subject": "ANTH", "catalog": "339",  "title": "Ecological Anthropology",                    "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
           {"subject": "ANTH", "catalog": "512",  "title": "Political Ecology",                          "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
           {"subject": "ENVR", "catalog": "421",  "title": "Montreal: Environmental History and Sustainability", "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology", "notes": "Alternate years, Summer term"},
+          {"subject": "GEOG", "catalog": "300",  "title": "Human Ecology in Geography",                 "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
+          {"subject": "GEOG", "catalog": "310",  "title": "Development and Livelihoods",                "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
           {"subject": "SOCI", "catalog": "254",  "title": "Development and Underdevelopment",           "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
           {"subject": "SOCI", "catalog": "365",  "title": "Health and Development",                     "credits": 3, "is_required": False, "choose_from_group": "Development and Ecology"},
         ],
@@ -195,8 +199,10 @@ ENVIRONMENT_PROGRAMS = [
           {"subject": "ENVB", "catalog": "500",  "title": "Advanced Topics in Ecotoxicology",           "credits": 3, "is_required": False, "choose_from_group": "Advanced Ecology", "notes": "Macdonald campus. Alternate years, Fall."},
           {"subject": "NRSC", "catalog": "451",  "title": "Research in Ecology and Development in Africa", "credits": 3, "is_required": False, "choose_from_group": "Advanced Ecology", "notes": "Macdonald campus. Field: Africa. Cannot take both BIOL 451 and NRSC 451."},
           # Pollution Control and Pest Management
+          {"subject": "ENTO", "catalog": "350",  "title": "Insect Biology and Control",                  "credits": 3, "is_required": False, "choose_from_group": "Pollution Control"},
           {"subject": "ENTO", "catalog": "352",  "title": "Biocontrol of Pest Insects",                  "credits": 3, "is_required": False, "choose_from_group": "Pollution Control"},
           {"subject": "NRSC", "catalog": "333",  "title": "Pollution and Bioremediation",               "credits": 3, "is_required": False, "choose_from_group": "Pollution Control", "notes": "Macdonald campus"},
+          {"subject": "PARA", "catalog": "515",  "title": "Water, Health and Sanitation",               "credits": 3, "is_required": False, "choose_from_group": "Pollution Control", "notes": "Macdonald campus"},
           # Techniques and Management
           {"subject": "AEBI", "catalog": "423",  "title": "Sustainable Land Use",                       "credits": 3, "is_required": False, "choose_from_group": "Techniques and Management", "notes": "Macdonald campus. Field: Barbados."},
           {"subject": "ENVB", "catalog": "529",  "title": "GIS for Natural Resource Management",        "credits": 3, "is_required": False, "choose_from_group": "Techniques and Management", "notes": "Macdonald campus. Cannot take both ENVB 529 and GEOG 201."},
@@ -320,7 +326,6 @@ ENVIRONMENT_PROGRAMS = [
           {"subject": "AEMA", "catalog": "310",  "title": "Statistical Methods 1",               "credits": 3, "is_required": False, "notes": "Macdonald campus"},
           {"subject": "GEOG", "catalog": "202",  "title": "Statistics and Spatial Analysis",     "credits": 3, "is_required": False},
           {"subject": "MATH", "catalog": "203",  "title": "Principles of Statistics 1",          "credits": 3, "is_required": False, "recommended": True, "recommendation_reason": "Widely available statistics option"},
-          {"subject": "PSYC", "catalog": "204",  "title": "Introduction to Psychological Statistics", "credits": 3, "is_required": False},
         ],
       },
       {
@@ -390,9 +395,9 @@ ENVIRONMENT_PROGRAMS = [
           {"subject": "BIOL", "catalog": "343",  "title": "Biodiversity in the Caribbean",           "credits": 3, "is_required": False, "notes": "Field: Barbados."},
           {"subject": "BREE", "catalog": "217",  "title": "Hydrology and Water Resources",           "credits": 3, "is_required": False, "notes": "Macdonald campus. Cannot take with GEOG 322."},
           {"subject": "ENVB", "catalog": "305",  "title": "Population and Community Ecology",        "credits": 3, "is_required": False, "notes": "Macdonald campus. Cannot take with BIOL 308."},
+          {"subject": "EPSC", "catalog": "325",  "title": "Environmental Geochemistry",              "credits": 3, "is_required": False},
           {"subject": "EPSC", "catalog": "355",  "title": "Sedimentary Geology",                     "credits": 3, "is_required": False, "notes": "Offered winter 2025 and alternate winters"},
           {"subject": "EPSC", "catalog": "549",  "title": "Hydrogeology",                            "credits": 3, "is_required": False},
-          {"subject": "GEOG", "catalog": "305",  "title": "Soils and Environment",                   "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "322",  "title": "Environmental Hydrology",                 "credits": 3, "is_required": False, "notes": "Cannot take with BREE 217."},
           {"subject": "SOIL", "catalog": "300",  "title": "Geosystems",                              "credits": 3, "is_required": False, "notes": "Macdonald campus"},
         ],
@@ -604,61 +609,62 @@ ENVIRONMENT_PROGRAMS = [
       "perspectives, and world views that will help them gain an understanding of the "
       "complexity and conflicts that underlie environmental problems. Complements "
       "any major or faculty program outside the Bieler School of Environment. "
+      "Requires all four core ENVR courses (200, 201, 202, 203) plus 6 credits of "
+      "electives with adviser approval (at least 3 credits in natural sciences). "
+      "No overlap allowed with the student's major or second minor. "
       "Students can add this to their record in Minerva."
     ),
-    "ecalendar_url": "https://coursecatalogue.mcgill.ca/en/undergraduate/environment/programs/minor-environment/environment-minor-ba/",
+    "ecalendar_url": "https://www.mcgill.ca/study/2024-2025/faculties/environment/undergraduate/programs/bachelor-arts-ba-minor-concentration-environment",
     "blocks": [
       {
         "block_key":      "env_minor_ba_required",
-        "title":          "Required Courses (9 credits)",
+        "title":          "Required Courses (12 credits)",
         "block_type":     "required",
-        "credits_needed": 9,
+        "credits_needed": 12,
         "courses_needed": None,
         "group_name":     None,
-        "notes":          "Three core ENVR courses required for all minor students.",
+        "notes":          "All four core ENVR courses are required for the minor.",
         "sort_order": 1,
         "courses": [
-          {"subject": "ENVR", "catalog": "200", "title": "The Global Environment",              "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Start here – first required course"},
+          {"subject": "ENVR", "catalog": "200", "title": "The Global Environment",                  "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Start here – first required course"},
           {"subject": "ENVR", "catalog": "201", "title": "Society, Environment and Sustainability", "credits": 3, "is_required": True},
-          {"subject": "ENVR", "catalog": "400", "title": "Environmental Thought",               "credits": 3, "is_required": True, "recommended": True, "recommendation_reason": "Senior required course – take in U3"},
+          {"subject": "ENVR", "catalog": "202", "title": "The Evolving Earth",                      "credits": 3, "is_required": True},
+          {"subject": "ENVR", "catalog": "203", "title": "Knowledge, Ethics and Environment",       "credits": 3, "is_required": True},
         ],
       },
       {
         "block_key":      "env_minor_ba_complementary",
-        "title":          "Complementary Courses (9 credits)",
+        "title":          "Complementary Courses (6 credits)",
         "block_type":     "choose_credits",
-        "credits_needed": 9,
+        "credits_needed": 6,
         "courses_needed": None,
         "group_name":     None,
-        "notes":          "Choose 9 credits from the approved complementary course list. At least 6 credits at the 400 level or above.",
+        "notes": (
+          "Choose 6 credits of environmentally-related courses with adviser approval. "
+          "At least 3 credits must be in natural sciences. All courses at the 200 level or above. "
+          "No overlap with the student's major program. Consult the Program Adviser for the "
+          "full approved course list, which spans Social Sciences/Policy and Natural Sciences/Technology."
+        ),
         "sort_order": 2,
         "courses": [
-          {"subject": "AGEC", "catalog": "442",  "title": "Economics of International Agricultural Development", "credits": 3, "is_required": False, "notes": "Macdonald campus"},
-          {"subject": "AGRI", "catalog": "411",  "title": "Global Issues on Development, Food and Agriculture", "credits": 3, "is_required": False, "notes": "Macdonald campus"},
+          # Social Sciences and Policy (selected examples)
           {"subject": "ANTH", "catalog": "206",  "title": "Environment and Culture",                   "credits": 3, "is_required": False},
-          {"subject": "ANTH", "catalog": "212",  "title": "Anthropology of Development",               "credits": 3, "is_required": False},
           {"subject": "ANTH", "catalog": "339",  "title": "Ecological Anthropology",                   "credits": 3, "is_required": False},
-          {"subject": "ANTH", "catalog": "418",  "title": "Environment and Development",               "credits": 3, "is_required": False},
           {"subject": "ECON", "catalog": "225",  "title": "Economics of the Environment",              "credits": 3, "is_required": False},
           {"subject": "ECON", "catalog": "326",  "title": "Ecological Economics",                      "credits": 3, "is_required": False},
           {"subject": "ECON", "catalog": "347",  "title": "Economics of Climate Change",               "credits": 3, "is_required": False},
           {"subject": "ECON", "catalog": "405",  "title": "Natural Resource Economics",                "credits": 3, "is_required": False},
-          {"subject": "ENVB", "catalog": "437",  "title": "Assessing Environmental Impact",           "credits": 3, "is_required": False},
-          {"subject": "ENVR", "catalog": "201",  "title": "Society, Environment and Sustainability",   "credits": 3, "is_required": False},
-          {"subject": "ENVR", "catalog": "203",  "title": "Knowledge, Ethics and Environment",         "credits": 3, "is_required": False},
-          {"subject": "ENVR", "catalog": "421",  "title": "Montreal: Environmental History and Sustainability", "credits": 3, "is_required": False, "notes": "Alternate years, May term"},
-          {"subject": "GEOG", "catalog": "216",  "title": "Climate Change: From Science to Solution",  "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "302",  "title": "Environmental Management 1",                "credits": 3, "is_required": False},
           {"subject": "GEOG", "catalog": "303",  "title": "Health Geography",                          "credits": 3, "is_required": False},
-          {"subject": "GEOG", "catalog": "322",  "title": "Environmental Hydrology",                   "credits": 3, "is_required": False},
-          {"subject": "GEOG", "catalog": "423",  "title": "Dilemmas of Development",                   "credits": 3, "is_required": False, "notes": "Field: Africa."},
-          {"subject": "GEOG", "catalog": "530",  "title": "Global Land and Water Resources",           "credits": 3, "is_required": False},
           {"subject": "HIST", "catalog": "292",  "title": "History and the Environment",               "credits": 3, "is_required": False},
           {"subject": "POLI", "catalog": "350",  "title": "Global Environmental Politics",             "credits": 3, "is_required": False, "recommended": True, "recommendation_reason": "Excellent upper-level complementary choice"},
-          {"subject": "POLI", "catalog": "412",  "title": "Canadian Voting/Public Opinion",            "credits": 3, "is_required": False},
-          {"subject": "POLI", "catalog": "445",  "title": "International Political Economy: Monetary Relations", "credits": 3, "is_required": False},
-          {"subject": "SOCI", "catalog": "234",  "title": "Population and Society",                    "credits": 3, "is_required": False},
-          {"subject": "SOCI", "catalog": "307",  "title": "Globalization",                             "credits": 3, "is_required": False},
+          {"subject": "SOCI", "catalog": "254",  "title": "Development and Underdevelopment",          "credits": 3, "is_required": False},
+          # Natural Sciences and Technology (selected examples)
+          {"subject": "BIOL", "catalog": "308",  "title": "Ecological Dynamics",                       "credits": 3, "is_required": False},
+          {"subject": "BIOL", "catalog": "465",  "title": "Conservation Biology",                      "credits": 3, "is_required": False},
+          {"subject": "ENVB", "catalog": "437",  "title": "Assessing Environmental Impact",            "credits": 3, "is_required": False},
+          {"subject": "GEOG", "catalog": "216",  "title": "Climate Change: From Science to Solution",  "credits": 3, "is_required": False},
+          {"subject": "GEOG", "catalog": "322",  "title": "Environmental Hydrology",                   "credits": 3, "is_required": False},
         ],
       },
     ],
@@ -711,7 +717,13 @@ ENVIRONMENT_PROGRAMS = [
         "credits_needed": 12,
         "courses_needed": None,
         "group_name":     None,
-        "notes":          "Choose 12 credits. At least 6 at the 400 level or higher. All courses at 200+ level and grade C or better. Notes: Cannot take both LSCI 230 and MIMM 211; ENVB 529 and GEOG 201; BREE 217/CIVE 323/GEOG 322 (only one); BIOL 308 and ENVB 305; BIOL 465 and WILD 421; COMP 202 and COMP 204; EPSC 201 and EPSC 233; GEOG 272 and SOIL 300.",
+        "notes": (
+          "Choose 12 credits of environmentally-related courses with Program Adviser approval. "
+          "3 credits must be outside the student's previous degree field (natural sciences for arts graduates; "
+          "social sciences for science graduates). 9 credits in a chosen focus area; at least 6 of these at "
+          "the 400-level or higher. All courses at the 200+ level; grade of C or better required. "
+          "The following are suggested courses — alternatives may be approved by the adviser."
+        ),
         "sort_order": 2,
         "courses": [
           {"subject": "AGEC", "catalog": "231",  "title": "Economic Systems of Agriculture",         "credits": 3, "is_required": False, "notes": "Macdonald campus"},

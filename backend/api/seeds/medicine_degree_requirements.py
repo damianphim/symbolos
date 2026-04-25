@@ -18,9 +18,8 @@ Accuracy notes:
       * Clerkship — Years 3 & 4
   - Most MDCM courses use the "INDS" (Interdisciplinary Studies) prefix and are
     shared between Medicine (MDCM) and Dentistry (DMD) students in Years 1-2.
-  - INDS 125/225/325/423/424 are integrated assessment courses (0 credits each).
-  - Elective credits (ELEC 400-404): 4 required = 200-credit total; 5th optional
-    brings the maximum to 204 credits.
+  - INDS 125/225/323/423/424 are integrated assessment courses (0 credits each).
+  - Elective credits (ELEC 400=4cr, ELEC 401-403=3cr each, ELEC 404=3cr optional).
   - Med-P is a 1-year qualifying year registered in the Faculty of Science.
     Students must achieve CGPA >= 3.5 with all required-course grades >= B.
   - CPR/AED (Level C+) certification is required and must remain current.
@@ -42,8 +41,8 @@ MEDICINE_PROGRAMS = [
     "faculty":       "Faculty of Medicine and Health Sciences",
     "total_credits": 200,
     "ecalendar_url": (
-        "https://coursecatalogue.mcgill.ca/en/undergraduate/"
-        "medicine-health-sciences/professional/programs/mdcm/"
+        "https://www.mcgill.ca/study/2024-2025/faculties/medicine/undergraduate/programs/"
+        "doctor-medicine-and-master-surgery-mdcm-medicine-200-204-credits"
     ),
     "description": (
         "The M.D.,C.M. is McGill's flagship four-year medical degree. The curriculum "
@@ -56,35 +55,6 @@ MEDICINE_PROGRAMS = [
         "settings, not independently. Full details: mcgill.ca/ugme"
     ),
     "blocks": [
-
-      {
-        "block_key":      "mdcm_physicianship",
-        "title":          "Physicianship - Longitudinal (Years 1-4)",
-        "block_type":     "required",
-        "credits_needed": 14,
-        "notes": (
-            "Physicianship runs continuously across all four years, developing the dual "
-            "roles of the physician as professional and healer. Includes Clinical Method "
-            "1 (Y1), Clinical Method 2 & 3 (Y2), the Community Health Alliance Program "
-            "(CHAP, Y2), Mindful Medical Practice (Y2), Medical Ethics and Health Law "
-            "(Y2), Formation of the Professional & Healer (Y3), and the longitudinal "
-            "Physician Apprenticeship 4 (D1/D2). Students are assigned in groups of "
-            "6-7 to an Osler Fellow mentor throughout the program."
-        ),
-        "courses": [
-          {"subject": "INDS", "catalog": "121J1",  "title": "Clinical Method 1",                            "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "121J2",  "title": "Clinical Method 1",                            "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "121J3",  "title": "Clinical Method 1",                            "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "221",    "title": "Clinical Method 2",                            "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "222",    "title": "Community Health Alliance Program (CHAP)",     "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "224",    "title": "Medical Ethics and Health Law",                "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "226",    "title": "Mindful Medical Practice",                     "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "321",    "title": "Clinical Method 3",                            "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "323",    "title": "Formation of the Professional & Healer",       "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "422D1",  "title": "Physician Apprenticeship 4",                   "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "422D2",  "title": "Physician Apprenticeship 4",                   "credits": 1, "is_required": True},
-        ],
-      },
 
       {
         "block_key":      "mdcm_fmd_year1_systems",
@@ -100,17 +70,17 @@ MEDICINE_PROGRAMS = [
             "awarded only if all three J-sections are completed consecutively."
         ),
         "courses": [
-          {"subject": "INDS", "catalog": "111",    "title": "Molecules to Global Health",  "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "112",    "title": "Respiration",                 "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "113",    "title": "Circulation",                 "credits": 8, "is_required": True},
-          {"subject": "INDS", "catalog": "114",    "title": "Digestion and Metabolism",    "credits": 8, "is_required": True},
-          {"subject": "INDS", "catalog": "115",    "title": "Renal",                       "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "116",    "title": "Defense",                     "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "117",    "title": "Endocrine",                   "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "118",    "title": "Movement",                    "credits": 6, "is_required": True},
-          {"subject": "INDS", "catalog": "125J1",  "title": "FMD Integrated Assessment 1", "credits": 0, "is_required": True},
-          {"subject": "INDS", "catalog": "125J2",  "title": "FMD Integrated Assessment 1", "credits": 0, "is_required": True},
-          {"subject": "INDS", "catalog": "125J3",  "title": "FMD Integrated Assessment 1", "credits": 0, "is_required": True},
+          {"subject": "INDS", "catalog": "111",   "title": "Molecules to Global Health",   "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "112",   "title": "Respiration",                  "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "113",   "title": "Circulation",                  "credits": 8, "is_required": True},
+          {"subject": "INDS", "catalog": "114",   "title": "Digestion and Metabolism",     "credits": 8, "is_required": True},
+          {"subject": "INDS", "catalog": "115",   "title": "Renal",                        "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "116",   "title": "Defense",                      "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "117",   "title": "Infection",                    "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "118",   "title": "Movement",                     "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "125J1", "title": "FMD Integrated Assessment 1",  "credits": 0, "is_required": True},
+          {"subject": "INDS", "catalog": "125J2", "title": "FMD Integrated Assessment 1",  "credits": 0, "is_required": True},
+          {"subject": "INDS", "catalog": "125J3", "title": "FMD Integrated Assessment 1",  "credits": 0, "is_required": True},
         ],
       },
 
@@ -118,21 +88,33 @@ MEDICINE_PROGRAMS = [
         "block_key":      "mdcm_fmd_year1_longitudinal",
         "title":          "Fundamentals of Medicine and Dentistry - Longitudinal Courses (Year 1)",
         "block_type":     "required",
-        "credits_needed": 6,
+        "credits_needed": 11,   # 3 (CM1) + ~2 (PA1) + 3 (RF1) + 3 (LFME) = ~11 credits
         "notes": (
-            "INDS 123 (Research Fundamentals 1) runs across all three terms of Year 1; "
-            "no credit is awarded unless all three J-sections are completed consecutively. "
-            "RF1 focuses on formulating a research proposal. INDS 124 (Longitudinal Family "
-            "Medicine Experience) pairs each MDCM student with a family physician preceptor "
-            "from the very first month of medical school for early clinical exposure."
+            "INDS 119 (Clinical Method 1) and INDS 122 (Physician Apprenticeship 1) run "
+            "across all three terms of Year 1 as J-section courses; no credit is awarded "
+            "unless all three J-sections are completed consecutively. INDS 123 (Research "
+            "Fundamentals 1) focuses on formulating a research proposal. INDS 124 "
+            "(Longitudinal Family Medicine Experience) pairs each MDCM student with a "
+            "family physician preceptor from the first month of medical school for early "
+            "clinical exposure."
         ),
         "courses": [
-          {"subject": "INDS", "catalog": "123J1",  "title": "Research Fundamentals 1",                 "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "123J2",  "title": "Research Fundamentals 1",                 "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "123J3",  "title": "Research Fundamentals 1",                 "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "124J1",  "title": "Longitudinal Family Medicine Experience",  "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "124J2",  "title": "Longitudinal Family Medicine Experience",  "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "124J3",  "title": "Longitudinal Family Medicine Experience",  "credits": 1, "is_required": True},
+          # Clinical Method 1 (J1+J2+J3 = 3 credits)
+          {"subject": "INDS", "catalog": "119J1", "title": "Clinical Method 1",           "credits": 1,    "is_required": True},
+          {"subject": "INDS", "catalog": "119J2", "title": "Clinical Method 1",           "credits": 1,    "is_required": True},
+          {"subject": "INDS", "catalog": "119J3", "title": "Clinical Method 1",           "credits": 1,    "is_required": True},
+          # Physician Apprenticeship 1 (J1+J2+J3 = 2.01 credits ≈ 2 credits)
+          {"subject": "INDS", "catalog": "122J1", "title": "Physician Apprenticeship 1",  "credits": 0.67, "is_required": True},
+          {"subject": "INDS", "catalog": "122J2", "title": "Physician Apprenticeship 1",  "credits": 0.67, "is_required": True},
+          {"subject": "INDS", "catalog": "122J3", "title": "Physician Apprenticeship 1",  "credits": 0.67, "is_required": True},
+          # Research Fundamentals 1 (J1+J2+J3 = 3 credits)
+          {"subject": "INDS", "catalog": "123J1", "title": "Research Fundamentals 1",     "credits": 1,    "is_required": True},
+          {"subject": "INDS", "catalog": "123J2", "title": "Research Fundamentals 1",     "credits": 1,    "is_required": True},
+          {"subject": "INDS", "catalog": "123J3", "title": "Research Fundamentals 1",     "credits": 1,    "is_required": True},
+          # Longitudinal Family Medicine Experience (J1+J2+J3 = 3 credits)
+          {"subject": "INDS", "catalog": "124J1", "title": "Longitudinal Family Medicine Experience", "credits": 1, "is_required": True},
+          {"subject": "INDS", "catalog": "124J2", "title": "Longitudinal Family Medicine Experience", "credits": 1, "is_required": True},
+          {"subject": "INDS", "catalog": "124J3", "title": "Longitudinal Family Medicine Experience", "credits": 1, "is_required": True},
         ],
       },
 
@@ -140,18 +122,49 @@ MEDICINE_PROGRAMS = [
         "block_key":      "mdcm_fmd_year2",
         "title":          "Fundamentals of Medicine and Dentistry - Year 2 (First Half)",
         "block_type":     "required",
-        "credits_needed": 19,
+        "credits_needed": 21,
         "notes": (
             "The FMD component continues into the first half of Year 2 with two major "
             "systems blocks: Reproduction & Sexuality (6 cr) and Human Behaviour (12 cr, "
-            "covering psychiatry and neuroscience). Research Fundamentals 2 (1.5 cr) is "
-            "completed concurrently. INDS 225 is the FMD Integrated Assessment 2."
+            "covering psychiatry and neuroscience). Research Fundamentals 2 (1.5 cr) and "
+            "Physician Apprenticeship 2 (INDS 222J1/J2/J3, 1.5 cr total) are completed "
+            "concurrently. INDS 225 is the FMD Integrated Assessment 2 (0 cr)."
         ),
         "courses": [
-          {"subject": "INDS", "catalog": "211",  "title": "Reproduction and Sexuality",  "credits": 6,   "is_required": True},
-          {"subject": "INDS", "catalog": "212",  "title": "Human Behaviour",             "credits": 12,  "is_required": True},
-          {"subject": "INDS", "catalog": "223",  "title": "Research Fundamentals 2",     "credits": 1.5, "is_required": True},
-          {"subject": "INDS", "catalog": "225",  "title": "FMD Integrated Assessment 2", "credits": 0,   "is_required": True},
+          {"subject": "INDS", "catalog": "211",   "title": "Reproduction and Sexuality",   "credits": 6,   "is_required": True},
+          {"subject": "INDS", "catalog": "212",   "title": "Human Behaviour",              "credits": 12,  "is_required": True},
+          {"subject": "INDS", "catalog": "223",   "title": "Research Fundamentals 2",      "credits": 1.5, "is_required": True},
+          # Physician Apprenticeship 2 (J1+J2+J3 = 1.5 credits)
+          {"subject": "INDS", "catalog": "222J1", "title": "Physician Apprenticeship 2",   "credits": 0.5, "is_required": True},
+          {"subject": "INDS", "catalog": "222J2", "title": "Physician Apprenticeship 2",   "credits": 0.5, "is_required": True},
+          {"subject": "INDS", "catalog": "222J3", "title": "Physician Apprenticeship 2",   "credits": 0.5, "is_required": True},
+          {"subject": "INDS", "catalog": "225",   "title": "FMD Integrated Assessment 2",  "credits": 0,   "is_required": True},
+        ],
+      },
+
+      {
+        "block_key":      "mdcm_physicianship",
+        "title":          "Physicianship - Longitudinal (Years 3-4)",
+        "block_type":     "required",
+        "credits_needed": 2,
+        "notes": (
+            "Physicianship continues longitudinally into clerkship years. Physician "
+            "Apprenticeship 3 (INDS 322J1/J2/J3, 1.5 cr) runs throughout Year 3 "
+            "Clerkship. Physician Apprenticeship 4 (INDS 422D1/D2, 0.5 cr) is the "
+            "final consolidating course in Year 4. IPEA 500 (Roles in Interprofessional "
+            "Teams, 0 cr) is also required. Students are assigned in groups of 6-7 to "
+            "an Osler Fellow mentor throughout the program."
+        ),
+        "courses": [
+          # Physician Apprenticeship 3 — Year 3 (J1+J2+J3 = 1.5 credits)
+          {"subject": "INDS", "catalog": "322J1", "title": "Physician Apprenticeship 3", "credits": 0.5,  "is_required": True},
+          {"subject": "INDS", "catalog": "322J2", "title": "Physician Apprenticeship 3", "credits": 0.5,  "is_required": True},
+          {"subject": "INDS", "catalog": "322J3", "title": "Physician Apprenticeship 3", "credits": 0.5,  "is_required": True},
+          # Physician Apprenticeship 4 — Year 4 (D1+D2 = 0.5 credits)
+          {"subject": "INDS", "catalog": "422D1", "title": "Physician Apprenticeship 4", "credits": 0.25, "is_required": True},
+          {"subject": "INDS", "catalog": "422D2", "title": "Physician Apprenticeship 4", "credits": 0.25, "is_required": True},
+          # Interprofessional Education — 0 credits
+          {"subject": "IPEA", "catalog": "500",   "title": "Roles in Interprofessional Teams", "credits": 0, "is_required": True},
         ],
       },
 
@@ -159,76 +172,94 @@ MEDICINE_PROGRAMS = [
         "block_key":      "mdcm_tcp",
         "title":          "Transition to Clinical Practice (TCP) - Year 2 (Second Half)",
         "block_type":     "required",
-        "credits_needed": 27,
+        "credits_needed": 31,   # ~31 credits (slight variation due to 0.67-credit CHAP courses)
         "notes": (
             "TCP bridges classroom learning and active patient care. Students consolidate "
             "history-taking, physical examination, and clinical reasoning through clinical "
-            "apprentice sessions across Internal Medicine, Neurology, Family Medicine, "
-            "Pediatrics, Surgery, Radiology, and Ophthalmology. Concludes with a short "
-            "Transition to Clerkship course (INDS 301)."
+            "apprentice sessions across Internal Medicine, Family Medicine, Anesthesia, "
+            "Neurology, Pediatrics, Surgery, Radiology, and Ophthalmology. Also includes "
+            "Clinical Method 2 (INDS 219), Community Health Alliance Project - C.H.A.P "
+            "(INDS 224J1/J2/J3), Mindful Medical Practice (INDS 300), Medical Ethics and "
+            "Health Law (INDS 302), Formation of the Professional and Healer (INDS 320J1/J2/J3), "
+            "and Transition to Clerkship (INDS 305). Concludes with TCP Integrated Assessment "
+            "(INDS 323, 0 cr)."
         ),
         "courses": [
-          {"subject": "IMED", "catalog": "301",  "title": "TCP Internal Medicine",              "credits": 7, "is_required": True},
-          {"subject": "FMED", "catalog": "301",  "title": "TCP Family Medicine",                "credits": 3, "is_required": True},
-          {"subject": "ANAE", "catalog": "301",  "title": "TCP Anesthesia",                     "credits": 2, "is_required": True},
-          {"subject": "NEUR", "catalog": "301",  "title": "TCP Neurology",                      "credits": 4, "is_required": True},
-          {"subject": "PAED", "catalog": "301",  "title": "TCP Pediatrics",                     "credits": 3, "is_required": True},
-          {"subject": "SURG", "catalog": "301",  "title": "TCP Surgery",                        "credits": 4, "is_required": True},
-          {"subject": "DIAD", "catalog": "301",  "title": "TCP Diagnostic Imaging / Radiology", "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "301",  "title": "Transition to Clerkship",            "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "325",  "title": "TCP Integrated Assessment",          "credits": 0, "is_required": True},
+          # Discipline rotations
+          {"subject": "IMED", "catalog": "301",  "title": "TCP Internal Medicine",              "credits": 7,    "is_required": True},
+          {"subject": "FMED", "catalog": "301",  "title": "TCP Family Medicine",                "credits": 3,    "is_required": True},
+          {"subject": "ANAE", "catalog": "301",  "title": "TCP Anesthesia",                     "credits": 2,    "is_required": True},
+          {"subject": "NEUR", "catalog": "301",  "title": "TCP Neurology",                      "credits": 2,    "is_required": True},
+          {"subject": "PAED", "catalog": "301",  "title": "TCP Pediatrics",                     "credits": 2,    "is_required": True},
+          {"subject": "SURG", "catalog": "301",  "title": "TCP Surgery",                        "credits": 4,    "is_required": True},
+          {"subject": "RADD", "catalog": "301",  "title": "TCP Radiology",                      "credits": 1,    "is_required": True},
+          {"subject": "OPTH", "catalog": "300",  "title": "TCP Ophthalmology",                  "credits": 1,    "is_required": True},
+          # Longitudinal TCP courses
+          {"subject": "INDS", "catalog": "219",   "title": "Clinical Method 2",                 "credits": 1.5,  "is_required": True},
+          {"subject": "INDS", "catalog": "224J1", "title": "Community Health Alliance Project - C.H.A.P", "credits": 0.67, "is_required": True},
+          {"subject": "INDS", "catalog": "224J2", "title": "Community Health Alliance Project - C.H.A.P", "credits": 0.67, "is_required": True},
+          {"subject": "INDS", "catalog": "224J3", "title": "Community Health Alliance Project - C.H.A.P", "credits": 0.67, "is_required": True},
+          {"subject": "INDS", "catalog": "300",   "title": "Mindful Medical Practice",          "credits": 1.5,  "is_required": True},
+          {"subject": "INDS", "catalog": "302",   "title": "Medical Ethics and Health Law",     "credits": 1.5,  "is_required": True},
+          {"subject": "INDS", "catalog": "305",   "title": "Transition to Clerkship",           "credits": 1,    "is_required": True},
+          {"subject": "INDS", "catalog": "320J1", "title": "Formation of the Professional and Healer", "credits": 0.5, "is_required": True},
+          {"subject": "INDS", "catalog": "320J2", "title": "Formation of the Professional and Healer", "credits": 0.5, "is_required": True},
+          {"subject": "INDS", "catalog": "320J3", "title": "Formation of the Professional and Healer", "credits": 0.5, "is_required": True},
+          # Assessment
+          {"subject": "INDS", "catalog": "323",  "title": "TCP Integrated Assessment",          "credits": 0,    "is_required": True},
         ],
       },
 
       {
         "block_key":      "mdcm_clerkship_year3",
-        "title":          "Clerkship - Year 3",
+        "title":          "Clerkship - Year 3 (Core Rotations)",
         "block_type":     "required",
-        "credits_needed": 41,
+        "credits_needed": 48,
         "notes": (
             "Year 3 Clerkship places students in active patient care under supervision "
             "across all core disciplines. Rotation sequence varies by student stream. "
             "Sites include the MUHC Glen Campus, Montreal General Hospital, Jewish General "
             "Hospital, Montreal Children's Hospital, and affiliated community hospitals. "
-            "INDS 423 is Clerkship Integrated Assessment 1 (progress test + OSCE)."
+            "INDS 423 is Clerkship Integrated Assessment 1 (progress test + OSCE, 0 cr). "
+            "ELEC 400 is a 4-credit (4-week) clinical/research elective taken in Year 3."
         ),
         "courses": [
           {"subject": "INDS", "catalog": "423",  "title": "Clerkship Integrated Assessment 1", "credits": 0, "is_required": True},
           {"subject": "IMED", "catalog": "401",  "title": "Internal Medicine Clerkship",        "credits": 8, "is_required": True},
-          {"subject": "SURG", "catalog": "401",  "title": "Surgery Clerkship",                  "credits": 8, "is_required": True},
-          {"subject": "FMED", "catalog": "405",  "title": "Family Medicine Clerkship",          "credits": 6, "is_required": True},
-          {"subject": "PSYT", "catalog": "401",  "title": "Psychiatric Medicine Clerkship",     "credits": 6, "is_required": True},
+          {"subject": "SURG", "catalog": "402",  "title": "Surgery Clerkship",                  "credits": 8, "is_required": True},
+          {"subject": "FMED", "catalog": "405",  "title": "Family Medicine Clerkship",          "credits": 8, "is_required": True},
+          {"subject": "PSYT", "catalog": "401",  "title": "Psychiatry Clerkship",               "credits": 8, "is_required": True},
           {"subject": "PAED", "catalog": "401",  "title": "Pediatrics Clerkship",               "credits": 6, "is_required": True},
-          {"subject": "OBGY", "catalog": "401",  "title": "Obstetrics & Gynecology Clerkship",  "credits": 6, "is_required": True},
-          {"subject": "ELEC", "catalog": "400",  "title": "Clinical / Research Elective 1",     "credits": 1, "is_required": True},
+          {"subject": "OBGY", "catalog": "401",  "title": "Obstetrics and Gynecology Clerkship","credits": 6, "is_required": True},
+          {"subject": "ELEC", "catalog": "400",  "title": "Elective 1 Clerkship",               "credits": 4, "is_required": True},
         ],
       },
 
       {
         "block_key":      "mdcm_clerkship_year4",
-        "title":          "Clerkship - Year 4",
+        "title":          "Clerkship - Year 4 (Senior Rotations & Electives)",
         "block_type":     "required",
-        "credits_needed": 20,
+        "credits_needed": 32,
         "notes": (
-            "Year 4 includes senior rotations in Geriatric Medicine (IMED 407), Emergency "
-            "Medicine (INDS 408), Anesthesia (ANAE 401), Public Health & Preventive "
-            "Medicine (INDS 427), Putting It All Together (INDS 426), and Transition to "
-            "Residency (INDS 428). Significant elective time is available for CaRMS "
-            "preparation. ELEC 404 (Elective 5) is optional and brings the degree total "
-            "to a maximum of 204 credits. INDS 424 is Clerkship Integrated Assessment 2."
+            "Year 4 includes senior rotations in Geriatric Medicine (IMED 407, 4 cr), "
+            "Emergency Medicine (INDS 408, 4 cr), Public Health & Preventive Medicine "
+            "(INDS 427, 1 cr), Putting It All Together (INDS 426, 6 cr), and Transition "
+            "to Residency (INDS 421, 8 cr). Three additional electives (ELEC 401/402/403, "
+            "3 cr each) provide time for CaRMS preparation. ELEC 404 (Elective 5, 3 cr) "
+            "is optional and brings the degree total to a maximum of 204 credits. "
+            "INDS 424 is Clerkship Integrated Assessment 2 (0 cr)."
         ),
         "courses": [
           {"subject": "INDS", "catalog": "424",  "title": "Clerkship Integrated Assessment 2",              "credits": 0, "is_required": True},
-          {"subject": "ANAE", "catalog": "401",  "title": "Anesthesia Clerkship",                           "credits": 2, "is_required": True},
-          {"subject": "IMED", "catalog": "407",  "title": "Geriatric Medicine Clerkship",                   "credits": 2, "is_required": True},
+          {"subject": "IMED", "catalog": "407",  "title": "Geriatric Medicine Clerkship",                   "credits": 4, "is_required": True},
           {"subject": "INDS", "catalog": "408",  "title": "Emergency Medicine Clerkship",                   "credits": 4, "is_required": True},
-          {"subject": "INDS", "catalog": "427",  "title": "Public Health & Preventive Medicine Clerkship",  "credits": 1, "is_required": True},
-          {"subject": "INDS", "catalog": "426",  "title": "Putting It All Together: Basic Science, Medicine and Society", "credits": 2, "is_required": True},
-          {"subject": "INDS", "catalog": "428",  "title": "Transition to Residency",                        "credits": 2, "is_required": True},
-          {"subject": "ELEC", "catalog": "401",  "title": "Clinical / Research Elective 2",                 "credits": 1, "is_required": True},
-          {"subject": "ELEC", "catalog": "402",  "title": "Clinical / Research Elective 3",                 "credits": 1, "is_required": True},
-          {"subject": "ELEC", "catalog": "403",  "title": "Clinical / Research Elective 4",                 "credits": 1, "is_required": True},
-          {"subject": "ELEC", "catalog": "404",  "title": "Clinical / Research Elective 5 (optional)",      "credits": 1, "is_required": False},
+          {"subject": "INDS", "catalog": "427",  "title": "Public Health and Preventive Medicine Clerkship","credits": 1, "is_required": True},
+          {"subject": "INDS", "catalog": "426",  "title": "Putting It All Together: Basic Science, Medicine and Society", "credits": 6, "is_required": True},
+          {"subject": "INDS", "catalog": "421",  "title": "Transition to Residency",                        "credits": 8, "is_required": True},
+          {"subject": "ELEC", "catalog": "401",  "title": "Elective 2 Clerkship",                           "credits": 3, "is_required": True},
+          {"subject": "ELEC", "catalog": "402",  "title": "Elective 3 Clerkship",                           "credits": 3, "is_required": True},
+          {"subject": "ELEC", "catalog": "403",  "title": "Elective 4 Clerkship",                           "credits": 3, "is_required": True},
+          {"subject": "ELEC", "catalog": "404",  "title": "Elective 5 Clerkship (optional)",                "credits": 3, "is_required": False},
         ],
       },
 
@@ -245,8 +276,8 @@ MEDICINE_PROGRAMS = [
     "faculty":       "Faculty of Medicine and Health Sciences",
     "total_credits": 30,
     "ecalendar_url": (
-        "https://coursecatalogue.mcgill.ca/en/undergraduate/"
-        "medicine-health-sciences/professional/programs/medicine-preparatory-program/"
+        "https://www.mcgill.ca/study/2024-2025/faculties/medicine/undergraduate/programs/"
+        "bachelor-science-bsc-medicine-preparatory-program-med-p-program"
     ),
     "description": (
         "The Med-P is a one-year qualifying program for immediate graduates of the Quebec "
@@ -272,11 +303,11 @@ MEDICINE_PROGRAMS = [
             "francophone equivalents are offered by McGill Faculty of Science professors."
         ),
         "courses": [
-          {"subject": "BIOL", "catalog": "200", "title": "Cellular Biology and Molecular Medicine", "credits": 3, "is_required": True},
-          {"subject": "BIOL", "catalog": "201", "title": "Cellular Biology & Metabolism",           "credits": 3, "is_required": True},
-          {"subject": "BIOL", "catalog": "202", "title": "Genetics",                                "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "209", "title": "Mammalian Physiology 1",                  "credits": 3, "is_required": True},
-          {"subject": "PHGY", "catalog": "210", "title": "Mammalian Physiology 2",                  "credits": 3, "is_required": True},
+          {"subject": "BIOL", "catalog": "200", "title": "Molecular Biology",          "credits": 3, "is_required": True},
+          {"subject": "BIOL", "catalog": "201", "title": "Cell Biology and Metabolism", "credits": 3, "is_required": True},
+          {"subject": "BIOL", "catalog": "202", "title": "Basic Genetics",              "credits": 3, "is_required": True},
+          {"subject": "PHGY", "catalog": "209", "title": "Mammalian Physiology 1",      "credits": 3, "is_required": True},
+          {"subject": "PHGY", "catalog": "210", "title": "Mammalian Physiology 2",      "credits": 3, "is_required": True},
         ],
       },
 
@@ -293,7 +324,7 @@ MEDICINE_PROGRAMS = [
             "this requirement."
         ),
         "courses": [
-          {"subject": "MATH", "catalog": "203", "title": "Principles of Statistics", "credits": 3, "is_required": True},
+          {"subject": "MATH", "catalog": "203", "title": "Principles of Statistics 1", "credits": 3, "is_required": True},
         ],
       },
 
@@ -308,12 +339,12 @@ MEDICINE_PROGRAMS = [
             "consult an academic advisor for the current approved list."
         ),
         "courses": [
-          {"subject": "CHEM", "catalog": "212", "title": "Organic Chemistry 1",                         "credits": 3, "is_required": False},
-          {"subject": "CHEM", "catalog": "222", "title": "Organic Chemistry 2",                         "credits": 3, "is_required": False},
-          {"subject": "BIOL", "catalog": "300", "title": "Molecular Biology",                           "credits": 3, "is_required": False},
-          {"subject": "BIOL", "catalog": "301", "title": "Biochemistry",                               "credits": 3, "is_required": False},
-          {"subject": "PHGY", "catalog": "311", "title": "Neurophysiology",                            "credits": 3, "is_required": False},
-          {"subject": "PSYC", "catalog": "211", "title": "Introduction to Learning and Behaviour",     "credits": 3, "is_required": False},
+          {"subject": "CHEM", "catalog": "212", "title": "Introductory Organic Chemistry 1",   "credits": 4, "is_required": False},
+          {"subject": "CHEM", "catalog": "222", "title": "Introductory Organic Chemistry 2",   "credits": 4, "is_required": False},
+          {"subject": "BIOL", "catalog": "300", "title": "Molecular Biology of the Gene",      "credits": 3, "is_required": False},
+          {"subject": "BIOL", "catalog": "301", "title": "Cell and Molecular Laboratory",      "credits": 4, "is_required": False},
+          {"subject": "PHGY", "catalog": "311", "title": "Channels, Synapses and Hormones",    "credits": 3, "is_required": False},
+          {"subject": "PSYC", "catalog": "211", "title": "Introductory Behavioural Neuroscience", "credits": 3, "is_required": False},
         ],
       },
 

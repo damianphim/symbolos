@@ -100,18 +100,20 @@ NURSING_PROGRAMS = [
         "block_key":      "bscn_u1_required",
         "title":          "Year 1 (U1) – Required Courses",
         "block_type":     "required",
-        "credits_needed": 36,
+        "credits_needed": 37,
         "courses_needed": None,
         "group_name":     None,
         "notes": (
           "Taken over Fall, Winter, and Summer terms of U1. "
-          "All four IPEA courses (500–503) are completed in U1. "
+          "Fall: NUR1 331, NUR1 335, IPEA 500. "
+          "Winter: NUR1 209, 210, 221, 224, 311, IPEA 501. "
+          "Summer: NUR1 225, 230, 231, 233, 234, 235, 236. "
           "IPEA courses are non-credit, Pass/Fail, mandatory for graduation."
         ),
         "courses": [
           {"subject": "NUR1", "catalog": "209",  "title": "Pathophysiology for Nursing 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "210",  "title": "Pathophysiology for Nursing 2", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "221",  "title": "Introduction to Professional Practice", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "221",  "title": "Intro to Prof Practice & Strengths-Based Nursing and Healthcare", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "224",  "title": "Individual and Family Development Across Lifespans 1", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "225",  "title": "Individual and Family Development Across Lifespans 2", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "230",  "title": "Supporting Health and Healing Capacities 1", "credits": 1, "is_required": True},
@@ -120,6 +122,9 @@ NURSING_PROGRAMS = [
           {"subject": "NUR1", "catalog": "234",  "title": "Nursing Older Adults (Clinical)", "credits": 2, "is_required": True},
           {"subject": "NUR1", "catalog": "235",  "title": "Health and Physical Assessment/Anatomy 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "236",  "title": "Health and Physical Assessment/Anatomy 2", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "311",  "title": "Infection Prevention and Control", "credits": 3, "is_required": True},
+          {"subject": "NUR1", "catalog": "331",  "title": "Nursing in Illness 1 (Clinical)", "credits": 4, "is_required": True},
+          {"subject": "NUR1", "catalog": "335",  "title": "Illness Management Clinical Skills Laboratory 1", "credits": 1, "is_required": True},
           {"subject": "IPEA", "catalog": "500",  "title": "Roles in Interprofessional Teams (0 credits, Pass/Fail)", "credits": 0, "is_required": True,
            "notes": "Mandatory IPE workshop – non-credit, appears on transcript."},
           {"subject": "IPEA", "catalog": "501",  "title": "Communication in Interprofessional Teams (0 credits, Pass/Fail)", "credits": 0, "is_required": True},
@@ -133,22 +138,25 @@ NURSING_PROGRAMS = [
         "block_key":      "bscn_u2_required",
         "title":          "Year 2 (U2) – Required Courses",
         "block_type":     "required",
-        "credits_needed": 34,
+        "credits_needed": 28,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Taken over Fall and Winter terms of U2.",
+        "notes": (
+          "Taken over Fall, Winter, and Summer terms of U2. "
+          "Fall: NUR1 329. "
+          "Winter: NUR1 300, 301, 323, 324, 325, 326, IPEA 502, 503 (IPEA 0-credit, counted in U1 block). "
+          "Summer: NUR1 332, 333 (or 431 as alternative), 336."
+        ),
         "courses": [
           {"subject": "NUR1", "catalog": "300",  "title": "Pharmacology for Nursing 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "301",  "title": "Pharmacology for Nursing 2", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "311",  "title": "Infection Prevention and Control", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "323",  "title": "Illness Management 1", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "324",  "title": "Illness Management 2", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "325",  "title": "Acute, Chronic, and Palliative Health Challenges 1", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "326",  "title": "Acute, Chronic, and Palliative Health Challenges 2", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "329",  "title": "Skin Integrity and Wound Care", "credits": 3, "is_required": True},
-          {"subject": "NUR1", "catalog": "331",  "title": "Nursing in Illness 1 (Clinical)", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "332",  "title": "Nursing in Illness 2 (Clinical)", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "335",  "title": "Illness Management Clinical Skills Laboratory 1", "credits": 1, "is_required": True},
+          {"subject": "NUR1", "catalog": "333",  "title": "Nursing in Illness 3 (Clinical)", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "336",  "title": "Illness Management Clinical Skills Laboratory 2", "credits": 1, "is_required": True},
         ],
       },
@@ -158,15 +166,17 @@ NURSING_PROGRAMS = [
         "block_key":      "bscn_u3_required",
         "title":          "Year 3 (U3) – Required Courses",
         "block_type":     "required",
-        "credits_needed": 26,
+        "credits_needed": 15,
         "courses_needed": None,
         "group_name":     None,
-        "notes": "Taken over Fall and Winter terms of U3. Includes capstone clinical placements.",
+        "notes": (
+          "Taken over Fall and Winter terms of U3. "
+          "Fall: NUR1 424, 432, 529, and electives. "
+          "Winter: NUR1 423, plus complementary NUR1 530 or 531."
+        ),
         "courses": [
-          {"subject": "NUR1", "catalog": "333",  "title": "Nursing in Illness 3 (Clinical)", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "423",  "title": "Leading Change: Policy and Practice", "credits": 4, "is_required": True},
           {"subject": "NUR1", "catalog": "424",  "title": "Legal, Ethical, and Professional Practice Issues", "credits": 4, "is_required": True},
-          {"subject": "NUR1", "catalog": "431",  "title": "Community Health Nursing Practicum", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "432",  "title": "Community Health Nursing Project", "credits": 3, "is_required": True},
           {"subject": "NUR1", "catalog": "529",  "title": "Critical Care Nursing", "credits": 4, "is_required": True},
         ],

@@ -161,16 +161,13 @@ ARTS_HUMANITIES = [
           {"subject":"HIST","catalog":"207","title":"Jewish History: 400 B.C.E. to 1000","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"213","title":"World History, 600–2000","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Great global breadth course"},
           {"subject":"HIST","catalog":"219","title":"Jewish History: 1000–2000","credits":3,"is_required":False},
-          {"subject":"HIST","catalog":"222","title":"History of Pandemics","credits":3,"is_required":False,"recommended":True},
           {"subject":"HIST","catalog":"223","title":"Indigenous Peoples and Empires","credits":3,"is_required":False},
-          {"subject":"HIST","catalog":"224","title":"Introduction to the African Diaspora","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"238","title":"Histories of Science","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"240","title":"Modern History of Islamic Movements","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"249","title":"Health and the Healer in Western History","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"262","title":"Mediterranean and European Interconnections","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"292","title":"History and the Environment","credits":3,"is_required":False},
-          {"subject":"HIST","catalog":"298","title":"Topics in History","credits":3,"is_required":False},
-          {"subject":"HIST","catalog":"299","title":"The Historian's Craft","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Excellent intro to historical methods — note: cannot satisfy distribution requirement"},
+          {"subject":"HIST","catalog":"299","title":"The Historian's Craft","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Excellent intro to historical methods — note: cannot satisfy distribution or temporal breadth requirement"},
         ],
       },
       {
@@ -239,6 +236,10 @@ ARTS_HUMANITIES = [
           "JWST 240/245/303/311/312/334/348/365/366/371."
         ),
         "courses": [
+          # Additional 200-level HIST courses (eligible as electives but NOT in Groups A/B/C)
+          {"subject":"HIST","catalog":"222","title":"History of Pandemics","credits":3,"is_required":False,"recommended":True,"recommendation_reason":"Counts as elective credit; not in Groups A/B/C distribution"},
+          {"subject":"HIST","catalog":"224","title":"Introduction to the African Diaspora","credits":3,"is_required":False,"notes":"Counts as elective credit; not in Groups A/B/C distribution"},
+          {"subject":"HIST","catalog":"298","title":"Topics in History","credits":3,"is_required":False,"notes":"Counts as elective credit; not in Groups A/B/C distribution"},
           # Approved HIST 300-level electives
           {"subject":"HIST","catalog":"360","title":"Themes in the History of the Americas","credits":3,"is_required":False},
           {"subject":"HIST","catalog":"361","title":"Themes in Modern African History","credits":3,"is_required":False},

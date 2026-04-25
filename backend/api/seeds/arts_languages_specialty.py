@@ -1343,8 +1343,8 @@ ARTS_LANGUAGES_SPECIALTY = [
           "credits_needed": 18,
           "sort_order": 1,
           "courses": [
-            {"subject":"ENGL","catalog":"202","title":"Survey of English Literature 1","credits":3,"is_required":True},
-            {"subject":"ENGL","catalog":"203","title":"Survey of English Literature 2","credits":3,"is_required":True},
+            {"subject":"ENGL","catalog":"202","title":"Departmental Survey of English Literature 1","credits":3,"is_required":True},
+            {"subject":"ENGL","catalog":"203","title":"Departmental Survey of English Literature 2","credits":3,"is_required":True},
             {"subject":"ENGL","catalog":"311","title":"Poetics","credits":3,"is_required":True},
             {"subject":"ENGL","catalog":"360","title":"Literary Criticism","credits":3,"is_required":True},
             {"subject":"ENGL","catalog":"491D1","title":"Honours Essay 1","credits":3,"is_required":True},
@@ -1356,7 +1356,7 @@ ARTS_LANGUAGES_SPECIALTY = [
           "title": "Literature Electives (36 credits)",
           "block_type": "choose_credits",
           "credits_needed": 36,
-          "notes": "36 credits across periods, genres, and areas. At least 12 at 400-level.",
+          "notes": "36 credits across periods, genres, and areas. At least 6 credits at 500-level. Max 9 credits at 200-level (none in final year). Max 9 credits from other departments (with permission).",
           "sort_order": 2,
           "courses": [
             {"subject":"ENGL","catalog":"308","title":"Shakespeare","credits":3,"is_required":False},
