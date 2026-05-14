@@ -78,6 +78,16 @@ export default function Dashboard() {
   const [showTranscriptUpload, setShowTranscriptUpload] = useState(false)
   const [transcriptUploadTab, setTranscriptUploadTab] = useState('transcript')
 
+  // Listen for `open-transcript-upload` custom event fired by reminder card chips
+  useEffect(() => {
+    const handler = () => {
+      setTranscriptUploadTab('transcript')
+      setShowTranscriptUpload(true)
+    }
+    window.addEventListener('open-transcript-upload', handler)
+    return () => window.removeEventListener('open-transcript-upload', handler)
+  }, [])
+
   // ── Advisor cards ──────────────────────────────────────
   const [advisorCards, setAdvisorCards] = useState([])
   const [cardsLoading, setCardsLoading] = useState(false)
@@ -198,19 +208,42 @@ export default function Dashboard() {
       return
     }
     isGeneratingCardsRef.current = true
+    setCardsGenerating(true)
+    // Clear existing AI cards so the skeleton/stream-in feels fresh
+    setAdvisorCards(prev => prev.filter(c => c.source !== 'ai'))
+
+    const usedLang = lang || languageRef.current
+    let streamIdx = 0
+
     try {
-      setCardsGenerating(true)
-      const usedLang = lang || languageRef.current
-      const data = await cardsAPI.generateCards(user.id, force, usedLang)
-      const cards = data.cards || []
-      setAdvisorCards(cards)
-      setCardsGeneratedAt(data.generated_at || null)
-      // Only cache + mark language when backend confirms it (cards_language !== null)
-      const confirmedLang = data.cards_language
-      if (confirmedLang) {
-        _cacheCards(cards, data.generated_at, confirmedLang)
-        try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
-      }
+      await cardsAPI.generateCardsStream(user.id, force, usedLang, {
+        onCard: (card) => {
+          const idx = streamIdx++
+          // Tag with _streamIdx so we can identify un-persisted stream cards in prev
+          const tagged = { ...card, _streamIdx: idx }
+          setAdvisorCards(prev => {
+            // Keep user-sourced cards + already-streamed cards (tagged), then append new one
+            const base = prev.filter(c => c.source === 'user' || c._streamIdx !== undefined)
+            return [...base, tagged]
+          })
+        },
+        onDone: (event) => {
+          const confirmedLang = event.language
+          if (confirmedLang) {
+            // Fetch persisted cards from server to replace tagged stream cards with real DB rows
+            cardsAPI.getCards(user.id).then(data => {
+              const cards = data.cards || []
+              setAdvisorCards(cards)
+              setCardsGeneratedAt(data.generated_at || null)
+              _cacheCards(cards, data.generated_at, confirmedLang)
+              try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
+            }).catch(() => {})
+          }
+        },
+        onError: (detail) => {
+          console.error('Card stream error:', detail)
+        },
+      })
     } catch (error) {
       console.error('Error generating advisor cards:', error)
     } finally {

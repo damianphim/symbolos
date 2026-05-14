@@ -227,7 +227,14 @@ function AdvisorCard({
         panelOpen  ? 'advisor-card--expanded' : '',
         isPinned   ? 'advisor-card--pinned' : '',
       ].filter(Boolean).join(' ')}
-      style={{ '--card-accent': config.accent }}
+      style={{
+        '--card-accent': config.accent,
+        // During streaming, each card gets an explicit stagger delay so they
+        // visually appear one by one. After persisted (id present), clear it.
+        ...(card._streamIdx !== undefined && !card.id
+          ? { animationDelay: `${card._streamIdx * 0.18}s` }
+          : {}),
+      }}
       ref={cardRef}
     >
       {/* Drag handle */}
@@ -298,12 +305,20 @@ function AdvisorCard({
             <div className="advisor-card__chips">
               {chips.map((chip, i) => {
                 const chipLabel = typeof chip === 'string' ? chip : (chip?.label ?? '')
+                const chipType  = typeof chip === 'object' ? chip?.type : null
+                const handleChipClick = () => {
+                  if (chipType === 'open_transcript_upload') {
+                    window.dispatchEvent(new CustomEvent('open-transcript-upload'))
+                    return
+                  }
+                  handleSend(chipLabel)
+                }
                 return (
                   <button
                     key={i}
                     className="advisor-card__chip"
-                    onClick={() => handleSend(chipLabel)}
-                    disabled={isThinking}
+                    onClick={handleChipClick}
+                    disabled={isThinking && chipType !== 'open_transcript_upload'}
                   >
                     <FaBolt className="chip-icon" />
                     {chipLabel}

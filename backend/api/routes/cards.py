@@ -18,8 +18,10 @@ CONTEXT FIX (v3):
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import anthropic
+import asyncio
 import logging
 import json
 from datetime import datetime, timezone, timedelta
@@ -38,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 _anthropic_client: anthropic.Anthropic | None = None
+_async_anthropic_client: anthropic.AsyncAnthropic | None = None
 
 
 def get_anthropic_client() -> anthropic.Anthropic:
@@ -47,8 +50,25 @@ def get_anthropic_client() -> anthropic.Anthropic:
     return _anthropic_client
 
 
+def get_async_anthropic_client() -> anthropic.AsyncAnthropic:
+    global _async_anthropic_client
+    if _async_anthropic_client is None:
+        _async_anthropic_client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+    return _async_anthropic_client
+
+
 CARD_CATEGORIES = ["deadlines", "degree", "courses", "grades", "planning", "opportunities"]
 CATEGORIES_PROMPT_LIST = "\n".join(f'  - "{c}"' for c in CARD_CATEGORIES)
+
+
+# ── Transcript reminder config ──────────────────────────────────────
+# (month, day) tuples for when we drop a "re-upload your transcript" card
+# into every user's brief. Set ~10 days after the final-exam period ends so
+# grades have time to post.
+#   - Winter finals: reminder on May 10
+#   - Fall finals:   reminder on Jan 10
+POST_FINALS_REMINDER_DATES = [(5, 10), (1, 10)]
+TRANSCRIPT_REMINDER_LABEL = "TRANSCRIPT UPDATE"
 
 
 class ThreadRequest(BaseModel):
@@ -529,6 +549,194 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
         raise HTTPException(status_code=500, detail="Failed to generate advisor cards")
 
 
+async def _fetch_student_context_parallel(user_id: str, user_sb=None) -> dict:
+    """Same as fetch_student_context but runs all DB queries in parallel."""
+    sb = user_sb if user_sb is not None else get_supabase()
+    # user lookup is needed before parallel queries but is a single fast call
+    user = await asyncio.to_thread(get_user_by_id, user_id)
+
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    def q_favorites():
+        return (sb.table("favorites")
+            .select("course_code, course_title, subject, catalog")
+            .eq("user_id", user_id).order("created_at", desc=True).limit(30)
+            .execute().data or [])
+
+    def q_completed():
+        return (sb.table("completed_courses")
+            .select("course_code, course_title, subject, catalog, term, year, grade, credits")
+            .eq("user_id", user_id).order("year", desc=True).limit(50)
+            .execute().data or [])
+
+    def q_current():
+        return (sb.table("current_courses")
+            .select("course_code, course_title, subject, catalog, credits")
+            .eq("user_id", user_id).execute().data or [])
+
+    def q_calendar():
+        return (sb.table("calendar_events")
+            .select("title, date, time, type, description")
+            .eq("user_id", user_id).gte("date", today)
+            .order("date", desc=False).limit(20)
+            .execute().data or [])
+
+    def q_clubs():
+        joined, created = [], []
+        try:
+            r = sb.table("user_clubs").select("clubs(name, category, meeting_schedule)").eq("user_id", user_id).execute()
+            joined = [x.get("clubs", {}).get("name", "Unknown") for x in (r.data or []) if x.get("clubs")]
+        except Exception:
+            pass
+        try:
+            r = sb.table("clubs").select("name, category, is_private").eq("created_by", user_id).execute()
+            created = r.data or []
+        except Exception:
+            pass
+        return joined, created
+
+    favorites, completed, current, calendar, (joined_clubs, created_clubs) = await asyncio.gather(
+        asyncio.to_thread(q_favorites),
+        asyncio.to_thread(q_completed),
+        asyncio.to_thread(q_current),
+        asyncio.to_thread(q_calendar),
+        asyncio.to_thread(q_clubs),
+    )
+
+    return {"user": user, "favorites": favorites, "completed": completed,
+            "current": current, "calendar": calendar,
+            "joined_clubs": joined_clubs, "created_clubs": created_clubs}
+
+
+def _build_ndjson_context(ctx: dict, saved_cards: list = None) -> str:
+    """Like build_rich_context but asks for NDJSON output (one card per line) for streaming."""
+    base = build_rich_context(ctx, saved_cards=saved_cards)
+    # Replace the final return instruction with NDJSON variant
+    return base.replace(
+        "Return ONLY the JSON array — no markdown, no commentary.",
+        "Return exactly 8 cards as newline-delimited JSON (NDJSON): one complete JSON object per line, "
+        "no surrounding array brackets, no markdown fences. Each line must be a valid standalone JSON object."
+    )
+
+
+@router.post("/stream/{user_id}")
+async def stream_cards(
+    user_id: str, request: GenerateRequest, req: Request,
+    current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
+):
+    """
+    SSE streaming card generation. Emits one `data:` event per card as Claude
+    produces them, then a final `done` event. Language handling is identical to
+    the non-streaming /generate endpoint.
+    """
+    require_self(current_user_id, user_id)
+
+    # Auth check up front (outside the generator so HTTP errors still work)
+    try:
+        get_user_by_id(user_id)
+    except UserNotFoundException:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # If cards are fresh and not forced, stream existing cards instantly
+    if not request.force and cards_are_fresh(user_id):
+        existing = _fetch_cards_response(user_id, confirmed_language=None, user_sb=user_sb)
+
+        async def _instant_stream():
+            for i, card in enumerate(existing.get("cards", [])):
+                yield f"data: {json.dumps({'type': 'card', 'card': card, 'index': i})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'count': len(existing.get('cards', [])), 'language': existing.get('cards_language'), 'fresh': True})}\n\n"
+
+        return StreamingResponse(_instant_stream(), media_type="text/event-stream",
+                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    # Rate-limit check
+    if request.force:
+        gen_count = await asyncio.to_thread(_count_generations_this_week, user_id)
+        if gen_count >= 2:
+            existing = _fetch_cards_response(user_id, user_sb=user_sb)
+
+            async def _rate_limited_stream():
+                for i, card in enumerate(existing.get("cards", [])):
+                    yield f"data: {json.dumps({'type': 'card', 'card': card, 'index': i})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'count': len(existing.get('cards', [])), 'language': existing.get('cards_language'), 'rate_limited': True})}\n\n"
+
+            return StreamingResponse(_rate_limited_stream(), media_type="text/event-stream",
+                                      headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    language = request.language
+
+    async def _generate_stream():
+        try:
+            # Parallel DB fetch
+            ctx, saved = await asyncio.gather(
+                _fetch_student_context_parallel(user_id, user_sb),
+                asyncio.to_thread(fetch_saved_cards, user_id, user_sb),
+            )
+
+            prompt = _build_ndjson_context(ctx, saved_cards=saved) + _lang_instruction(language)
+            async_client = get_async_anthropic_client()
+
+            collected_cards: list = []
+            line_buffer = ""
+
+            async with async_client.messages.stream(
+                model=settings.CLAUDE_MODEL, max_tokens=4096,
+                messages=[{"role": "user", "content": prompt}]
+            ) as stream:
+                async for text in stream.text_stream:
+                    line_buffer += text
+                    while "\n" in line_buffer:
+                        line, line_buffer = line_buffer.split("\n", 1)
+                        line = line.strip()
+                        if not line:
+                            continue
+                        # Strip stray array brackets Claude may emit
+                        if line in ("[", "]") or line.startswith("```"):
+                            continue
+                        line = line.rstrip(",")
+                        try:
+                            card = json.loads(line)
+                            card["category"] = _sanitise_category(card)
+                            card.setdefault("type", "insight")
+                            card.setdefault("icon", "💡")
+                            card.setdefault("actions", [])
+                            collected_cards.append(card)
+                            yield f"data: {json.dumps({'type': 'card', 'card': card, 'index': len(collected_cards) - 1})}\n\n"
+                        except json.JSONDecodeError:
+                            pass
+
+            # Handle any trailing content in the buffer
+            if line_buffer.strip() and line_buffer.strip() not in ("[", "]"):
+                try:
+                    card = json.loads(line_buffer.strip().rstrip(","))
+                    card["category"] = _sanitise_category(card)
+                    card.setdefault("type", "insight")
+                    card.setdefault("icon", "💡")
+                    card.setdefault("actions", [])
+                    collected_cards.append(card)
+                    yield f"data: {json.dumps({'type': 'card', 'card': card, 'index': len(collected_cards) - 1})}\n\n"
+                except json.JSONDecodeError:
+                    pass
+
+            if collected_cards:
+                await asyncio.to_thread(save_cards, user_id, collected_cards)
+                await asyncio.to_thread(_set_stored_cards_language, user_id, language)
+                logger.info(f"Streamed {len(collected_cards)} cards for {user_id} in {language}")
+
+            yield f"data: {json.dumps({'type': 'done', 'count': len(collected_cards), 'language': language})}\n\n"
+
+        except Exception as e:
+            logger.exception(f"Card stream failed for {user_id}: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'detail': 'Card generation failed'})}\n\n"
+
+    return StreamingResponse(
+        _generate_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @router.post("/retranslate/{user_id}", response_model=dict)
 async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb=Depends(get_user_db)):
     require_self(current_user_id, user_id)
@@ -741,3 +949,120 @@ async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, cur
     except Exception as e:
         logger.exception(f"Failed to reorder cards for {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to reorder cards")
+
+# ════════════════════════════════════════════════════════════════════
+#  Post-finals transcript reminder
+# ════════════════════════════════════════════════════════════════════
+
+def is_post_finals_day(today: "date | None" = None) -> bool:
+    """Returns True if `today` is one of the configured post-finals dates."""
+    from datetime import date as _date
+    t = today or _date.today()
+    return (t.month, t.day) in POST_FINALS_REMINDER_DATES
+
+
+def _has_recent_transcript_activity(user_id: str, within_days: int = 14) -> bool:
+    """Skip reminder if user has imported any course rows in the last N days
+       (suggests they already re-uploaded after finals)."""
+    try:
+        supabase = get_supabase()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=within_days)).isoformat()
+        resp = (supabase.table("completed_courses")
+                .select("id")
+                .eq("user_id", user_id)
+                .gte("created_at", cutoff)
+                .limit(1).execute())
+        return bool(resp.data)
+    except Exception:
+        return False
+
+
+def _has_active_transcript_reminder(user_id: str) -> bool:
+    """True if a transcript-reminder card was already inserted today (idempotency)."""
+    try:
+        supabase = get_supabase()
+        today_iso = datetime.now(timezone.utc).date().isoformat()
+        resp = (supabase.table("advisor_cards")
+                .select("id")
+                .eq("user_id", user_id)
+                .eq("label", TRANSCRIPT_REMINDER_LABEL)
+                .gte("generated_at", today_iso)
+                .limit(1).execute())
+        return bool(resp.data)
+    except Exception:
+        return False
+
+
+def _insert_transcript_reminder_card(user_id: str) -> bool:
+    """
+    Insert a high-priority transcript-reminder card for one user.
+    Returns True if inserted, False if skipped (already exists / recent upload).
+    """
+    if _has_active_transcript_reminder(user_id):
+        return False
+    if _has_recent_transcript_activity(user_id, within_days=14):
+        return False
+    try:
+        supabase = get_supabase()
+        now = datetime.now(timezone.utc).isoformat()
+        # Push existing cards down by 1 so this reminder appears at the top
+        try:
+            existing = (supabase.table("advisor_cards").select("id, sort_order")
+                        .eq("user_id", user_id).execute().data or [])
+            for c in existing:
+                supabase.table("advisor_cards") \
+                    .update({"sort_order": (c.get("sort_order") or 0) + 1}) \
+                    .eq("id", c["id"]).execute()
+        except Exception:
+            pass
+
+        row = {
+            "user_id": user_id,
+            "source": "system",
+            "card_type": "urgent",
+            "icon": "📄",
+            "label": TRANSCRIPT_REMINDER_LABEL,
+            "title": "Re-upload your transcript",
+            "body": (
+                "Final grades for this term should now be posted on Minerva. "
+                "Re-upload your unofficial transcript to keep your courses, GPA, "
+                "and degree progress current. (Minerva → Unofficial Transcript → "
+                "⌘/Ctrl + P → Save as PDF)"
+            ),
+            "actions": json.dumps([
+                {"type": "open_transcript_upload", "label": "Upload transcript"},
+                "How do I get my unofficial transcript PDF?",
+                "What gets updated when I re-upload?",
+            ]),
+            "category": "planning",
+            "priority": 1,
+            "sort_order": 0,
+            "generated_at": now,
+        }
+        supabase.table("advisor_cards").insert(row).execute()
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to insert transcript reminder for {user_id}: {e}")
+        return False
+
+
+def run_transcript_reminder_cron() -> dict:
+    """
+    Daily cron: if today is a post-finals date, drop a reminder card into every
+    user's brief (idempotent — won't duplicate within the same day, and skips
+    users who already re-uploaded recently).
+    """
+    if not is_post_finals_day():
+        return {"sent": 0, "skipped": "not_post_finals_day"}
+    try:
+        supabase = get_supabase()
+        users_resp = supabase.table("users").select("id").execute()
+        sent = 0
+        for u in (users_resp.data or []):
+            if u.get("id") and _insert_transcript_reminder_card(u["id"]):
+                sent += 1
+        logger.info(f"Transcript reminder cron: inserted {sent} cards")
+        return {"sent": sent}
+    except Exception as e:
+        logger.exception(f"Transcript reminder cron failed: {e}")
+        return {"sent": 0, "error": str(e)}

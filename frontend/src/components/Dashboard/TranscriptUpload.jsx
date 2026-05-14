@@ -151,6 +151,17 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
             {step === 'upload' && (
               <div className="tu-step">
                 <p className="tu-desc">Upload your unofficial McGill transcript PDF to auto-import your courses, grades, and GPA.</p>
+
+                <div className="tu-howto">
+                  <p className="tu-howto-title">How to get your transcript PDF</p>
+                  <ol className="tu-howto-list">
+                    <li>Open your <strong>Unofficial Transcript</strong> page on Minerva.</li>
+                    <li>Press <kbd>{navigator.platform.includes('Mac') ? '⌘ Cmd' : 'Ctrl'}</kbd> + <kbd>P</kbd> to open the print dialog.</li>
+                    <li>Under <em>Destination</em>, choose <strong>Save as PDF</strong>.</li>
+                    <li>Click <strong>Save</strong>, then upload the downloaded file below.</li>
+                  </ol>
+                </div>
+
                 <div
                   className={`tu-dropzone ${dragOver ? 'tu-dropzone--over' : ''} ${file ? 'tu-dropzone--has-file' : ''}`}
                   onDragOver={e => { e.preventDefault(); setDragOver(true) }}
@@ -210,6 +221,24 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                     </div>
                   )}
                 </div>
+                {parsed.student_info?.advanced_standing?.length > 0 && (
+                  <div className="tu-section">
+                    <p className="tu-section-title">
+                      Transfer / AP Credits ({parsed.student_info.advanced_standing.length}
+                      {' · '}
+                      {parsed.student_info.advanced_standing.reduce((sum, c) => sum + (Number(c.credits) || 0), 0)} cr total)
+                    </p>
+                    <div className="tu-course-list">
+                      {parsed.student_info.advanced_standing.map((c, i) => (
+                        <div key={i} className="tu-course-row tu-course-row--transfer">
+                          <span className="tu-course-code">{c.course_code}</span>
+                          <span className="tu-course-name">{c.course_title || '—'}</span>
+                          <span className="tu-course-grade">{c.credits} cr</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {parsed.current_courses?.length > 0 && (
                   <div className="tu-section">
                     <p className="tu-section-title">Current Courses ({parsed.current_courses.length})</p>
@@ -337,8 +366,14 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                     </div>
                   ))}
                 </div>
-                <div className="tu-verify-hint">
-                  <span>Please double-check your calendar for accuracy. Go to <strong>Calendar</strong> to verify lecture times, exam dates, and assignment deadlines. Use <strong>Edit Events</strong> to fix any incorrect times.</span>
+                <div className="tu-warn">
+                  <FaExclamationTriangle className="tu-warn-icon" />
+                  <span>
+                    <strong>Double-check every imported event.</strong> Professors regularly shift exam and assignment dates
+                    after the syllabus is published. Open <strong>Calendar</strong>, verify each lecture time, exam date, and
+                    deadline against the latest syllabus or myCourses announcement, and use <strong>Edit Events</strong> to
+                    correct anything that has moved.
+                  </span>
                 </div>
                 <div className="tu-actions tu-actions--center">
                   <button className="tu-btn tu-btn--primary" onClick={onClose}>Done</button>
@@ -351,6 +386,16 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                 <p className="tu-desc">
                   Upload your course syllabi to automatically add lecture schedules, exams, and assignment deadlines to your calendar.
                 </p>
+
+                <div className="tu-warn">
+                  <FaExclamationTriangle className="tu-warn-icon" />
+                  <span>
+                    <strong>Heads-up:</strong> professors change exam and assignment dates often during the term.
+                    After importing, always cross-check imported events against the latest syllabus and any announcements on myCourses,
+                    and use <strong>Edit Events</strong> in the Calendar to update anything that shifted.
+                  </span>
+                </div>
+
                 <div
                   className={`tu-dropzone ${sylDragOver ? 'tu-dropzone--over' : ''}`}
                   onDragOver={e => { e.preventDefault(); setSylDragOver(true) }}

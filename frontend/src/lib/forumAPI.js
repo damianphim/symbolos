@@ -33,17 +33,56 @@ const forumAPI = {
     return res.json()   // { posts: [], total: N }
   },
 
-  async createPost({ author, avatar_color, category, title, body, tags, program_info }) {
+  async createPost({
+    author, avatar_color, category, title, body, tags, program_info,
+    rating, review_target_type, review_target_value,
+  }) {
     const res = await fetch(`${BASE_URL}/api/forum/posts`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ author, avatar_color, category, title, body, tags, program_info }),
+      body: JSON.stringify({
+        author, avatar_color, category, title, body, tags, program_info,
+        rating, review_target_type, review_target_value,
+      }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.detail || 'Failed to create post')
     }
     return res.json()   // { post: {...} }
+  },
+
+  // ── Reviews helpers ───────────────────────────────────────────────
+
+  async getMyInstructors() {
+    const res = await fetch(`${BASE_URL}/api/forum/my-instructors`, {
+      headers: await authHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch courses/professors')
+    return res.json()   // { courses: [...], professors: [...] }
+  },
+
+  async getReviewSummary(targetType, targetValue) {
+    const params = new URLSearchParams({ target_type: targetType, target_value: targetValue })
+    const res = await fetch(`${BASE_URL}/api/forum/reviews/summary?${params}`, {
+      headers: await authHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to fetch review summary')
+    return res.json()
+  },
+
+  async setCourseProfessor(courseCode, professor, { term, year } = {}) {
+    const params = new URLSearchParams()
+    if (term) params.set('term', term)
+    if (year) params.set('year', year)
+    const qs = params.toString() ? `?${params}` : ''
+    const res = await fetch(`${BASE_URL}/api/forum/courses/${encodeURIComponent(courseCode)}/professor${qs}`, {
+      method: 'PATCH',
+      headers: await authHeaders(),
+      body: JSON.stringify({ professor }),
+    })
+    if (!res.ok) throw new Error('Failed to update professor')
+    return res.json()
   },
 
   async deletePost(postId) {

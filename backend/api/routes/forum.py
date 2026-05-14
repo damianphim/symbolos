@@ -32,8 +32,19 @@ from ..config import settings
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-VALID_CATEGORIES = {"courses", "study", "advice", "general", "planning"}
-VALID_SORTS      = {"hot", "new", "top"}
+# New top-level sections after the 2026-04 forum redesign.
+# Legacy categories kept for backwards compatibility with existing posts.
+VALID_CATEGORIES = {
+    # Reviews
+    "course_review", "professor_review",
+    # Other sections
+    "clubs", "general", "app_feedback",
+    # Legacy
+    "courses", "study", "advice", "planning",
+}
+REVIEW_CATEGORIES = {"course_review", "professor_review"}
+REVIEW_TARGET_TYPES = {"course", "professor"}
+VALID_SORTS = {"hot", "new", "top"}
 
 
 # ── Pydantic models ────────────────────────────────────────────────────────────
@@ -47,6 +58,11 @@ class PostCreate(BaseModel):
     tags:         List[str] = Field(default_factory=list)
     program_info: Optional[str] = Field(None, max_length=200)
 
+    # Review-only fields. Required when category ∈ REVIEW_CATEGORIES.
+    rating:              Optional[int] = Field(None, ge=1, le=5)
+    review_target_type:  Optional[str] = Field(None, max_length=20)
+    review_target_value: Optional[str] = Field(None, max_length=120)
+
     @field_validator("category")
     @classmethod
     def validate_category(cls, v: str) -> str:
@@ -59,6 +75,34 @@ class PostCreate(BaseModel):
     def validate_tags(cls, v: List[str]) -> List[str]:
         cleaned = [t.strip()[:50] for t in v if t.strip()]
         return cleaned[:8]   # max 8 tags
+
+    @field_validator("review_target_type")
+    @classmethod
+    def validate_target_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        if v not in REVIEW_TARGET_TYPES:
+            raise ValueError(f"review_target_type must be one of {REVIEW_TARGET_TYPES}")
+        return v
+
+    def enforce_review_consistency(self) -> None:
+        """Ensure review posts have required review fields, and non-reviews don't."""
+        is_review = self.category in REVIEW_CATEGORIES
+        if is_review:
+            if self.rating is None:
+                raise ValueError("rating (1–5) is required for review posts")
+            if not self.review_target_value:
+                raise ValueError("review_target_value is required for review posts")
+            # Auto-infer target_type from category if not provided
+            if not self.review_target_type:
+                self.review_target_type = (
+                    "course" if self.category == "course_review" else "professor"
+                )
+        else:
+            # Clear review fields on non-review posts for data cleanliness
+            self.rating = None
+            self.review_target_type = None
+            self.review_target_value = None
 
 
 class ReplyCreate(BaseModel):
@@ -149,7 +193,8 @@ async def list_posts(
 
     def _run():
         q = user_sb.table("forum_posts").select(
-            "id, user_id, author, avatar_color, category, title, body, tags, program_info, like_count, created_at"
+            "id, user_id, author, avatar_color, category, title, body, tags, program_info, "
+            "rating, review_target_type, review_target_value, like_count, created_at"
         )
 
         if category and category != "all" and category in VALID_CATEGORIES:
@@ -229,16 +274,25 @@ async def create_post(
     user_sb = Depends(get_user_db),
 ):
     """Create a new forum post. Auth required."""
+    # Validate review fields are present when category is a review
+    try:
+        payload.enforce_review_consistency()
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
     def _run():
         data = {
-            "user_id":      current_user_id,
-            "author":       payload.author,
-            "avatar_color": payload.avatar_color,
-            "category":     payload.category,
-            "title":        payload.title,
-            "body":         payload.body,
-            "tags":         payload.tags,
-            "program_info": payload.program_info,
+            "user_id":             current_user_id,
+            "author":              payload.author,
+            "avatar_color":        payload.avatar_color,
+            "category":            payload.category,
+            "title":               payload.title,
+            "body":                payload.body,
+            "tags":                payload.tags,
+            "program_info":        payload.program_info,
+            "rating":              payload.rating,
+            "review_target_type":  payload.review_target_type,
+            "review_target_value": payload.review_target_value,
         }
         res = user_sb.table("forum_posts").insert(data).execute()
         if not res.data:
@@ -595,3 +649,164 @@ async def report_reply(
     except Exception as e:
         logger.exception(f"Error reporting reply {reply_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit report")
+
+# ════════════════════════════════════════════════════════════════════
+#  Reviews — user's instructor/course list + rating aggregates
+# ════════════════════════════════════════════════════════════════════
+
+@router.get("/my-instructors", response_model=dict)
+async def my_instructors(
+    current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
+):
+    """
+    Return the current user's distinct courses and professors aggregated across
+    their completed_courses and current_courses rows (year-over-year history is
+    preserved because each course has its own row per term).
+
+    Returns:
+      {
+        "courses":    [{"course_code","course_title","occurrences":[{term,year,professor}, ...]}, ...]
+        "professors": [{"name","courses":[{"course_code","term","year"}, ...]}, ...]
+      }
+    """
+    try:
+        completed = (user_sb.table("completed_courses")
+                     .select("course_code, course_title, term, year, professor")
+                     .eq("user_id", current_user_id).execute().data or [])
+        current = (user_sb.table("current_courses")
+                   .select("course_code, course_title, professor")
+                   .eq("user_id", current_user_id).execute().data or [])
+
+        # Build per-course aggregate
+        course_map: dict = {}
+        prof_map: dict = {}
+        for row in completed + current:
+            code = (row.get("course_code") or "").strip().upper()
+            if not code:
+                continue
+            entry = course_map.setdefault(code, {
+                "course_code": code,
+                "course_title": row.get("course_title") or "",
+                "occurrences": [],
+            })
+            occ = {
+                "term":      row.get("term"),
+                "year":      row.get("year"),
+                "professor": row.get("professor") or None,
+            }
+            entry["occurrences"].append(occ)
+            if not entry["course_title"] and row.get("course_title"):
+                entry["course_title"] = row["course_title"]
+
+            prof = (row.get("professor") or "").strip()
+            if prof:
+                p = prof_map.setdefault(prof, {"name": prof, "courses": []})
+                p["courses"].append({
+                    "course_code": code,
+                    "term":        row.get("term"),
+                    "year":        row.get("year"),
+                })
+
+        return {
+            "courses":    sorted(course_map.values(), key=lambda c: c["course_code"]),
+            "professors": sorted(prof_map.values(), key=lambda p: p["name"].lower()),
+        }
+    except Exception as e:
+        logger.exception(f"my_instructors error for {current_user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch instructors")
+
+
+@router.get("/reviews/summary", response_model=dict)
+async def reviews_summary(
+    target_type: str = Query(..., regex="^(course|professor)$"),
+    target_value: str = Query(..., min_length=1, max_length=120),
+    current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
+):
+    """
+    Aggregate rating info for a single course or professor.
+    Returns avg_rating, rating_count, and a per-star histogram.
+    """
+    try:
+        # Case-insensitive match for professor names; exact match for course codes
+        if target_type == "course":
+            normalized = target_value.strip().upper()
+            q = user_sb.table("forum_posts") \
+                .select("rating") \
+                .eq("review_target_type", "course") \
+                .eq("review_target_value", normalized)
+        else:
+            q = user_sb.table("forum_posts") \
+                .select("rating") \
+                .eq("review_target_type", "professor") \
+                .ilike("review_target_value", target_value.strip())
+
+        rows = q.execute().data or []
+        ratings = [r["rating"] for r in rows if r.get("rating") is not None]
+
+        histogram = {str(i): 0 for i in range(1, 6)}
+        for r in ratings:
+            if 1 <= r <= 5:
+                histogram[str(r)] += 1
+
+        avg = round(sum(ratings) / len(ratings), 2) if ratings else None
+        return {
+            "target_type":  target_type,
+            "target_value": target_value,
+            "avg_rating":   avg,
+            "rating_count": len(ratings),
+            "histogram":    histogram,
+        }
+    except Exception as e:
+        logger.exception(f"reviews_summary error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch review summary")
+
+
+# ════════════════════════════════════════════════════════════════════
+#  Set / update a course's professor (year-over-year persistence)
+# ════════════════════════════════════════════════════════════════════
+
+class CourseProfessorUpdate(BaseModel):
+    professor: Optional[str] = Field(None, max_length=120)
+
+
+@router.patch("/courses/{course_code}/professor", response_model=dict)
+async def set_course_professor(
+    course_code: str,
+    payload: CourseProfessorUpdate,
+    term: Optional[str] = Query(None, max_length=10),
+    year: Optional[int] = Query(None, ge=1900, le=2100),
+    current_user_id: str = Depends(get_current_user_id),
+    user_sb = Depends(get_user_db),
+):
+    """
+    Set the professor for a course in the user's history. Targets either
+    completed_courses or current_courses by course_code (and optional term/year
+    to disambiguate retakes).
+
+    POST /api/forum/courses/COMP%20251/professor?term=Fall&year=2024
+      body: {"professor": "Joseph Vybihal"}
+    """
+    code = course_code.strip().upper()
+    if not code:
+        raise HTTPException(status_code=422, detail="course_code required")
+
+    prof_value = (payload.professor or "").strip()[:120] or None
+
+    updated = 0
+    try:
+        for table in ("completed_courses", "current_courses"):
+            q = user_sb.table(table).update({"professor": prof_value}) \
+                .eq("user_id", current_user_id).eq("course_code", code)
+            if term:
+                q = q.eq("term", term.capitalize())
+            if year:
+                q = q.eq("year", year)
+            res = q.execute()
+            updated += len(res.data or [])
+    except Exception as e:
+        logger.exception(f"set_course_professor error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update professor")
+
+    return {"updated": updated, "professor": prof_value}

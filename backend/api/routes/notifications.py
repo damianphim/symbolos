@@ -403,5 +403,21 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         else:
             fail_count += 1
 
-    logger.info(f"Cron: {sent_count} sent, {fail_count} failed")
-    return {"ok": True, "sent": sent_count, "failed": fail_count}
+    # Post-finals transcript reminder — only fires on configured dates
+    try:
+        from .cards import run_transcript_reminder_cron
+        reminder_result = run_transcript_reminder_cron()
+    except Exception as e:
+        logger.exception(f"Transcript reminder cron failed: {e}")
+        reminder_result = {"sent": 0, "error": str(e)}
+
+    logger.info(
+        f"Cron: {sent_count} sent, {fail_count} failed, "
+        f"transcript_reminders={reminder_result.get('sent', 0)}"
+    )
+    return {
+        "ok": True,
+        "sent": sent_count,
+        "failed": fail_count,
+        "transcript_reminders": reminder_result,
+    }

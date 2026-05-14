@@ -872,3 +872,151 @@
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   Forum redesign (2026-04): section tabs, review sub-tabs, star ratings
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Top-level section bar ─────────────────────────────────────── */
+.forum-section-bar {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  margin: 12px 0 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.forum-section-bar::-webkit-scrollbar { display: none; }
+
+.forum-section-btn {
+  flex: 1;
+  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.forum-section-btn:hover { color: var(--text-primary); background: var(--bg-primary); }
+.forum-section-btn.active {
+  background: var(--cat-color, var(--accent-primary));
+  color: #fff;
+}
+.forum-section-btn.active svg { color: #fff; }
+
+/* ── Reviews sub-tab bar ───────────────────────────────────────── */
+.forum-subtab-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  max-width: 320px;
+}
+.forum-subtab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.forum-subtab-btn:hover { color: var(--text-primary); }
+.forum-subtab-btn.active {
+  background: var(--cat-color, var(--accent-primary));
+  color: #fff;
+}
+
+/* ── Star rating widget ─────────────────────────────────────────── */
+.forum-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.forum-star {
+  background: transparent;
+  border: none;
+  cursor: default;
+  color: var(--text-tertiary, #9ca3af);
+  padding: 0;
+  line-height: 1;
+}
+.forum-stars--picker .forum-star {
+  cursor: pointer;
+  padding: 2px;
+  transition: transform 0.1s ease;
+}
+.forum-stars--picker .forum-star:hover { transform: scale(1.15); }
+.forum-star--on { color: #f59e0b; }
+
+/* ── Review post header strip ───────────────────────────────────── */
+.forum-post-card--review {
+  border-left: 3px solid #f59e0b;
+}
+.forum-review-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  margin: 0 0 6px;
+  background: rgba(245, 158, 11, 0.08);
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  font-size: 0.8125rem;
+}
+.forum-review-strip__target {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.forum-review-strip__target svg { color: #f59e0b; }
+
+/* ── 2-column grid for review sub-type ─────────────────────────── */
+.forum-modal__cat-grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.forum-modal__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ── Mobile section bar ────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .forum-section-btn {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+  }
+  .forum-section-btn span {
+    display: none;  /* show icons only on mobile to save space */
+  }
+  .forum-section-btn.active span { display: inline; }
+}

@@ -63,6 +63,85 @@ def normalize_course_code(code: str) -> str:
     return code
 
 
+# Grades that indicate the course has a meaningful outcome (vs. failed/withdrawn/in-progress).
+# When picking which duplicate to keep, prefer entries with these grades.
+_PASSING_GRADES = {"A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "P", "S", "CO", "HH"}
+_NON_PASSING = {"W", "F", "U", "L", "IP", "K"}
+
+
+def _grade_rank(grade: str | None) -> int:
+    """Higher rank = preferred when deduping. Passing > unknown > non-passing."""
+    g = (grade or "").strip().upper()
+    if g in _PASSING_GRADES:
+        return 2
+    if g in _NON_PASSING:
+        return 0
+    return 1  # unknown / null
+
+
+def _dedupe_extracted(extracted: dict) -> None:
+    """
+    In-place dedup of the parsed transcript data so the preview matches what will
+    be imported.
+
+    Rules:
+      - Within completed_courses: keep the entry with the best grade per course_code.
+      - Within current_courses:   keep the first occurrence per course_code.
+      - Cross-list:               if a code appears in BOTH completed and current,
+                                  it belongs in completed (the grade arrived) — drop
+                                  the current entry.
+      - advanced_standing:        unique by course_code (first wins).
+    """
+    # 1. Dedupe completed_courses — prefer entry with the best grade
+    completed = extracted.get("completed_courses") or []
+    best_completed: dict[str, dict] = {}
+    for c in completed:
+        code = (c.get("course_code") or "").strip().upper()
+        if not code:
+            continue
+        prev = best_completed.get(code)
+        if prev is None or _grade_rank(c.get("grade")) > _grade_rank(prev.get("grade")):
+            best_completed[code] = c
+    extracted["completed_courses"] = list(best_completed.values())
+
+    # 2. Dedupe current_courses — first wins
+    current = extracted.get("current_courses") or []
+    seen_current: dict[str, dict] = {}
+    for c in current:
+        code = (c.get("course_code") or "").strip().upper()
+        if not code or code in seen_current:
+            continue
+        seen_current[code] = c
+
+    # 3. Cross-list: remove any current course whose code is already completed
+    completed_codes = set(best_completed.keys())
+    extracted["current_courses"] = [c for k, c in seen_current.items() if k not in completed_codes]
+
+    # 4. Dedupe advanced_standing by (course_code, course_title).
+    # Generic placeholder codes like "ECON 1XX" legitimately appear multiple times
+    # for different AP exams (e.g. Macroeconomics + Microeconomics, each 3 cr).
+    # Only collapse rows that match on BOTH code AND title.
+    student_info = extracted.get("student_info")
+    if isinstance(student_info, dict):
+        standing = student_info.get("advanced_standing") or []
+        if isinstance(standing, list):
+            seen_std: set[tuple[str, str]] = set()
+            unique_std = []
+            for item in standing:
+                if not isinstance(item, dict):
+                    continue
+                code = (item.get("course_code") or "").strip().upper()
+                title = (item.get("course_title") or "").strip().lower()
+                if not code:
+                    continue
+                key = (code, title)
+                if key in seen_std:
+                    continue
+                seen_std.add(key)
+                unique_std.append(item)
+            student_info["advanced_standing"] = unique_std
+
+
 # ── Extraction prompt ─────────────────────────────────────────────────────────
 
 EXTRACTION_PROMPT = """You are parsing a McGill University unofficial transcript PDF.
@@ -95,6 +174,12 @@ IMPORTANT — multi-term courses:
   If FRSL 207D1 appears in Fall with RW and no grade, it is STILL IN PROGRESS even though
   Winter shows FRSL 207D2 also with RW. Include BOTH D1 and D2 in current_courses.
   Always include every RW course from every term that has no grade.
+== STEP 4: Professor names (when available) ==
+If the transcript lists instructor / professor names next to each course
+(some unofficial transcripts include them, e.g. "Instructor: J. Vybihal"),
+capture the name in the "professor" field for both completed_courses and
+current_courses. If no instructor name appears on the transcript, set
+professor to null — do NOT guess.
 Return ONLY this JSON — no markdown, no explanation:
 {
   "student_info": {
@@ -116,7 +201,8 @@ Return ONLY this JSON — no markdown, no explanation:
       "term": "Fall",
       "year": 2024,
       "grade": "B-",
-      "credits": 3
+      "credits": 3,
+      "professor": "Joseph Vybihal"
     }
   ],
   "current_courses": [
@@ -125,7 +211,8 @@ Return ONLY this JSON — no markdown, no explanation:
       "course_title": "Algorithms and Data Structures",
       "subject": "COMP",
       "catalog": "251",
-      "credits": 3
+      "credits": 3,
+      "professor": null
     }
   ]
 }
@@ -134,7 +221,8 @@ Additional rules:
   - year is the 4-digit calendar year the term occurred (e.g. 2024)
   - credits: use the numeric value on the transcript (typically 3 or 4)
   - catalog for multi-term courses includes the full suffix: "207D1", "207D2"
-  - If a field is unknown, use null"""
+  - professor: full name as printed on the transcript, or null if absent
+  - If any other field is unknown, use null"""
 
 
 # ── Claude extraction (with retry on transient 500s) ─────────────────────────
@@ -263,6 +351,9 @@ async def parse_transcript(
         if course.get("course_code"):
             course["course_code"] = normalize_course_code(course["course_code"])
 
+    # Dedupe extracted lists BEFORE returning so the preview matches what will be imported.
+    _dedupe_extracted(extracted)
+
     if is_dry_run:
         return {"parsed": extracted, "saved": False}
 
@@ -285,8 +376,17 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
     }
 
     # 1. Completed courses
+    # Dedupe within this batch first so Claude extracting the same course twice
+    # only inserts once (keeps the FIRST occurrence — usually the passing attempt).
+    seen_completed: set[str] = set()
     for course in extracted.get("completed_courses", []) or []:
         try:
+            code = (course.get("course_code") or "").strip().upper()
+            if not code or code in seen_completed:
+                results["completed_skipped"] += 1
+                continue
+            seen_completed.add(code)
+
             term = (course.get("term") or "").strip()
             if term.lower() not in VALID_TERMS:
                 results["completed_skipped"] += 1
@@ -315,16 +415,45 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
                 "year": course.get("year"),
                 "grade": grade or None,
                 "credits": int(float(course.get("credits") or 3)),
+                "professor": (course.get("professor") or "").strip()[:120] or None,
             }
             supabase.table("completed_courses").insert(row).execute()
+
+            # If this course was previously marked "current", remove that stale row
+            try:
+                supabase.table("current_courses") \
+                    .delete() \
+                    .eq("user_id", user_id) \
+                    .eq("course_code", course["course_code"]) \
+                    .execute()
+            except Exception:
+                pass
+
             results["completed_added"] += 1
         except Exception as e:
             logger.warning(f"Skipping completed course {course.get('course_code')}: {e}")
             results["completed_skipped"] += 1
 
     # 2. Current courses
+    seen_current: set[str] = set()
     for course in extracted.get("current_courses", []) or []:
         try:
+            code = (course.get("course_code") or "").strip().upper()
+            if not code or code in seen_current:
+                results["current_skipped"] += 1
+                continue
+            seen_current.add(code)
+
+            # Skip if this course code already exists in completed (it's been graded since)
+            existing_completed = supabase.table("completed_courses") \
+                .select("id") \
+                .eq("user_id", user_id) \
+                .eq("course_code", course["course_code"]) \
+                .execute()
+            if existing_completed.data:
+                results["current_skipped"] += 1
+                continue
+
             existing = supabase.table("current_courses") \
                 .select("id") \
                 .eq("user_id", user_id) \
@@ -341,6 +470,7 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
                 "subject": course.get("subject", course["course_code"].split()[0]),
                 "catalog": course.get("catalog", course["course_code"].split()[-1]),
                 "credits": int(float(course.get("credits") or 3)),
+                "professor": (course.get("professor") or "").strip()[:120] or None,
             }
             supabase.table("current_courses").insert(row).execute()
             results["current_added"] += 1
@@ -378,11 +508,20 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
         raw_standing = student_info["advanced_standing"]
         if isinstance(raw_standing, list):
             validated = []
+            # Dedupe by (code, title) — generic placeholder codes like "ECON 1XX"
+            # legitimately repeat across different AP exams.
+            seen_standing: set[tuple[str, str]] = set()
             for item in raw_standing[:50]:
                 if isinstance(item, dict) and item.get("course_code"):
+                    code = normalize_course_code(str(item["course_code"]))[:20]
+                    title = str(item.get("course_title", "")).strip()[:200]
+                    key = (code, title.lower())
+                    if key in seen_standing:
+                        continue
+                    seen_standing.add(key)
                     validated.append({
-                        "course_code": str(item["course_code"]).strip()[:20],
-                        "course_title": str(item.get("course_title", "")).strip()[:200],
+                        "course_code": code,
+                        "course_title": title,
                         "credits": min(max(float(item.get("credits") or 3), 0), 20),
                     })
             if validated:
@@ -419,6 +558,7 @@ class _CourseItem(BaseModel):
     year: int | None = None
     grade: str | None = Field(None, max_length=5)
     credits: float | None = 3
+    professor: str | None = Field(None, max_length=120)
 
 
 class _StudentInfo(BaseModel):
@@ -466,6 +606,9 @@ async def import_transcript(
     for course in (extracted.get("student_info") or {}).get("advanced_standing") or []:
         if isinstance(course, dict) and course.get("course_code"):
             course["course_code"] = normalize_course_code(course["course_code"])
+
+    # Dedupe before persist (defense-in-depth — should already be deduped from parse)
+    _dedupe_extracted(extracted)
 
     results = _persist_transcript_data(user_id, extracted, user_sb=user_sb)
     return {"results": results, "saved": True}

@@ -402,6 +402,52 @@
   border-left: 3px solid var(--accent-primary);
 }
 
+.tu-course-row--transfer {
+  border-left: 3px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+/* ── How-to instructions box ── */
+.tu-howto {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 0 0 14px 0;
+  font-size: 0.8125rem;
+}
+
+.tu-howto-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  font-size: 0.8125rem;
+}
+
+.tu-howto-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.tu-howto-list li {
+  margin-bottom: 2px;
+}
+
+.tu-howto-list kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  box-shadow: 0 1px 0 var(--border-color);
+}
+
 .tu-course-code {
   font-weight: 700;
   color: var(--accent-primary);
@@ -546,6 +592,31 @@
   text-align: left;
 }
 .tu-verify-hint strong {
+  color: var(--text-primary);
+}
+
+/* ── Strong amber warning (syllabus heads-up) ────────────── */
+.tu-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-left: 3px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.tu-warn-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 1rem;
+}
+.tu-warn strong {
   color: var(--text-primary);
 }
 

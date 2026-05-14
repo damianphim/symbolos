@@ -49,6 +49,55 @@ const cardsAPI = {
     return response.json()
   },
 
+  /**
+   * Streaming card generation via SSE.
+   * Calls onCard(card, index) for each card as it arrives.
+   * Calls onDone({ count, language, fresh?, rate_limited? }) when complete.
+   * Calls onError(detail) on failure.
+   */
+  async generateCardsStream(userId, force = false, language = null, { onCard, onDone, onError } = {}) {
+    const response = await fetch(`${BASE_URL}/api/cards/stream/${userId}`, {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ force, language: language || getLang() }),
+    })
+    if (!response.ok) {
+      onError?.('Failed to start card generation')
+      return
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() // keep incomplete last line
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event = JSON.parse(line.slice(6))
+            if (event.type === 'card') {
+              onCard?.(event.card, event.index)
+              // Give the browser a full frame to paint the new card before the next one
+              await new Promise(r => requestAnimationFrame(r))
+            } else if (event.type === 'done') {
+              onDone?.(event)
+            } else if (event.type === 'error') {
+              onError?.(event.detail)
+            }
+          } catch { /* ignore malformed SSE lines */ }
+        }
+      }
+    } finally {
+      reader.releaseLock()
+    }
+  },
+
   async retranslateCards(userId, language = null) {
     const response = await fetch(`${BASE_URL}/api/cards/retranslate/${userId}`, {
       method: 'POST',
