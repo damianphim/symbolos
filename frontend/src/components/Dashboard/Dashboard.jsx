@@ -43,7 +43,20 @@ export default function Dashboard() {
     localStorage.getItem('symbolos_open_pw_change') ? 'profile' : 'chat'
   )
 
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Sidebar open/closed state — persisted across reloads but defaults to OPEN
+  // on first visit so new users see the navigation rail.
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sidebar_open')
+      if (stored === null) return true   // first visit → open
+      return stored === 'true'
+    } catch {
+      return true
+    }
+  })
+  useEffect(() => {
+    try { localStorage.setItem('sidebar_open', String(sidebarOpen)) } catch {}
+  }, [sidebarOpen])
 
   // ── Dynamic browser tab title ────────────────────────
   useEffect(() => {

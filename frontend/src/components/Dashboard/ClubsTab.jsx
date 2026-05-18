@@ -62,19 +62,31 @@ function CategoryBadge({ category, size = 'sm', t }) {
   )
 }
 
-function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = null }) {
+function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = null, editable = false, onEditClick = null }) {
   const meta = getCat(category)
   const initials = (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
   const dim = { sm: 28, md: 44, lg: 64 }[size] ?? 44
+
+  const handleClick = (e) => {
+    if (!editable || !onEditClick) return
+    e.stopPropagation()
+    onEditClick()
+  }
+
   return (
-    <div className={`club-avatar club-avatar--${size}`} style={{
-      width: dim, height: dim, borderRadius: 10,
-      background: logoUrl ? 'transparent' : meta.bg,
-      color: meta.color, border: `1px solid ${meta.border}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: dim * 0.36, fontWeight: 700, position: 'relative', flexShrink: 0,
-      overflow: 'hidden',
-    }}>
+    <div
+      className={`club-avatar club-avatar--${size} ${editable ? 'club-avatar--editable' : ''}`}
+      onClick={handleClick}
+      title={editable ? 'Click to change logo' : undefined}
+      style={{
+        width: dim, height: dim, borderRadius: 10,
+        background: logoUrl ? 'transparent' : meta.bg,
+        color: meta.color, border: `1px solid ${meta.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: dim * 0.36, fontWeight: 700, position: 'relative', flexShrink: 0,
+        overflow: 'hidden', cursor: editable ? 'pointer' : undefined,
+      }}
+    >
       {logoUrl ? (
         <img
           src={logoUrl}
@@ -86,6 +98,11 @@ function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = 
       {calSynced && (
         <span className="club-avatar__cal-badge" title="In your calendar">
           <FaCalendarAlt size={9} />
+        </span>
+      )}
+      {editable && (
+        <span className="club-avatar__edit-overlay" aria-hidden>
+          <FaEdit size={Math.max(10, dim * 0.28)} />
         </span>
       )}
     </div>
@@ -279,14 +296,18 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   )
 }
 
-function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe }) {
+function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe, onLogoChanged }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
   const [activity, setActivity] = useState(null)        // #11 — recent announcements/events
   const [facultyStats, setFacultyStats] = useState(null) // #12 — faculty social proof
+  const [logoOptimistic, setLogoOptimistic] = useState(null)
+  const [logoBusy, setLogoBusy] = useState(false)
+  const drawerLogoInputRef = useRef(null)
   const instructionsRef = useRef(null)
 
   useEffect(() => {
     if (!club?.id) return
+    setLogoOptimistic(null)
     clubsAPI.getClubActivity(club.id, { limit: 4 }).then(setActivity).catch(() => setActivity({ items: [] }))
     clubsAPI.getClubFacultyStats(club.id).then(setFacultyStats).catch(() => setFacultyStats(null))
   }, [club?.id])
@@ -295,6 +316,25 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   const display = liveClub ? { ...club, ...liveClub } : club
   const meta = getCat(display.category)
   const isLoading = clubLoading[club.id] ?? false
+  const isOwnerOrAdmin = isAdmin || (userId && display.created_by === userId)
+  const displayLogo = logoOptimistic || display.logo_url
+
+  const handleDrawerLogoPick = () => drawerLogoInputRef.current?.click()
+  const handleDrawerLogoFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setLogoBusy(true)
+    try {
+      const { logo_url } = await clubsAPI.uploadClubLogo(display.id, file)
+      setLogoOptimistic(logo_url)
+      onLogoChanged?.(display.id, logo_url)
+    } catch (err) {
+      alert(err.message || 'Upload failed')
+    } finally {
+      setLogoBusy(false)
+    }
+  }
   const isPrivate = display.is_private ?? false
   const canManage = isAdmin || display.created_by === userId
 
@@ -309,7 +349,24 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
             <FaChevronLeft size={13} /> {t('clubs.back')}
           </button>
           <div className="club-drawer__strip-main">
-            <ClubAvatar name={display.name} category={display.category} size="lg" calSynced={calSynced} logoUrl={display.logo_url} />
+            <ClubAvatar
+              name={display.name}
+              category={display.category}
+              size="lg"
+              calSynced={calSynced}
+              logoUrl={displayLogo}
+              editable={isOwnerOrAdmin && !logoBusy}
+              onEditClick={handleDrawerLogoPick}
+            />
+            {isOwnerOrAdmin && (
+              <input
+                ref={drawerLogoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                hidden
+                onChange={handleDrawerLogoFile}
+              />
+            )}
             <div className="club-drawer__strip-text">
               <h2 className="club-drawer__name">{display.name}</h2>
               <div className="club-drawer__badges">
@@ -579,11 +636,35 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   )
 }
 
-function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, isAdmin, clubLoading, t, userId, language, isFeatured = false }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, language, isFeatured = false }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
   const isOwner = userId && club.created_by === userId
+
+  // Logo quick-upload (owners only) — click the avatar to swap the picture
+  const [logoOptimistic, setLogoOptimistic] = useState(null)
+  const [logoBusy, setLogoBusy] = useState(false)
+  const logoInputRef = useRef(null)
+  const displayLogoUrl = logoOptimistic || club.logo_url
+
+  const handleLogoPick = () => logoInputRef.current?.click()
+
+  const handleLogoFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // reset so re-picking same file fires onChange
+    if (!file) return
+    setLogoBusy(true)
+    try {
+      const { logo_url } = await clubsAPI.uploadClubLogo(club.id, file)
+      setLogoOptimistic(logo_url)
+      onLogoChanged?.(club.id, logo_url)
+    } catch (err) {
+      alert(err.message || 'Upload failed')
+    } finally {
+      setLogoBusy(false)
+    }
+  }
 
   const handleJoin = async (e) => {
     e.stopPropagation()
@@ -603,9 +684,26 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
           <FaFire size={8} /> {t('clubs.featuredBadge') || 'Trending'}
         </div>
       )}
+      {isOwner && (
+        <input
+          ref={logoInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          hidden
+          onChange={handleLogoFile}
+        />
+      )}
       <div className="club-card__body">
         <div className="club-card__top">
-          <ClubAvatar name={club.name} category={club.category} size="md" calSynced={calSynced} logoUrl={club.logo_url} />
+          <ClubAvatar
+            name={club.name}
+            category={club.category}
+            size="md"
+            calSynced={calSynced}
+            logoUrl={displayLogoUrl}
+            editable={isOwner && !logoBusy}
+            onEditClick={handleLogoPick}
+          />
           <div className="club-card__info">
             <h3 className="club-card__name">{club.name}</h3>
             <div className="club-card__badges">
@@ -1899,6 +1997,19 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     await fetchCreatedClubs()
   }
 
+  // Fired after a successful logo upload from a card or the drawer — patch
+  // the loaded clubs in place so other parts of the UI reflect the new URL
+  // without a full refetch.
+  const handleLogoChanged = useCallback((clubId, newLogoUrl) => {
+    setClubs(prev => prev.map(c => c.id === clubId ? { ...c, logo_url: newLogoUrl } : c))
+    setCreatedClubs(prev => prev.map(c => c.id === clubId ? { ...c, logo_url: newLogoUrl } : c))
+    setMyClubs(prev => prev.map(m => {
+      const cl = m.club ?? m
+      if (cl.id !== clubId) return m
+      return m.club ? { ...m, club: { ...m.club, logo_url: newLogoUrl } } : { ...m, logo_url: newLogoUrl }
+    }))
+  }, [])
+
   const displayClubs = useMemo(() => {
     let list = [...clubs]
     if (sortMode === 'members') list.sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0))
@@ -2090,6 +2201,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onDelete={handleDeleteClub}
                     onEdit={setEditingClub}
                     onManage={setManagingClub}
+                    onLogoChanged={handleLogoChanged}
                     isFeatured
                     isAdmin={isAdmin}
                     clubLoading={clubLoading}
@@ -2125,6 +2237,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onDelete={handleDeleteClub}
                     onEdit={setEditingClub}
                     onManage={setManagingClub}
+                    onLogoChanged={handleLogoChanged}
                     isAdmin={isAdmin}
                     clubLoading={clubLoading}
                     userId={user?.id}
@@ -2189,6 +2302,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onJoin={handleJoin}
                     onLeave={handleLeave}
                     onManage={setManagingClub}
+                    onLogoChanged={handleLogoChanged}
                     language={language}
                     onToggleCalendar={handleToggleCalendar}
                     onToggleSubscribe={handleToggleSubscribe}
@@ -2236,6 +2350,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                         club={club}
                         onEdit={setEditingClub}
                         onManage={setManagingClub}
+                    onLogoChanged={handleLogoChanged}
                         onManageRequests={setManagingRequestsClub}
                         onOpen={setOpenClub}
                         pendingCount={pendingCounts[club.id] || 0}
@@ -2305,6 +2420,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                         onDelete={handleDeleteClub}
                         onEdit={setEditingClub}
                         onManage={setManagingClub}
+                    onLogoChanged={handleLogoChanged}
                         isAdmin={isAdmin}
                         clubLoading={clubLoading}
                         userId={user?.id}
@@ -2333,6 +2449,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
           onToggleCalendar={handleToggleCalendar}
           onToggleSubscribe={handleToggleSubscribe}
           onClose={() => setOpenClub(null)}
+          onLogoChanged={handleLogoChanged}
           clubLoading={clubLoading}
           t={t}
           isAdmin={isAdmin}

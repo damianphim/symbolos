@@ -2009,3 +2009,27 @@
   font-size: 0.7rem;
   color: var(--text-tertiary);
 }
+
+/* ── Editable avatar — owner clicks logo to upload a new one ───── */
+.club-avatar--editable {
+  transition: box-shadow 0.15s ease;
+}
+.club-avatar--editable:hover {
+  box-shadow: 0 0 0 2px var(--accent-primary, #ed1b2f);
+}
+.club-avatar__edit-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.club-avatar--editable:hover .club-avatar__edit-overlay,
+.club-avatar--editable:focus-visible .club-avatar__edit-overlay {
+  opacity: 1;
+}
