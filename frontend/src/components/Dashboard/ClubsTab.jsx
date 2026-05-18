@@ -67,10 +67,11 @@ function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = 
   const initials = (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
   const dim = { sm: 28, md: 44, lg: 64 }[size] ?? 44
 
+  // Always stop click from bubbling up to the card (so clicking the avatar
+  // never opens the detail drawer). Only owners get the file picker fired.
   const handleClick = (e) => {
-    if (!editable || !onEditClick) return
     e.stopPropagation()
-    onEditClick()
+    if (editable && onEditClick) onEditClick()
   }
 
   return (
