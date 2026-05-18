@@ -1897,3 +1897,115 @@
     font-size: 0.55rem;
   }
 }
+
+/* ── Club logo uploader (in ClubManageDashboard edit form) ────── */
+.club-logo-uploader {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+.club-logo-uploader__actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.club-logo-uploader__hint {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.club-logo-uploader__err {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+.club-logo-uploader .btn-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: clubLogoSpin 0.8s linear infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+@keyframes clubLogoSpin { to { transform: rotate(360deg); } }
+
+/* ── #12 Faculty social-proof banner in drawer ────────────────── */
+.club-drawer__faculty-proof {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 12px;
+  padding: 9px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.81rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.club-drawer__faculty-proof strong { color: var(--text-primary); }
+
+/* ── #11 Drawer activity feed ─────────────────────────────────── */
+.club-drawer__activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.club-drawer__activity-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  align-items: flex-start;
+}
+.club-drawer__activity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.club-drawer__activity-content { flex: 1; min-width: 0; }
+.club-drawer__activity-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  margin-bottom: 2px;
+}
+.club-drawer__activity-body {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.club-drawer__activity-meta {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}

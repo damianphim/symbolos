@@ -269,6 +269,48 @@ const clubsAPI = {
     return { subscribed_club_ids: [] }
   },
 
+  // ── Activity feed + faculty stats (drawer enrichment) ─────────────────────
+  async getClubActivity(clubId, { limit = 5 } = {}) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/activity?limit=${limit}`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { items: [], count: 0 }
+  },
+
+  async getClubFacultyStats(clubId) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/faculty-stats`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { your_faculty: null, your_faculty_count: 0, by_faculty: [], total: 0 }
+  },
+
+  // ── Logo upload — direct to Supabase Storage, then PATCH the club row ─────
+  async uploadClubLogo(clubId, file) {
+    // Lazy-import the supabase client to avoid circular imports
+    const { supabase } = await import('./supabase')
+    if (!file) throw new Error('No file selected')
+    if (!file.type?.startsWith('image/')) throw new Error('File must be an image')
+    if (file.size > 2 * 1024 * 1024) throw new Error('Image must be under 2 MB')
+
+    // Path: club-logos/{club_id}/logo.{ext} — overwrite previous logo
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '')
+    const path = `${clubId}/logo.${ext || 'png'}`
+    const { error: upErr } = await supabase.storage
+      .from('club-logos')
+      .upload(path, file, { upsert: true, contentType: file.type })
+    if (upErr) throw new Error(upErr.message || 'Upload failed')
+
+    const { data: urlData } = supabase.storage.from('club-logos').getPublicUrl(path)
+    // Cache-bust so the new logo shows immediately
+    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`
+
+    // Persist the URL on the club row via the existing PUT endpoint
+    await this.editClub(clubId, { logo_url: publicUrl })
+    return { logo_url: publicUrl }
+  },
+
   // ── Club Managers ──────────────────────────────────────────────────────────
   async getClubManagers(clubId) {
     try {

@@ -62,18 +62,27 @@ function CategoryBadge({ category, size = 'sm', t }) {
   )
 }
 
-function ClubAvatar({ name, category, size = 'md', calSynced = false }) {
+function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = null }) {
   const meta = getCat(category)
   const initials = (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
   const dim = { sm: 28, md: 44, lg: 64 }[size] ?? 44
   return (
     <div className={`club-avatar club-avatar--${size}`} style={{
       width: dim, height: dim, borderRadius: 10,
-      background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`,
+      background: logoUrl ? 'transparent' : meta.bg,
+      color: meta.color, border: `1px solid ${meta.border}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: dim * 0.36, fontWeight: 700, position: 'relative', flexShrink: 0,
+      overflow: 'hidden',
     }}>
-      {initials}
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={name || 'Club logo'}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement.appendChild(document.createTextNode(initials)) }}
+        />
+      ) : initials}
       {calSynced && (
         <span className="club-avatar__cal-badge" title="In your calendar">
           <FaCalendarAlt size={9} />
@@ -272,7 +281,16 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
 
 function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
+  const [activity, setActivity] = useState(null)        // #11 — recent announcements/events
+  const [facultyStats, setFacultyStats] = useState(null) // #12 — faculty social proof
   const instructionsRef = useRef(null)
+
+  useEffect(() => {
+    if (!club?.id) return
+    clubsAPI.getClubActivity(club.id, { limit: 4 }).then(setActivity).catch(() => setActivity({ items: [] }))
+    clubsAPI.getClubFacultyStats(club.id).then(setFacultyStats).catch(() => setFacultyStats(null))
+  }, [club?.id])
+
   if (!club) return null
   const display = liveClub ? { ...club, ...liveClub } : club
   const meta = getCat(display.category)
@@ -291,7 +309,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
             <FaChevronLeft size={13} /> {t('clubs.back')}
           </button>
           <div className="club-drawer__strip-main">
-            <ClubAvatar name={display.name} category={display.category} size="lg" calSynced={calSynced} />
+            <ClubAvatar name={display.name} category={display.category} size="lg" calSynced={calSynced} logoUrl={display.logo_url} />
             <div className="club-drawer__strip-text">
               <h2 className="club-drawer__name">{display.name}</h2>
               <div className="club-drawer__badges">
@@ -440,6 +458,46 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
             )}
           </div>
 
+          {/* #12 Faculty social proof — only show if there's a meaningful overlap */}
+          {facultyStats && facultyStats.your_faculty && facultyStats.your_faculty_count > 0 && (
+            <div className="club-drawer__faculty-proof">
+              <FaUsers size={14} style={{ color: meta.color }} />
+              <span>
+                <strong>{facultyStats.your_faculty_count}</strong> {facultyStats.your_faculty_count === 1 ? (t('clubs.studentFrom') || 'student from') : (t('clubs.studentsFrom') || 'students from')} <strong>{facultyStats.your_faculty}</strong> {t('clubs.areMembers') || (facultyStats.your_faculty_count === 1 ? 'is a member' : 'are members')}
+              </span>
+            </div>
+          )}
+
+          {/* #11 Recent activity — shows the club is alive */}
+          {activity && activity.items && activity.items.length > 0 && (
+            <section className="club-drawer__section">
+              <h3 className="club-drawer__section-title">
+                <FaBullhorn size={11} /> {t('clubs.recentActivity') || 'Recent activity'}
+              </h3>
+              <div className="club-drawer__activity-list">
+                {activity.items.map(item => (
+                  <div key={`${item.type}-${item.id}`} className="club-drawer__activity-item">
+                    <span
+                      className="club-drawer__activity-badge"
+                      style={{ background: item.type === 'event' ? meta.color : '#8b5cf6' }}
+                    >
+                      {item.type === 'event' ? <FaCalendarAlt size={9} /> : <FaBullhorn size={9} />}
+                      {item.type === 'event' ? 'Event' : 'Update'}
+                    </span>
+                    <div className="club-drawer__activity-content">
+                      <div className="club-drawer__activity-title">{item.title}</div>
+                      {item.body && <div className="club-drawer__activity-body">{item.body}</div>}
+                      <div className="club-drawer__activity-meta">
+                        {item.timestamp && new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {item.location && <> · {item.location}</>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {display.description && (
             <section className="club-drawer__section">
               <h3 className="club-drawer__section-title"><FaCheck size={12} /> {t('clubs.about')}</h3>
@@ -538,9 +596,6 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
     <article
       className={`club-card ${joined ? 'club-card--joined' : ''} ${isFeatured ? 'club-card--featured' : ''}`}
       onClick={() => onOpen(club)}
-      style={{
-        background: `linear-gradient(135deg, ${meta.bg}33 0%, transparent 35%), var(--bg-primary)`,
-      }}
     >
       <div className="club-card__accent" style={{ background: meta.color, opacity: joined ? 1 : 0.6 }} />
       {isFeatured && (
@@ -550,7 +605,7 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
       )}
       <div className="club-card__body">
         <div className="club-card__top">
-          <ClubAvatar name={club.name} category={club.category} size="md" calSynced={calSynced} />
+          <ClubAvatar name={club.name} category={club.category} size="md" calSynced={calSynced} logoUrl={club.logo_url} />
           <div className="club-card__info">
             <h3 className="club-card__name">{club.name}</h3>
             <div className="club-card__badges">
@@ -694,7 +749,7 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, onDelet
   const isLoading = clubLoading[club.id] ?? false
   return (
     <div className="my-club-row" onClick={() => onOpen(club)}>
-      <ClubAvatar name={club.name} category={club.category} size="sm" />
+      <ClubAvatar name={club.name} category={club.category} size="sm" logoUrl={club.logo_url} />
       <div className="my-club-row__info">
         <span className="my-club-row__name">{club.name}</span>
         <CategoryBadge category={club.category} t={t} />
@@ -735,7 +790,7 @@ function CreatedClubRow({ club, onEdit, onManage, onManageRequests, onOpen, pend
   const meta = getCat(club.category)
   return (
     <div className="my-club-row created-club-row" onClick={() => onOpen(club)} style={{ cursor: 'pointer' }}>
-      <ClubAvatar name={club.name} category={club.category} size="sm" />
+      <ClubAvatar name={club.name} category={club.category} size="sm" logoUrl={club.logo_url} />
       <div className="my-club-row__info">
         <span className="my-club-row__name">{club.name}</span>
         <CategoryBadge category={club.category} t={t} />
@@ -867,6 +922,25 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editSuccess, setEditSuccess] = useState(false)
   const [editError, setEditError] = useState('')
+
+  // Logo upload state
+  const [logoUrl, setLogoUrl] = useState(club?.logo_url || null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoError, setLogoError] = useState('')
+  const logoFileRef = useRef(null)
+
+  const handleLogoFile = async (file) => {
+    if (!file) return
+    setLogoError(''); setLogoUploading(true)
+    try {
+      const { logo_url } = await clubsAPI.uploadClubLogo(club.id, file)
+      setLogoUrl(logo_url)
+    } catch (e) {
+      setLogoError(e.message || 'Upload failed')
+    } finally {
+      setLogoUploading(false)
+    }
+  }
   const meta = getCat(club?.category)
 
   useEffect(() => {
@@ -976,7 +1050,7 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
         {/* Header */}
         <div className="club-manage__header">
           <div className="club-manage__header-left">
-            <ClubAvatar name={club.name} category={club.category} size="md" />
+            <ClubAvatar name={club.name} category={club.category} size="md" logoUrl={club.logo_url} />
             <div>
               <h2 className="club-manage__title">{club.name}</h2>
               <p className="club-manage__subtitle">{t('clubs.manage.dashboardTitle')}</p>
@@ -1040,6 +1114,53 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
           {activeSection === 'edit' && (
             <form className="club-manage__edit-form" onSubmit={handleSaveEdit}>
               {editSuccess && <div className="club-manage__success"><FaCheck size={12} /> {t('clubs.manage.saved')}</div>}
+
+              {/* Logo upload */}
+              <div className="clubs-field">
+                <label>{t('clubs.fieldLogo') || 'Club logo'}</label>
+                <div className="club-logo-uploader">
+                  <ClubAvatar name={editForm.name || club?.name} category={editForm.category || club?.category} size="lg" logoUrl={logoUrl} />
+                  <div className="club-logo-uploader__actions">
+                    <input
+                      ref={logoFileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      hidden
+                      onChange={e => handleLogoFile(e.target.files?.[0])}
+                    />
+                    <button
+                      type="button"
+                      className="clubs-modal__btn clubs-modal__btn--secondary"
+                      onClick={() => logoFileRef.current?.click()}
+                      disabled={logoUploading}
+                    >
+                      {logoUploading
+                        ? <><div className="btn-spinner" /> {t('clubs.uploading') || 'Uploading…'}</>
+                        : logoUrl
+                          ? (t('clubs.changeLogo') || 'Change logo')
+                          : (t('clubs.uploadLogo') || 'Upload logo')}
+                    </button>
+                    {logoUrl && (
+                      <button
+                        type="button"
+                        className="clubs-modal__btn clubs-modal__btn--ghost"
+                        onClick={async () => {
+                          setLogoUrl(null)
+                          try { await clubsAPI.editClub(club.id, { logo_url: '' }) } catch {}
+                        }}
+                        disabled={logoUploading}
+                      >
+                        <FaTrash size={11} /> {t('clubs.removeLogo') || 'Remove'}
+                      </button>
+                    )}
+                    <p className="club-logo-uploader__hint">
+                      {t('clubs.logoHint') || 'Square image, under 2 MB. PNG, JPG, WebP, or SVG.'}
+                    </p>
+                    {logoError && <p className="club-logo-uploader__err"><FaExclamationTriangle size={11} /> {logoError}</p>}
+                  </div>
+                </div>
+              </div>
+
               <div className="clubs-field">
                 <label>{t('clubs.fieldName')} *</label>
                 <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />

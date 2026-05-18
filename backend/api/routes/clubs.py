@@ -106,6 +106,7 @@ class UpdateClubRequest(BaseModel):
     executive_emails:  Optional[str]  = Field(None, max_length=500)
     join_instructions: Optional[str]  = Field(None, max_length=2000)
     application_url:   Optional[str]  = None
+    logo_url:          Optional[str]  = Field(None, max_length=500)
 
 
 class JoinRequestAction(BaseModel):
@@ -1315,3 +1316,121 @@ async def admin_email_action(token: str):
             f"Something went wrong: {e}",
             False,
         ))
+
+
+# ════════════════════════════════════════════════════════════════════
+#  Club activity feed + faculty social proof
+# ════════════════════════════════════════════════════════════════════
+
+@router.get("/{club_id}/activity")
+async def get_club_activity(
+    club_id: str,
+    limit: int = 5,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """
+    Recent activity in a club — most recent N events + announcements merged,
+    sorted newest-first. Used by the club drawer to give a "this club is alive"
+    signal.
+    """
+    supabase = get_supabase()
+    limit = max(1, min(limit, 20))
+    try:
+        anns = (supabase.table("club_announcements")
+                .select("id, title, body, created_at")
+                .eq("club_id", club_id)
+                .order("created_at", desc=True)
+                .limit(limit).execute()).data or []
+        evts = (supabase.table("club_events")
+                .select("id, title, description, date, time, location")
+                .eq("club_id", club_id)
+                .order("date", desc=True)
+                .limit(limit).execute()).data or []
+
+        items = []
+        for a in anns:
+            items.append({
+                "type":       "announcement",
+                "id":         a.get("id"),
+                "title":      a.get("title") or "",
+                "body":       (a.get("body") or "")[:200],
+                "timestamp":  a.get("created_at"),
+            })
+        for e in evts:
+            ts = e.get("date") or ""
+            if e.get("time"):
+                ts = f"{ts}T{e['time']}"
+            items.append({
+                "type":      "event",
+                "id":        e.get("id"),
+                "title":     e.get("title") or "",
+                "body":      (e.get("description") or "")[:200],
+                "location":  e.get("location"),
+                "timestamp": ts,
+            })
+
+        items.sort(key=lambda x: x.get("timestamp") or "", reverse=True)
+        return {"items": items[:limit], "count": len(items[:limit])}
+    except Exception as e:
+        logger.exception(f"Error fetching club activity: {e}")
+        return {"items": [], "count": 0}
+
+
+@router.get("/{club_id}/faculty-stats")
+async def get_club_faculty_stats(
+    club_id: str,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """
+    Aggregate club membership by faculty. Returns counts only (no names) so it's
+    privacy-safe for non-members to see "3 students from your faculty" in the
+    drawer before joining.
+
+    Response:
+      {
+        "your_faculty": "Science",
+        "your_faculty_count": 3,
+        "by_faculty": [{"faculty": "Science", "count": 12}, ...],
+        "total": 47,
+      }
+    """
+    supabase = get_supabase()
+    try:
+        # Caller's faculty for the "your faculty" highlight
+        caller = supabase.table("users").select("faculty").eq("id", current_user_id).execute().data or []
+        your_faculty = (caller[0].get("faculty") if caller else None) or None
+
+        # Member IDs
+        memberships = supabase.table("user_clubs").select("user_id").eq("club_id", club_id).execute().data or []
+        user_ids = [m.get("user_id") for m in memberships if m.get("user_id")]
+        if not user_ids:
+            return {
+                "your_faculty":       your_faculty,
+                "your_faculty_count": 0,
+                "by_faculty":         [],
+                "total":              0,
+            }
+
+        # Fetch faculty for each member in one batched call
+        users = supabase.table("users").select("id, faculty").in_("id", user_ids).execute().data or []
+        counts: dict[str, int] = {}
+        for u in users:
+            f = (u.get("faculty") or "Unknown").strip() or "Unknown"
+            counts[f] = counts.get(f, 0) + 1
+
+        by_faculty = sorted(
+            [{"faculty": k, "count": v} for k, v in counts.items()],
+            key=lambda x: x["count"], reverse=True,
+        )
+
+        your_faculty_count = counts.get(your_faculty or "", 0)
+
+        return {
+            "your_faculty":       your_faculty,
+            "your_faculty_count": your_faculty_count,
+            "by_faculty":         by_faculty,
+            "total":              len(user_ids),
+        }
+    except Exception as e:
+        logger.exception(f"Error fetching club faculty stats: {e}")
+        return {"your_faculty": None, "your_faculty_count": 0, "by_faculty": [], "total": 0}
