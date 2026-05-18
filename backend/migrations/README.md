@@ -12,23 +12,20 @@ All migrations are idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `DO $$
 
 ---
 
-## Supabase connection pooler
+## Supabase connection pooler — N/A for this stack
 
-Once you cross ~1k concurrent users, each Vercel serverless invocation opening
-a fresh Postgres connection becomes the bottleneck. Supabase ships a built-in
-PgBouncer pooler — switch to it by editing **one env var**:
+The Supabase pooler (port 6543, Pro plan) only applies to **direct Postgres
+connections** (asyncpg, psycopg2, raw psql). This backend uses `supabase-py`'s
+`create_client()`, which talks to Supabase via **PostgREST** — and PostgREST
+manages its own internal pool on Supabase's side. **Do not change `SUPABASE_URL`
+to the pooler URL** — it'll break PostgREST routing.
 
-1. Supabase dashboard → **Settings → Database → Connection string**
-2. Pick the **Transaction** mode pooler (port `6543`, not `5432`)
-3. Copy that URL and set it as `SUPABASE_URL` in your Vercel env vars
-
-Two gotchas:
-
-- The pooled connection requires the **Pro plan** ($25/mo). Free tier is direct only.
-- Statement-level features (e.g. `LISTEN/NOTIFY`, prepared statements) are unavailable in
-  Transaction mode. We don't use either, so this is safe.
-
-Direct URL still works for migrations run from the SQL Editor — those don't go through the pooler.
+The pooler becomes relevant only if you later move hot-path reads onto
+`asyncpg` directly (real persistent pool, lower per-query overhead). Good
+candidates if/when you do that:
+- `forum.py` post list queries
+- `cards.py::_fetch_student_context_parallel`
+- `clubs.py` list/category fetches
 
 ---
 
