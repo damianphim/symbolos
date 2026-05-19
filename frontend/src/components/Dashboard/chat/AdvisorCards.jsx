@@ -306,9 +306,16 @@ function AdvisorCard({
               {chips.map((chip, i) => {
                 const chipLabel = typeof chip === 'string' ? chip : (chip?.label ?? '')
                 const chipType  = typeof chip === 'object' ? chip?.type : null
+                // Typed actions short-circuit the normal chat-send flow.
+                // Keep this list in sync with Dashboard's window listeners.
+                const TYPED_ACTIONS = {
+                  open_transcript_upload: 'open-transcript-upload',
+                  open_degree_planning:   'open-degree-planning',
+                }
+                const dispatchEvent = TYPED_ACTIONS[chipType]
                 const handleChipClick = () => {
-                  if (chipType === 'open_transcript_upload') {
-                    window.dispatchEvent(new CustomEvent('open-transcript-upload'))
+                  if (dispatchEvent) {
+                    window.dispatchEvent(new CustomEvent(dispatchEvent))
                     return
                   }
                   handleSend(chipLabel)
@@ -318,7 +325,7 @@ function AdvisorCard({
                     key={i}
                     className="advisor-card__chip"
                     onClick={handleChipClick}
-                    disabled={isThinking && chipType !== 'open_transcript_upload'}
+                    disabled={isThinking && !dispatchEvent}
                   >
                     <FaBolt className="chip-icon" />
                     {chipLabel}

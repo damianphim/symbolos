@@ -122,6 +122,15 @@ export default function Dashboard() {
     return () => window.removeEventListener('open-transcript-upload', handler)
   }, [])
 
+  // Listen for `open-degree-planning` custom event fired by the
+  // course-registration reminder card chip — jumps the user to the
+  // Degree Planning tab so they can plan next term.
+  useEffect(() => {
+    const handler = () => setActiveTab('favorites')   // 'favorites' tab = Degree Planning
+    window.addEventListener('open-degree-planning', handler)
+    return () => window.removeEventListener('open-degree-planning', handler)
+  }, [])
+
   // ── Advisor cards ──────────────────────────────────────
   const [advisorCards, setAdvisorCards] = useState([])
   const [cardsLoading, setCardsLoading] = useState(false)

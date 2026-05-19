@@ -71,6 +71,15 @@ POST_FINALS_REMINDER_DATES = [(5, 10), (1, 10)]
 TRANSCRIPT_REMINDER_LABEL = "TRANSCRIPT UPDATE"
 
 
+# ── Course-registration reminder config ─────────────────────────────
+# Course registration for Fall/Winter opens late May. We fire:
+#   - May 20: one-week heads-up so students can plan ("look ahead")
+#   - May 28: day-of "registration opens, go register now"
+# Update annually if McGill's registration window shifts.
+COURSE_REGISTRATION_REMINDER_DATES = [(5, 20), (5, 28)]
+COURSE_REGISTRATION_REMINDER_LABEL = "COURSE REGISTRATION"
+
+
 class ThreadRequest(BaseModel):
     user_id: str
     message: str = Field(..., min_length=1, max_length=2000)
@@ -1149,4 +1158,133 @@ def run_transcript_reminder_cron() -> dict:
         return {"sent": sent}
     except Exception as e:
         logger.exception(f"Transcript reminder cron failed: {e}")
+        return {"sent": 0, "error": str(e)}
+
+
+# ════════════════════════════════════════════════════════════════════
+#  Course-registration opens reminder
+# ════════════════════════════════════════════════════════════════════
+
+def is_course_registration_day(today: "date | None" = None) -> bool:
+    """True if today is one of the configured course-registration reminder dates."""
+    from datetime import date as _date
+    t = today or _date.today()
+    return (t.month, t.day) in COURSE_REGISTRATION_REMINDER_DATES
+
+
+def _has_active_course_registration_card(user_id: str) -> bool:
+    """True if a course-registration card was already inserted today (idempotency)."""
+    try:
+        supabase = get_supabase()
+        today_iso = datetime.now(timezone.utc).date().isoformat()
+        resp = (supabase.table("advisor_cards")
+                .select("id")
+                .eq("user_id", user_id)
+                .eq("label", COURSE_REGISTRATION_REMINDER_LABEL)
+                .gte("generated_at", today_iso)
+                .limit(1).execute())
+        return bool(resp.data)
+    except Exception:
+        return False
+
+
+def _insert_course_registration_card(user_id: str, days_before_open: int) -> bool:
+    """
+    Insert a course-registration card for one user. days_before_open distinguishes
+    the heads-up card (>0) from the day-of card (0).
+    """
+    if _has_active_course_registration_card(user_id):
+        return False
+    try:
+        supabase = get_supabase()
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Push existing cards down by 1 so this one appears at the top
+        try:
+            existing = (supabase.table("advisor_cards").select("id, sort_order")
+                        .eq("user_id", user_id).execute().data or [])
+            for c in existing:
+                supabase.table("advisor_cards") \
+                    .update({"sort_order": (c.get("sort_order") or 0) + 1}) \
+                    .eq("id", c["id"]).execute()
+        except Exception:
+            pass
+
+        # Wording shifts based on whether registration is opening today or upcoming
+        if days_before_open > 0:
+            title = f"Course registration opens in {days_before_open} days"
+            body = (
+                f"McGill course registration for Fall/Winter opens in about {days_before_open} days. "
+                "Now's the time to review your degree plan, identify the courses you need next term, "
+                "and build a backup list in case your first picks fill up. "
+                "Avoid scheduling conflicts by lining up your top choices ahead of time."
+            )
+            card_type = "warning"
+        else:
+            title = "Course registration is open"
+            body = (
+                "McGill Minerva course registration is open. Sign in and register for next term's "
+                "courses as soon as possible — popular sections fill quickly. Double-check your "
+                "Fall and Winter selections, watch for time conflicts, and queue up backup courses."
+            )
+            card_type = "urgent"
+
+        row = {
+            "user_id": user_id,
+            "source": "system",
+            "card_type": card_type,
+            "icon": "📝",
+            "label": COURSE_REGISTRATION_REMINDER_LABEL,
+            "title": title,
+            "body": body,
+            "actions": json.dumps([
+                {"type": "open_degree_planning", "label": "Open Degree Planning"},
+                "Which courses do I need to take next term?",
+                "How do I check for prerequisite conflicts?",
+                "What backups should I have ready if my first picks fill up?",
+            ]),
+            "category": "deadlines",
+            "priority": 1,
+            "sort_order": 0,
+            "generated_at": now,
+        }
+        supabase.table("advisor_cards").insert(row).execute()
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to insert course-registration card for {user_id}: {e}")
+        return False
+
+
+def run_course_registration_reminder_cron() -> dict:
+    """
+    Daily cron: if today is one of the configured registration-reminder dates,
+    drop a card into every user's brief (idempotent — one card per user per day).
+    """
+    if not is_course_registration_day():
+        return {"sent": 0, "skipped": "not_registration_day"}
+    try:
+        from datetime import date as _date
+        today = _date.today()
+        # Distance to the closest "registration opens" date in our list. If today
+        # IS the opens day, days_before_open = 0; if it's the heads-up day, > 0.
+        # We treat the LATEST date in the list as "the actual opens day" since
+        # earlier entries are heads-up dates.
+        sorted_dates = sorted(COURSE_REGISTRATION_REMINDER_DATES, key=lambda x: (x[0], x[1]))
+        opens_month, opens_day = sorted_dates[-1]
+        try:
+            opens_date = today.replace(month=opens_month, day=opens_day)
+            days_before_open = max(0, (opens_date - today).days)
+        except ValueError:
+            days_before_open = 0
+
+        supabase = get_supabase()
+        users_resp = supabase.table("users").select("id").execute()
+        sent = 0
+        for u in (users_resp.data or []):
+            if u.get("id") and _insert_course_registration_card(u["id"], days_before_open):
+                sent += 1
+        logger.info(f"Course-registration reminder cron: inserted {sent} cards (days_before_open={days_before_open})")
+        return {"sent": sent, "days_before_open": days_before_open}
+    except Exception as e:
+        logger.exception(f"Course-registration reminder cron failed: {e}")
         return {"sent": 0, "error": str(e)}

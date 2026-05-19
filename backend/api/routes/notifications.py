@@ -381,13 +381,23 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         logger.exception(f"Transcript reminder cron failed: {e}")
         reminder_result = {"sent": 0, "error": str(e)}
 
+    # Course registration reminder — only fires on late-May dates
+    try:
+        from .cards import run_course_registration_reminder_cron
+        registration_result = run_course_registration_reminder_cron()
+    except Exception as e:
+        logger.exception(f"Course registration reminder cron failed: {e}")
+        registration_result = {"sent": 0, "error": str(e)}
+
     logger.info(
         f"Cron: {sent_count} sent, {fail_count} failed, "
-        f"transcript_reminders={reminder_result.get('sent', 0)}"
+        f"transcript_reminders={reminder_result.get('sent', 0)}, "
+        f"registration_reminders={registration_result.get('sent', 0)}"
     )
     return {
         "ok": True,
         "sent": sent_count,
         "failed": fail_count,
-        "transcript_reminders": reminder_result,
+        "transcript_reminders":   reminder_result,
+        "registration_reminders": registration_result,
     }
