@@ -1,15 +1,13 @@
-// Lightweight loading screen — pure CSS, no video.
-// The previous version loaded a 25 MB MP4 every visit; this renders instantly
-// and keeps the bundle ~25 MB smaller.
+// Lightweight loading screen — single static logo + thin progress bar.
+// No video, no animated gradients, no media bigger than a few KB.
+import loadingLogo from '../../assets/loading-logo.png'
 import './Loading.css'
 
 export default function Loading() {
   return (
     <div className="loading-container">
-      <div className="loading-gradient" />
       <div className="loading-content">
-        <div className="loading-mark">S</div>
-        <p className="loading-message">Symbolos</p>
+        <img src={loadingLogo} alt="Symbolos" className="loading-logo" />
         <div className="loading-bar"><span /></div>
       </div>
     </div>
