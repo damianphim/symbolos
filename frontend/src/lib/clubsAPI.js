@@ -269,6 +269,43 @@ const clubsAPI = {
     return { subscribed_club_ids: [] }
   },
 
+  // ── Manager-invite requests ──────────────────────────────────────────────
+  async createManagerRequest(clubId, email, message = null) {
+    const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/manager-requests`, {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ email, message }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'Failed to send invite')
+    }
+    return res.json()
+  },
+
+  async getIncomingManagerRequests() {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/manager-requests/incoming`, {
+        headers: await authHeaders(),
+      })
+      if (res.ok) return res.json()
+    } catch (_) {}
+    return { requests: [], count: 0 }
+  },
+
+  async respondToManagerRequest(requestId, action) {
+    const res = await fetch(`${BASE_URL}/api/clubs/manager-requests/${requestId}/action`, {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ action }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'Failed to respond to invite')
+    }
+    return res.json()
+  },
+
   // ── Activity feed + faculty stats (drawer enrichment) ─────────────────────
   async getClubActivity(clubId, { limit = 5 } = {}) {
     try {

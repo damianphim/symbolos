@@ -2033,3 +2033,53 @@
 .club-avatar--editable:focus-visible .club-avatar__edit-overlay {
   opacity: 1;
 }
+
+/* ── Manager-invite inbox (top of My Clubs) ────────────────────── */
+.clubs-invite-inbox {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 12px;
+}
+.clubs-invite-inbox .clubs-mine__section-title {
+  color: var(--accent-primary);
+}
+.clubs-invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.clubs-invite-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+}
+.clubs-invite-row__avatar { flex-shrink: 0; }
+.clubs-invite-row__body { flex: 1; min-width: 0; }
+.clubs-invite-row__text {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.clubs-invite-row__msg {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.clubs-invite-row__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .clubs-invite-row { flex-direction: column; align-items: flex-start; }
+  .clubs-invite-row__actions { width: 100%; justify-content: stretch; }
+  .clubs-invite-row__actions > * { flex: 1; }
+}

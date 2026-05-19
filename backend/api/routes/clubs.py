@@ -221,7 +221,9 @@ async def list_clubs(
     category: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
 ):
-    """Return all verified clubs, optionally filtered."""
+    """Return all verified clubs, optionally filtered. Each club row is
+    augmented with a `subscriber_count` (computed from club_subscriptions)
+    — the new public metric replacing the legacy member_count."""
     try:
         supabase = get_supabase()
         query = (
@@ -237,7 +239,25 @@ async def list_clubs(
             safe_search = search.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
             query = query.ilike("name", f"%{safe_search}%")
         result = query.execute()
-        return {"clubs": result.data or [], "count": len(result.data or [])}
+        clubs = result.data or []
+
+        # Batched subscriber counts — one query for all clubs on this page
+        ids = [c["id"] for c in clubs if c.get("id")]
+        sub_counts: dict = {}
+        if ids:
+            try:
+                sub_rows = (supabase.table("club_subscriptions")
+                            .select("club_id").in_("club_id", ids).execute().data or [])
+                for r in sub_rows:
+                    cid = r.get("club_id")
+                    if cid:
+                        sub_counts[cid] = sub_counts.get(cid, 0) + 1
+            except Exception:
+                pass
+        for c in clubs:
+            c["subscriber_count"] = sub_counts.get(c.get("id"), 0)
+
+        return {"clubs": clubs, "count": len(clubs)}
     except Exception as e:
         logger.exception(f"Error listing clubs: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve clubs")
@@ -1501,3 +1521,164 @@ async def get_club_faculty_stats(
     except Exception as e:
         logger.exception(f"Error fetching club faculty stats: {e}")
         return {"your_faculty": None, "your_faculty_count": 0, "by_faculty": [], "total": 0}
+
+
+# ════════════════════════════════════════════════════════════════════
+#  Manager invite-request flow
+#  Owner/admin -> request another Symbolos user to become a manager.
+#  Target user accepts/denies from their Clubs tab.
+# ════════════════════════════════════════════════════════════════════
+
+class ManagerInviteCreate(BaseModel):
+    email: str = Field(..., min_length=3, max_length=200)
+    message: Optional[str] = Field(None, max_length=500)
+
+
+class ManagerInviteAction(BaseModel):
+    action: str  # 'accept' | 'deny'
+
+
+@router.post("/{club_id}/manager-requests")
+async def create_manager_request(
+    club_id: str,
+    body: ManagerInviteCreate,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Owner/admin invites another Symbolos user (by email) to become a manager.
+    Inserts a pending row in club_manager_requests; the target sees and acts on
+    it from their Clubs tab."""
+    supabase = get_supabase()
+    if not _is_club_owner_or_admin(club_id, current_user_id):
+        raise HTTPException(status_code=403, detail="Only the club owner or admins can invite managers")
+
+    email = body.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=422, detail="Invalid email")
+
+    # Find the target user
+    target = supabase.table("users").select("id, email").ilike("email", email).execute()
+    if not target.data:
+        raise HTTPException(status_code=404, detail=f"No Symbolos account found for {email}")
+    target_user_id = target.data[0]["id"]
+
+    if target_user_id == current_user_id:
+        raise HTTPException(status_code=400, detail="You can't invite yourself")
+
+    # Already a manager / owner?
+    existing_role = supabase.table("user_clubs").select("role") \
+        .eq("club_id", club_id).eq("user_id", target_user_id).execute()
+    if existing_role.data:
+        role = (existing_role.data[0].get("role") or "").lower()
+        if role in ("owner", "admin"):
+            raise HTTPException(status_code=400, detail=f"That user is already a {role}")
+
+    # Existing pending invite?
+    pending = supabase.table("club_manager_requests").select("id") \
+        .eq("club_id", club_id).eq("target_user_id", target_user_id) \
+        .eq("status", "pending").execute()
+    if pending.data:
+        raise HTTPException(status_code=400, detail="A pending invite already exists for that user")
+
+    try:
+        row = {
+            "club_id":        club_id,
+            "target_user_id": target_user_id,
+            "requested_by":   current_user_id,
+            "status":         "pending",
+            "message":        (body.message or "").strip()[:500] or None,
+        }
+        result = supabase.table("club_manager_requests").insert(row).execute()
+        invite = result.data[0] if result.data else row
+        return {"ok": True, "invite": invite}
+    except Exception as e:
+        logger.exception(f"create_manager_request failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send manager invite")
+
+
+@router.get("/manager-requests/incoming")
+async def list_incoming_manager_requests(
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Pending manager invitations for the current user, with club info.
+    Used to render the inbox at the top of My Clubs."""
+    supabase = get_supabase()
+    try:
+        resp = (supabase.table("club_manager_requests")
+                .select("id, club_id, requested_by, message, created_at, status, clubs(name, category, logo_url)")
+                .eq("target_user_id", current_user_id)
+                .eq("status", "pending")
+                .order("created_at", desc=True)
+                .execute())
+        rows = resp.data or []
+        # Resolve "requested_by" emails to first names (privacy: same
+        # email-derived display name we use for club members).
+        requester_ids = [r.get("requested_by") for r in rows if r.get("requested_by")]
+        names: dict = {}
+        if requester_ids:
+            try:
+                u = supabase.table("users").select("id, email").in_("id", requester_ids).execute()
+                for row in (u.data or []):
+                    names[row["id"]] = _display_name_from_email(row.get("email", ""))
+            except Exception:
+                pass
+        for r in rows:
+            r["requested_by_name"] = names.get(r.get("requested_by"), "Member")
+        return {"requests": rows, "count": len(rows)}
+    except Exception as e:
+        logger.exception(f"list_incoming_manager_requests failed: {e}")
+        return {"requests": [], "count": 0}
+
+
+@router.post("/manager-requests/{request_id}/action")
+async def respond_to_manager_request(
+    request_id: str,
+    body: ManagerInviteAction,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """Accept or deny a manager invitation. Only the target user can act."""
+    if body.action not in ("accept", "deny"):
+        raise HTTPException(status_code=422, detail="action must be 'accept' or 'deny'")
+
+    supabase = get_supabase()
+    inv_res = supabase.table("club_manager_requests").select("*").eq("id", request_id).execute()
+    if not inv_res.data:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    invite = inv_res.data[0]
+
+    if invite.get("target_user_id") != current_user_id:
+        raise HTTPException(status_code=403, detail="This invite is not for you")
+    if invite.get("status") != "pending":
+        raise HTTPException(status_code=400, detail=f"Invite is already {invite.get('status')}")
+
+    club_id = invite["club_id"]
+    new_status = "accepted" if body.action == "accept" else "denied"
+
+    try:
+        if body.action == "accept":
+            # Upsert membership row with admin role
+            existing = (supabase.table("user_clubs")
+                        .select("id, role")
+                        .eq("club_id", club_id)
+                        .eq("user_id", current_user_id)
+                        .execute().data or [])
+            if existing:
+                if (existing[0].get("role") or "").lower() != "owner":
+                    supabase.table("user_clubs") \
+                        .update({"role": "admin"}) \
+                        .eq("id", existing[0]["id"]).execute()
+            else:
+                supabase.table("user_clubs").insert({
+                    "club_id": club_id,
+                    "user_id": current_user_id,
+                    "role":    "admin",
+                }).execute()
+
+        supabase.table("club_manager_requests").update({
+            "status":       new_status,
+            "responded_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", request_id).execute()
+
+        return {"ok": True, "status": new_status}
+    except Exception as e:
+        logger.exception(f"respond_to_manager_request failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to respond to invite")

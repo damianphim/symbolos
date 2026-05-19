@@ -504,11 +504,11 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
           </div>
 
           <div className="club-drawer__stats">
-            {display.member_count != null && (
+            {display.subscriber_count != null && (
               <div className="club-drawer__stat">
-                <FaUsers size={22} style={{ color: meta.color }} />
-                <span className="club-drawer__stat-value">{display.member_count}</span>
-                <span className="club-drawer__stat-label">{t('clubs.members')}</span>
+                <FaBell size={20} style={{ color: meta.color }} />
+                <span className="club-drawer__stat-value">{display.subscriber_count}</span>
+                <span className="club-drawer__stat-label">{t('clubs.subscribers') || 'Subscribers'}</span>
               </div>
             )}
             {display.meeting_schedule && (
@@ -726,10 +726,10 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
         {club.description && (
           <p className="club-card__desc club-card__desc--clamped">{club.description}</p>
         )}
-        {(club.member_count != null || club.meeting_schedule || club.location) && (
+        {(club.subscriber_count != null || club.meeting_schedule || club.location) && (
           <div className="club-card__meta-line">
-            {club.member_count != null && (
-              <span><FaUsers size={9} /> {club.member_count}</span>
+            {club.subscriber_count != null && (
+              <span title={t('clubs.subscribers') || 'Subscribers'}><FaBell size={9} /> {club.subscriber_count}</span>
             )}
             {club.meeting_schedule && (
               <>
@@ -906,8 +906,8 @@ function CreatedClubRow({ club, onEdit, onManage, onManageRequests, onOpen, pend
         <CategoryBadge category={club.category} t={t} />
       </div>
       <div className="my-club-row__right" onClick={e => e.stopPropagation()}>
-        {club.member_count != null && (
-          <span className="my-club-row__schedule"><FaUsers size={10} /> {club.member_count} {t('clubs.members').toLowerCase()}</span>
+        {club.subscriber_count != null && (
+          <span className="my-club-row__schedule"><FaBell size={10} /> {club.subscriber_count} {(t('clubs.subscribers') || 'Subscribers').toLowerCase()}</span>
         )}
         <button className="club-edit-btn club-edit-btn--manage" onClick={() => onManage(club)}>
           <FaCog size={10} /> {t('clubs.manage.btn')}
@@ -1068,11 +1068,12 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
     setManagerError('')
     setManagerSuccess('')
     try {
-      const result = await clubsAPI.addClubManager(club.id, newManagerEmail.trim())
-      setManagers(prev => [...prev, result.manager])
+      // Send a manager-invite REQUEST; the target user accepts/denies from
+      // their own Clubs tab. They become an admin only on accept.
+      await clubsAPI.createManagerRequest(club.id, newManagerEmail.trim())
       setNewManagerEmail('')
-      setManagerSuccess(t('clubs.manage.managerAdded'))
-      setTimeout(() => setManagerSuccess(''), 3000)
+      setManagerSuccess(t('clubs.manage.managerInviteSent') || 'Invite sent — they will see it in their Clubs tab.')
+      setTimeout(() => setManagerSuccess(''), 4000)
     } catch (e) {
       setManagerError(e.message)
     } finally {
@@ -1192,14 +1193,9 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
             <div className="club-manage__overview">
               <div className="club-manage__stats-grid">
                 <div className="club-manage__stat-card">
-                  <FaUsers size={20} style={{ color: meta.color }} />
-                  <div className="club-manage__stat-val">{club.member_count ?? 0}</div>
-                  <div className="club-manage__stat-label">{t('clubs.members')}</div>
-                </div>
-                <div className="club-manage__stat-card">
-                  <FaBell size={20} style={{ color: '#2563eb' }} />
-                  <div className="club-manage__stat-val">{subscribers.count ?? 0}</div>
-                  <div className="club-manage__stat-label">{t('clubs.manage.subscribers')}</div>
+                  <FaBell size={20} style={{ color: meta.color }} />
+                  <div className="club-manage__stat-val">{subscribers.count ?? club.subscriber_count ?? 0}</div>
+                  <div className="club-manage__stat-label">{t('clubs.subscribers') || 'Subscribers'}</div>
                 </div>
                 <div className="club-manage__stat-card">
                   <FaCrown size={20} style={{ color: '#f59e0b' }} />
@@ -1885,11 +1881,37 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     } catch { /* silent */ }
   }, [user?.id])
 
+  // Manager-invite inbox — invitations sent to me, awaiting my response
+  const [managerInvites, setManagerInvites] = useState([])
+  const fetchManagerInvites = useCallback(async () => {
+    try {
+      const data = await clubsAPI.getIncomingManagerRequests()
+      if (isMounted.current) setManagerInvites(data.requests || [])
+    } catch { /* silent */ }
+  }, [])
+
+  const respondToInvite = useCallback(async (inviteId, action) => {
+    // Optimistic: hide the invite immediately
+    setManagerInvites(prev => prev.filter(r => r.id !== inviteId))
+    try {
+      await clubsAPI.respondToManagerRequest(inviteId, action)
+      if (action === 'accept') {
+        // Pull fresh my-clubs / created-clubs so the new admin role shows up
+        fetchMyClubs()
+        fetchCreatedClubs()
+      }
+    } catch (e) {
+      alert(e.message || 'Failed')
+      fetchManagerInvites()  // reload on failure to recover state
+    }
+  }, [fetchMyClubs, fetchCreatedClubs, fetchManagerInvites])
+
   useEffect(() => { setPage(1); fetchClubs(1) }, [fetchClubs])
   useEffect(() => { fetchMyClubs() }, [fetchMyClubs])
   useEffect(() => { fetchCreatedClubs() }, [fetchCreatedClubs])
   useEffect(() => { fetchCategories() }, [fetchCategories])
   useEffect(() => { fetchPendingRequests() }, [fetchPendingRequests])
+  useEffect(() => { fetchManagerInvites() }, [fetchManagerInvites])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -1924,8 +1946,6 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
         setJoinToast(t('clubs.requestSentToast').replace('{name}', club?.name || 'club'))
       } else {
         await fetchMyClubs()
-        setClubs(prev => prev.map(c => c.id === clubId ? { ...c, member_count: (c.member_count ?? 0) + 1 } : c))
-        if (openClub?.id === clubId) setOpenClub(prev => prev ? { ...prev, member_count: (prev.member_count ?? 0) + 1 } : prev)
         if (club) setJoinToast(t('clubs.joinedToast').replace('{name}', club.name))
       }
       setTimeout(() => { if (isMounted.current) setJoinToast(null) }, 3000)
@@ -2092,8 +2112,11 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   }, [clubs])
 
   const totalPendingRequests = useMemo(() =>
-    Object.values(pendingCounts).reduce((sum, c) => sum + c, 0),
-    [pendingCounts]
+    // Sum of join requests pending on clubs the user manages
+    Object.values(pendingCounts).reduce((sum, c) => sum + c, 0)
+    // ...plus manager invites pending for the current user themselves
+    + managerInvites.length,
+    [pendingCounts, managerInvites.length]
   )
 
   return (
@@ -2343,6 +2366,54 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
       {activeView === 'my-clubs' && (
         <div className="clubs-mine">
+          {/* Manager-invite inbox — pinned at the top so users see it instantly */}
+          {managerInvites.length > 0 && (
+            <div className="clubs-mine__section clubs-invite-inbox">
+              <h3 className="clubs-mine__section-title">
+                <FaBell size={13} /> {t('clubs.managerInvitesTitle') || 'Manager invitations'}
+                <span className="clubs-mine__section-count">{managerInvites.length}</span>
+              </h3>
+              <div className="clubs-invite-list">
+                {managerInvites.map(inv => {
+                  const clubName = inv?.clubs?.name || 'a club'
+                  const requester = inv.requested_by_name || 'A manager'
+                  return (
+                    <div key={inv.id} className="clubs-invite-row">
+                      <div className="clubs-invite-row__avatar">
+                        <ClubAvatar
+                          name={clubName}
+                          category={inv?.clubs?.category}
+                          size="sm"
+                          logoUrl={inv?.clubs?.logo_url}
+                        />
+                      </div>
+                      <div className="clubs-invite-row__body">
+                        <p className="clubs-invite-row__text">
+                          <strong>{requester}</strong> {t('clubs.invitedYouTo') || 'invited you to manage'} <strong>{clubName}</strong>
+                        </p>
+                        {inv.message && <p className="clubs-invite-row__msg">"{inv.message}"</p>}
+                      </div>
+                      <div className="clubs-invite-row__actions">
+                        <button
+                          className="club-action-btn club-action-btn--join"
+                          onClick={() => respondToInvite(inv.id, 'accept')}
+                        >
+                          <FaCheck size={10} /> {t('clubs.accept') || 'Accept'}
+                        </button>
+                        <button
+                          className="club-action-btn club-action-btn--subscribe"
+                          onClick={() => respondToInvite(inv.id, 'deny')}
+                        >
+                          <FaTimes size={10} /> {t('clubs.deny') || 'Deny'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {myClubsLoading ? (
             <div className="clubs-loading"><div className="clubs-spinner" /><p>{t('clubs.loadingMine')}</p></div>
           ) : (
