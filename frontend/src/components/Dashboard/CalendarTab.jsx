@@ -182,7 +182,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
           if (cancelled) break
           if (ev.date < today) continue
           try {
-            await queueExamNotification(ev, user.id, user.email)
+            await queueExamNotification(ev, user.id, user.email, notifPrefs)
           } catch (err) {
             console.warn(`Could not queue notification for ${ev.title}:`, err)
           }
@@ -461,7 +461,9 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     }
 
     if (event.notifyEnabled) {
-      try { await scheduleNotification(event, user.id, user.email) }
+      // Pass the user's notification prefs so method (email/sms/both/none),
+      // phone, and event-type opt-outs are all honored on the backend.
+      try { await scheduleNotification(event, user.id, user.email, notifPrefs) }
       catch (err) { console.error('Failed to schedule notification:', err) }
       setNotifSaved(true)
       setTimeout(() => setNotifSaved(false), 3000)

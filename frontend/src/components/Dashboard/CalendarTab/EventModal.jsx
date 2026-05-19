@@ -15,12 +15,19 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
     timeZone: localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone
   })
 
-  const defaultNotif = () => ({
-    notifyEnabled: notifPrefs.method !== 'none',
-    notifySameDay: notifPrefs.timing.sameDay,
-    notify1Day:    notifPrefs.timing.oneDay,
-    notify7Days:   notifPrefs.timing.oneWeek,
-  })
+  // Default each new event's notify toggle to OFF when the user has either
+  // (a) set method to 'none' or (b) opted out of this specific event type in
+  // Settings. Otherwise honor their timing defaults.
+  const defaultNotif = (type = 'personal') => {
+    const methodOff = notifPrefs.method === 'none'
+    const typeOff   = notifPrefs.eventTypes?.[type] === false
+    return {
+      notifyEnabled: !methodOff && !typeOff,
+      notifySameDay: notifPrefs.timing.sameDay,
+      notify1Day:    notifPrefs.timing.oneDay,
+      notify7Days:   notifPrefs.timing.oneWeek,
+    }
+  }
 
   const [form, setForm] = useState(() => ({
     title:       event?.title       || '',
@@ -40,7 +47,7 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
           notify1Day:    event.notify1Day    ?? true,
           notify7Days:   event.notify7Days   ?? true,
         }
-      : defaultNotif()
+      : defaultNotif(event?.type || 'personal')
     ),
   }))
 

@@ -21,9 +21,48 @@ async function _authHeader() {
 }
 
 /**
- * Save an event to Supabase and queue its notifications.
+ * Resolve which channels to use from notification prefs.
+ *   method ∈ 'email' | 'sms' | 'both' | 'none'
+ * Returns { notify_email, notify_sms, email, phone } honoring the user's choice.
  */
-export async function scheduleNotification(event, userId, userEmail) {
+function _resolveChannels(notifPrefs, fallbackEmail) {
+  const method = (notifPrefs?.method) || 'email'
+  const email  = (notifPrefs?.email  || fallbackEmail || '').trim() || null
+  const phone  = (notifPrefs?.phone  || '').trim() || null
+  return {
+    notify_email: (method === 'email' || method === 'both') && !!email,
+    notify_sms:   (method === 'sms'   || method === 'both') && !!phone,
+    email,
+    phone,
+  }
+}
+
+/**
+ * Should we even schedule a notification for this event?
+ * Honors:
+ *   - method !== 'none'
+ *   - per-event-type opt-out (eventTypes[event.type] !== false)
+ *   - at least one channel actually has credentials (email or phone)
+ */
+function _shouldSchedule(event, notifPrefs, channels) {
+  if (event.notifyEnabled === false) return false
+  if ((notifPrefs?.method) === 'none') return false
+
+  const type = event.type || 'personal'
+  const typePref = notifPrefs?.eventTypes
+  if (typePref && typePref[type] === false) return false
+
+  return channels.notify_email || channels.notify_sms
+}
+
+/**
+ * Save an event to Supabase and queue its notifications.
+ * notifPrefs is the user's preferences from useNotificationPrefs().
+ */
+export async function scheduleNotification(event, userId, userEmail, notifPrefs = null) {
+  const channels = _resolveChannels(notifPrefs, userEmail)
+  const willSchedule = _shouldSchedule(event, notifPrefs, channels)
+
   const payload = {
     user_id:          userId,
     title:            event.title,
@@ -32,15 +71,17 @@ export async function scheduleNotification(event, userId, userEmail) {
     type:             event.type        || 'personal',
     category:         event.category    || null,
     description:      event.description || null,
-    notify_enabled:   event.notifyEnabled ?? true,
-    notify_email:     true,
-    notify_sms:       false,
-    notify_email_addr: userEmail,
-    notify_phone:     null,
+    // notify_enabled gates whether the backend writes any rows into
+    // notification_queue. Honor the user's preference here.
+    notify_enabled:   willSchedule,
+    notify_email:     channels.notify_email,
+    notify_sms:       channels.notify_sms,
+    notify_email_addr: channels.email,
+    notify_phone:     channels.phone,
     notify_same_day:  event.notifySameDay ?? false,
     notify_1day:      event.notify1Day   ?? true,
     notify_7days:     event.notify7Days  ?? true,
-    method:           'email',
+    method:           (notifPrefs?.method) || 'email',
   }
 
   const res = await fetch(`${BASE}/api/notifications/schedule`, {
@@ -76,9 +117,16 @@ function to24h(timeStr) {
   return `${String(h).padStart(2, '0')}:${min}`
 }
 
-export async function queueExamNotification(event, userId, userEmail) {
-  // /queue-exam was removed — route through /schedule which now supports
-  // client_id-based upsert for idempotency. Safe to call on every load.
+export async function queueExamNotification(event, userId, userEmail, notifPrefs = null) {
+  const channels = _resolveChannels(notifPrefs, userEmail)
+  // Caller (CalendarTab effect) already guards on method !== 'none' and the
+  // 'exam' event-type opt-out, but double-check here so this is safe to call
+  // standalone too.
+  const willSchedule =
+    (notifPrefs?.method) !== 'none'
+    && notifPrefs?.eventTypes?.exam !== false
+    && (channels.notify_email || channels.notify_sms)
+
   const payload = {
     client_id:        event.id,
     user_id:          userId,
@@ -88,11 +136,11 @@ export async function queueExamNotification(event, userId, userEmail) {
     type:             'exam',
     category:         event.category    || null,
     description:      event.description || null,
-    notify_enabled:   true,
-    notify_email:     true,
-    notify_sms:       false,
-    notify_email_addr: userEmail,
-    notify_phone:     null,
+    notify_enabled:   willSchedule,
+    notify_email:     channels.notify_email,
+    notify_sms:       channels.notify_sms,
+    notify_email_addr: channels.email,
+    notify_phone:     channels.phone,
     notify_same_day:  event.notifySameDay ?? false,
     notify_1day:      event.notify1Day   ?? true,
     notify_7days:     event.notify7Days  ?? true,
