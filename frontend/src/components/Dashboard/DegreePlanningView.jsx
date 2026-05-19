@@ -588,6 +588,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
             <p className="dp-electives-sub">
               Courses you've taken that don't count toward{' '}
               {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
+              {(profile?.major || profile?.minor) && ' Majors/Minors'}
             </p>
           </div>
         </div>
