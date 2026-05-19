@@ -18,10 +18,11 @@ function AppContent() {
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
 
-  // Enforce 2-second minimum loading screen
+  // Brief flash-prevention only — render as soon as auth resolves (no
+  // artificial 2s minimum, that was costing every user 2s on first paint).
   const [minLoadDone, setMinLoadDone] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setMinLoadDone(true), 2000)
+    const t = setTimeout(() => setMinLoadDone(true), 250)
     return () => clearTimeout(t)
   }, [])
 

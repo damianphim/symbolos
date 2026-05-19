@@ -1,48 +1,99 @@
+/* Loading screen — pure CSS, no media files. */
 html, body, #root {
   margin: 0 !important;
   padding: 0 !important;
-  background: #000 !important;
   overflow: hidden !important;
 }
 
 .loading-container {
   position: fixed;
-  inset: -2px; /* bleed 2px past viewport edges to kill subpixel gaps */
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  background: #000;
+  background: #0c0c10;
   overflow: hidden;
 }
 
-.loading-video {
+/* Animated brand gradient background — no media file needed */
+.loading-gradient {
   position: absolute;
-  inset: -2px;
-  width: calc(100% + 4px);
-  height: calc(100% + 4px);
-  object-fit: cover;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 25% 30%, rgba(237, 27, 47, 0.30) 0%, transparent 45%),
+    radial-gradient(circle at 75% 70%, rgba(124, 58, 237, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.20) 0%, transparent 55%),
+    #0c0c10;
+  filter: blur(40px);
+  animation: loading-drift 12s ease-in-out infinite alternate;
   z-index: 0;
 }
 
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 1;
+@keyframes loading-drift {
+  0%   { transform: translate(0, 0)   scale(1);   }
+  50%  { transform: translate(2%, -3%) scale(1.05); }
+  100% { transform: translate(-2%, 2%) scale(1);  }
 }
 
 .loading-content {
   position: relative;
-  z-index: 2;
-  text-align: center;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #fff;
+}
+
+/* Brand mark — square with the S */
+.loading-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ed1b2f 0%, #b01b2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(237, 27, 47, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  animation: loading-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.95; }
+  50%      { transform: scale(1.04); opacity: 1;    }
 }
 
 .loading-message {
-  color: #fff;
-  font-size: 1.4rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Indeterminate progress bar */
+.loading-bar {
+  width: 140px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.loading-bar span {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ed1b2f, transparent);
+  animation: loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%);  }
 }

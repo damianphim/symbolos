@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { coursesAPI } from '../../lib/api'
 import favoritesAPI from '../../lib/favoritesAPI'
@@ -9,24 +9,44 @@ import { normalizeQuery, buildCorrectionCandidates } from '../../utils/fuzzySear
 import { useLanguage } from '../../contexts/LanguageContext'
 import cardsAPI from '../../lib/cardsAPI'
 import AdvisorCards from './chat/AdvisorCards'
-import FeedbackModal from './FeedbackModal'
-import ClubsTab from './ClubsTab'
 import RightSidebar from './RightSidebar'
 import CoursesView from './CoursesView'
 
 import Sidebar from './Sidebar'
-import ProfileTab from './ProfileTab'
-import DegreePlanningView from './DegreePlanningView'
-import Forum from '../Forum/Forum'
-import MarkCompleteModal from './MarkCompleteModal'
-import CalendarTab from './CalendarTab'
 import clubsAPI from '../../lib/clubsAPI'
-import TranscriptUpload from './TranscriptUpload'
 
-import OnboardingTutorial from './OnboardingTutorial'
+// Code-split everything that isn't on the default landing screen. Brief/Chat
+// is the default tab and ships in the main bundle; secondary tabs and modals
+// only download when the user navigates to them.
+const ClubsTab          = lazy(() => import('./ClubsTab'))
+const ProfileTab        = lazy(() => import('./ProfileTab'))
+const DegreePlanningView = lazy(() => import('./DegreePlanningView'))
+const Forum             = lazy(() => import('../Forum/Forum'))
+const CalendarTab       = lazy(() => import('./CalendarTab'))
+const TranscriptUpload  = lazy(() => import('./TranscriptUpload'))
+const FeedbackModal     = lazy(() => import('./FeedbackModal'))
+const MarkCompleteModal = lazy(() => import('./MarkCompleteModal'))
+const OnboardingTutorial = lazy(() => import('./OnboardingTutorial'))
+
 import { CourseDetailProvider } from '../../contexts/CourseDetailContext'
 import CourseDetailModal from '../shared/CourseDetailModal'
 import './Dashboard.css'
+
+// Tiny inline spinner used as Suspense fallback for lazy tabs
+function TabLoader() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '40vh', color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 28, height: 28, border: '3px solid var(--border-color)',
+        borderTopColor: 'var(--accent-primary, #ed1b2f)', borderRadius: '50%',
+        animation: 'spin 0.7s linear infinite',
+      }} />
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const { user, profile, signOut, updateProfile, refreshProfile, authFlags } = useAuth()
@@ -835,13 +855,15 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'clubs' && (
-            <ClubsTab
-              key="clubs-tab-v2"
-              user={user}
-              profile={profile}
-              authFlags={authFlags}
-              onClubEventsChange={setClubCalendarEvents}
-            />
+            <Suspense fallback={<TabLoader />}>
+              <ClubsTab
+                key="clubs-tab-v2"
+                user={user}
+                profile={profile}
+                authFlags={authFlags}
+                onClubEventsChange={setClubCalendarEvents}
+              />
+            </Suspense>
           )}
 
           {activeTab === 'courses' && (
@@ -884,68 +906,82 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'favorites' && (
-            <DegreePlanningView
-              favorites={favorites}
-              completedCourses={completedCourses}
-              completedCoursesMap={completedCoursesMap}
-              currentCourses={currentCourses}
-              currentCoursesMap={currentCoursesMap}
-              favoritesMap={favoritesMap}
-              profile={profile}
-              authFlags={authFlags}
-              onToggleFavorite={handleToggleFavorite}
-              onToggleCompleted={handleToggleCompleted}
-              onToggleCurrent={handleToggleCurrent}
-              onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
-              onImportSyllabus={() => { setTranscriptUploadTab('syllabus'); setShowTranscriptUpload(true) }}
-              onCourseClick={undefined}
-            />
+            <Suspense fallback={<TabLoader />}>
+              <DegreePlanningView
+                favorites={favorites}
+                completedCourses={completedCourses}
+                completedCoursesMap={completedCoursesMap}
+                currentCourses={currentCourses}
+                currentCoursesMap={currentCoursesMap}
+                favoritesMap={favoritesMap}
+                profile={profile}
+                authFlags={authFlags}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleCompleted={handleToggleCompleted}
+                onToggleCurrent={handleToggleCurrent}
+                onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
+                onImportSyllabus={() => { setTranscriptUploadTab('syllabus'); setShowTranscriptUpload(true) }}
+                onCourseClick={undefined}
+              />
+            </Suspense>
           )}
 
-          {activeTab === 'forum' && <Forum />}
+          {activeTab === 'forum' && (
+            <Suspense fallback={<TabLoader />}>
+              <Forum />
+            </Suspense>
+          )}
 
           {activeTab === 'calendar' && (
-            <CalendarTab user={user} authFlags={authFlags} clubEvents={clubCalendarEvents} managedClubs={managedClubs} />
+            <Suspense fallback={<TabLoader />}>
+              <CalendarTab user={user} authFlags={authFlags} clubEvents={clubCalendarEvents} managedClubs={managedClubs} />
+            </Suspense>
           )}
 
           {activeTab === 'profile' && (
-            <ProfileTab
-              user={user}
-              profile={profile}
-              updateProfile={updateProfile}
-              signOut={handleSignOut}
-              profileImage={profileImage}
-              isUploadingImage={isUploadingImage}
-              fileInputRef={fileInputRef}
-              handleImageUpload={handleImageUpload}
-              handleAvatarClick={handleAvatarClick}
-              completedCourses={completedCourses}
-              favorites={favorites}
-              chatHistory={[]}
-              onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
-            />
+            <Suspense fallback={<TabLoader />}>
+              <ProfileTab
+                user={user}
+                profile={profile}
+                updateProfile={updateProfile}
+                signOut={handleSignOut}
+                profileImage={profileImage}
+                isUploadingImage={isUploadingImage}
+                fileInputRef={fileInputRef}
+                handleImageUpload={handleImageUpload}
+                handleAvatarClick={handleAvatarClick}
+                completedCourses={completedCourses}
+                favorites={favorites}
+                chatHistory={[]}
+                onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
+              />
+            </Suspense>
           )}
         </div>
       </main>
 
       {showCompleteCourseModal && courseToComplete && (
-        <MarkCompleteModal
-          course={courseToComplete}
-          onConfirm={handleConfirmComplete}
-          onCancel={() => {
-            setShowCompleteCourseModal(false)
-            setCourseToComplete(null)
-          }}
-        />
+        <Suspense fallback={null}>
+          <MarkCompleteModal
+            course={courseToComplete}
+            onConfirm={handleConfirmComplete}
+            onCancel={() => {
+              setShowCompleteCourseModal(false)
+              setCourseToComplete(null)
+            }}
+          />
+        </Suspense>
       )}
 
       {showTranscriptUpload && (
-        <TranscriptUpload
-          userId={user?.id}
-          defaultTab={transcriptUploadTab}
-          onClose={() => setShowTranscriptUpload(false)}
-          onImportComplete={handleTranscriptImportComplete}
-        />
+        <Suspense fallback={null}>
+          <TranscriptUpload
+            userId={user?.id}
+            defaultTab={transcriptUploadTab}
+            onClose={() => setShowTranscriptUpload(false)}
+            onImportComplete={handleTranscriptImportComplete}
+          />
+        </Suspense>
       )}
 
       <RightSidebar
@@ -959,15 +995,19 @@ export default function Dashboard() {
         activeTab={activeTab}
       />
 
-      <FeedbackModal userId={user?.id} userEmail={user?.email} />
+      <Suspense fallback={null}>
+        <FeedbackModal userId={user?.id} userEmail={user?.email} />
+      </Suspense>
 
       {showTutorial && (
-        <OnboardingTutorial
-          onComplete={() => {
-            localStorage.setItem(tourKey, '1')
-            setShowTutorial(false)
-          }}
-        />
+        <Suspense fallback={null}>
+          <OnboardingTutorial
+            onComplete={() => {
+              localStorage.setItem(tourKey, '1')
+              setShowTutorial(false)
+            }}
+          />
+        </Suspense>
       )}
     </div>
 

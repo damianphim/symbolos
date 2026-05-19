@@ -274,7 +274,25 @@ function CourseRow({ course, onClick, actions }) {
 function ElectivesPanel({ profile, completedCourses, currentCourses, programData, minorData, allProgramData, courseAllocations, assignCourse }) {
   const { t } = useLanguage()
   const { openCourse } = useCourseDetail()
-  const [recs, setRecs]           = useState(null)
+  // Elective recs are cached in localStorage with a 24h TTL keyed by user.
+  // On mount we hydrate from cache so the section renders instantly on
+  // subsequent visits — the user can still hit "Refresh" to regenerate.
+  const RECS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+  const _recsCacheKey = profile?.id ? `elective_recs_${profile.id}` : null
+
+  const _loadCachedRecs = () => {
+    if (!_recsCacheKey) return null
+    try {
+      const raw = localStorage.getItem(_recsCacheKey)
+      if (!raw) return null
+      const { data, ts } = JSON.parse(raw)
+      if (!data || !ts) return null
+      if (Date.now() - ts > RECS_CACHE_TTL_MS) return null
+      return data
+    } catch { return null }
+  }
+
+  const [recs, setRecs]           = useState(() => _loadCachedRecs())
   const [recsLoading, setRecsLoading] = useState(false)
   const [recsError, setRecsError] = useState(null)
   const [showRecs, setShowRecs]   = useState(false)
@@ -421,6 +439,14 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
       const data = await res.json()
       if (!data.success) throw new Error(data.detail || 'Failed')
       setRecs(data.data)
+
+      // Persist the result so the user doesn't see this section regenerate
+      // on every page visit. 24h TTL; the Refresh button bypasses it.
+      try {
+        if (_recsCacheKey) {
+          localStorage.setItem(_recsCacheKey, JSON.stringify({ data: data.data, ts: Date.now() }))
+        }
+      } catch {}
 
       // Append the new recommendations to the recent list (keep last 32 unique)
       try {
