@@ -2083,3 +2083,39 @@
   .clubs-invite-row__actions { width: 100%; justify-content: stretch; }
   .clubs-invite-row__actions > * { flex: 1; }
 }
+
+/* ── Labelled Subscribe button (sits next to Join Club CTA) ───── */
+.club-subscribe-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.club-subscribe-btn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+.club-subscribe-btn--on {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+.club-subscribe-btn--on:hover:not(:disabled) {
+  filter: brightness(1.05);
+  color: #fff;
+}
+.club-subscribe-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
