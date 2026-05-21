@@ -27,6 +27,7 @@ from .clubs_email import (
     _verify_action_token,
     _send_admin_club_email,
     _send_submitter_notification_email,
+    _send_manager_invite_email,
 )
 
 router = APIRouter()
@@ -168,6 +169,7 @@ class ClubEventCreate(BaseModel):
     time:        Optional[str]  = None        # HH:MM (auto-converts 12h format)
     end_time:    Optional[str]  = None        # HH:MM (auto-converts 12h format)
     location:    Optional[str]  = Field(None, max_length=200)
+    join_link:   Optional[str]  = Field(None, max_length=500)
     recurrence:  Optional[str]  = None        # null, 'weekly_monday', 'biweekly_tuesday', etc.
 
     @field_validator('time', 'end_time', mode='before')
@@ -177,9 +179,10 @@ class ClubEventCreate(BaseModel):
 
 
 class ClubAnnouncementCreate(BaseModel):
-    title:    str           = Field(..., min_length=1, max_length=200)
-    body:     str           = Field(..., min_length=1, max_length=2000)
-    event_id: Optional[str] = None
+    title:     str           = Field(..., min_length=1, max_length=200)
+    body:      str           = Field(..., min_length=1, max_length=2000)
+    event_id:  Optional[str] = None
+    join_link: Optional[str] = Field(None, max_length=500)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -896,7 +899,7 @@ async def create_club_event(club_id: str, body: ClubEventCreate, current_user_id
         raise HTTPException(status_code=403, detail="Only club owner or admins can create events")
     try:
         supabase = get_supabase()
-        result = supabase.table("club_events").insert({
+        row = {
             "club_id": club_id,
             "title": body.title,
             "description": body.description,
@@ -906,7 +909,10 @@ async def create_club_event(club_id: str, body: ClubEventCreate, current_user_id
             "location": body.location,
             "recurrence": body.recurrence,
             "created_by": current_user_id,
-        }).execute()
+        }
+        if body.join_link:
+            row["join_link"] = body.join_link
+        result = supabase.table("club_events").insert(row).execute()
 
         # Email all club members about the new event (non-blocking)
         try:
@@ -916,6 +922,7 @@ async def create_club_event(club_id: str, body: ClubEventCreate, current_user_id
                 supabase, club_id, club_name,
                 title=body.title, date=body.date, time=body.time,
                 location=body.location, description=body.description,
+                join_link=body.join_link,
             )
         except Exception as e:
             logger.warning(f"Failed to send event notification emails: {e}")
@@ -957,6 +964,8 @@ async def create_club_announcement(club_id: str, body: ClubAnnouncementCreate, c
         }
         if body.event_id:
             row["event_id"] = body.event_id
+        if body.join_link:
+            row["join_link"] = body.join_link
         result = supabase.table("club_announcements").insert(row).execute()
 
         # Send email to all club members
@@ -973,7 +982,7 @@ async def create_club_announcement(club_id: str, body: ClubAnnouncementCreate, c
             except Exception:
                 pass
 
-        _notify_club_members_announcement(supabase, club_id, club_name, body.title, body.body, event=event_data)
+        _notify_club_members_announcement(supabase, club_id, club_name, body.title, body.body, event=event_data, join_link=body.join_link)
 
         return {"success": True, "announcement": result.data[0] if result.data else None}
     except Exception as e:
@@ -1401,12 +1410,12 @@ async def get_club_activity(
     limit = max(1, min(limit, 20))
     try:
         anns = (supabase.table("club_announcements")
-                .select("id, title, body, created_at")
+                .select("id, title, body, join_link, created_at")
                 .eq("club_id", club_id)
                 .order("created_at", desc=True)
                 .limit(limit).execute()).data or []
         evts = (supabase.table("club_events")
-                .select("id, title, description, date, time, location")
+                .select("id, title, description, date, time, location, join_link")
                 .eq("club_id", club_id)
                 .order("date", desc=True)
                 .limit(limit).execute()).data or []
@@ -1418,6 +1427,7 @@ async def get_club_activity(
                 "id":         a.get("id"),
                 "title":      a.get("title") or "",
                 "body":       (a.get("body") or "")[:200],
+                "join_link":  a.get("join_link"),
                 "timestamp":  a.get("created_at"),
             })
         for e in evts:
@@ -1430,6 +1440,7 @@ async def get_club_activity(
                 "title":     e.get("title") or "",
                 "body":      (e.get("description") or "")[:200],
                 "location":  e.get("location"),
+                "join_link": e.get("join_link"),
                 "timestamp": ts,
             })
 
@@ -1589,6 +1600,28 @@ async def create_manager_request(
         }
         result = supabase.table("club_manager_requests").insert(row).execute()
         invite = result.data[0] if result.data else row
+
+        # Out-of-band email so the target doesn't have to open the site to learn
+        # about the invite. The in-app inbox is still the canonical UI; the email
+        # is just a heads-up. Non-fatal — failures are logged but don't break
+        # the request flow.
+        try:
+            target_email_addr = (target.data[0].get("email") or "").strip()
+            requester_row = supabase.table("users").select("email") \
+                .eq("id", current_user_id).execute()
+            requester_email_addr = (requester_row.data[0].get("email") if requester_row.data else "") or ""
+            club_row = supabase.table("clubs").select("name").eq("id", club_id).execute()
+            club_name = (club_row.data[0].get("name") if club_row.data else "your club") or "your club"
+            _send_manager_invite_email(
+                target_email      = target_email_addr,
+                target_first_name = _display_name_from_email(target_email_addr),
+                club_name         = club_name,
+                requester_first_name = _display_name_from_email(requester_email_addr),
+                message           = (body.message or "").strip(),
+            )
+        except Exception as e:
+            logger.warning(f"Manager invite email failed (non-fatal): {e}")
+
         return {"ok": True, "invite": invite}
     except Exception as e:
         logger.exception(f"create_manager_request failed: {e}")

@@ -82,7 +82,7 @@ def _send_join_request_email(creator_email: str, club_name: str, requester_name:
         logger.exception(f"Failed to send join request email: {e}")
 
 
-def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title: str, date: str, time: str = None, location: str = None, description: str = None):
+def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title: str, date: str, time: str = None, location: str = None, description: str = None, join_link: str = None):
     """Email all members of a club about a new event."""
     if not settings.RESEND_API_KEY:
         return
@@ -134,6 +134,7 @@ def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title
             <tr><td style="padding:6px 0;font-size:13px;color:#6b7280;width:80px;">Date</td><td style="padding:6px 0;font-size:14px;color:#111827;font-weight:600;">{escape(date)}</td></tr>
             <tr><td style="padding:6px 0;font-size:13px;color:#6b7280;">Time</td><td style="padding:6px 0;font-size:14px;color:#111827;">{escape(time_str)}</td></tr>
             <tr><td style="padding:6px 0;font-size:13px;color:#6b7280;">Location</td><td style="padding:6px 0;font-size:14px;color:#111827;">{safe_loc}</td></tr>
+            {"<tr><td style='padding:6px 0;font-size:13px;color:#6b7280;'>Join Link</td><td style='padding:6px 0;font-size:14px;'><a href='" + escape(join_link) + "' style='color:#1d4ed8;text-decoration:underline;'>" + escape(join_link) + "</a></td></tr>" if join_link else ""}
           </table>
           {"<p style='margin:0 0 20px;font-size:14px;color:#374151;line-height:1.6;'>" + safe_desc + "</p>" if safe_desc else ""}
           <div style="text-align:center;">
@@ -166,7 +167,7 @@ def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title
         logger.exception(f"Failed to send event notification: {e}")
 
 
-def _notify_club_members_announcement(supabase, club_id: str, club_name: str, title: str, body_text: str, event=None):
+def _notify_club_members_announcement(supabase, club_id: str, club_name: str, title: str, body_text: str, event=None, join_link: str = None):
     """Email all members of a club about a new announcement, optionally with an attached event."""
     if not settings.RESEND_API_KEY:
         return
@@ -227,6 +228,7 @@ def _notify_club_members_announcement(supabase, club_id: str, club_name: str, ti
           <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;line-height:1.3;">{safe_title}</h1>
           <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">From <strong>{safe_name}</strong></p>
           <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">{safe_body}</p>
+          {"<p style='margin:0 0 16px;font-size:14px;'><strong>Join Link:</strong> <a href='" + escape(join_link) + "' style='color:#1d4ed8;text-decoration:underline;'>" + escape(join_link) + "</a></p>" if join_link else ""}
           {event_block}
           <div style="text-align:center;margin-top:20px;">
             <a href="https://symbolos.ca" style="display:inline-block;background:#ED1B2F;color:#fff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">View on Symbolos</a>
@@ -464,3 +466,96 @@ def _send_submitter_notification_email(contact_email: str, club_name: str, statu
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+
+def _send_manager_invite_email(
+    target_email: str,
+    target_first_name: str,
+    club_name: str,
+    requester_first_name: str,
+    message: str = "",
+):
+    """Email a Symbolos user when they're invited to be a club manager/admin.
+    The recipient still sees the invite in their Clubs tab — this is an
+    out-of-band heads-up so they don't miss it if they don't open the site
+    for a few days."""
+    try:
+        if not settings.RESEND_API_KEY:
+            logger.warning("RESEND_API_KEY not set — skipping manager invite email")
+            return
+        if not target_email:
+            return
+
+        safe_club      = escape(club_name or "a club")
+        safe_target    = escape(target_first_name or "there")
+        safe_requester = escape(requester_first_name or "A manager")
+        safe_message   = escape(message.strip()) if message else ""
+
+        message_block = ""
+        if safe_message:
+            message_block = (
+                '<div style="margin:14px 0 20px;padding:12px 14px;background:#f9fafb;'
+                'border-left:3px solid #ED1B2F;border-radius:6px;font-size:14px;'
+                'color:#374151;line-height:1.5;font-style:italic;">'
+                f'"{safe_message}"'
+                '</div>'
+            )
+
+        subject = f"You've been invited to manage {club_name}"
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td style="background:#ED1B2F;border-radius:12px 12px 0 0;padding:20px 28px;">
+          <span style="color:#fff;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">Symbolos</span>
+        </td></tr>
+        <tr><td style="background:#ffffff;padding:28px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
+          <div style="margin-bottom:16px;">
+            <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;">Manager Invite</span>
+          </div>
+          <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#111827;line-height:1.3;">
+            Hi {safe_target},
+          </h1>
+          <p style="margin:0 0 6px;font-size:16px;color:#374151;line-height:1.5;">
+            <strong>{safe_requester}</strong> has invited you to help manage
+            <strong>{safe_club}</strong> on Symbolos.
+          </p>
+          {message_block}
+          <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.5;">
+            Accepting gives you admin access to edit the club info, post announcements
+            and events, and review join requests. You can leave or be removed at any time.
+          </p>
+          <div style="text-align:center;">
+            <a href="https://symbolos.ca" style="display:inline-block;background:#ED1B2F;color:#fff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">Open Symbolos to accept</a>
+          </div>
+          <p style="margin:18px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
+            You'll find the invite at the top of your Clubs tab.
+          </p>
+        </td></tr>
+        <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6;">
+            You received this because someone with a Symbolos account invited you to manage their club.
+            If this wasn't expected, simply ignore — the invite expires when you deny it.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
+        import httpx
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={"from": "Symbolos <notifications@symbolos.ca>", "to": [target_email], "subject": subject, "html": html},
+            timeout=10,
+        )
+        if resp.status_code >= 400:
+            logger.warning(f"Resend API error for manager invite: {resp.status_code} {resp.text}")
+        else:
+            logger.info(f"Manager invite email sent to {target_email} for club {club_name}")
+    except Exception as e:
+        logger.exception(f"Failed to send manager invite email: {e}")
