@@ -234,11 +234,16 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
 
   const canManage = callerRole === 'owner' || callerRole === 'admin'
   const roleOrder = { owner: 0, admin: 1, member: 2 }
-  const filteredMembers = members.filter(m => {
-    if (!searchTerm) return true
-    const q = searchTerm.toLowerCase()
-    return (m.name || '').toLowerCase().includes(q) || (canManage && (m.email || '').toLowerCase().includes(q))
-  }).sort((a, b) => (roleOrder[a.role] ?? 2) - (roleOrder[b.role] ?? 2))
+  // Discovery-only site — clubs have an owner and execs (admins), no regular
+  // members. Hide any stray role='member' rows from older data.
+  const filteredMembers = members
+    .filter(m => m.role === 'owner' || m.role === 'admin')
+    .filter(m => {
+      if (!searchTerm) return true
+      const q = searchTerm.toLowerCase()
+      return (m.name || '').toLowerCase().includes(q) || (canManage && (m.email || '').toLowerCase().includes(q))
+    })
+    .sort((a, b) => (roleOrder[a.role] ?? 2) - (roleOrder[b.role] ?? 2))
 
   return (
     <div className="club-members-list">
@@ -784,34 +789,17 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
               <FaTimes size={10} /> {t('clubs.leave')}
             </button>
           </div>
-        ) : hasPendingRequest ? (
-          <div className="club-app-status">
-            <div className="club-app-status__strip">
-              <span className="club-app-status__step club-app-status__step--done">
-                <FaCheck size={8} /> Applied
-              </span>
-              <span className="club-app-status__bar" style={{ background: meta.color }} />
-              <span
-                className="club-app-status__step club-app-status__step--current"
-                style={{ borderColor: meta.color, color: meta.color }}
-              >
-                Reviewing
-              </span>
-              <span className="club-app-status__bar" />
-              <span className="club-app-status__step">Decision</span>
-            </div>
-            <p className="club-app-status__hint">
-              {language === 'fr' ? 'En attente de réponse du club' : language === 'zh' ? '等待俱乐部回复中' : 'Awaiting response from the club'}
-            </p>
-          </div>
         ) : (
+          // Discovery-only: Subscribe bell + a primary "Join Club" button that
+          // always points OUT to the club's application URL or scrolls the
+          // drawer to their join-instructions. Joining happens off-Symbolos.
           <div className="club-card__cta-row">
             <button
               className={`club-bell-toggle ${isSubscribed ? 'club-bell-toggle--on' : ''}`}
               onClick={(e) => { e.stopPropagation(); onToggleSubscribe(club.id) }}
               disabled={isLoading}
               title={isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
-              aria-label={isSubscribed ? 'Unsubscribe from notifications' : 'Subscribe to notifications'}
+              aria-label={isSubscribed ? 'Unsubscribe from updates' : 'Subscribe for updates'}
             >
               <FaBell size={12} />
             </button>
@@ -1160,9 +1148,9 @@ function ClubManageDashboard({ club, onClose, onSave, t, isAdmin }) {
   const sections = [
     { key: 'overview', icon: <FaStar size={13} />, label: t('clubs.manage.overview') },
     { key: 'edit', icon: <FaEdit size={13} />, label: t('clubs.manage.editInfo') },
-    // Members tab replaces the old separate Managers tab — owners/admins
-    // appear at the top of the same list, with promote/demote/remove inline.
-    { key: 'members', icon: <FaUsers size={13} />, label: t('clubs.manage.members') || 'Members' },
+    // Execs tab — clubs have an owner and admins (no regular members on this
+    // site, which is discovery-only).
+    { key: 'members', icon: <FaUsers size={13} />, label: t('clubs.manage.execs') || 'Execs' },
     { key: 'announcements', icon: <FaBullhorn size={13} />, label: t('clubs.manage.announcements') },
     { key: 'events', icon: <FaCalendarAlt size={13} />, label: t('clubs.manage.events') },
   ]
@@ -2465,40 +2453,9 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                 </div>
               )}
 
-              {/* Joined Clubs Section */}
-              <div className="clubs-mine__section">
-                <h3 className="clubs-mine__section-title">
-                  <FaHeart size={13} /> {t('clubs.joinedClubs')}
-                  {resolvedMyClubs.length > 0 && <span className="clubs-mine__section-count">{resolvedMyClubs.length}</span>}
-                </h3>
-                {resolvedMyClubs.length === 0 ? (
-                  <div className="clubs-empty" style={{ padding: '40px 20px' }}>
-                    <div className="clubs-empty__visual" style={{ opacity: 0.2 }}><FaHeart size={42} /></div>
-                    <h3>{t('clubs.noJoined')}</h3>
-                    <p>{t('clubs.noJoinedHint')}</p>
-                    <button className="club-action-btn club-action-btn--join" onClick={() => setActiveView('explore')}>
-                      <FaSearch size={13} /> {t('clubs.browseBtn')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="clubs-mine__list">
-                    {resolvedMyClubs.map(({ club, calendar_synced }) => (
-                      <MyClubRow
-                        key={club.id}
-                        club={club}
-                        calSynced={calendar_synced}
-                        onLeave={handleLeave}
-                        onToggleCalendar={handleToggleCalendar}
-                        onOpen={setOpenClub}
-                        onDelete={handleDeleteClub}
-                        isAdmin={isAdmin}
-                        clubLoading={clubLoading}
-                        t={t}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Joined Clubs section removed — discovery-only site, no
+                  "joining" concept. Subscriptions live in the Watching section
+                  below. */}
 
               {/* #4 — Subscribed / Watching section (clubs you follow but haven't joined) */}
               {watchingClubs.length > 0 && (
