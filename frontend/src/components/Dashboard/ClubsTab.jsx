@@ -790,17 +790,19 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
             </button>
           </div>
         ) : (
-          // Discovery-only: a clearly-labelled Subscribe button (calendar +
-          // updates) alongside a primary Join Club button (external link to
-          // the club's application_url or scroll-to join_instructions).
+          // Discovery-only: small bell-icon Subscribe toggle alongside a
+          // primary Join Club button. Subscribe pulls events into the
+          // user's calendar; Join links OUT to the club's external apply
+          // URL or scrolls the drawer to their join_instructions.
           <div className="club-card__cta-row">
             <button
-              className={`club-subscribe-btn ${isSubscribed ? 'club-subscribe-btn--on' : ''}`}
+              className={`club-bell-toggle ${isSubscribed ? 'club-bell-toggle--on' : ''}`}
               onClick={(e) => { e.stopPropagation(); onToggleSubscribe(club.id) }}
               disabled={isLoading}
+              title={isSubscribed ? (t('clubs.subscribed') || 'Subscribed') : (t('clubs.subscribe') || 'Subscribe')}
               aria-label={isSubscribed ? 'Unsubscribe from updates' : 'Subscribe for updates'}
             >
-              <FaBell size={11} /> {isSubscribed ? (t('clubs.subscribed') || 'Subscribed') : (t('clubs.subscribe') || 'Subscribe')}
+              <FaBell size={12} />
             </button>
             {club.application_url ? (
               <a
