@@ -171,10 +171,42 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       const todayStr = new Date().toISOString().split('T')[0]
       allCourses.forEach((course, idx) => {
         // lookupExams returns EVERY matching exam across all loaded terms.
-        // A student who took COMP 251 in two different years gets two
-        // separate exam events in their calendar history.
         const matches = lookupExams(course.course_code)
-        matches.forEach((exam, mIdx) => {
+
+        // Filter:
+        //  1. Term/year must match the course's recorded term/year, so a
+        //     Winter 2026 exam never shows up for a course taken in Winter
+        //     2025 (and vice versa).  Current courses (no term/year) get
+        //     all future exams — student is presumably enrolled in the
+        //     upcoming sitting.
+        //  2. For HISTORICAL courses, the user must have had the course in
+        //     their Symbolos account BEFORE the exam date. If they imported
+        //     the transcript after the exam already happened, don't pretend
+        //     the calendar tracked it at the time.
+        const courseAddedAt = course.created_at || null
+        const relevant = matches.filter(exam => {
+          if (course._historical) {
+            // Term/year exact match required for completed courses
+            if (!course.term || !course.year) return false
+            if (course.term !== exam.term)   return false
+            if (Number(course.year) !== exam.year) return false
+            // User must have been on Symbolos when the exam happened
+            if (courseAddedAt) {
+              const addedDate = courseAddedAt.slice(0, 10) // YYYY-MM-DD
+              if (addedDate > exam.date) return false
+            } else {
+              // No created_at field → only show if the exam is from the
+              // current cycle (i.e. not yet past)
+              if (exam.date < todayStr) return false
+            }
+            return true
+          } else {
+            // Current course — show all future-or-today exams
+            return exam.date >= todayStr
+          }
+        })
+
+        relevant.forEach((exam, mIdx) => {
           const timeStr = exam.start ? formatExamTime(exam.start) : ''
           const endStr  = exam.end   ? formatExamTime(exam.end)   : ''
           const campusLabel = exam.campus === 'D.T.' ? 'Downtown Campus'
@@ -187,13 +219,9 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
             date: exam.date,
             time: timeStr,
             type: 'exam',
-            // Use the term label baked into each exam entry by the
-            // schedule registry — e.g. "Winter 2026 Finals", "Fall 2026 Finals"
             category: exam.termLabel || (isPast ? 'Past Final Exam' : 'Final Exam'),
             description: [course.course_title || exam.title, timeStr && endStr ? `${timeStr} – ${endStr}` : timeStr, formatLabel].filter(Boolean).join(' · '),
             readOnly: true,
-            // Only queue notifications for FUTURE exams; past exams stay
-            // in calendar as history but don't trigger any email.
             notifyEnabled: !isPast,
             notifySameDay: notifPrefs.timing.sameDay,
             notify1Day:    notifPrefs.timing.oneDay,

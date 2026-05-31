@@ -11,25 +11,28 @@
 import { APRIL_2026_EXAMS } from './examSchedule2026'
 
 // ── Term registry ──────────────────────────────────────────────────
+// term:  one of 'Winter' | 'Summer' | 'Fall' (must match the value stored
+//        in completed_courses.term so we can match a user's course to the
+//        correct term's exam).
+// year:  4-digit calendar year the exams happen in.
 // label: human-readable string the calendar uses as the event category.
 // exams: the array of exam entries (one per course-section).
-// Order: most recent first — lookupExam returns the closest-future match
-// or, if none, the most-recent past match. Either way, freshness wins.
 const TERMS = [
-  { label: 'Winter 2026 Finals', exams: APRIL_2026_EXAMS },
+  { term: 'Winter', year: 2026, label: 'Winter 2026 Finals', exams: APRIL_2026_EXAMS },
   // Add future terms here, e.g.:
-  // { label: 'Fall 2026 Finals', exams: DEC_2026_EXAMS },
+  // { term: 'Fall',   year: 2026, label: 'Fall 2026 Finals',   exams: DEC_2026_EXAMS },
 ]
 
-// Build a multimap: normalized course code → list of { exam, termLabel }
-// (each course may have entries in multiple terms — that's the whole point)
+// Build a multimap: normalized course code → list of exam entries
+// Each entry carries its term + year + termLabel so the caller can filter
+// to only the matches that apply to a given course.
 const _multimap = (() => {
   const m = new Map()
-  for (const { label, exams } of TERMS) {
+  for (const { term, year, label, exams } of TERMS) {
     for (const exam of exams) {
       const key = exam.code.trim().toUpperCase()
       if (!m.has(key)) m.set(key, [])
-      m.get(key).push({ ...exam, termLabel: label })
+      m.get(key).push({ ...exam, term, year, termLabel: label })
     }
   }
   return m
