@@ -169,36 +169,34 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
 
       const events = []
       const todayStr = new Date().toISOString().split('T')[0]
+
+      // "When did the user actually start using Symbolos?" — use account
+      // created_at, NOT per-course created_at. Re-importing a transcript
+      // moves courses from current → completed with a fresh per-row
+      // timestamp, which is misleading. The account creation date is the
+      // real signal for "was this user on Symbolos at the time of the exam?"
+      const userCreatedAt = user?.created_at ? user.created_at.slice(0, 10) : null
+
       allCourses.forEach((course, idx) => {
         // lookupExams returns EVERY matching exam across all loaded terms.
         const matches = lookupExams(course.course_code)
 
         // Filter:
-        //  1. Term/year must match the course's recorded term/year, so a
+        //  1. Term/year must match the course's recorded term/year so a
         //     Winter 2026 exam never shows up for a course taken in Winter
-        //     2025 (and vice versa).  Current courses (no term/year) get
-        //     all future exams — student is presumably enrolled in the
-        //     upcoming sitting.
-        //  2. For HISTORICAL courses, the user must have had the course in
-        //     their Symbolos account BEFORE the exam date. If they imported
-        //     the transcript after the exam already happened, don't pretend
-        //     the calendar tracked it at the time.
-        const courseAddedAt = course.created_at || null
+        //     2025 (and vice versa). Current courses (no term/year) get
+        //     all future exams — student is presumably enrolled.
+        //  2. For HISTORICAL courses, the USER ACCOUNT must have existed on
+        //     or before the exam date. Accounts created after the exam can't
+        //     have had a real calendar history for that exam, so we skip it.
         const relevant = matches.filter(exam => {
           if (course._historical) {
             // Term/year exact match required for completed courses
             if (!course.term || !course.year) return false
             if (course.term !== exam.term)   return false
             if (Number(course.year) !== exam.year) return false
-            // User must have been on Symbolos when the exam happened
-            if (courseAddedAt) {
-              const addedDate = courseAddedAt.slice(0, 10) // YYYY-MM-DD
-              if (addedDate > exam.date) return false
-            } else {
-              // No created_at field → only show if the exam is from the
-              // current cycle (i.e. not yet past)
-              if (exam.date < todayStr) return false
-            }
+            // Account must have predated the exam date
+            if (userCreatedAt && userCreatedAt > exam.date) return false
             return true
           } else {
             // Current course — show all future-or-today exams
