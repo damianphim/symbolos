@@ -7,11 +7,11 @@
  *
  * SCREENSHOTS expected at frontend/src/assets/landing/ (drop them here as PNGs):
  *   - brief.png      — Advisor cards / Brief tab
- *   - degree.png     — Degree Planning view
+ *   - degree1.png    — Degree Planning overview (first of two side-by-side shots)
+ *   - degree2.png    — Degree Requirements detail (second of two)
  *   - calendar.png   — Calendar grid with exam dots
  *   - clubs1.png     — Clubs directory (first of two side-by-side shots)
  *   - clubs2.png     — Club detail / drawer / manage (second of two)
- *   - forum.png      — Forum sections (optional)
  *
  * Missing screenshots gracefully render as a styled "Screenshot placeholder"
  * so the page never breaks if you haven't dropped them yet.
@@ -31,9 +31,10 @@ const _findShot = (basename) => {
   return match ? match[1] : null
 }
 const brief    = _findShot('brief')
-const degree   = _findShot('degree')
+const degree1  = _findShot('degree1') || _findShot('degree')   // backwards compat
+const degree2  = _findShot('degree2')
 const calendar = _findShot('calendar')
-const clubs1   = _findShot('clubs1') || _findShot('clubs')   // backwards compat
+const clubs1   = _findShot('clubs1') || _findShot('clubs')     // backwards compat
 const clubs2   = _findShot('clubs2')
 const forum    = _findShot('forum')
 
@@ -174,8 +175,9 @@ export default function LandingPage({ onSignIn }) {
               <li>Built-in support for joint, honours, and B.A. & Sc. programs</li>
             </ul>
           </Reveal>
-          <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={degree} alt="Degree planning view showing requirement blocks and progress" />
+          <Reveal delay={120} className="landing-feature__visual landing-feature__visual--double">
+            <Screenshot src={degree1} alt="Degree progress overview with credit totals and milestone bar" />
+            <Screenshot src={degree2} alt="Degree requirements view showing each block of courses" />
           </Reveal>
         </div>
       </section>
