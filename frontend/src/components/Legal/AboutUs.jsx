@@ -2,7 +2,7 @@ import {
   FaTimes, FaGraduationCap, FaRobot, FaChartBar,
   FaCalendarAlt, FaBuilding, FaGlobe, FaEnvelope,
 } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './Legal.css'
 
 export default function AboutUs({ onClose }) {

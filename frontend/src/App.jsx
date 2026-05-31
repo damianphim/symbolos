@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { LanguageProvider } from './contexts/LanguageContext'
-import { TimezoneProvider } from './contexts/TimezoneContext'
+import { PreferencesProvider } from './contexts/PreferencesContext'
 import Login from './components/Auth/Login'
 import Dashboard from './components/Dashboard/Dashboard'
 import ProfileSetup from './components/ProfileSetup/ProfileSetup'
@@ -88,15 +86,11 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <LanguageProvider>
-          <TimezoneProvider>
-            <AuthProvider>
-              <AppContent />
-            </AuthProvider>
-          </TimezoneProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+      <PreferencesProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </PreferencesProvider>
     </ErrorBoundary>
   )
 }

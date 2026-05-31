@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FaTimes, FaBell, FaCheck, FaTrash, FaGraduationCap, FaClipboardList, FaStar, FaBullseye } from 'react-icons/fa'
+import { FaTimes, FaBell, FaCheck, FaTrash, FaGraduationCap, FaClipboardList, FaStar, FaBullseye, FaLink } from 'react-icons/fa'
 import { L, EVENT_TYPE_OPTIONS } from './calendarConstants'
 
 // Re-export EVENT_TYPE_OPTIONS with icons attached (requires JSX context)
@@ -38,6 +38,7 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
     type:        event?.type        || 'personal',
     category:    event?.category    || '',
     description: event?.description || '',
+    join_link:   event?.join_link   || '',
     clubId:      event?.clubId      || (managedClubs[0]?.id || ''),
     recurrence:  event?.recurrence  || '',
     ...(event?.id && !event?.titleKey
@@ -127,6 +128,17 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
               value={form.location}
               onChange={e => f('location')(e.target.value)}
               placeholder={L(language, 'Room, building…', 'Salle, bâtiment…', '教室、建筑…')}
+            />
+          </div>
+
+          <div className="cal-v2-field">
+            <label className="cal-v2-label"><FaLink size={10} style={{ marginRight: 4, opacity: 0.6 }} />{L(language, 'Join Link', 'Lien de participation', '参与链接')}</label>
+            <input
+              className="cal-v2-input"
+              type="url"
+              value={form.join_link}
+              onChange={e => f('join_link')(e.target.value)}
+              placeholder={L(language, 'Zoom, Teams, or other link…', 'Zoom, Teams ou autre lien…', 'Zoom、Teams 或其他链接…')}
             />
           </div>
 

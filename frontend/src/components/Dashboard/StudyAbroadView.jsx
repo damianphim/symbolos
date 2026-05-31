@@ -5,7 +5,7 @@ import {
   FaChevronDown, FaChevronUp, FaSearch, FaRegBookmark, FaBookmark,
   FaGraduationCap, FaUsers, FaInfoCircle
 } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './StudyAbroadView.css'
 
 const PROGRAMS_EN = [

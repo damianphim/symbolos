@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { FaEdit, FaChevronDown, FaChevronUp, FaCheck, FaUser, FaEnvelope, FaGraduationCap } from 'react-icons/fa'
 import { HiMiniSparkles } from 'react-icons/hi2'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import EnhancedProfileForm from './EnhancedProfileForm'
 import './PersonalInfoCard.css'
 

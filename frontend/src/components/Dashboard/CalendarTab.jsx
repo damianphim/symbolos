@@ -5,8 +5,7 @@ import {
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
   FaStar, FaBullseye, FaNewspaper, FaSearch, FaBellSlash
 } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
-import { useTimezone } from '../../contexts/TimezoneContext'
+import { useLanguage, useTimezone } from '../../contexts/PreferencesContext'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
 import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
 import { lookupExam, formatExamTime } from '../../utils/examSchedule2026'
@@ -942,6 +941,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                   time: data.eventTime || null,
                   end_time: data.eventEndTime || null,
                   location: data.eventLocation || null,
+                  join_link: data.join_link || null,
                 })
                 eventId = ev.id || ev.event?.id || null
               }
@@ -949,6 +949,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                 title: data.title,
                 body: data.body,
                 event_id: eventId,
+                join_link: data.join_link || null,
               })
               await refreshClubData()
             } catch (err) { console.error('Failed to create announcement:', err) }

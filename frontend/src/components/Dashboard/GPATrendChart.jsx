@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { FaChartBar } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './GPATrendChart.css'
 
 export default function GPATrendChart({ completedCourses, currentGPA }) {

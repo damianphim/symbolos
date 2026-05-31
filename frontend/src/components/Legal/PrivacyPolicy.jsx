@@ -1,5 +1,5 @@
 import { FaTimes } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './Legal.css'
 
 export default function PrivacyPolicy({ onClose }) {

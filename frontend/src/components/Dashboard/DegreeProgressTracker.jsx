@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { getCreditsRequired } from '../../utils/mcgillData'
 import { FaBook, FaBolt, FaCheck, FaBullseye, FaRegCircle, FaGraduationCap, FaLightbulb, FaFlag } from 'react-icons/fa'
 import { GiPartyPopper } from 'react-icons/gi'

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { supabase } from '../../lib/supabase'
 import {

@@ -7,10 +7,8 @@ import {
   FaTrash, FaExclamationTriangle, FaClipboardList,
   FaNewspaper,
 } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage, useTheme, useTimezone, TIMEZONES } from '../../contexts/PreferencesContext'
 import { useAuth } from '../../contexts/AuthContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { useTimezone, TIMEZONES } from '../../contexts/TimezoneContext'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
 import './Settings.css'
 

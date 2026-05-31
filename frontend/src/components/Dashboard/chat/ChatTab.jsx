@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 import { HiPaperClip } from 'react-icons/hi'
-import { useLanguage } from '../../../contexts/LanguageContext'
+import { useLanguage } from '../../../contexts/PreferencesContext'
 import FileUpload from './FileUpload'
 import { FaRobot } from 'react-icons/fa'
 import './ChatTab.css'

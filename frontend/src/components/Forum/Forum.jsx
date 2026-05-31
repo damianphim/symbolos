@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import forumAPI from '../../lib/forumAPI'
 import {
   FaComments, FaThumbsUp, FaReply, FaSearch, FaFire,

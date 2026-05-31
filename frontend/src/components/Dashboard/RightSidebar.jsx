@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { chatAPI } from '../../lib/api'
 import { FaRobot, FaChevronRight, FaArrowRight, FaTimes, FaChevronDown, FaChevronUp, FaThumbtack } from 'react-icons/fa'
 import { MdPushPin, MdOutlinePushPin } from 'react-icons/md'

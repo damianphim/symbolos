@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { usersAPI } from '../../lib/api'
 import { supabase } from '../../lib/supabase'
 

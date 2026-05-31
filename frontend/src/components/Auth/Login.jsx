@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { HiLightBulb } from 'react-icons/hi'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { supabase } from '../../lib/supabase'
 import {
   validateEmail,

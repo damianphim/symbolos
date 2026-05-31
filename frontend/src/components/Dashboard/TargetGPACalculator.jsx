@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { FaBullseye, FaLightbulb, FaBan, FaSmile, FaFire } from 'react-icons/fa'
 import { FaDumbbell } from 'react-icons/fa6'
 import { FaBook } from 'react-icons/fa'

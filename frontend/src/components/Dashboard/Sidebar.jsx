@@ -6,8 +6,7 @@ import {
   FaSun, FaMoon
 } from 'react-icons/fa'
 import { MdLanguage } from 'react-icons/md'
-import { useTheme } from '../../contexts/ThemeContext'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useTheme, useLanguage } from '../../contexts/PreferencesContext'
 import PrivacyPolicy from '../Legal/PrivacyPolicy'
 import TermsOfService from '../Legal/TOS'
 import AboutUs from '../Legal/AboutUs'

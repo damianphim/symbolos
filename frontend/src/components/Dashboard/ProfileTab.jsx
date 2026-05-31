@@ -1,5 +1,5 @@
 import { FaCamera, FaChartBar, FaBullseye, FaLightbulb, FaFileUpload } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import PersonalInfoCard from './PersonalInfoCard'
 import DegreeProgressTracker from './DegreeProgressTracker'
 import GPATrendChart from './GPATrendChart'

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { FaTimes, FaCheck, FaBullhorn, FaCalendarAlt } from 'react-icons/fa'
+import { FaTimes, FaCheck, FaBullhorn, FaCalendarAlt, FaLink } from 'react-icons/fa'
 import { L } from './calendarConstants'
 
 export default function AnnouncementModal({ clubs, onSave, onClose, language }) {
-  const [form, setForm] = useState({ title: '', body: '', clubId: clubs[0]?.id || '', attachEvent: false, eventDate: '', eventTime: '', eventEndTime: '', eventLocation: '' })
+  const [form, setForm] = useState({ title: '', body: '', clubId: clubs[0]?.id || '', join_link: '', attachEvent: false, eventDate: '', eventTime: '', eventEndTime: '', eventLocation: '' })
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.title.trim() || !form.body.trim() || !form.clubId) return
@@ -35,6 +35,10 @@ export default function AnnouncementModal({ clubs, onSave, onClose, language }) 
           <div className="cal-v2-field">
             <label className="cal-v2-label">{L(language, 'Message', 'Message', '消息')} <span className="cal-v2-required">*</span></label>
             <textarea className="cal-v2-input cal-v2-textarea" rows={4} value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} placeholder={L(language, 'Write your announcement…', 'Rédigez votre annonce…', '写下你的公告…')} required />
+          </div>
+          <div className="cal-v2-field">
+            <label className="cal-v2-label"><FaLink size={10} style={{ marginRight: 4, opacity: 0.6 }} />{L(language, 'Join Link', 'Lien de participation', '参与链接')}</label>
+            <input className="cal-v2-input" type="url" value={form.join_link} onChange={e => setForm(p => ({ ...p, join_link: e.target.value }))} placeholder={L(language, 'Zoom, Teams, or other link…', 'Zoom, Teams ou autre lien…', 'Zoom、Teams 或其他链接…')} />
           </div>
           <div className="cal-v2-field">
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>

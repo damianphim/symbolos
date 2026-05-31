@@ -34,6 +34,14 @@ export default function EventPopup({ event, onClose, onEdit, canEdit, onHide, t,
         {event.location && (
           <div className="cal-event-popup-location">📍 {event.location}</div>
         )}
+        {event.join_link && (
+          <div className="cal-event-popup-location">
+            <FaExternalLinkAlt size={10} />{' '}
+            <a href={event.join_link} target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
+              {L(language, 'Join Link', 'Lien de participation', '参与链接')}
+            </a>
+          </div>
+        )}
         {event.description && <p className="cal-event-popup-desc">{event.description}</p>}
         {event.notifyEnabled && (
           <div className="cal-event-popup-notif">

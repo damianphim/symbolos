@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FaTimes } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './MarkCompleteModal.css'
 
 export default function MarkCompleteModal({ 

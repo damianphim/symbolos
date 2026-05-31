@@ -6,7 +6,7 @@ import {
   FaExclamationCircle
 } from 'react-icons/fa'
 import { MdOutlineRateReview } from 'react-icons/md'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './CoursesTab.css'
 import ProfSuggestionPopover from '../ProfSuggestion/ProfSuggestionPopover'
 

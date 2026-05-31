@@ -6,7 +6,7 @@ import {
   FaInfoCircle, FaUserGraduate, FaPassport, FaUniversity,
   FaMoneyBillWave, FaHeartbeat, FaClock
 } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './AdvisingResourcesView.css'
 
 const RESOURCES = [

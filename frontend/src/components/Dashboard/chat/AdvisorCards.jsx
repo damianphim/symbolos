@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useLanguage } from '../../../contexts/LanguageContext'
+import { useLanguage } from '../../../contexts/PreferencesContext'
 import {
   FaSync, FaChevronDown, FaChevronUp,
   FaBolt, FaArrowRight, FaGraduationCap,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FaHeart, FaRegHeart, FaCheckCircle, FaCheck, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import './SavedCoursesView.css'
 

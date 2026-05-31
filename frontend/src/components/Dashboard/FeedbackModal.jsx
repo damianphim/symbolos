@@ -17,7 +17,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { FaFlag, FaCheck, FaTimes, FaCommentAlt, FaSearch } from 'react-icons/fa'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './FeedbackModal.css'
 
 export default function FeedbackModal() {
