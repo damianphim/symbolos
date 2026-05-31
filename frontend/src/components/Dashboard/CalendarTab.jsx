@@ -10,6 +10,7 @@ import useNotificationPrefs from '../../hooks/useNotificationPrefs'
 import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
 import { lookupExam, formatExamTime } from '../../utils/examSchedule2026'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
+import completedCoursesAPI from '../../lib/completedCoursesAPI'
 import { getEvents, saveEvent, deleteEvent as deleteEventDB, migrateLocalStorageEvents, expandRecurringEvents } from '../../lib/calendarAPI'
 import clubsAPI from '../../lib/clubsAPI'
 import newslettersAPI from '../../lib/newslettersAPI'
@@ -140,11 +141,34 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    currentCoursesAPI.getCurrent(user.id).then(async data => {
+    // Pull BOTH current and completed courses — past exams stay in the
+    // calendar as a permanent history record even after the term ends and
+    // courses move from "current" → "completed".
+    Promise.all([
+      currentCoursesAPI.getCurrent(user.id).catch(() => ({})),
+      completedCoursesAPI.getCompleted(user.id).catch(() => ({})),
+    ]).then(async ([curData, compData]) => {
       if (cancelled) return
-      const courses = data?.current_courses || []
+      const currentCourses   = curData?.current_courses    || []
+      const completedCourses = compData?.completed_courses || []
+
+      // Dedupe by course_code — if a course is somehow in both lists,
+      // current wins (it's the most recent enrollment).
+      const seen = new Set()
+      const allCourses = []
+      for (const c of currentCourses) {
+        if (c.course_code && !seen.has(c.course_code)) {
+          seen.add(c.course_code); allCourses.push({ ...c, _historical: false })
+        }
+      }
+      for (const c of completedCourses) {
+        if (c.course_code && !seen.has(c.course_code)) {
+          seen.add(c.course_code); allCourses.push({ ...c, _historical: true })
+        }
+      }
+
       const events = []
-      courses.forEach((course, idx) => {
+      allCourses.forEach((course, idx) => {
         const exam = lookupExam(course.course_code)
         if (!exam) return
         const timeStr = exam.start ? formatExamTime(exam.start) : ''
@@ -158,10 +182,13 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
           date: exam.date,
           time: timeStr,
           type: 'exam',
-          category: 'Winter 2026 Finals',
+          // Tag historical exams differently so the UI can dim them if needed
+          category: course._historical ? 'Past Final Exam' : 'Winter 2026 Finals',
           description: [course.course_title || exam.title, timeStr && endStr ? `${timeStr} – ${endStr}` : timeStr, formatLabel].filter(Boolean).join(' · '),
           readOnly: true,
-          notifyEnabled: true,
+          // Only queue notifications for FUTURE exams (line below already
+          // filters by date, but historical flag adds a safety belt)
+          notifyEnabled: !course._historical,
           notifySameDay: notifPrefs.timing.sameDay,
           notify1Day:    notifPrefs.timing.oneDay,
           notify7Days:   notifPrefs.timing.oneWeek,
