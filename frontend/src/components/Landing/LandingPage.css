@@ -5,6 +5,9 @@
    ────────────────────────────────────────────────────────────── */
 
 .landing-root {
+  /* Landing page is locked to a single LIGHT cream appearance regardless of
+     the user's dark/light theme preference. All landing styles use the
+     --land-* variables (hex values, not theme tokens) so they never shift. */
   --land-bg:        #f5f0e6;
   --land-bg-alt:    #ebe4d4;
   --land-fg:        #1a1a1a;
@@ -18,15 +21,21 @@
   color: var(--land-fg);
   min-height: 100vh;
   overflow-x: hidden;
-  /* Override the Loading.css overflow:hidden on body when this mounts */
+  /* Force light color-scheme — this affects form controls, scrollbars, and
+     anything else the browser themes based on the page's stated scheme. */
+  color-scheme: light;
 }
 .landing-root * { box-sizing: border-box; }
 
-/* Make sure the page actually scrolls when this view mounts (the loading
-   screen earlier locks overflow on html/body, undo that here). */
+/* When the landing is mounted, the document body/html should NEVER inherit
+   the user's dark theme. Force a cream background + light color-scheme on
+   the document root so dark-mode users don't see a dark gap behind the
+   landing (visible on overscroll bounce, browser chrome, etc.). */
 html:has(.landing-root),
 body:has(.landing-root),
 #root:has(.landing-root) {
+  background: #f5f0e6 !important;
+  color-scheme: light !important;
   overflow-y: auto !important;
 }
 
