@@ -397,11 +397,21 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         logger.exception(f"Summer registration reminder cron failed: {e}")
         summer_result = {"sent": 0, "error": str(e)}
 
+    # Stale-club cleanup — auto-deletes clubs whose entire admin team
+    # hasn't signed in for over 2 years (see clubs.STALE_CLUB_THRESHOLD_DAYS).
+    try:
+        from .clubs import run_stale_club_cleanup_cron
+        stale_clubs_result = run_stale_club_cleanup_cron()
+    except Exception as e:
+        logger.exception(f"Stale-club cleanup cron failed: {e}")
+        stale_clubs_result = {"deleted": 0, "error": str(e)}
+
     logger.info(
         f"Cron: {sent_count} sent, {fail_count} failed, "
         f"transcript_reminders={reminder_result.get('sent', 0)}, "
         f"registration_reminders={registration_result.get('sent', 0)}, "
-        f"summer_reminders={summer_result.get('sent', 0)}"
+        f"summer_reminders={summer_result.get('sent', 0)}, "
+        f"stale_clubs_deleted={stale_clubs_result.get('deleted', 0)}"
     )
     return {
         "ok": True,
@@ -410,4 +420,5 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         "transcript_reminders":   reminder_result,
         "registration_reminders": registration_result,
         "summer_reminders":       summer_result,
+        "stale_clubs":            stale_clubs_result,
     }
