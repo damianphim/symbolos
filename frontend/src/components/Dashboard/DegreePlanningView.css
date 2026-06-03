@@ -160,25 +160,54 @@
   overflow: hidden;
 }
 
+/* Phones — 2×2 grid so the four tabs stay readable.
+   The old approach shrank to flex:1 + 11px font and hid icons, but the
+   longer labels ("Degree Requirements", "Advising Resources") still
+   overflowed and got clipped under the parent's overflow:hidden. A
+   2-column grid gives each tab ~50% width, plenty of room for the
+   full label at a comfortable size. */
 @media (max-width: 600px) {
   .dp-subtab-bar {
-    padding: 3px;
-    border-radius: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    overflow: visible;
   }
   .dp-subtab-btn {
-    padding: 8px 6px;
-    font-size: 11px;
-    gap: 4px;
-    border-radius: 7px;
+    flex: initial;        /* override flex:1 from the desktop rule */
+    padding: 10px 8px;
+    font-size: 12.5px;
+    gap: 6px;
+    border-radius: 9px;
+    min-width: 0;
+    /* Allow the label to wrap onto a 2nd line if a translation is
+       extra-long (FR/ZH) so it never truncates. */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .dp-subtab-btn span {
+    /* The label sits inside a span — make it shrink properly */
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .dp-subtab-icon {
-    display: none;
+    font-size: 13px;
+    flex-shrink: 0;
   }
   .dp-subtab-count {
     font-size: 10px;
     padding: 1px 5px;
     min-width: 16px;
   }
+}
+
+/* Very small phones — drop the icons to claw back space for the label */
+@media (max-width: 360px) {
+  .dp-subtab-btn { gap: 4px; padding: 9px 6px; font-size: 12px; }
+  .dp-subtab-icon { display: none; }
 }
 
 .dp-subtab-btn {

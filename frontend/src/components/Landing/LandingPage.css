@@ -413,10 +413,17 @@ body:has(.landing-root),
   margin: 0;
 }
 
-/* ── Big bottom CTA ──────────────────────────────────────── */
+/* ── Big bottom CTA ──────────────────────────────────────────
+   Uses the McGill red so it stands out from BOTH the cream
+   Privacy section above AND the near-black footer below. The
+   earlier dark gradient blended into the footer on phones,
+   making the CTA look like one giant dark band with no edge. */
 .landing-cta {
-  background: linear-gradient(135deg, var(--land-fg) 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, var(--land-accent) 0%, var(--land-accent-dk) 100%);
   color: #fff;
+  /* Tiny darker stripe at the bottom edge so the boundary with the
+     footer is unmistakable on small screens. */
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 .landing-cta__inner {
   text-align: center;
@@ -427,18 +434,21 @@ body:has(.landing-root),
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin: 0 0 18px;
+  /* Subtle text shadow strengthens contrast over the saturated red */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .landing-cta__sub {
   font-size: clamp(1rem, 1.4vw, 1.2rem);
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.92);
   margin: 0 0 36px;
 }
 .landing-cta .landing-btn--primary {
   background: #fff;
-  color: var(--land-fg);
+  color: var(--land-accent-dk);
 }
 .landing-cta .landing-btn--primary:hover {
-  background: #f5f5f5;
+  background: #fff7f8;
+  color: var(--land-accent);
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
