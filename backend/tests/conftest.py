@@ -55,6 +55,12 @@ class FakeTable:
     def ilike(self, col, val):
         return self
 
+    def or_(self, *args, **kwargs):
+        """PostgREST-style OR expression. We don't parse it — the security
+        tests still get protected by the application-layer Python filter
+        we apply on top of the query, which is the defense-in-depth point."""
+        return self
+
     def order(self, *args, **kwargs):
         return self
 

@@ -153,10 +153,15 @@ async def search(
         }
         search_cache.set(cache_key, result, ttl=300)
         # Course catalogue is read-only public data — let the edge cache.
-        # 10-minute TTL with stale-while-revalidate hides DB pressure
-        # during the peak registration window (May / Aug / Jan).
+        # `public` so the Vercel edge can hold ONE copy and serve every
+        # signed-in caller from it. 5-min TTL matches the audit
+        # recommendation; the catalogue itself only changes when we
+        # re-ingest the McGill course feed (~once/term).
+        # 1-hour stale-while-revalidate keeps responses snappy during the
+        # peak registration window (May / Aug / Jan) when this endpoint
+        # gets pounded.
         response.headers["Cache-Control"] = (
-            "public, s-maxage=600, stale-while-revalidate=3600"
+            "public, max-age=60, s-maxage=300, stale-while-revalidate=3600"
         )
         return result
 

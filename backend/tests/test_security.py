@@ -167,6 +167,28 @@ def test_data_export_requires_self(client, fake_supabase):
     assert resp.status_code == 403
 
 
+# ── Perf: /api/clubs must be public-cacheable on the CDN edge ────────────────
+def test_clubs_response_is_public_cacheable(client, fake_supabase):
+    """The endpoint returns the same payload for every signed-in user, so
+    its Cache-Control header MUST start with `public, ...` for the Vercel
+    edge to actually cache it. If a future refactor reintroduces per-user
+    data on this endpoint, the test will fail and force you to either:
+      (a) revert the per-user data, or
+      (b) move the cache to private and add a different fast path.
+    Either is a conscious decision; we just don't want it to happen by accident.
+    """
+    fake_supabase.set_table("clubs", [
+        {"id": "c1", "name": "Club One", "is_verified": True, "is_private": False},
+    ])
+    resp = client.get("/api/clubs", headers={"X-Test-User": "anyone"})
+    assert resp.status_code == 200
+    cc = resp.headers.get("cache-control", "")
+    assert cc.lower().startswith("public"), (
+        f"/api/clubs must be public-cacheable, got Cache-Control: {cc!r}"
+    )
+    assert "s-maxage=" in cc, "missing edge-cache TTL"
+
+
 # ── Bonus: /openapi.json hidden in production ────────────────────────────────
 def test_openapi_json_hidden_in_production(monkeypatch):
     """In prod (DEBUG=False) FastAPI must not expose the route list."""

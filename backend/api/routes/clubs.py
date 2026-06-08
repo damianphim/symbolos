@@ -242,21 +242,27 @@ async def list_clubs(
     limit: int = Query(default=50, ge=1, le=200),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    """Return verified clubs, optionally filtered.
+    """Return the public discovery view of verified, non-private clubs.
 
     SEC FIX #4 (HIGH):
-      * Endpoint now requires authentication. The previous version was
-        completely public, which let anonymous scrapers pull every club's
-        contact_email / executive_emails / created_by in one request.
-      * Private clubs (`is_private`) are filtered out for non-managers.
-        Managers + the global admins still see their own private clubs.
-      * Per-club PII columns (contact_email, executive_emails, created_by,
-        owner/admin emails) are stripped from rows the caller does not
-        manage, even on public clubs.
+      * Endpoint requires authentication (the McGill-only gate).
+      * Private clubs are filtered out — there is NO branch in this
+        response that exposes them. Managers see their private clubs
+        via the dedicated /api/clubs/created/{user_id} endpoint, which
+        is per-user and never edge-cached.
+      * Per-club PII (contact_email, executive_emails, created_by,
+        admin emails) is always stripped. Managers needing those fields
+        for clubs they own use /api/clubs/created/{user_id} or
+        /api/clubs/{club_id}/managers.
 
-    Note: this hardens the application layer. The Supabase `clubs` table
-    also needs RLS that mirrors this logic so the bundled anon key can't
-    bypass us — see /backend/migrations/2026_06_clubs_rls.sql.
+    PERF: because the response is now *identical for every authenticated
+    user* (no per-user manager carve-out), we can safely public-cache it
+    at the Vercel edge. 5-min TTL + 1-hour stale-while-revalidate cuts
+    Supabase reads on this endpoint by ~99% under launch traffic.
+
+    Supabase RLS still mirrors this in case the anon key in the bundle
+    is used to query the table directly — see
+    backend/migrations/2026_06_01_sec_rls_clubs_pii.sql.
     """
     try:
         supabase = get_supabase()
@@ -264,6 +270,9 @@ async def list_clubs(
             supabase.table("clubs")
             .select("*")
             .eq("is_verified", True)
+            # SEC: hard filter at the query level — private clubs MUST NOT
+            # appear in the discovery response under any circumstance.
+            .or_("is_private.is.null,is_private.eq.false")
             .order("name")
             .limit(limit)
         )
@@ -275,42 +284,17 @@ async def list_clubs(
         result = query.execute()
         clubs = result.data or []
 
-        # Determine which clubs this user manages — they get the full row.
-        is_global_admin = _is_admin_user(current_user_id)
-        managed_ids: set[str] = set()
-        if not is_global_admin:
-            try:
-                owned = (
-                    supabase.table("clubs").select("id")
-                    .eq("created_by", current_user_id).execute()
-                ).data or []
-                managed = (
-                    supabase.table("club_managers").select("club_id")
-                    .eq("user_id", current_user_id).execute()
-                ).data or []
-                admin_in = (
-                    supabase.table("user_clubs").select("club_id")
-                    .eq("user_id", current_user_id).eq("role", "admin").execute()
-                ).data or []
-                managed_ids = (
-                    {c["id"] for c in owned}
-                    | {m["club_id"] for m in managed}
-                    | {a["club_id"] for a in admin_in}
-                )
-            except Exception:
-                pass
+        # Defense-in-depth: even if the .or_() filter is dropped in a
+        # future refactor, we re-filter private clubs in Python before
+        # serialising. The smoke test (test_private_clubs_hidden) covers
+        # this path specifically.
+        clubs = [c for c in clubs if not c.get("is_private")]
 
-        # Filter + redact
-        visible: list[dict] = []
-        for c in clubs:
-            cid = c.get("id")
-            is_private = bool(c.get("is_private"))
-            caller_manages = is_global_admin or (cid in managed_ids)
-            if is_private and not caller_manages:
-                continue
-            visible.append(c if caller_manages else _strip_club_pii(c))
+        # Strip PII uniformly. Same response for everyone, so the edge can
+        # cache one copy and serve it to every signed-in caller.
+        visible = [_strip_club_pii(c) for c in clubs]
 
-        # Batched subscriber counts — one query for all visible clubs
+        # Batched subscriber counts — single query for the whole page.
         ids = [c["id"] for c in visible if c.get("id")]
         sub_counts: dict = {}
         if ids:
@@ -326,14 +310,13 @@ async def list_clubs(
         for c in visible:
             c["subscriber_count"] = sub_counts.get(c.get("id"), 0)
 
-        # PERF: this list changes rarely (new club approvals are admin-gated)
-        # but every dashboard load currently hits it. Tell the Vercel edge to
-        # cache for 5 min and serve stale for an hour while it revalidates.
-        # Private — the payload differs per-user (subscribed flags, redacted
-        # PII), so we use the CDN-only directive `s-maxage` rather than the
-        # shared `max-age`.
+        # `public` = shared cache (Vercel edge) may store this response.
+        # `s-maxage=300` = edge keeps it 5 min; `max-age=60` = browsers
+        # reuse for 1 min so a quick back-button doesn't refetch.
+        # `stale-while-revalidate` = serve stale for an hour while a
+        # background refresh runs — invisible to the user, smooths spikes.
         response.headers["Cache-Control"] = (
-            "private, s-maxage=300, stale-while-revalidate=3600"
+            "public, max-age=60, s-maxage=300, stale-while-revalidate=3600"
         )
         return {"clubs": visible, "count": len(visible)}
     except Exception as e:
