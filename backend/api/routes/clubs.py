@@ -263,6 +263,19 @@ async def list_clubs(
     Supabase RLS still mirrors this in case the anon key in the bundle
     is used to query the table directly — see
     backend/migrations/2026_06_01_sec_rls_clubs_pii.sql.
+
+    !! IMPORTANT for future maintainers !!
+    Vercel's edge cache ignores the Authorization header on cache keys,
+    so once warm, this endpoint effectively serves to anyone, including
+    requests with no auth header. The audit (finding #4) explicitly OK'd
+    this once PII and private clubs were stripped at the data layer —
+    they are. DO NOT add ANY of the following to this response, because
+    the cache will leak it to non-McGill callers:
+      * personal email addresses (contact_email, executive_emails, ...)
+      * any field that could differ per-caller
+      * private-club rows
+      * draft / unverified clubs
+      * anything you wouldn't write on a public flyer.
     """
     try:
         supabase = get_supabase()

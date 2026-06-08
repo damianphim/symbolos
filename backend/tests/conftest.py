@@ -3,13 +3,18 @@ pytest fixtures shared by the security smoke tests.
 
 We don't talk to Supabase / Anthropic / Resend in CI. Every external
 client is patched here so the tests run hermetically in <1s.
+
+IMPORTANT: FastAPI captures dependency references at route-definition
+time, so `monkeypatch.setattr(auth_module, ...)` does NOT override what
+`Depends(get_current_user_id)` resolves to. The correct override is
+`app.dependency_overrides[get_current_user_id] = fake_fn`, which we do
+inside the `client` fixture below.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -39,11 +44,10 @@ class FakeAuthAdmin:
 
 class FakeTable:
     """Records every query and returns canned data."""
-    def __init__(self, name: str, data: list[dict] | None = None):
+    def __init__(self, name: str, data):
         self._name = name
-        self._data = data or []
-        self._eq_filters: list[tuple[str, object]] = []
-        self._in_filters: list[tuple[str, list]] = []
+        self._data = data if data is not None else []
+        self._eq_filters: list = []
 
     def select(self, *args, **kwargs):
         return self
@@ -56,9 +60,9 @@ class FakeTable:
         return self
 
     def or_(self, *args, **kwargs):
-        """PostgREST-style OR expression. We don't parse it — the security
-        tests still get protected by the application-layer Python filter
-        we apply on top of the query, which is the defense-in-depth point."""
+        """PostgREST OR — no-op shim. The endpoints we test apply a
+        Python-side filter as defense in depth, so the security
+        assertions still hold even when this no-ops."""
         return self
 
     def order(self, *args, **kwargs):
@@ -68,7 +72,6 @@ class FakeTable:
         return self
 
     def in_(self, col, vals):
-        self._in_filters.append((col, vals))
         return self
 
     def single(self):
@@ -85,7 +88,6 @@ class FakeTable:
         return self
 
     def execute(self):
-        # Apply naive eq filtering for the tests that care
         rows = list(self._data)
         for col, val in self._eq_filters:
             rows = [r for r in rows if r.get(col) == val]
@@ -96,10 +98,10 @@ class FakeSupabase:
     """Stand-in for the supabase client. Tests can pre-seed tables via
     `.set_table('users', [...])`."""
     def __init__(self, auth_email: str = "tester@mail.mcgill.ca"):
-        self._tables: dict[str, list[dict]] = {}
+        self._tables: dict = {}
         self.auth = SimpleNamespace(admin=FakeAuthAdmin(email=auth_email))
 
-    def set_table(self, name: str, rows: list[dict]) -> None:
+    def set_table(self, name: str, rows: list) -> None:
         self._tables[name] = rows
 
     def table(self, name: str) -> FakeTable:
@@ -111,50 +113,78 @@ class FakeSupabase:
 
 @pytest.fixture
 def fake_supabase(monkeypatch):
+    """Patch every importable get_supabase reference so all routes see
+    the fake regardless of where they imported it from."""
     sb = FakeSupabase()
-    # Patch every importable get_supabase reference so all routes see the fake.
+    # Patch at the canonical module location.
     import api.utils.supabase_client as supa
     monkeypatch.setattr(supa, "get_supabase", lambda: sb)
     monkeypatch.setattr(supa, "get_user_supabase", lambda jwt: sb)
+
+    # Routes do `from ..utils.supabase_client import get_supabase` at
+    # module load time, which BINDS the original function into their
+    # own module namespace. We need to override THOSE bindings too.
+    for module_path in (
+        "api.routes.clubs",
+        "api.routes.users",
+        "api.routes.verification",
+        "api.routes.forum",
+        "api.routes.cards",
+        "api.routes.chat",
+        "api.routes.courses",
+        "api.routes.webhooks",
+        "api.utils.verified_user",
+        "api.utils.llm_budget",
+        "api.utils.anomaly",
+        "api.main",
+    ):
+        try:
+            mod = __import__(module_path, fromlist=["get_supabase"])
+        except Exception:
+            continue
+        if hasattr(mod, "get_supabase"):
+            monkeypatch.setattr(mod, "get_supabase", lambda: sb)
     return sb
 
 
 @pytest.fixture
 def client(fake_supabase, monkeypatch):
-    """A FastAPI TestClient with auth dependencies stubbed.
+    """A FastAPI TestClient with auth dependencies overridden.
 
-    Tests can override the authenticated user by setting
-    `client.headers['X-Test-User']` and the test middleware below picks it up.
+    Tests pass `X-Test-User: <id>` to identify themselves. No header
+    means the unauthenticated case (expect 401).
     """
-    # Bypass JWT verification: a fake get_current_user_id reads a header.
-    from fastapi import HTTPException
-    from api import auth as auth_module
+    from fastapi import HTTPException, Request
+    from fastapi.testclient import TestClient
+    from api.main import app
+    from api.auth import get_current_user_id, get_current_jwt, get_user_db
 
-    async def _fake_get_user(request):
+    async def _fake_get_user(request: Request):
         uid = request.headers.get("x-test-user")
         if not uid:
             raise HTTPException(status_code=401, detail="Missing test auth header")
         return uid
 
-    async def _fake_get_jwt(request):
+    async def _fake_get_jwt(request: Request):
         return request.headers.get("x-test-user", "")
 
-    async def _fake_get_db(request):
+    async def _fake_get_db(request: Request):
         return fake_supabase
 
-    monkeypatch.setattr(auth_module, "get_current_user_id", _fake_get_user)
-    monkeypatch.setattr(auth_module, "get_current_jwt", _fake_get_jwt)
-    monkeypatch.setattr(auth_module, "get_user_db", _fake_get_db)
+    # FastAPI overrides — the correct way to swap deps in tests.
+    app.dependency_overrides[get_current_user_id] = _fake_get_user
+    app.dependency_overrides[get_current_jwt]    = _fake_get_jwt
+    app.dependency_overrides[get_user_db]        = _fake_get_db
 
-    # And in routes that re-import them at module load — patch the references
-    # already bound on those modules.
-    from api.routes import clubs, users as users_route, verification as ver_route, forum
-    for mod in (clubs, users_route, ver_route, forum):
-        if hasattr(mod, "get_current_user_id"):
-            monkeypatch.setattr(mod, "get_current_user_id", _fake_get_user)
-        if hasattr(mod, "get_user_db"):
-            monkeypatch.setattr(mod, "get_user_db", _fake_get_db)
+    # Also override the email-verified gate so tests don't trip on it.
+    from api.utils import verified_user as vu
+    monkeypatch.setattr(vu, "is_email_verified", lambda _uid: True)
+    # And the LLM budget gate.
+    from api.utils import llm_budget as lb
+    monkeypatch.setattr(lb, "check_and_record_llm_usage", lambda *a, **kw: None)
 
-    from fastapi.testclient import TestClient
-    from api.main import app
-    return TestClient(app)
+    tc = TestClient(app)
+    try:
+        yield tc
+    finally:
+        app.dependency_overrides.clear()
