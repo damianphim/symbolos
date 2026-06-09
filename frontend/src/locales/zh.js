@@ -1032,6 +1032,23 @@ const ZH_TRANSLATIONS = {
     'error.sessionSetup': '正在设置您的会话...',
     'error.loadingProfile': '正在加载您的资料...',
 
+    'error.screen.title.generic':      '出了点问题',
+    'error.screen.title.verifyFailed': '验证失败',
+    'error.screen.title.authFailed':   '无法登录',
+    'error.screen.title.network':      '您当前离线',
+    'error.screen.body.generic':       '我们这边出了点小故障，导致此页面无法加载。您的数据是安全的，没有任何更改。',
+    'error.screen.body.verifyFailed':  '此验证链接无效，可能已过期或已被使用。',
+    'error.screen.body.authFailed':    '我们无法连接到身份验证服务，通常是网络不稳定导致的。',
+    'error.screen.body.network':       '看起来您的网络断开了。重新联网后此页面会自动恢复。',
+    'error.screen.action.reload':      '重新加载页面',
+    'error.screen.action.home':        '回到首页',
+    'error.screen.action.signin':      '返回登录',
+    'error.screen.action.signOut':     '退出登录',
+    'error.screen.action.contact':     '联系支持',
+    'error.screen.eventId':            '参考编号：{id}',
+    'error.screen.eventIdHint':        '如果您联系我们，请附上此编号，方便我们在日志中定位问题。',
+    'error.screen.status':             '查看状态页面',
+
     // ── Sign Out Confirmation ─────────────────────────────
     'signOut.confirm': '您确定要退出登录吗？',
     'signOut.button': '退出登录',

@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard/Dashboard'
 import ProfileSetup from './components/ProfileSetup/ProfileSetup'
 import Loading from './components/Loading/Loading'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
+import ErrorScreen from './components/ErrorScreen/ErrorScreen'
 import { authAPI } from './lib/api'
 import './theme.css'
 import './App.css'
@@ -82,21 +83,24 @@ function AppContent() {
 
   if (verifyError) {
     return (
-      <div className="error-screen">
-        <h2>Verification failed</h2>
-        <p>{verifyError}</p>
-        <button onClick={() => { setVerifyError(''); window.location.replace('/') }}>Back to sign in</button>
-      </div>
+      <ErrorScreen
+        variant="verifyFailed"
+        customMessage={verifyError}
+        showReload={false}
+        showSignIn={true}
+        showHome={false}
+        onSignIn={() => { setVerifyError(''); window.location.replace('/') }}
+      />
     )
   }
 
   if (error?.type === 'AUTH_INIT_FAILED') {
     return (
-      <div className="error-screen">
-        <h2>Unable to initialize authentication</h2>
-        <p>Please refresh the page or check your internet connection.</p>
-        <button onClick={() => window.location.reload()}>Reload Page</button>
-      </div>
+      <ErrorScreen
+        variant="authFailed"
+        showReload={true}
+        showHome={false}
+      />
     )
   }
 

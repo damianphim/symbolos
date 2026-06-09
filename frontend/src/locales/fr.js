@@ -975,6 +975,23 @@ const FR_TRANSLATIONS = {
     'error.sessionSetup': 'Configuration de votre session...',
     'error.loadingProfile': 'Chargement de votre profil...',
 
+    'error.screen.title.generic':      'Quelque chose a mal tourné',
+    'error.screen.title.verifyFailed': 'La vérification n\'a pas fonctionné',
+    'error.screen.title.authFailed':   'Connexion impossible',
+    'error.screen.title.network':      'Vous êtes hors ligne',
+    'error.screen.body.generic':       'Un pépin de notre côté a empêché le chargement de cette page. Vos données sont en sécurité — rien n\'a été modifié.',
+    'error.screen.body.verifyFailed':  'Le lien de vérification n\'a pas fonctionné. Il a peut-être expiré ou déjà été utilisé.',
+    'error.screen.body.authFailed':    'Nous n\'avons pas pu joindre le service d\'authentification. Souvent dû à une connexion Internet instable.',
+    'error.screen.body.network':       'Il semble que votre connexion soit interrompue. Cette page se chargera à nouveau dès que vous serez en ligne.',
+    'error.screen.action.reload':      'Recharger la page',
+    'error.screen.action.home':        'Accueil',
+    'error.screen.action.signin':      'Retour à la connexion',
+    'error.screen.action.signOut':     'Se déconnecter',
+    'error.screen.action.contact':     'Contacter le support',
+    'error.screen.eventId':            'Référence : {id}',
+    'error.screen.eventIdHint':        'Mentionnez cette référence si vous nous contactez — elle nous aide à retrouver le problème dans nos journaux.',
+    'error.screen.status':             'Voir la page de statut',
+
     // ── Sign Out Confirmation ─────────────────────────────
     'signOut.confirm': 'Êtes-vous sûr de vouloir vous déconnecter ?',
     'signOut.button': 'Déconnexion',

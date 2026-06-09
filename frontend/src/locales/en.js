@@ -1051,6 +1051,24 @@ const EN_TRANSLATIONS = {
     'error.sessionSetup': 'Setting up your session...',
     'error.loadingProfile': 'Loading your profile...',
 
+    // Generic error screen used by ErrorBoundary + App.jsx flows
+    'error.screen.title.generic':      'Something went wrong',
+    'error.screen.title.verifyFailed': 'Verification didn\'t work',
+    'error.screen.title.authFailed':   'Couldn\'t sign you in',
+    'error.screen.title.network':      'You\'re offline',
+    'error.screen.body.generic':       'A glitch on our side stopped this page from loading. Your data is safe — nothing was changed.',
+    'error.screen.body.verifyFailed':  'The verification link didn\'t work. It may have expired or already been used.',
+    'error.screen.body.authFailed':    'We couldn\'t talk to the authentication service. This is usually a flaky internet connection.',
+    'error.screen.body.network':       'Looks like your connection dropped. Once you\'re back online, this page should load.',
+    'error.screen.action.reload':      'Reload page',
+    'error.screen.action.home':        'Go home',
+    'error.screen.action.signin':      'Back to sign in',
+    'error.screen.action.signOut':     'Sign out',
+    'error.screen.action.contact':     'Email support',
+    'error.screen.eventId':            'Reference: {id}',
+    'error.screen.eventIdHint':        'Include this reference if you contact us — it helps us find the issue in our logs.',
+    'error.screen.status':             'Check status page',
+
     // ── Sign Out Confirmation ─────────────────────────────
     'signOut.confirm': 'Are you sure you want to sign out?',
     'signOut.button': 'Sign Out',

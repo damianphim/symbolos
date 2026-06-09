@@ -1,76 +1,59 @@
+/**
+ * ErrorBoundary — catches uncaught React render errors at the root.
+ *
+ * On error:
+ *   1. Captures the exception to Sentry (if VITE_SENTRY_DSN is set)
+ *      and stashes the returned event ID so the user can quote it.
+ *   2. Logs locally to console for dev visibility.
+ *   3. Shows the shared branded <ErrorScreen> so users see the same
+ *      polished UI regardless of which path crashed.
+ *
+ * NEVER let this component itself throw. The fallback path uses inline
+ * fallback strings so a missing i18n provider doesn't escalate.
+ */
 import { Component } from 'react'
-import { FaExclamationTriangle } from 'react-icons/fa'
-import './ErrorBoundary.css'
+import ErrorScreen from '../ErrorScreen/ErrorScreen'
 
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    }
+    this.state = { hasError: false, error: null, eventId: null }
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
     return { hasError: true, error }
   }
 
   componentDidCatch(error, errorInfo) {
+    // Always log locally — Vercel function logs would have shown the
+    // backend half but the frontend stack is harder to get without this.
     console.error('Error caught by boundary:', error, errorInfo)
-    this.setState({
-      error,
-      errorInfo
-    })
-  }
 
-  handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    })
-    window.location.href = '/'
+    // Capture to Sentry async so we don't block the fallback render.
+    // The dynamic import keeps Sentry out of the bundle until needed
+    // AND means this works fine when Sentry isn't configured (the
+    // import succeeds; init was a no-op so capture is also a no-op).
+    import('@sentry/react').then(Sentry => {
+      try {
+        const eventId = Sentry.captureException(error, {
+          contexts: { react: { componentStack: errorInfo?.componentStack } },
+        })
+        this.setState({ eventId })
+      } catch { /* never let the error path throw */ }
+    }).catch(() => {})
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary">
-          <div className="error-container">
-            <div className="error-icon"><FaExclamationTriangle /></div>
-            <h1 className="error-title">Oops! Something went wrong</h1>
-            <p className="error-message">
-              We're sorry, but something unexpected happened. Don't worry, your data is safe.
-            </p>
-            
-            {import.meta.env.DEV && this.state.error && (
-              <details className="error-details">
-                <summary>Error Details (Development Only)</summary>
-                <pre className="error-stack">
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
-            
-            <div className="error-actions">
-              <button onClick={this.handleReset} className="btn btn-primary">
-                Return to Home
-              </button>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="btn btn-secondary"
-              >
-                Reload Page
-              </button>
-            </div>
-          </div>
-        </div>
+        <ErrorScreen
+          variant="generic"
+          eventId={this.state.eventId}
+          showReload={true}
+          showHome={true}
+        />
       )
     }
-
     return this.props.children
   }
 }

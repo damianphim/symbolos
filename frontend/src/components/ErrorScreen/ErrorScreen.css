@@ -1,0 +1,207 @@
+/* ────────────────────────────────────────────────────────────────
+   ErrorScreen — branded blocking error UI.
+   Cream background to match the landing page (the error screen is the
+   first impression for a broken signup/auth flow). McGill red accent
+   on the primary action only — everything else is restrained so the
+   page reads as "this is fixable" not "your house is on fire."
+   ──────────────────────────────────────────────────────────────── */
+
+.err-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  padding-left:  max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
+  background: #f5f0e6;            /* same cream as landing */
+  color: #1a1a1a;
+  z-index: 10000;
+  /* Lock to light theme regardless of user preference — same logic the
+     landing page uses. A red gradient over the dark theme looked alarming. */
+  color-scheme: light;
+}
+
+.err-screen__card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 36px 28px 28px;
+  text-align: center;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 12px 40px rgba(0, 0, 0, 0.08);
+  animation: err-card-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes err-card-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.err-screen__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+.err-screen__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(237, 27, 47, 0.08);
+  color: #ED1B2F;
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.err-screen__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0 0 10px;
+  color: #1a1a1a;
+}
+
+.err-screen__body {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #5a5a5a;
+  margin: 0 0 24px;
+}
+
+/* ── Action buttons ───────────────────────────────────────────── */
+.err-screen__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.err-screen__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  border: 1.5px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.err-screen__btn:active { transform: scale(0.98); }
+
+.err-screen__btn--primary {
+  background: linear-gradient(135deg, #ED1B2F 0%, #B01B2E 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(237, 27, 47, 0.25);
+}
+.err-screen__btn--primary:hover {
+  background: linear-gradient(135deg, #d01929 0%, #9a1827 100%);
+}
+
+.err-screen__btn--ghost {
+  background: transparent;
+  color: #1a1a1a;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+.err-screen__btn--ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Sentry event ID reference ───────────────────────────────── */
+.err-screen__ref {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.err-screen__ref-code {
+  display: block;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.78rem;
+  color: #1a1a1a;
+  padding: 4px 6px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.err-screen__ref-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #6f6f6f;
+}
+
+.err-screen__ref-hint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #9a9a9a;
+}
+
+/* ── Footer links ─────────────────────────────────────────────── */
+.err-screen__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #5a5a5a;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.err-screen__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #5a5a5a;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.err-screen__link:hover { color: #ED1B2F; }
+
+.err-screen__sep {
+  color: rgba(0, 0, 0, 0.2);
+  user-select: none;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .err-screen { padding: 16px; }
+  .err-screen__card { padding: 30px 22px 24px; border-radius: 14px; }
+  .err-screen__logo { width: 48px; height: 48px; }
+  .err-screen__title { font-size: 1.3rem; }
+  .err-screen__body { font-size: 0.92rem; }
+  .err-screen__btn { height: 46px; font-size: 0.92rem; }
+  .err-screen__ref-code { font-size: 0.74rem; }
+}
+
+/* ── Dark mode? No. We lock to light so this looks consistent. ── */
