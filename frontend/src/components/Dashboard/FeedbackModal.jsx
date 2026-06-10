@@ -61,7 +61,7 @@ export default function FeedbackModal() {
     setStatus('idle')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     const missingCourse = mode === 'missing-course'
@@ -70,6 +70,25 @@ export default function FeedbackModal() {
 
     setStatus('submitting')
 
+    // Primary path: POST to the backend, which persists the feedback,
+    // emails the admin inbox via Resend, and optionally pings Slack.
+    // This works even when the user has no mail client configured.
+    try {
+      const { default: api } = await import('../../lib/api')
+      await api.post('/feedback', {
+        kind: missingCourse ? 'missing-course' : 'general',
+        message: text.trim() || `(missing course request: ${course.trim()})`,
+        course: missingCourse ? course.trim() : undefined,
+        page: window.location.pathname,
+      })
+      setStatus('success')
+      setTimeout(() => close(), 2000)
+      return
+    } catch (err) {
+      console.warn('Feedback POST failed, falling back to mailto:', err)
+    }
+
+    // Fallback: mailto (covers the case where the backend is unreachable).
     const subject = encodeURIComponent(
       missingCourse
         ? `[Symbolos] Missing Course: ${course.trim()}`
@@ -80,7 +99,6 @@ export default function FeedbackModal() {
         ? `Missing course: ${course.trim()}\nNote: ${text.trim()}\nUser: ${user?.email || 'anonymous'}`
         : `${text.trim()}\n\nUser: ${user?.email || 'anonymous'}`
     )
-
     window.open(`mailto:symbolosadvsry@gmail.com?subject=${subject}&body=${body}`)
     setStatus('success')
     setTimeout(() => close(), 2000)

@@ -88,6 +88,16 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Lighthouse CI (performance + a11y budget)
+        working-directory: frontend
+        # Runs against the built dist/. Measures the public landing page
+        # (no backend needed). Budgets in lighthouserc.json. Non-blocking
+        # for now (|| true) so a perf regression warns but doesn't block
+        # merge — flip to blocking once the budgets are dialed in.
+        run: |
+          npm install -g @lhci/cli@0.14.x
+          lhci autorun || true
+
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-latest

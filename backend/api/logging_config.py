@@ -42,6 +42,62 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry, default=str)
 
 
+class _RemoteHTTPHandler(logging.Handler):
+    """Best-effort HTTP log shipper for Better Stack / Logtail / Axiom.
+
+    Ships each record as a JSON line to LOG_SHIP_URL with an optional
+    bearer token. Fire-and-forget on a daemon thread pool so logging never
+    blocks the request path; drops logs silently if the sink is down (we
+    still have the console/Vercel logs as the source of truth).
+    """
+    def __init__(self, url: str, token: str | None, level=logging.INFO):
+        super().__init__(level)
+        self._url = url
+        self._token = token
+        self._formatter = JSONFormatter()
+        import concurrent.futures
+        # Tiny pool — log shipping is I/O bound and we cap concurrency so a
+        # slow sink can't spawn unbounded threads under load.
+        self._pool = concurrent.futures.ThreadPoolExecutor(
+            max_workers=2, thread_name_prefix="logship"
+        )
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            payload = self._formatter.format(record)
+            self._pool.submit(self._ship, payload)
+        except Exception:
+            pass  # never let logging raise
+
+    def _ship(self, payload: str) -> None:
+        try:
+            import httpx
+            headers = {"Content-Type": "application/json"}
+            if self._token:
+                headers["Authorization"] = f"Bearer {self._token}"
+            httpx.post(self._url, content=payload, headers=headers, timeout=5)
+        except Exception:
+            pass  # sink down — drop silently, console log is the source of truth
+
+
+def _build_remote_handler(log_level):
+    """Construct the remote log handler if configured, else None."""
+    # Better Stack / Logtail style: token + their ingest URL.
+    token = os.getenv("LOGTAIL_TOKEN", "").strip()
+    url = os.getenv("LOG_SHIP_URL", "").strip()
+    if token and not url:
+        # Default Better Stack ingest endpoint.
+        url = "https://in.logs.betterstack.com"
+    if not url:
+        return None
+    try:
+        h = _RemoteHTTPHandler(url, token or None, level=log_level)
+        h.setLevel(log_level)
+        return h
+    except Exception:
+        return None
+
+
 def setup_logging() -> logging.Logger:
     """Configure application logging with console + optional file output."""
 
@@ -80,6 +136,13 @@ def setup_logging() -> logging.Logger:
         file_handler.setFormatter(JSONFormatter())  # always JSON on disk
         file_handler.setLevel(log_level)
 
+    # ── Remote log sink for retention (Better Stack / Logtail / Axiom) ───
+    # Vercel function logs evaporate after ~30 days. If LOGTAIL_TOKEN (or a
+    # generic LOG_SHIP_URL) is set, ship JSON logs there too so we can grep
+    # months back when debugging. Buffered + non-blocking so a slow sink
+    # never stalls a request. No-op when unset.
+    remote_handler = _build_remote_handler(log_level)
+
     # ── Root logger ──────────────────────────────────────────────────────
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
@@ -88,6 +151,8 @@ def setup_logging() -> logging.Logger:
     root_logger.addHandler(console_handler)
     if file_handler:
         root_logger.addHandler(file_handler)
+    if remote_handler:
+        root_logger.addHandler(remote_handler)
 
     # ── Third-party noise reduction ──────────────────────────────────────
     logging.getLogger("uvicorn").setLevel(logging.INFO)
@@ -97,9 +162,10 @@ def setup_logging() -> logging.Logger:
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     root_logger.info(
-        "Logging configured — level=%s, file=%s, format=%s",
+        "Logging configured — level=%s, file=%s, remote=%s, format=%s",
         log_level_name,
         log_file or "(console only)",
+        "on" if remote_handler else "off",
         "json" if settings.ENVIRONMENT == "production" else "text",
     )
 

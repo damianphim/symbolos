@@ -23,6 +23,7 @@
     "terser": "^5.46.0"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "^2.22.7",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",

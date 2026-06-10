@@ -15,9 +15,42 @@
 
 let _sentryReady = false
 let _posthog = null
+let _analyticsStarted = false
 
+// ── Consent gating (Quebec Law 25 §8.1) ──────────────────────────────────────
+// We split telemetry into two buckets:
+//   • Sentry  = "strictly necessary" error monitoring. It carries no
+//     marketing identifiers, is PII-scrubbed, and is needed to keep the
+//     service working. Under Law 25 / GDPR this is a legitimate-interest
+//     basis that does NOT require opt-in consent. It loads immediately.
+//   • PostHog + Vercel Analytics = product analytics. These DO require
+//     affirmative consent because they set non-essential cookies / track
+//     behaviour. They stay dark until the user accepts the cookie banner.
+const CONSENT_KEY = 'symbolos_cookie_consent'  // 'accepted' | 'declined'
+
+export function getConsent() {
+  try { return localStorage.getItem(CONSENT_KEY) } catch { return null }
+}
+
+export function setConsent(value) {
+  try { localStorage.setItem(CONSENT_KEY, value) } catch {}
+  if (value === 'accepted') startAnalytics()
+}
+
+/** Boot the strictly-necessary telemetry (Sentry) immediately, and the
+ * consent-gated analytics only if consent was previously granted. */
 export async function initTelemetry() {
-  await Promise.all([_initSentry(), _initPostHog()])
+  await _initSentry()
+  if (getConsent() === 'accepted') startAnalytics()
+}
+
+/** Start the consent-gated analytics (PostHog). Idempotent. Called either
+ * from initTelemetry (returning user who already consented) or from
+ * setConsent('accepted') (user just clicked Accept). */
+export async function startAnalytics() {
+  if (_analyticsStarted) return
+  _analyticsStarted = true
+  await _initPostHog()
 }
 
 async function _initSentry() {

@@ -1,0 +1,57 @@
+-- ────────────────────────────────────────────────────────────────────────────
+-- SCHEMA.sql — human-readable snapshot of the Symbolos database shape.
+--
+-- This is a REFERENCE, not a migration. It is NOT run by anything; it
+-- exists so contributors can answer "what columns does table X have?"
+-- without opening Supabase Studio.
+--
+-- Regenerate after any migration (see CONTRIBUTING.md):
+--
+--   pg_dump --schema-only --no-owner --no-privileges \
+--     "$SUPABASE_DB_URL" > backend/migrations/SCHEMA.sql
+--
+-- The placeholder below lists the known tables as of the last manual
+-- update. Replace the whole file with real pg_dump output the first time
+-- you have the DB connection string handy.
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- KNOWN TABLES (run the pg_dump above to replace this with full DDL):
+--
+--   users                     — profile data (email, major, faculty, prefs,
+--                               email_verified, verification_token*,
+--                               last_verification_sent_at, email_bounced*)
+--   auth.users                — Supabase-managed auth identities (source of
+--                               truth for email + email_confirmed_at)
+--   chat_messages             — AI advisor conversation history
+--   advisor_cards             — generated brief cards
+--   favorites                 — saved courses
+--   completed_courses         — transcript-imported + manually marked
+--   current_courses           — in-progress enrollment
+--   calendar_events           — user calendar + syllabus-parsed events
+--   notification_queue        — scheduled reminder emails
+--   clubs                     — club directory (is_verified, is_private,
+--                               contact_email, executive_emails, created_by)
+--   club_managers             — per-club manager roster
+--   club_subscriptions        — follow relationships
+--   club_join_requests        — pending joins for private clubs
+--   club_manager_requests     — manager invite flow
+--   club_events               — club-posted events
+--   club_announcements        — club-posted announcements
+--   club_submissions          — pending club submissions for admin review
+--   user_clubs                — membership + role (owner/admin/member)
+--   forum_posts               — forum threads (escaped on write)
+--   forum_replies             — thread replies
+--   forum_post_likes          — like join table
+--   forum_reply_likes         — like join table
+--   prof_suggestions          — professor suggestion submissions
+--   degree_programs           — seeded requirement programs
+--   requirement_blocks        — program requirement blocks
+--   requirement_courses       — courses within a requirement block
+--   courses                   — McGill course catalogue (read-only, edge-cached)
+--   rate_limits               — sliding-window counters (rate limiting,
+--                               LLM budget, anomaly counters, verify throttle)
+--   feedback                  — user-submitted feedback (2026_06_03)
+--   seen_resend_events        — webhook idempotency dedup (2026_06_03)
+--
+-- Columns marked * are sensitive and stripped from API responses /
+-- revoked from anon+authenticated roles (see migrations + supabase_client.py).

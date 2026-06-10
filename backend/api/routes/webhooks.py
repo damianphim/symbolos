@@ -128,6 +128,28 @@ async def resend_webhook(req: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
+    # ── Idempotency ───────────────────────────────────────────────────────────
+    # Resend retries on any non-2xx, so the same event can arrive multiple
+    # times. Dedup on the Svix message id (stable across retries of the same
+    # delivery). If we've seen it, ack with 200 and do nothing.
+    event_id = req.headers.get("svix-id") or payload.get("id")
+    if event_id:
+        try:
+            sb = get_supabase()
+            existing = (
+                sb.table("seen_resend_events")
+                .select("event_id").eq("event_id", event_id).execute()
+            )
+            if existing.data:
+                logger.info("Resend webhook %s already processed — skipping", event_id)
+                return {"ok": True, "deduped": True}
+            sb.table("seen_resend_events").insert({"event_id": event_id}).execute()
+        except Exception as exc:
+            # If the dedup table is unavailable, fail open — better to risk a
+            # double-process (which is idempotent anyway: flagging a user
+            # bounced twice is harmless) than to drop the event.
+            logger.warning("webhook dedup check failed: %s", type(exc).__name__)
+
     event_type = (payload.get("type") or "").lower()
     data = payload.get("data") or {}
     # Resend nests the recipient under data.to (list)

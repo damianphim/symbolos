@@ -23,6 +23,7 @@ from datetime import date, timedelta
 import resend
 from ..config import settings
 from ..utils.supabase_client import get_supabase
+from ..utils.email_footer import casl_footer_html
 from ..auth import get_current_user_id, require_self
 
 router = APIRouter()
@@ -161,8 +162,8 @@ def _build_html_email(event_title: str, event_date: str, event_type: str, days_b
         <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
           <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.7;">
             Symbolos · Not affiliated with McGill University<br>
-            You're receiving this because you set a reminder in your Symbolos calendar.<br>
-            <a href="https://symbolos.ca" style="color:#ED1B2F;text-decoration:none;">Manage reminders</a>
+            You're receiving this because you set a reminder in your Symbolos calendar.
+            {casl_footer_html("https://symbolos.ca", transactional=False)}
           </p>
         </td></tr>
       </table>
@@ -237,6 +238,32 @@ def _send_email(to: str, event_title: str, event_date: str, event_type: str, day
 
 
 # _send_sms / Twilio integration removed Apr 2026 — site is email-only.
+
+
+def _heartbeat(stage: str) -> None:
+    """Ping Healthchecks.io so a missed/failed daily cron alerts us.
+
+    Set HEALTHCHECK_URL in Vercel env to the check's ping URL
+    (https://hc-ping.com/<uuid>). Stages:
+      start   → POST <url>/start
+      success → POST <url>
+      fail    → POST <url>/fail
+    No-op when HEALTHCHECK_URL is unset. Never raises.
+    """
+    import os
+    base = os.getenv("HEALTHCHECK_URL", "").strip()
+    if not base:
+        return
+    url = base.rstrip("/")
+    if stage == "start":
+        url += "/start"
+    elif stage == "fail":
+        url += "/fail"
+    try:
+        import httpx
+        httpx.post(url, timeout=5)
+    except Exception as exc:
+        logger.debug("heartbeat ping failed (non-critical): %s", type(exc).__name__)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
@@ -335,6 +362,12 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
     if not hmac.compare_digest(secret, settings.CRON_SECRET):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    # Heartbeat START ping — tells Healthchecks.io the cron actually began
+    # running. If it never fires (Vercel cron silently stopped, function
+    # crashed on import, secret rotated), Healthchecks pages us. Best-effort:
+    # never let a monitoring call break the cron itself.
+    _heartbeat("start")
+
     today = date.today().isoformat()
     supabase = get_supabase()
 
@@ -406,6 +439,15 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         logger.exception(f"Stale-club cleanup cron failed: {e}")
         stale_clubs_result = {"deleted": 0, "error": str(e)}
 
+    # If the bulk send had a high failure rate, flag the run as failed to
+    # the heartbeat monitor even though the handler returned 200 — a 90%
+    # bounce rate means something is wrong (Resend down, DKIM broke) even
+    # if no exception was raised.
+    total_attempts = sent_count + fail_count
+    if total_attempts > 0 and fail_count / total_attempts > 0.5:
+        logger.error("Cron email failure rate >50%% (%d/%d) — flagging heartbeat fail", fail_count, total_attempts)
+        _heartbeat("fail")
+
     logger.info(
         f"Cron: {sent_count} sent, {fail_count} failed, "
         f"transcript_reminders={reminder_result.get('sent', 0)}, "
@@ -413,6 +455,11 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         f"summer_reminders={summer_result.get('sent', 0)}, "
         f"stale_clubs_deleted={stale_clubs_result.get('deleted', 0)}"
     )
+
+    # Heartbeat SUCCESS ping — confirms the run finished. The gap between
+    # this and the start ping is the run duration in the Healthchecks UI.
+    _heartbeat("success")
+
     return {
         "ok": True,
         "sent": sent_count,

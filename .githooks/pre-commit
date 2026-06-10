@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+#
+# Symbolos pre-commit hook.
+#
+# Runs fast, local checks before a commit is created so obvious breakage
+# (syntax errors, lint failures, committed secrets) never reaches CI.
+# Mirrors the GitHub Actions checks but only on STAGED files, so it's quick.
+#
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# Skip in an emergency:
+#   git commit --no-verify
+#
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+FAIL=0
+
+# Collect staged files by type.
+staged() { git diff --cached --name-only --diff-filter=ACM -- "$@"; }
+
+PY_FILES=$(staged '*.py' || true)
+JS_FILES=$(staged '*.js' '*.jsx' || true)
+
+# ── 1. Python: compile + ruff (errors only) ──────────────────────────────────
+if [ -n "$PY_FILES" ]; then
+  echo "▶ Python compile check…"
+  if ! python3 -m py_compile $PY_FILES 2>/tmp/symbolos_pycompile.log; then
+    echo "✗ Python syntax error:"
+    cat /tmp/symbolos_pycompile.log
+    FAIL=1
+  fi
+
+  if command -v ruff >/dev/null 2>&1; then
+    echo "▶ ruff (errors only)…"
+    # E9/F63/F7/F82 = syntax errors, undefined names, etc. — the stuff that
+    # actually breaks. We don't enforce style on a legacy codebase.
+    if ! ruff check --select=E9,F63,F7,F82 $PY_FILES; then
+      FAIL=1
+    fi
+  fi
+fi
+
+# ── 2. Frontend: eslint on staged JS ─────────────────────────────────────────
+if [ -n "$JS_FILES" ]; then
+  if [ -f "$ROOT/frontend/package.json" ]; then
+    echo "▶ eslint (staged frontend files)…"
+    # Filter to files inside frontend/ and make paths relative to it.
+    FE_FILES=$(echo "$JS_FILES" | grep '^frontend/' | sed 's#^frontend/##' || true)
+    if [ -n "$FE_FILES" ]; then
+      ( cd "$ROOT/frontend" && npx --no-install eslint $FE_FILES ) || FAIL=1
+    fi
+  fi
+fi
+
+# ── 3. Naive secret scan on staged content ───────────────────────────────────
+echo "▶ secret scan…"
+# Patterns for the credential shapes this project uses.
+SECRET_RE='(sk-ant-[A-Za-z0-9_-]{20,}|re_[A-Za-z0-9]{20,}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}|service_role|SUPABASE_SERVICE_KEY\s*=\s*ey)'
+if git diff --cached -U0 | grep -nE "^\+" | grep -E "$SECRET_RE" >/tmp/symbolos_secret.log 2>&1; then
+  echo "✗ Possible secret in staged diff:"
+  cat /tmp/symbolos_secret.log
+  echo "  If this is a false positive, commit with --no-verify and add an exception."
+  FAIL=1
+fi
+
+if [ "$FAIL" -ne 0 ]; then
+  echo ""
+  echo "✗ pre-commit checks failed. Fix the above or use 'git commit --no-verify' to bypass."
+  exit 1
+fi
+
+echo "✓ pre-commit checks passed"
+exit 0

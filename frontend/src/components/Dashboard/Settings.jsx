@@ -59,6 +59,28 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     }
   }, [showPwModal, isRecoveryFlow])
 
+  // CASL one-click unsubscribe: the footer link on reminder emails points
+  // to /settings?unsubscribe=1. Honour it by switching notifications off
+  // and confirming to the user. Required to take effect within 10 business
+  // days under CASL — we do it instantly.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('unsubscribe') === '1') {
+      setNotifPrefs(p => ({ ...p, method: 'none' }))
+      // Clean the URL so a refresh doesn't re-trigger.
+      try {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('unsubscribe')
+        window.history.replaceState({}, '', url.toString())
+      } catch {}
+      // Defer the alert so it doesn't race the initial render.
+      setTimeout(() => {
+        alert(t('settings.unsubscribed') || 'You have been unsubscribed from reminder emails. You can re-enable them anytime below.')
+      }, 300)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Lock body scroll while any modal is open (prevents scrollbar-width layout shift)
   const anyModalOpen = showPwModal || showExportModal || showDeleteModal
   useEffect(() => {
