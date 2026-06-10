@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     API_VERSION: str = "3.1.0"
     API_PREFIX: str = "/api"
 
+    # Bump this whenever the Terms of Service or Privacy Policy materially
+    # change. New signups record the version they accepted; existing users
+    # whose accepted version is older than this can be prompted to re-accept.
+    LEGAL_POLICY_VERSION: str = "2026-06-10"
+
     # ── Environment ──────────────────────────────────────────────────────
     ENVIRONMENT: str = "development"
     DEBUG: bool = False

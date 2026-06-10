@@ -619,6 +619,8 @@ const FR_TRANSLATIONS = {
     'auth.btnForgot': 'Envoyer le lien',
     'auth.btnLogin': 'Se connecter',
     'auth.btnSignup': 'Créer un compte',
+    'auth.clickwrapPre': 'En créant un compte, vous acceptez nos',
+    'auth.clickwrapAnd': 'et notre',
     'auth.loadingForgot': 'Envoi…',
     'auth.loadingLogin': 'Connexion…',
     'auth.loadingSignup': 'Création du compte…',

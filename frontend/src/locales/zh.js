@@ -602,6 +602,8 @@ const ZH_TRANSLATIONS = {
     'auth.btnForgot': '发送重置链接',
     'auth.btnLogin': '登录',
     'auth.btnSignup': '创建账户',
+    'auth.clickwrapPre': '创建账户即表示您同意我们的',
+    'auth.clickwrapAnd': '和',
     'auth.loadingForgot': '发送中…',
     'auth.loadingLogin': '登录中…',
     'auth.loadingSignup': '创建账户中…',

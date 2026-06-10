@@ -422,6 +422,21 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                   </div>
                 )}
 
+                {/* Clickwrap notice (Law 25 / contract): completing signup
+                    constitutes acceptance. Backend records version+timestamp. */}
+                {!isLogin && !isForgot && (
+                  <p className="auth-clickwrap">
+                    {t('auth.clickwrapPre')}{' '}
+                    <button type="button" className="auth-clickwrap-link" onClick={() => setLegalModal('terms')}>
+                      {t('legal.navTerms')}
+                    </button>
+                    {' '}{t('auth.clickwrapAnd')}{' '}
+                    <button type="button" className="auth-clickwrap-link" onClick={() => setLegalModal('privacy')}>
+                      {t('legal.navPrivacy')}
+                    </button>.
+                  </p>
+                )}
+
                 <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
                   {loading ? (
                     <span className="btn-loading">

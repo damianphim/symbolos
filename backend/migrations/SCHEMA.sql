@@ -19,7 +19,8 @@
 --
 --   users                     — profile data (email, major, faculty, prefs,
 --                               email_verified, verification_token*,
---                               last_verification_sent_at, email_bounced*)
+--                               last_verification_sent_at, email_bounced*,
+--                               tos_accepted_at, tos_version)
 --   auth.users                — Supabase-managed auth identities (source of
 --                               truth for email + email_confirmed_at)
 --   chat_messages             — AI advisor conversation history

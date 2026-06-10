@@ -226,6 +226,14 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
                 for item in (user_data["advanced_standing"] or [])
             ]
 
+        # Record Terms / Privacy acceptance at the moment of profile creation.
+        # Completing signup constitutes agreement (the signup form shows the
+        # clickwrap notice + links). Storing a server timestamp + the policy
+        # version gives us a defensible record under Quebec Law 25 / general
+        # contract law: "user X agreed to version Y at time Z".
+        user_data["tos_accepted_at"] = datetime.now(timezone.utc).isoformat()
+        user_data["tos_version"] = settings.LEGAL_POLICY_VERSION
+
         new_user = create_user_db(user_data)
         logger.info(f"New user created: {new_user.get('id')}")
         return {"user": new_user, "message": "User profile created successfully"}

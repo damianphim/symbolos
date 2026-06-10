@@ -466,11 +466,40 @@ async def root():
 
 
 @app.get(f"{settings.API_PREFIX}/health")
-async def health_check():
-    # SEC-05: Don't expose version string in production — it aids targeted exploit research.
+async def health_check(deep: bool = False):
+    """Liveness + optional dependency readiness check.
+
+    Default (?deep=false): cheap liveness — "the function booted". Used as
+    the fast path so a flood of monitor pings doesn't cost a DB query each.
+
+    ?deep=true: verifies the Supabase connection actually works. THIS is
+    what the uptime monitor should poll, because a shallow check reports
+    "healthy" even when the database is unreachable — which is exactly the
+    outage you most want to be paged about. Returns 503 if the DB is down
+    so Better Stack / UptimeRobot register it as an incident.
+    """
     response = {"status": "healthy"}
     if settings.DEBUG:
         response["version"] = settings.API_VERSION
+
+    if deep:
+        checks = {}
+        ok = True
+        # Database round-trip — cheap single-row read.
+        try:
+            from .utils.supabase_client import get_supabase
+            get_supabase().table("users").select("id").limit(1).execute()
+            checks["database"] = "ok"
+        except Exception as exc:
+            checks["database"] = "error"
+            ok = False
+            logger.error("Health check DB probe failed: %s", type(exc).__name__)
+
+        response["checks"] = checks
+        if not ok:
+            response["status"] = "degraded"
+            return JSONResponse(status_code=503, content=response)
+
     return response
 
 

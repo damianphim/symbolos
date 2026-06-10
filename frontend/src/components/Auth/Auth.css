@@ -683,6 +683,26 @@
   padding-top: 10px;
   border-top: 1px solid var(--border-primary);
 }
+/* Clickwrap notice above the Create Account button */
+.auth-clickwrap {
+  margin: 0 0 12px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--text-tertiary, #9ca3af);
+  text-align: center;
+}
+.auth-clickwrap-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.74rem;
+  color: var(--accent-primary, #ED1B2F);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.auth-clickwrap-link:hover { opacity: 0.8; }
+
 .auth-legal-link {
   background: none;
   border: none;

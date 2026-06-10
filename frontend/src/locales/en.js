@@ -619,6 +619,8 @@ const EN_TRANSLATIONS = {
     'auth.btnForgot': 'Send Reset Link',
     'auth.btnLogin': 'Sign In',
     'auth.btnSignup': 'Create Account',
+    'auth.clickwrapPre': 'By creating an account you agree to our',
+    'auth.clickwrapAnd': 'and',
     'auth.loadingForgot': 'Sending...',
     'auth.loadingLogin': 'Signing in...',
     'auth.loadingSignup': 'Creating account...',
