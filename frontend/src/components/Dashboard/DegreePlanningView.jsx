@@ -14,7 +14,7 @@ import DegreeRequirementsView from './DegreeRequirementsView'
 import StudyAbroadView from './StudyAbroadView'
 import AdvisingResourcesView from './AdvisingResourcesView'
 import { readCache, writeCache } from '../../lib/userDataCache'
-import { matchCourse, wildcardBand } from '../../utils/requirementMatch'
+import { matchCourse, wildcardBand, blockWildcardMatches } from '../../utils/requirementMatch'
 import './DegreePlanningView.css'
 
 // Fix double /api/api bug
@@ -309,19 +309,12 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
     return codes
   }, [allProgramData])
 
-  // Wildcard blocks: any PSYC 300+ etc. — user courses matching these aren't electives
-  const wildcardBlocks = useMemo(() => {
+  // Wildcard bands across all programs — a user course that satisfies one of
+  // these (via blockWildcardMatches) counts toward a program, so it's NOT an
+  // elective. Collect every program's blocks; we test membership per-course.
+  const wildcardAllBlocks = useMemo(() => {
     const blocks = []
-    allProgramData.forEach(prog => {
-      prog?.blocks?.forEach(b => {
-        if ((b.courses?.some(c => !c.catalog)) || b.min_level) {
-          blocks.push({
-            subjects: new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean)),
-            minLevel: b.min_level || 0,
-          })
-        }
-      })
-    })
+    allProgramData.forEach(prog => prog?.blocks?.forEach(b => blocks.push(b)))
     return blocks
   }, [allProgramData])
 
@@ -356,18 +349,14 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, programData
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
       if (requiredCodes.has(key)) return false
       if (courseAllocations[key]) return false // manually assigned to a program
-      // Check wildcard blocks
-      for (const wb of wildcardBlocks) {
-        if (!wb.subjects.has(c.subject?.toUpperCase())) continue
-        if (wb.minLevel > 0) {
-          const lvl = parseInt(c.catalog)
-          if (isNaN(lvl) || lvl < wb.minLevel) continue
-        }
-        return false // matches a wildcard block → not an elective
+      // Satisfies a wildcard placeholder / null-catalog / min_level band in
+      // ANY program → it's counting there, so it's not an elective.
+      for (const b of wildcardAllBlocks) {
+        if (blockWildcardMatches(b, [c]).length > 0) return false
       }
       return true
     })
-  }, [completedCourses, currentCourses, profile, requiredCodes, wildcardBlocks, courseAllocations])
+  }, [completedCourses, currentCourses, profile, requiredCodes, wildcardAllBlocks, courseAllocations])
 
   const _recsRateLimited = () => {
     if (authFlags?.is_admin) return false // admins unlimited
@@ -681,35 +670,38 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
     }
   }))
 
-  // Phase 2: wildcard blocks — min_level, null-catalog entries, OR
-  // placeholder courses like "Any 200-level X course". Count any matching
-  // user course not already counted above.
+  // Phase 2: wildcard blocks — placeholder "Any 200-level X course",
+  // null-catalog, or min_level — capped at each block's credit need.
+  const allUserCourses = [...completedCourses, ...currentCourses]
   prog.blocks?.forEach(b => {
-    const wildcardBands = (b.courses || []).map(c => wildcardBand(c)).filter(Boolean)
-    const legacyApplies = (b.courses?.some(c => !c.catalog)) || !!b.min_level
-    if (!legacyApplies && wildcardBands.length === 0) return
-    const blockSubjects = new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
-    const minLevel = b.min_level || 0
     const blockNeeded = b.credits_needed || Infinity
     let blockWildcardEarned = 0
-    for (const uc of [...completedCourses, ...currentCourses]) {
+    for (const uc of blockWildcardMatches(b, allUserCourses)) {
       if (blockWildcardEarned >= blockNeeded) break
       const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
       if (seenDbKeys.has(ucKey) || seenUserKeys.has(ucKey)) continue
-      const ucSubj = (uc.subject || '').toUpperCase()
-      const ucLvl  = parseInt(uc.catalog)
-      const inBand = wildcardBands.some(bd =>
-        bd.subject === ucSubj && !isNaN(ucLvl) && ucLvl >= bd.min && ucLvl <= bd.max)
-      let inLegacy = legacyApplies && blockSubjects.has(ucSubj)
-      if (inLegacy && minLevel > 0 && (isNaN(ucLvl) || ucLvl < minLevel)) inLegacy = false
-      if (!(inBand || inLegacy)) continue
-      // If overlapping course allocated to a different program, skip it
       if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
       earnedCredits += parseFloat(uc.credits || 3)
       blockWildcardEarned += parseFloat(uc.credits || 3)
       seenUserKeys.add(ucKey)
     }
   })
+
+  // Phase 3: manually-added electives — courses the user explicitly assigned
+  // to THIS program from the Electives tab that no block matched. They get
+  // their own "Other Courses (Added by you)" dropdown below and count toward
+  // the credit total.
+  const manuallyAdded = []
+  for (const uc of allUserCourses) {
+    const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+    if (seenUserKeys.has(ucKey)) continue
+    if (matchTransfer(uc, advStanding)) continue
+    if (courseAllocations[ucKey] === progKey) {
+      earnedCredits += parseFloat(uc.credits || 3)
+      seenUserKeys.add(ucKey)
+      manuallyAdded.push(uc)
+    }
+  }
 
   const pct = Math.min(100, Math.round((earnedCredits / totalCredits) * 100))
 
@@ -741,31 +733,13 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
           .filter(c => !wildcardBand(c))   // wildcard placeholders counted below, not here
           .reduce((s, c) => s + parseFloat(c.credits || 3), 0)
 
-        // Wildcard credit counting. A block is "wildcard" if it has:
-        //   • a null-catalog placeholder, OR
-        //   • a min_level set, OR
-        //   • a placeholder like "Any 200-level X course" (catalog "200")
-        // For each, count user courses that fall in the relevant band until
-        // the block's credit requirement is met.
-        const wildcardBands = (block.courses || []).map(c => wildcardBand(c)).filter(Boolean)
-        const legacyApplies = (block.courses?.some(c => !c.catalog)) || !!block.min_level
-        const hasWildcard = legacyApplies || wildcardBands.length > 0
-        if (hasWildcard && creditsEarned < creditsNeeded) {
-          const blockSubjects = new Set(block.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
-          const minLevel = block.min_level || 0
-          for (const uc of [...completedCourses, ...currentCourses]) {
+        // Wildcard credit counting — placeholder "Any 200-level X course",
+        // null-catalog, or min_level — capped at the block's credit need.
+        if (creditsEarned < creditsNeeded) {
+          for (const uc of blockWildcardMatches(block, [...completedCourses, ...currentCourses])) {
             if (creditsEarned >= creditsNeeded) break
-            const ucKey  = `${uc.subject} ${uc.catalog}`.toUpperCase()
+            const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
             if (exactKeys.has(ucKey)) continue
-            const ucSubj = (uc.subject || '').toUpperCase()
-            const ucLvl  = parseInt(uc.catalog)
-            // Match an explicit wildcard band ("Any 200-level X course")…
-            const inBand = wildcardBands.some(b =>
-              b.subject === ucSubj && !isNaN(ucLvl) && ucLvl >= b.min && ucLvl <= b.max)
-            // …or the legacy subject(+min_level) rule for null-catalog blocks.
-            let inLegacy = legacyApplies && blockSubjects.has(ucSubj)
-            if (inLegacy && minLevel > 0 && (isNaN(ucLvl) || ucLvl < minLevel)) inLegacy = false
-            if (!(inBand || inLegacy)) continue
             creditsEarned += parseFloat(uc.credits || 3)
           }
         }
@@ -872,6 +846,61 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
           </div>
         )
       })}
+
+      {/* Other Courses (Added by you) — electives the user manually counted
+          toward this program. Collapsible like a requirement block. */}
+      {manuallyAdded.length > 0 && (
+        <div className="dp-req-block dp-req-block--manual">
+          <button
+            className="dp-req-block-header"
+            onClick={() => setOpenBlocks(p => ({ ...p, [`__manual_${progKey}`]: !p[`__manual_${progKey}`] }))}
+          >
+            <div className="dp-req-block-left">
+              <span className="dp-req-block-chevron">
+                {openBlocks[`__manual_${progKey}`] ? <FaChevronDown /> : <FaChevronRight />}
+              </span>
+              <span className="dp-req-block-name">{t('dp.otherCoursesAdded')}</span>
+              <span className="dp-req-block-cr">
+                {manuallyAdded.reduce((s, c) => s + parseFloat(c.credits || 3), 0)}cr
+              </span>
+            </div>
+          </button>
+
+          {openBlocks[`__manual_${progKey}`] && (
+            <div className="dp-req-block-courses">
+              <p className="dp-req-block-note">{t('dp.otherCoursesNote')}</p>
+              {manuallyAdded.map(uc => {
+                const key = `${uc.subject} ${uc.catalog}`.toUpperCase()
+                return (
+                  <div key={key} className="dp-req-course dp-req-course--done">
+                    <FaCheckCircle className="dp-req-course-icon dp-req-course-icon--done" />
+                    <div className="dp-req-course-main">
+                      <div
+                        className="dp-req-course-row"
+                        onClick={() => openCourse(uc.subject, uc.catalog)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <span className="dp-req-course-code">{uc.subject} {uc.catalog}</span>
+                        <span className="dp-req-course-title">{uc.course_title || uc.title || ''}</span>
+                        <span className="dp-req-done-tag">{t('dp.statusDone')}</span>
+                      </div>
+                      {assignCourse && (
+                        <button
+                          className="dp-req-remove-manual"
+                          onClick={() => assignCourse(key, null)}
+                          title={t('dp.removeFromProgram')}
+                        >
+                          <FaTimes /> {t('dp.removeFromProgram')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -1229,22 +1258,34 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
       }
     }))
 
-    // Phase 2: wildcard blocks
+    // Phase 2: wildcard blocks (placeholder "Any 200-level X course",
+    // null-catalog, or min_level), capped at each block's credit need.
+    const allUC = [...completedCourses, ...currentCourses]
     prog.blocks?.forEach(b => {
-      const hasWildcard = (b.courses?.some(c => !c.catalog)) || b.min_level
-      if (!hasWildcard) return
-      const blockSubjects = new Set(b.courses?.map(c => c.subject?.toUpperCase()).filter(Boolean))
-      const minLevel = b.min_level || 0
-      for (const uc of [...completedCourses, ...currentCourses]) {
+      const needed = b.credits_needed || Infinity
+      let got = 0
+      for (const uc of blockWildcardMatches(b, allUC)) {
+        if (got >= needed) break
         const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
         if (seenDb.has(ucKey) || seenUser.has(ucKey)) continue
-        if (!blockSubjects.has(uc.subject?.toUpperCase())) continue
-        if (minLevel > 0) { const lvl = parseInt(uc.catalog); if (isNaN(lvl) || lvl < minLevel) continue }
         if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
         earned += parseFloat(uc.credits || 3)
+        got += parseFloat(uc.credits || 3)
         seenUser.add(ucKey)
       }
     })
+
+    // Phase 3: courses the user MANUALLY assigned to this program from the
+    // Electives tab (no block matched, but they chose to count it here).
+    for (const uc of allUC) {
+      const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+      if (seenUser.has(ucKey)) continue
+      if (matchTransfer(uc, advStanding)) continue
+      if (courseAllocations[ucKey] === progKey) {
+        earned += parseFloat(uc.credits || 3)
+        seenUser.add(ucKey)
+      }
+    }
 
     return { pct: Math.min(100, Math.round((earned / total) * 100)), earned, total }
   }

@@ -834,6 +834,35 @@
   line-height: 1.4;
 }
 
+/* "Other Courses (Added by you)" block — distinguish from real requirement
+   blocks with a subtle accent so it's clear these are user choices. */
+.dp-req-block--manual {
+  border-style: dashed;
+  border-color: var(--accent-primary);
+}
+.dp-req-block--manual .dp-req-block-name { color: var(--accent-primary); }
+
+.dp-req-remove-manual {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.dp-req-remove-manual:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(237, 27, 47, 0.06);
+}
+
 /* ── Electives tab highlight ───────────────────────────────── */
 .dp-prog-tab--electives.dp-prog-tab--active {
   background: var(--accent-lighter);

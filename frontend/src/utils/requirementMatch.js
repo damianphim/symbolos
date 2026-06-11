@@ -73,3 +73,36 @@ export function matchCourse(req, userCourses = []) {
     `${c.subject || ''} ${c.catalog || ''}`.toUpperCase() === key
   ) || null
 }
+
+/**
+ * Return the user courses that satisfy a block's *wildcard* portion —
+ * placeholder courses ("Any 200-level X course"), null-catalog entries, or
+ * a block-level min_level. Does NOT apply any credit cap or de-dup against
+ * exact matches; callers handle that bookkeeping (seen sets, overlap
+ * allocation, per-block credit limits) themselves.
+ *
+ * Used by all three progress computations (the program ring, the per-program
+ * progress bar, and per-block credit counting) so they can't drift apart.
+ */
+export function blockWildcardMatches(block, userCourses = []) {
+  const bands = (block?.courses || []).map(c => wildcardBand(c)).filter(Boolean)
+  const minLevel = block?.min_level || 0
+  const legacyApplies = (block?.courses || []).some(c => !c.catalog) || minLevel > 0
+  if (!legacyApplies && bands.length === 0) return []
+
+  const blockSubjects = new Set(
+    (block?.courses || []).map(c => (c.subject || '').toUpperCase()).filter(Boolean)
+  )
+
+  const out = []
+  for (const uc of userCourses) {
+    const ucSubj = (uc.subject || '').toUpperCase()
+    const ucLvl = parseInt(uc.catalog, 10)
+    const inBand = bands.some(b =>
+      b.subject === ucSubj && !Number.isNaN(ucLvl) && ucLvl >= b.min && ucLvl <= b.max)
+    let inLegacy = legacyApplies && blockSubjects.has(ucSubj)
+    if (inLegacy && minLevel > 0 && (Number.isNaN(ucLvl) || ucLvl < minLevel)) inLegacy = false
+    if (inBand || inLegacy) out.push(uc)
+  }
+  return out
+}
