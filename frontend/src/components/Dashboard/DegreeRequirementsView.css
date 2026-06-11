@@ -19,6 +19,46 @@
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop collapse: shrink to nothing so the program detail gets the
+   full width. The "Browse Programs" button (revealed below) brings it
+   back. On mobile this class is a no-op — the off-canvas rules in the
+   media query take over instead. */
+.drv-sidebar--collapsed {
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  border-right: none;
+}
+
+/* Collapse chevron — desktop only (mobile uses the X close button). */
+.drv-sidebar-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.drv-sidebar-collapse:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+/* Reveal the "Browse Programs" button on desktop only while collapsed. */
+.drv-root:has(.drv-sidebar--collapsed) .drv-open-sidebar {
+  display: inline-flex;
 }
 
 .drv-sidebar-header {
@@ -757,7 +797,11 @@
   }
   .drv-sidebar--open   { left: 0; }
   .drv-sidebar-close   { display: block; }
+  .drv-sidebar-collapse { display: none; }   /* mobile uses the X instead */
   .drv-open-sidebar    { display: flex; }
+  /* On mobile the off-canvas sidebar keeps its width even when collapsed —
+     it's hidden by the left:-100% transform, not by zero width. */
+  .drv-sidebar--collapsed { width: 85%; min-width: 0; max-width: 320px; }
   .drv-main            { padding: 16px; }
   .drv-detail-header   { flex-direction: column; }
   .drv-detail-meta     { flex-direction: row; align-items: center; }

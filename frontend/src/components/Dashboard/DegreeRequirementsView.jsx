@@ -359,11 +359,20 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     <div className="drv-root">
 
       {/* Sidebar */}
-      <aside className={`drv-sidebar ${sidebarOpen ? 'drv-sidebar--open' : ''}`}>
+      <aside className={`drv-sidebar ${sidebarOpen ? 'drv-sidebar--open' : 'drv-sidebar--collapsed'}`}>
         <div className="drv-sidebar-header">
           <FaGraduationCap className="drv-sidebar-icon" />
           <span>Programs</span>
-          <button className="drv-sidebar-close" onClick={() => setSidebarOpen(false)}><FaTimes /></button>
+          {/* Desktop: collapse the panel to free up width. Mobile: X close. */}
+          <button
+            className="drv-sidebar-collapse"
+            onClick={() => setSidebarOpen(false)}
+            title="Collapse programs panel"
+            aria-label="Collapse programs panel"
+          >
+            <FaChevronRight style={{ transform: 'rotate(180deg)' }} />
+          </button>
+          <button className="drv-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close"><FaTimes /></button>
         </div>
 
         <div className="drv-faculty-select-wrap">
@@ -519,7 +528,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       {/* Main */}
       <main className="drv-main">
         <button className="drv-open-sidebar" onClick={() => setSidebarOpen(true)}>
-          ☰ Browse Programs
+          <FaGraduationCap /> Browse Programs
         </button>
 
         {error && (
@@ -626,7 +635,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                     rel="noreferrer"
                     className="drv-ecal-link"
                   >
-                    {language === 'zh' ? 'eCalendar' : language === 'fr' ? 'eCalendrier' : 'eCalendar'} <FaExternalLinkAlt />
+                    {language === 'zh' ? '课程目录' : language === 'fr' ? 'Répertoire des cours' : 'Course Catalogue'} <FaExternalLinkAlt />
                   </a>
                 )}
               </div>
