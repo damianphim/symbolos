@@ -346,17 +346,29 @@ export const AuthProvider = ({ children }) => {
   // ── updateProfile ────────────────────────────────────────────────────────
   const updateProfile = async (updates) => {
     if (!user) throw new Error('No user logged in')
+    // Optimistic: paint the new values immediately so the UI feels instant,
+    // then reconcile with the server response (or roll back on failure).
+    const previous = profile
+    if (mountedRef.current) {
+      justUpdatedProfile.current = true
+      setProfile(prev => ({ ...(prev || {}), ...updates }))
+      loadedForUserId.current = user.id
+    }
     try {
       setError(null)
       const { user: updatedUser } = await usersAPI.updateUser(user.id, updates)
       if (mountedRef.current) {
-        justUpdatedProfile.current = true
+        // Reconcile with the canonical server row (e.g. derived/normalised fields).
         setProfile(updatedUser)
-        loadedForUserId.current = user.id
         setTimeout(() => { justUpdatedProfile.current = false }, 1000)
       }
       return { data: updatedUser, error: null }
     } catch (err) {
+      // Roll back the optimistic change so the UI reflects reality.
+      if (mountedRef.current) {
+        setProfile(previous)
+        justUpdatedProfile.current = false
+      }
       setError({ type: 'PROFILE_UPDATE_FAILED', message: 'Failed to update profile' })
       return { data: null, error: err }
     }

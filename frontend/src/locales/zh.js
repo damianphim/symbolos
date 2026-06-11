@@ -138,6 +138,7 @@ const ZH_TRANSLATIONS = {
 
     // ── Profile Tab Sections ──────────────────────────────
     'profile.academicPerformance': '学术表现',
+    'profile.saveFailed': '无法保存更改，请重试。',
     'profile.gpaTip': '保持GPA更新以获得更好的课程推荐',
     'profile.degreeProgress': '学位进度',
     'profile.interestsPreferences': '兴趣与偏好',

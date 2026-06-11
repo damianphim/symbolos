@@ -138,6 +138,7 @@ const FR_TRANSLATIONS = {
 
     // ── Profile Tab Sections ──────────────────────────────
     'profile.academicPerformance': 'Performance académique',
+    'profile.saveFailed': 'Impossible d’enregistrer les modifications. Veuillez réessayer.',
     'profile.gpaTip': 'Gardez votre MPC à jour pour de meilleures recommandations de cours',
     'profile.degreeProgress': 'Progrès du diplôme',
     'profile.interestsPreferences': 'Intérêts et préférences',

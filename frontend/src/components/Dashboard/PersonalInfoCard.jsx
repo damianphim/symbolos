@@ -313,19 +313,24 @@ export default function PersonalInfoCard({ profile, user, onUpdateProfile }) {
           )}
           <EnhancedProfileForm
             profile={profile}
-            onSave={async (formData) => {
-              try {
-                const result = await onUpdateProfile(formData)
-
-                // Force a small delay to ensure state updates
-                await new Promise(resolve => setTimeout(resolve, 100))
-
-                setIsEditing(false)
-                // Success - alert removed to prevent loop
-              } catch (error) {
-                console.error('Error updating profile:', error)
-                alert('Failed to update profile: ' + (error.message || 'Unknown error'))
-              }
+            onSave={(formData) => {
+              // Optimistic: updateProfile paints the new values synchronously,
+              // so we can drop straight back to the read view with no spinner
+              // or artificial delay. The network save runs in the background;
+              // if it fails we reopen the form and show the error.
+              setSaveError(null)
+              setIsEditing(false)
+              Promise.resolve(onUpdateProfile(formData))
+                .then(result => {
+                  if (result?.error) {
+                    setSaveError(t('profile.saveFailed') || 'Could not save changes. Please try again.')
+                    setIsEditing(true)
+                  }
+                })
+                .catch(() => {
+                  setSaveError(t('profile.saveFailed') || 'Could not save changes. Please try again.')
+                  setIsEditing(true)
+                })
             }}
             onCancel={() => setIsEditing(false)}
           />

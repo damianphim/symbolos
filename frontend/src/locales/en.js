@@ -138,6 +138,7 @@ const EN_TRANSLATIONS = {
 
     // ── Profile Tab Sections ──────────────────────────────
     'profile.academicPerformance': 'Academic Performance',
+    'profile.saveFailed': 'Could not save changes. Please try again.',
     'profile.gpaTip': 'Keep your GPA updated for better course recommendations',
     'profile.degreeProgress': 'Degree Progress',
     'profile.interestsPreferences': 'Interests & Preferences',

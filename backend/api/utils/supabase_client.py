@@ -253,7 +253,9 @@ def update_user(user_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
         if not response.data:
             raise UserNotFoundException(user_id)
         logger.info(f"User updated: {user_id}")
-        return response.data[0]
+        # SEC FIX #8: strip verification_token et al. before returning — the
+        # PATCH response is sent to the client, same as get_user_by_id.
+        return _strip_sensitive(response.data[0])
     try:
         return with_retry("update_user", _run)
     except UserNotFoundException:
