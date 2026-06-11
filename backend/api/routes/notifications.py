@@ -439,6 +439,15 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         logger.exception(f"Stale-club cleanup cron failed: {e}")
         stale_clubs_result = {"deleted": 0, "error": str(e)}
 
+    # Academic-year advance — bumps every student's year of study by one each
+    # September. No-op the rest of the year.
+    try:
+        from ..utils.academic_year import run_academic_year_advance_cron
+        academic_year_result = run_academic_year_advance_cron()
+    except Exception as e:
+        logger.exception(f"Academic-year advance cron failed: {e}")
+        academic_year_result = {"advanced": 0, "error": str(e)}
+
     # If the bulk send had a high failure rate, flag the run as failed to
     # the heartbeat monitor even though the handler returned 200 — a 90%
     # bounce rate means something is wrong (Resend down, DKIM broke) even
@@ -468,4 +477,5 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         "registration_reminders": registration_result,
         "summer_reminders":       summer_result,
         "stale_clubs":            stale_clubs_result,
+        "academic_year_advance":  academic_year_result,
     }

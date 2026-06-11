@@ -226,6 +226,12 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
                 for item in (user_data["advanced_standing"] or [])
             ]
 
+        # Anchor the academic year so the daily cron knows when `year` was set
+        # and only advances it on the next September rollover.
+        if user_data.get("year") is not None:
+            from ..utils.academic_year import current_academic_year
+            user_data["year_anchor"] = current_academic_year()
+
         # Record Terms / Privacy acceptance at the moment of profile creation.
         # Completing signup constitutes agreement (the signup form shows the
         # clickwrap notice + links). Storing a server timestamp + the policy
@@ -291,8 +297,6 @@ async def update_user(user_id: str, updates: UserUpdate, req: Request, current_u
     - **updates**: Fields to update (only provided fields are changed)
     """
     try:
-        get_user_by_id(user_id)
-
         # Use model_dump (Pydantic v2) — include fields explicitly set to None
         # so callers can clear optional fields
         update_data = updates.model_dump(exclude_unset=True)
@@ -303,6 +307,16 @@ async def update_user(user_id: str, updates: UserUpdate, req: Request, current_u
                 detail="No fields to update"
             )
 
+        # If the student is manually changing their year of study, re-anchor
+        # the academic year so the September cron doesn't advance them again
+        # this year.
+        if "year" in update_data and update_data["year"] is not None:
+            from ..utils.academic_year import current_academic_year
+            update_data["year_anchor"] = current_academic_year()
+
+        # PERF: skip the pre-flight SELECT — update_user_db raises
+        # UserNotFoundException when the UPDATE matches no row, so one DB
+        # round-trip instead of two on every profile save.
         updated_user = update_user_db(user_id, update_data)
         logger.info(f"User profile updated: {user_id}")
 
