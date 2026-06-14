@@ -234,15 +234,6 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Send verification email via Resend (bypasses Supabase rate limits).
-      // SEC FIX #1: no body — backend uses the JWT we just got + auth.users.email.
-      try {
-        await authAPI.sendVerification()
-      } catch (emailError) {
-        console.error('Failed to send verification email:', emailError)
-        // Non-fatal — user can resend from the verify screen
-      }
-
       // PostHog funnel event — fires once per signup. Lazy-imported so it's
       // a no-op when VITE_POSTHOG_KEY isn't configured.
       try {

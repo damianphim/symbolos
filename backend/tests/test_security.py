@@ -201,6 +201,19 @@ def test_course_allocations_delete_requires_self(client, fake_supabase):
     assert resp.status_code == 403
 
 
+# ── year_anchor is system-managed — mass-assignment must be impossible ───────
+def test_user_update_ignores_year_anchor_injection():
+    """A client must not be able to set year_anchor (a system field the
+    September cron relies on) by sneaking it into the PATCH body. UserUpdate
+    ignores unknown keys, so it never reaches the DB write."""
+    from api.routes.users import UserUpdate
+    m = UserUpdate(year=2, year_anchor=1900, tos_version="hacked")
+    dumped = m.model_dump(exclude_unset=True)
+    assert "year_anchor" not in dumped, "year_anchor must not be client-settable"
+    assert "tos_version" not in dumped, "tos_version must not be client-settable"
+    assert dumped.get("year") == 2
+
+
 # ── Perf: /api/clubs must be public-cacheable on the CDN edge ────────────────
 def test_clubs_response_is_public_cacheable(client, fake_supabase):
     """If a future refactor reintroduces per-user data, this test fails
