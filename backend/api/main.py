@@ -288,10 +288,11 @@ async def add_security_headers(request: Request, call_next):
     # revert to "'self' 'unsafe-inline'" and implement nonce-based CSP next sprint.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self'; "
+        "script-src 'self' https://us-assets.i.posthog.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "connect-src 'self' https://*.supabase.co https://ai-advisor-backend-seven.vercel.app; "
+        "connect-src 'self' https://*.supabase.co https://*.supabase.in https://ai-advisor-backend-seven.vercel.app "
+        "https://*.ingest.us.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com; "
         "img-src 'self' data: blob:; "
         "object-src 'none'; "
         "base-uri 'self'; "
@@ -427,7 +428,7 @@ async def add_process_time_header(request: Request, call_next):
 @app.get(f"{settings.API_PREFIX}/sentry-test")
 async def sentry_test():
     raise ValueError("Sentry backend test — safe to ignore")
-    
+
 # Exception handlers
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
