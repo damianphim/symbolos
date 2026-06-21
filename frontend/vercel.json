@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-WZb+T2h4Urnumr03EsvcJrTTakpYEKTG3TVHSW02UsM=' https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://ai-advisor-backend-seven.vercel.app https://symbolos.ca https://*.ingest.us.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'sha256-WZb+T2h4Urnumr03EsvcJrTTakpYEKTG3TVHSW02UsM=' 'sha256-ThjRNuGyfHMiBe3Mp8xwjXaO+5pJLPGgILGTgN2weU4=' https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://ai-advisor-backend-seven.vercel.app https://symbolos.ca https://*.ingest.us.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Content-Type-Options",
