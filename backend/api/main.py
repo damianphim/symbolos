@@ -243,6 +243,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.API_TITLE} v{settings.API_VERSION}")
     yield
     logger.info("Shutting down…")
+    from .utils.posthog_client import shutdown as _posthog_shutdown
+    _posthog_shutdown()
 
 
 app = FastAPI(

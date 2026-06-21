@@ -53,6 +53,7 @@ from api.exceptions import UserNotFoundException, DatabaseException
 from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 from api.utils.lang import lang_instruction as _lang_instruction
+from api.utils.posthog_client import capture as _ph_capture
 
 # ── Load static prompt content once at startup ────────────────────────────────
 _PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
@@ -511,6 +512,14 @@ async def send_message(
         )
 
     save_message(request.user_id, "assistant", assistant_response, session_id)
+
+    _ph_capture(request.user_id, "chat_message_sent", {
+        "session_id": session_id,
+        "current_tab": request.current_tab,
+        "language": request.language,
+        "has_card_context": bool(request.card_context),
+        "tokens_used": tokens_used,
+    })
 
     return ChatResponse(
         response=assistant_response,

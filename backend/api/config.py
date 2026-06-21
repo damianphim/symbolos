@@ -72,6 +72,10 @@ class Settings(BaseSettings):
             )
         return v
 
+    # ── PostHog ──────────────────────────────────────────────────────────
+    POSTHOG_API_KEY: str = ""
+    POSTHOG_HOST: str = "https://us.i.posthog.com"
+
     # ── AI ───────────────────────────────────────────────────────────────
     ANTHROPIC_API_KEY: str
     CLAUDE_MODEL: str = "claude-haiku-4-5-20251001"
