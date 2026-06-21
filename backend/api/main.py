@@ -422,7 +422,10 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Request-ID"] = request_id
     return response
 
-
+@app.get(f"{settings.API_PREFIX}/sentry-test")
+async def sentry_test():
+    raise ValueError("Sentry backend test — safe to ignore")
+    
 # Exception handlers
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
