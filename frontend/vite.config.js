@@ -35,6 +35,15 @@ export default defineConfig(async () => {
 
   return {
     plugins,
+    // Bake the Vercel commit SHA into a VITE_ var so the runtime release tag
+    // (telemetry.js) matches the release the source maps are uploaded under
+    // (the Sentry plugin uses VERCEL_GIT_COMMIT_SHA). Without this they'd
+    // drift and Sentry couldn't symbolicate. Falls back to 'dev' locally.
+    define: {
+      'import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA': JSON.stringify(
+        process.env.VERCEL_GIT_COMMIT_SHA || 'dev'
+      ),
+    },
     build: {
       // Emit source maps ONLY when Sentry is set to consume + delete them.
       // Otherwise stay at false (the prior behavior) so we never accidentally
