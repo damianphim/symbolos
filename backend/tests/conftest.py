@@ -48,36 +48,101 @@ class FakeAuthAdmin:
 
 
 class FakeTable:
-    """Records every query and returns canned data."""
+    """Records every query and returns canned data.
+
+    `_data` is the SAME list object held by `FakeSupabase._tables[name]` —
+    `.table(name)` hands out a fresh FakeTable per call, but they all share
+    this one underlying list, which is how insert/update/delete persist
+    across separate `supabase.table(...)` calls within a test.
+    """
     def __init__(self, name: str, data):
         self._name = name
         self._data = data if data is not None else []
-        self._eq_filters: list = []
+        self._filters: list = []  # (op, col, val)
+        self._pending_update = None
+        self._pending_delete = False
+        self._inserted = None
 
     def select(self, *args, **kwargs): return self
     def eq(self, col, val):
-        self._eq_filters.append((col, val))
+        self._filters.append(("eq", col, val))
         return self
-    def ilike(self, col, val): return self
+    def ilike(self, col, val):
+        self._filters.append(("ilike", col, val))
+        return self
+    def gte(self, col, val):
+        self._filters.append(("gte", col, val))
+        return self
     def or_(self, *args, **kwargs):
         """PostgREST OR — no-op shim. Defense-in-depth Python filters
         in the endpoints still enforce the security assertions."""
         return self
     def order(self, *args, **kwargs): return self
     def limit(self, n): return self
-    def in_(self, col, vals): return self
+    def in_(self, col, vals):
+        self._filters.append(("in", col, list(vals)))
+        return self
     def single(self): return self
     def insert(self, row):
-        self._data.append(row if isinstance(row, dict) else dict(row))
+        row = dict(row) if not isinstance(row, dict) else dict(row)
+        row.setdefault("id", f"fake-{self._name}-{len(self._data)}-{id(row)}")
+        self._data.append(row)
+        self._inserted = [row]
         return self
-    def update(self, row): return self
-    def delete(self): return self
+    def update(self, row):
+        self._pending_update = dict(row)
+        return self
+    def delete(self):
+        self._pending_delete = True
+        return self
+
+    def _matching_rows(self):
+        rows = list(self._data)
+        for op, col, val in self._filters:
+            if op == "eq":
+                rows = [r for r in rows if r.get(col) == val]
+            elif op == "in":
+                rows = [r for r in rows if r.get(col) in val]
+            elif op == "gte":
+                rows = [r for r in rows if (r.get(col) or "") >= val]
+            elif op == "ilike":
+                import re as _re
+                parts = []
+                i = 0
+                while i < len(val):
+                    ch = val[i]
+                    if ch == "\\" and i + 1 < len(val):
+                        parts.append(_re.escape(val[i + 1]))
+                        i += 2
+                        continue
+                    if ch == "%":
+                        parts.append(".*")
+                    elif ch == "_":
+                        parts.append(".")
+                    else:
+                        parts.append(_re.escape(ch))
+                    i += 1
+                regex = _re.compile("^" + "".join(parts) + "$", _re.IGNORECASE)
+                rows = [r for r in rows if regex.match(str(r.get(col) or ""))]
+        return rows
 
     def execute(self):
-        rows = list(self._data)
-        for col, val in self._eq_filters:
-            rows = [r for r in rows if r.get(col) == val]
-        return SimpleNamespace(data=rows, count=len(rows))
+        if self._inserted is not None:
+            return SimpleNamespace(data=self._inserted, count=len(self._inserted))
+
+        matched = self._matching_rows()
+
+        if self._pending_update is not None:
+            for row in matched:
+                row.update(self._pending_update)
+            return SimpleNamespace(data=matched, count=len(matched))
+
+        if self._pending_delete:
+            for row in matched:
+                self._data.remove(row)
+            return SimpleNamespace(data=matched, count=len(matched))
+
+        return SimpleNamespace(data=matched, count=len(matched))
 
 
 class FakeSupabase:
@@ -157,9 +222,12 @@ def fake_supabase(monkeypatch):
             monkeypatch.setattr(mod, "get_supabase", lambda: sb)
 
     # Patch the auth module too — get_current_user_id calls get_supabase
-    # to resolve the JWT, and we want it to hit the fake.
+    # to resolve the JWT, and we want it to hit the fake. get_user_db (used
+    # by clubs.py and others as `user_sb`) calls get_user_supabase the same
+    # way — same fix needed, or those routes silently hit a real client.
     import api.auth as auth_module
     monkeypatch.setattr(auth_module, "get_supabase", lambda: sb)
+    monkeypatch.setattr(auth_module, "get_user_supabase", lambda jwt: sb)
 
     return sb
 
