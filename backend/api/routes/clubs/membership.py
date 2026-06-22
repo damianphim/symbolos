@@ -126,7 +126,7 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
         supabase = get_supabase()
         if not is_admin_user(user_id):
             try:
-                auth_user = supabase.auth.admin.get_user(user_id)
+                auth_user = supabase.auth.admin.get_user_by_id(user_id)
                 auth_email = (getattr(auth_user.user, "email", None) or "").lower()
             except Exception:
                 auth_email = ""

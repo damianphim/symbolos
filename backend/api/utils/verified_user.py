@@ -42,7 +42,7 @@ def _cached_check(user_id: str, bucket: int) -> Tuple[bool, str]:
     # Real auth email (cannot be edited by the user)
     auth_email = ""
     try:
-        u = sb.auth.admin.get_user(user_id)
+        u = sb.auth.admin.get_user_by_id(user_id)
         auth_email = (getattr(u.user, "email", None) or "").lower()
     except Exception as exc:
         logger.warning("auth.admin.get_user failed for %s: %s", user_id, type(exc).__name__)

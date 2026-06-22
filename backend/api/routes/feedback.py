@@ -55,7 +55,7 @@ async def submit_feedback(
     # Resolve the user's email for the reply-to (best effort).
     user_email = "unknown"
     try:
-        u = sb.auth.admin.get_user(current_user_id)
+        u = sb.auth.admin.get_user_by_id(current_user_id)
         user_email = (getattr(u.user, "email", None) or "unknown")
     except Exception:
         pass

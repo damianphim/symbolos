@@ -44,7 +44,7 @@ def _is_admin_user(user_id: str) -> bool:
     try:
         from .supabase_client import get_supabase
         sb = get_supabase()
-        u = sb.auth.admin.get_user(user_id)
+        u = sb.auth.admin.get_user_by_id(user_id)
         email = (getattr(u.user, "email", None) or "").lower()
         admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
         return email in admin_emails

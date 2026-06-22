@@ -28,7 +28,7 @@ async def submit_club(submission: ClubSubmission, current_user_id: str = Depends
         # verified auth identity, NOT users.email which the user controls.
         if not is_admin_user(current_user_id):
             try:
-                auth_user = supabase.auth.admin.get_user(current_user_id)
+                auth_user = supabase.auth.admin.get_user_by_id(current_user_id)
                 auth_email = (getattr(auth_user.user, "email", None) or "").lower()
             except Exception:
                 auth_email = ""

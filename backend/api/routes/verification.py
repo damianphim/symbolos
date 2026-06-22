@@ -154,7 +154,7 @@ def _resolve_auth_email(user_id: str) -> str:
     user-editable profile column."""
     sb = get_supabase()
     try:
-        u = sb.auth.admin.get_user(user_id)
+        u = sb.auth.admin.get_user_by_id(user_id)
         email = (getattr(u.user, "email", None) or "").strip()
         if not email:
             raise HTTPException(status_code=400, detail="No email on file for this account")

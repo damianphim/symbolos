@@ -77,6 +77,32 @@ def test_mcgill_flag_uses_auth_identity(client, fake_supabase):
     )
 
 
+# ── Regression: POST /api/users/ must accept a body whose email matches
+# the caller's verified auth identity (the self-heal path AuthContext.jsx
+# uses to recreate a missing profile row after email confirmation). This
+# would have caught the auth.admin.get_user → get_user_by_id rename bug:
+# the wrong method name raised AttributeError, swallowed by a bare except,
+# which made the email-match check always fail with a spurious 400.
+def test_create_user_succeeds_when_email_matches_auth_identity(client, fake_supabase):
+    fake_supabase.set_auth_email("new.student@mail.mcgill.ca")
+    resp = client.post(
+        "/api/users/",
+        headers=auth("user-1"),
+        json={"id": "user-1", "email": "new.student@mail.mcgill.ca"},
+    )
+    assert resp.status_code == 201, resp.text
+
+
+def test_create_user_rejects_email_mismatched_with_auth_identity(client, fake_supabase):
+    fake_supabase.set_auth_email("real.address@mail.mcgill.ca")
+    resp = client.post(
+        "/api/users/",
+        headers=auth("user-1"),
+        json={"id": "user-1", "email": "spoofed@mail.mcgill.ca"},
+    )
+    assert resp.status_code == 400, resp.text
+
+
 # ── Audit #3: club managers endpoint requires manager role ───────────────────
 def test_managers_endpoint_403s_non_manager(client, fake_supabase):
     """Bug: any logged-in user could read /managers (organizer roster).

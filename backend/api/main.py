@@ -532,7 +532,7 @@ async def auth_flags(current_user_id: str = Depends(get_current_user_id)):
         # confirmation flow.
         auth_email = ""
         try:
-            u = sb.auth.admin.get_user(current_user_id)
+            u = sb.auth.admin.get_user_by_id(current_user_id)
             auth_email = (getattr(u.user, "email", None) or "").lower()
         except Exception:
             pass

@@ -30,13 +30,13 @@ if str(ROOT) not in sys.path:
 # ── Fakes ─────────────────────────────────────────────────────────────────────
 
 class FakeAuthAdmin:
-    """Mimics supabase.auth.admin.get_user(user_id) — returns a user
+    """Mimics supabase.auth.admin.get_user_by_id(user_id) — returns a user
     object whose `email` matches whatever the test sets up."""
     def __init__(self, email: str = "tester@mail.mcgill.ca", confirmed: bool = True):
         self.email = email
         self.confirmed = confirmed
 
-    def get_user(self, user_id: str):
+    def get_user_by_id(self, user_id: str):
         user = SimpleNamespace(
             id=user_id,
             email=self.email,
@@ -152,7 +152,7 @@ class FakeSupabase:
     that lets the real `get_current_user_id` dependency resolve cleanly
     when tests send `Authorization: Bearer <user-id>`.
 
-    `.auth.admin.get_user(user_id)` returns the configured auth identity
+    `.auth.admin.get_user_by_id(user_id)` returns the configured auth identity
     (email + email_confirmed_at) used by the McGill-flag logic.
     """
     def __init__(self, auth_email: str = "tester@mail.mcgill.ca"):

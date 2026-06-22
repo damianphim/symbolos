@@ -200,7 +200,7 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
     # (auth_flags, club managers, manager invites) would trust the lie.
     try:
         from ..utils.supabase_client import get_supabase
-        u = get_supabase().auth.admin.get_user(current_user_id)
+        u = get_supabase().auth.admin.get_user_by_id(current_user_id)
         auth_email = (getattr(u.user, "email", None) or "").lower()
     except Exception:
         auth_email = ""
@@ -471,7 +471,7 @@ async def export_user_data(
     # Also include the verified auth identity (NOT user-editable) so the
     # exporter knows which Supabase Auth account this belongs to.
     try:
-        u = supabase.auth.admin.get_user(user_id)
+        u = supabase.auth.admin.get_user_by_id(user_id)
         export["auth_identity"] = {
             "id":                  getattr(u.user, "id", None),
             "email":               getattr(u.user, "email", None),
