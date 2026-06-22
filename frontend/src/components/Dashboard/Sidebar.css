@@ -536,7 +536,7 @@
 
 /* ── Dark mode ── */
 [data-theme="dark"] .sidebar {
-  background: #1f2937;
+  background: #14171d;
   border-right-color: rgba(255,255,255,0.08);
 }
 [data-theme="dark"] .sidebar-header,
@@ -626,12 +626,12 @@
 
 /* Popup — animation (popup-in) is color-agnostic, just fix surface colors */
 [data-theme="dark"] .sidebar-popup {
-  background: #1f2937;
+  background: #14171d;
   border-color: rgba(255,255,255,0.1);
   box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
 }
 [data-theme="dark"] .sidebar-popup-arrow {
-  background: #1f2937;
+  background: #14171d;
   border-color: rgba(255,255,255,0.1);
 }
 [data-theme="dark"] .sidebar-popup-item { color: #e5e7eb; }

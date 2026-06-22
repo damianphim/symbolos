@@ -2,10 +2,19 @@
   --mcgill-red: var(--accent-primary); /* Official McGill Red */
   --bg-color: #f0f2f5;
   --chat-bg: #ffffff;
-  --user-msg-bg: var(--accent-primary); 
+  --user-msg-bg: var(--accent-primary);
   --bot-msg-bg: #f3f4f6; /* Softer grey */
   --shadow-color: rgba(0, 0, 0, 0.1);
   --input-focus-shadow: rgba(237, 27, 47, 0.15);
+}
+
+/* Dark mode: the <body> background (var(--bg-color)) must be the dark base
+   so there's no light flash behind content or at the edges. Defined here
+   (after :root, same file) so it wins on source order. */
+[data-theme='dark'] {
+  --bg-color: #0a0c10;
+  --chat-bg: #0a0c10;
+  --shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 /* --- LAYOUT FIXES --- */

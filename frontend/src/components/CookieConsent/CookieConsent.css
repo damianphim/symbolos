@@ -54,7 +54,7 @@
   margin: 0 0 2px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary, #0a0c10);
 }
 
 .cookie-consent__body {
@@ -99,7 +99,7 @@
 }
 .cookie-consent__btn--ghost:hover {
   background: var(--bg-secondary, #f9fafb);
-  color: var(--text-primary, #111827);
+  color: var(--text-primary, #0a0c10);
 }
 
 /* ── Mobile ──────────────────────────────────────────────────── */

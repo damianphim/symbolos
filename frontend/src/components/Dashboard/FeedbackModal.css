@@ -24,8 +24,8 @@
 }
 
 [data-theme="dark"] .feedback-trigger-btn {
-  background: #0f172a;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   color: #94a3b8;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
@@ -62,8 +62,8 @@
 }
 
 [data-theme="dark"] .feedback-modal {
-  background: #0f172a;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -85,7 +85,7 @@
 }
 
 [data-theme="dark"] .feedback-modal-header {
-  border-bottom-color: #2d3f55;
+  border-bottom-color: #2f353f;
 }
 
 .feedback-modal-flag {
@@ -141,8 +141,8 @@
 }
 
 [data-theme="dark"] .feedback-mode-btn {
-  background: #1e293b;
-  border-color: #2d3f55;
+  background: #14171d;
+  border-color: #2f353f;
 }
 
 .feedback-mode-btn:hover {
@@ -198,8 +198,8 @@
 }
 
 [data-theme="dark"] .feedback-input {
-  background: #0a1120;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   color: #e2e8f0;
 }
 
@@ -225,8 +225,8 @@
 }
 
 [data-theme="dark"] .feedback-textarea {
-  background: #0a1120;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   color: #e2e8f0;
 }
 

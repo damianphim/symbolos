@@ -176,31 +176,37 @@
    ──────────────────────────────────────────────────────────────── */
 
 [data-theme='dark'] {
-  /* ─── Backgrounds ─── */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --bg-quaternary: #475569;
-  --bg-hover: #1e293b;
-  --bg-active: #334155;
-  
+  /* ─── Backgrounds ──────────────────────────────────────────────────────
+     Professional near-black palette. A deep, faintly-cool base with clear
+     elevation steps so surfaces read as layered rather than flat slate.
+       base       #0a0c10  app background
+       surface    #14171d  cards / panels / sidebar / inputs / modals
+       surface-2  #1c2027  raised / hover / tertiary
+       surface-3  #262b33  quaternary */
+  --bg-primary: #0a0c10;
+  --bg-secondary: #14171d;
+  --bg-tertiary: #1c2027;
+  --bg-quaternary: #262b33;
+  --bg-hover: #14171d;
+  --bg-active: #1c2027;
+
   /* ─── Bot message bubble ─── */
-  --bot-msg-bg: #000000;
-  
-  /* ─── Text Colors ─── */
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --text-muted: #64748b;
-  --text-inverse: #0f172a;
-  --text-disabled: #475569;
-  
-  /* ─── Borders ─── */
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --border-tertiary: #1e293b;
+  --bot-msg-bg: #14171d;
+
+  /* ─── Text Colors ── softened off-white is easier on the eye on near-black ─ */
+  --text-primary: #e8eaed;
+  --text-secondary: #b4bac4;
+  --text-tertiary: #868d99;
+  --text-muted: #5b626d;
+  --text-inverse: #0a0c10;
+  --text-disabled: #3a414d;
+
+  /* ─── Borders ── low-contrast so they separate without drawing the eye ──── */
+  --border-primary: #242932;
+  --border-secondary: #2f353f;
+  --border-tertiary: #1a1e24;
   --border-focus: #ed1b2f;
-  --border-hover: #475569;
+  --border-hover: #3a414d;
 
   /* ─── McGill Red Accent ──────────────────────────────────────────────
      Foreground reds match the light-mode brand red exactly so the
@@ -249,93 +255,93 @@
   --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.4);
   
   /* ─── Input Fields ─── */
-  --input-bg: #1e293b;
-  --input-border: #475569;
-  --input-border-hover: #64748b;
+  --input-bg: #14171d;
+  --input-border: #2f353f;
+  --input-border-hover: #3a414d;
   --input-border-focus: #ed1b2f;
-  --input-text: #f1f5f9;
-  --input-placeholder: #64748b;
-  --input-disabled-bg: #334155;
-  --input-disabled-text: #64748b;
-  
+  --input-text: #e8eaed;
+  --input-placeholder: #5b626d;
+  --input-disabled-bg: #1c2027;
+  --input-disabled-text: #5b626d;
+
   /* ─── Buttons ─── */
   --btn-primary-bg: #ed1b2f;
   --btn-primary-hover: #d01929;
   --btn-primary-active: #b01623;
   --btn-primary-text: #ffffff;
-  --btn-secondary-bg: #334155;
-  --btn-secondary-hover: #475569;
-  --btn-secondary-text: #cbd5e1;
-  --btn-ghost-hover: #1e293b;
-  --btn-disabled-bg: #334155;
-  --btn-disabled-text: #64748b;
-  
+  --btn-secondary-bg: #1c2027;
+  --btn-secondary-hover: #262b33;
+  --btn-secondary-text: #b4bac4;
+  --btn-ghost-hover: #14171d;
+  --btn-disabled-bg: #1c2027;
+  --btn-disabled-text: #5b626d;
+
   /* ─── Cards ─── */
-  --card-bg: #1e293b;
-  --card-border: #334155;
-  --card-hover-bg: #334155;
-  --card-hover-border: #475569;
-  
-  /* ─── Sidebar ─── */
-  --sidebar-bg: #1e293b;
-  --sidebar-border: #334155;
-  --sidebar-item-hover: #334155;
+  --card-bg: #14171d;
+  --card-border: #242932;
+  --card-hover-bg: #1c2027;
+  --card-hover-border: #3a414d;
+
+  /* ─── Sidebar ── slightly distinct from the base so the rail reads ─── */
+  --sidebar-bg: #0d0f14;
+  --sidebar-border: #242932;
+  --sidebar-item-hover: #1c2027;
   --sidebar-item-active: #7f1d1d;
   --sidebar-item-active-text: #ffffff;
-  
+
   /* ─── Modal/Overlay ─── */
-  --overlay-bg: rgba(0, 0, 0, 0.75);
-  --modal-bg: #1e293b;
-  --modal-border: #334155;
-  
+  --overlay-bg: rgba(0, 0, 0, 0.72);
+  --modal-bg: #14171d;
+  --modal-border: #242932;
+
   /* ─── Toast/Alert ─── */
-  --toast-bg: #1e293b;
-  --toast-border: #334155;
+  --toast-bg: #14171d;
+  --toast-border: #242932;
   --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-  
+
   /* ─── Progress Bars ─── */
-  --progress-bg: #334155;
+  --progress-bg: #1c2027;
   --progress-fill: #ed1b2f;
-  --progress-text: #f1f5f9;
-  
+  --progress-text: #e8eaed;
+
   /* ─── Badges ─── */
-  --badge-bg: #334155;
-  --badge-text: #cbd5e1;
-  --badge-border: #475569;
-  
+  --badge-bg: #1c2027;
+  --badge-text: #b4bac4;
+  --badge-border: #2f353f;
+
   /* ─── Scrollbar ─── */
-  --scrollbar-track: #1e293b;
-  --scrollbar-thumb: #475569;
-  --scrollbar-thumb-hover: #64748b;
-  
+  --scrollbar-track: #0d0f14;
+  --scrollbar-thumb: #2f353f;
+  --scrollbar-thumb-hover: #3a414d;
+
   /* ─── Calendar ─── */
-  --calendar-bg: #1e293b;
-  --calendar-border: #334155;
-  --calendar-header-bg: #334155;
-  --calendar-cell-hover: #334155;
+  --calendar-bg: #14171d;
+  --calendar-border: #242932;
+  --calendar-header-bg: #1c2027;
+  --calendar-cell-hover: #1c2027;
   --calendar-today-bg: #7f1d1d;
   --calendar-today-border: #ed1b2f;
-  
+
   /* ─── Chat ─── */
-  --chat-bg: #0f172a;
+  --chat-bg: #0a0c10;
   --chat-message-user-bg: #ed1b2f;
   --chat-message-user-text: #ffffff;
-  --chat-message-ai-bg: #1e293b;
-  --chat-message-ai-text: #f1f5f9;
-  --chat-input-bg: #1e293b;
-  --chat-input-border: #334155;
-  
+  --chat-message-ai-bg: #14171d;
+  --chat-message-ai-text: #e8eaed;
+  --chat-input-bg: #14171d;
+  --chat-input-border: #242932;
+
   /* ─── Tabs ─── */
-  --tab-bg: #334155;
-  --tab-hover-bg: #475569;
-  --tab-active-bg: #1e293b;
+  --tab-bg: #1c2027;
+  --tab-hover-bg: #262b33;
+  --tab-active-bg: #14171d;
   --tab-active-text: #ed1b2f;
-  --tab-inactive-text: #94a3b8;
-  
+  --tab-inactive-text: #868d99;
+
   /* ─── Profile Hero (Dark gradient instead of red) ─── */
-  --profile-hero-start: #1f2937;
-  --profile-hero-end: #111827;
-  --profile-hero-text: #f1f5f9;
+  --profile-hero-start: #14171d;
+  --profile-hero-end: #0a0c10;
+  --profile-hero-text: #e8eaed;
   
   /* ─── Loading Spinner ─── */
   --spinner-color: #ed1b2f;

@@ -13,8 +13,8 @@
 }
 
 [data-theme="dark"] .prof-popover {
-  background: #0f172a;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
@@ -37,8 +37,8 @@
 }
 
 [data-theme="dark"] .prof-popover::after {
-  background: #0f172a;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
 }
 
 .prof-popover-header {
@@ -89,7 +89,7 @@
 }
 
 [data-theme="dark"] .prof-popover-current {
-  background: #1e293b;
+  background: #14171d;
 }
 
 .prof-popover-current span {
@@ -117,8 +117,8 @@
 }
 
 [data-theme="dark"] .prof-popover-input {
-  background: #0a1120;
-  border-color: #2d3f55;
+  background: #0a0c10;
+  border-color: #2f353f;
   color: #e2e8f0;
 }
 

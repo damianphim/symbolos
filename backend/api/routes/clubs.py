@@ -498,7 +498,10 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
         logger.info(f"[join-action] Found request for club {join_req.get('club_id')} by user {join_req.get('user_id')}")
 
         # Step 2: Verify club ownership, per-club admin, or global admin
-        if not _is_club_owner_or_admin(current_user_id, join_req["club_id"]):
+        # NOTE: signature is _is_club_owner_or_admin(club_id, user_id) — the
+        # arguments were previously reversed here, which made this check
+        # silently fail closed (no owner/admin could ever action a request).
+        if not _is_club_owner_or_admin(join_req["club_id"], current_user_id):
             raise HTTPException(status_code=403, detail="Only the club owner or admins can handle join requests")
 
         # Step 3: If approve, add to club

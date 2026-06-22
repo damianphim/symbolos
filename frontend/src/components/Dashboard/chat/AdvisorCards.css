@@ -1097,7 +1097,7 @@
 .history-preview-card__title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary, #0a0c10);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;

@@ -331,7 +331,11 @@ async def delete_event(event_id: str, body: EventDeleteRequest, current_user_id:
     """Remove a calendar event and its queued notifications."""
     require_self(current_user_id, body.user_id)
     supabase = get_supabase()
-    supabase.table("notification_queue").delete().eq("event_id", event_id).execute()
+    # Scope BOTH deletes to the calling user. The queue delete was previously
+    # keyed on event_id alone — since these run on the service-role client
+    # (no RLS), an attacker who knew another user's event_id could purge that
+    # user's pending notifications. eq("user_id", ...) closes that IDOR.
+    supabase.table("notification_queue").delete().eq("event_id", event_id).eq("user_id", body.user_id).execute()
     supabase.table("calendar_events").delete().eq("id", event_id).eq("user_id", body.user_id).execute()
     return {"ok": True}
 
