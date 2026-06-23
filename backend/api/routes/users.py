@@ -202,8 +202,10 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
         from ..utils.supabase_client import get_supabase
         u = get_supabase().auth.admin.get_user_by_id(current_user_id)
         auth_email = (getattr(u.user, "email", None) or "").lower()
+        auth_email_confirmed = bool(getattr(u.user, "email_confirmed_at", None))
     except Exception:
         auth_email = ""
+        auth_email_confirmed = False
     if not auth_email or auth_email != (user.email or "").lower():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -239,6 +241,15 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
         # contract law: "user X agreed to version Y at time Z".
         user_data["tos_accepted_at"] = datetime.now(timezone.utc).isoformat()
         user_data["tos_version"] = settings.LEGAL_POLICY_VERSION
+
+        # email_verified must come from the verified Supabase Auth identity
+        # (auth_email_confirmed, derived above), never from the client body —
+        # UserCreate has no email_verified field, so this is the only way it
+        # gets set. Without this, every profile created after the user has
+        # already confirmed their address (signup self-heal, ProfileSetup's
+        # ensureUser()) would default to unverified and bounce them back to
+        # the verify screen forever.
+        user_data["email_verified"] = auth_email_confirmed
 
         new_user = create_user_db(user_data)
         logger.info(f"New user created: {new_user.get('id')}")

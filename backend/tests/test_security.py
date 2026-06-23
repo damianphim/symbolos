@@ -103,6 +103,35 @@ def test_create_user_rejects_email_mismatched_with_auth_identity(client, fake_su
     assert resp.status_code == 400, resp.text
 
 
+# ── Regression: email_verified must be derived from auth.users.email_confirmed_at,
+# never defaulted false. Without this, the self-heal path in AuthContext.jsx
+# (and ProfileSetup's ensureUser()) creates a profile for an already-confirmed
+# user with email_verified=false, and App.jsx's forceVerify gate traps them on
+# the verify screen forever even though they already clicked the email link.
+def test_create_user_sets_email_verified_true_when_auth_confirmed(client, fake_supabase):
+    from tests.conftest import FakeAuthAdmin
+    fake_supabase.auth.admin = FakeAuthAdmin(email="confirmed@mail.mcgill.ca", confirmed=True)
+    resp = client.post(
+        "/api/users/",
+        headers=auth("user-1"),
+        json={"id": "user-1", "email": "confirmed@mail.mcgill.ca"},
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["user"]["email_verified"] is True
+
+
+def test_create_user_sets_email_verified_false_when_auth_unconfirmed(client, fake_supabase):
+    from tests.conftest import FakeAuthAdmin
+    fake_supabase.auth.admin = FakeAuthAdmin(email="pending@mail.mcgill.ca", confirmed=False)
+    resp = client.post(
+        "/api/users/",
+        headers=auth("user-1"),
+        json={"id": "user-1", "email": "pending@mail.mcgill.ca"},
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["user"]["email_verified"] is False
+
+
 # ── Audit #3: club managers endpoint requires manager role ───────────────────
 def test_managers_endpoint_403s_non_manager(client, fake_supabase):
     """Bug: any logged-in user could read /managers (organizer roster).
