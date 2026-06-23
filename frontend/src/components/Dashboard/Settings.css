@@ -721,3 +721,34 @@
 .delete-confirm-btn:not(:disabled):hover {
   background: #b91c1c !important;
 }
+
+/* ── Visibility / Forum Identity toggle ─────────────────────────────────── */
+.clubs-visibility-toggle {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--border-secondary, #e5e7eb);
+  border-radius: 9px;
+  overflow: hidden;
+  width: fit-content;
+}
+.clubs-visibility-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-primary, #fff);
+  border: none;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+.clubs-visibility-option:first-child { border-right: 1.5px solid var(--border-secondary, #e5e7eb); }
+.clubs-visibility-option:hover { background: var(--bg-hover, #f9fafb); }
+.clubs-visibility-option.active {
+  background: var(--accent-lighter, #fee2e2);
+  color: var(--accent-primary, #dc2626);
+  font-weight: 700;
+}

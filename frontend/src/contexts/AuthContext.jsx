@@ -257,7 +257,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const { track, Events } = await import('../lib/telemetry')
         track(Events.SignupCompleted, { email_domain: (email || '').split('@')[1] || null })
-      } catch {}
+      } catch { /* telemetry is best-effort */ }
 
       justSignedUp.current = false
 
@@ -417,6 +417,16 @@ export const AuthProvider = ({ children }) => {
     loadedForUserId.current = null
     loadingProfile.current = false
     await loadProfile(user.id)
+    // After verification-driven refresh (email confirm via magic link), the
+    // SIGNED_IN event never re-fires on the original tab.  Check the onboarding
+    // flag here so ProfileSetup still shows for new accounts.
+    try {
+      const pendingId = localStorage.getItem('symbolos_pending_onboarding')
+      if (pendingId === user.id) {
+        localStorage.removeItem('symbolos_pending_onboarding')
+        if (mountedRef.current) setNeedsOnboarding(true)
+      }
+    } catch { /* ignore storage errors */ }
   }, [user?.id, loadProfile])
 
   const value = { user, profile, loading, error, needsOnboarding, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError, resetPasswordForEmail, resendVerificationEmail, updatePassword }

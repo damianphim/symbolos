@@ -280,6 +280,19 @@ async def get_user(user_id: str, req: Request, current_user_id: str = Depends(ge
     """
     try:
         user = get_user_by_id(user_id)
+        # Auto-heal: if Supabase confirmed the address via their own magic-link
+        # (partner's SMTP flow), email_confirmed_at is set but our column is
+        # still False. Sync it here so the laptop's polling sees the flip.
+        if not user.get("email_verified"):
+            try:
+                u = get_supabase().auth.admin.get_user_by_id(user_id)
+                if getattr(u.user, "email_confirmed_at", None):
+                    get_supabase().table("users").update(
+                        {"email_verified": True}
+                    ).eq("id", user_id).execute()
+                    user["email_verified"] = True
+            except Exception:
+                pass  # best-effort; polling will retry in 4s
         return {"user": user}
     except UserNotFoundException as e:
         logger.warning(f"User not found: {user_id}")
