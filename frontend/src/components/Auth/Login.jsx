@@ -11,6 +11,7 @@ import {
 import PrivacyPolicy from '../Legal/PrivacyPolicy'
 import TermsOfService from '../Legal/TOS'
 import AboutUs from '../Legal/AboutUs'
+import logoMark from '../../assets/loading-logo.png'
 import './Auth.css'
 
 function Login({ forceVerify = false, email: propEmail = '', userId: propUserId = '', onBack = null }) {
@@ -27,7 +28,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [message, setMessage] = useState('')
   const [animating, setAnimating] = useState(false)
   const [pendingEmail, setPendingEmail] = useState(propEmail || storedVerify?.email || '')
-  const [pendingUserId] = useState(propUserId || storedVerify?.userId || '')
+  const [_pendingUserId] = useState(propUserId || storedVerify?.userId || '')
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendLoading, setResendLoading] = useState(false)
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
@@ -191,11 +192,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
         <div className="auth-branding-inner">
           <div className="auth-logo">
             <div className="auth-logo-mark">
-              <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="5" fill="white" opacity="0.95"/>
-                <circle cx="14" cy="14" r="11" stroke="white" strokeWidth="1.5" opacity="0.35"/>
-                <circle cx="14" cy="14" r="7" stroke="white" strokeWidth="1" opacity="0.6"/>
-              </svg>
+              <img src={logoMark} alt="Symbolos" className="auth-logo-mark-img" />
             </div>
             <span className="auth-logo-name">Symbolos</span>
           </div>

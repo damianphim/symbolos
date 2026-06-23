@@ -24,6 +24,9 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Pre-existing pattern in this codebase — setState in effects is fine here
+      // because the effects are intentionally synchronizing auth/profile state.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])

@@ -69,13 +69,16 @@
 .auth-logo-mark {
   width: 44px;
   height: 44px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.auth-logo-mark-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
 }
 
 .auth-logo-name {

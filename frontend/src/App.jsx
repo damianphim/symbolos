@@ -11,7 +11,7 @@ import ProfileSetup from './components/ProfileSetup/ProfileSetup'
 import Loading from './components/Loading/Loading'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
 import ErrorScreen from './components/ErrorScreen/ErrorScreen'
-import { authAPI } from './lib/api'
+import { authAPI, usersAPI } from './lib/api'
 import './theme.css'
 import './App.css'
 import AdminSuggestions from './components/Admin/AdminSuggestions'
@@ -77,7 +77,7 @@ function AppContent() {
       try {
         const { track, Events } = await import('./lib/telemetry')
         track(Events.EmailVerified)
-      } catch {}
+      } catch { /* telemetry is best-effort */ }
     } catch (err) {
       setVerifyError(err?.response?.data?.detail || 'Verification failed. The link may have expired.')
     } finally {
@@ -97,19 +97,31 @@ function AppContent() {
   // clicking the link). As soon as it flips true, the gate below falls
   // through and the user lands on the dashboard with no manual refresh.
   const needsVerify = !!(user && profile && profile.email_verified === false)
+  const userId = user?.id
   useEffect(() => {
-    if (!needsVerify) return
+    if (!needsVerify || !userId) return
+    // Bypass loadProfile's caching guards: directly fetch to get the freshest
+    // email_verified flag. Once true, call refreshProfile() to update the full
+    // context cleanly and dismiss the gate.
+    const checkVerified = async () => {
+      try {
+        const { user: fresh } = await usersAPI.getUser(userId)
+        if (fresh?.email_verified === true) {
+          await refreshProfile()
+        }
+      } catch { /* network errors are silent — next tick will retry */ }
+    }
     const started = Date.now()
     const id = setInterval(() => {
       // Stop after 15 min so a forgotten tab doesn't poll forever.
       if (Date.now() - started > 15 * 60 * 1000) { clearInterval(id); return }
-      refreshProfile().catch(() => {})
+      checkVerified()
     }, 4000)
-    const onFocus = () => { refreshProfile().catch(() => {}) }
+    const onFocus = () => { checkVerified() }
     window.addEventListener('focus', onFocus)
     return () => { clearInterval(id); window.removeEventListener('focus', onFocus) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needsVerify])
+  }, [needsVerify, userId])
 
   if (loading || !minLoadDone || verifying) return <Loading />
 
@@ -156,7 +168,7 @@ function AppContent() {
       const url = new URL(window.location.href)
       url.searchParams.delete('show')
       window.history.replaceState({}, '', url.toString())
-    } catch {}
+    } catch { /* URL manipulation is best-effort */ }
   }
 
   // Unauthenticated: show landing first; click "Sign in" → show Login.
