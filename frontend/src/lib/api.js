@@ -294,6 +294,10 @@ export const authAPI = {
     const response = await api.post('/auth/verify-email', { user_id: userId, token })
     return response.data
   },
+  async checkVerified(userId) {
+    const response = await api.get(`/auth/check-verified/${encodeURIComponent(userId)}`)
+    return response.data
+  },
 }
 
 export default api

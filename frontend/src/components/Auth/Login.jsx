@@ -11,6 +11,7 @@ import {
 import PrivacyPolicy from '../Legal/PrivacyPolicy'
 import TermsOfService from '../Legal/TOS'
 import AboutUs from '../Legal/AboutUs'
+import { authAPI } from '../../lib/api'
 import logoMark from '../../assets/loading-logo.png'
 import './Auth.css'
 
@@ -28,7 +29,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [message, setMessage] = useState('')
   const [animating, setAnimating] = useState(false)
   const [pendingEmail, setPendingEmail] = useState(propEmail || storedVerify?.email || '')
-  const [_pendingUserId] = useState(propUserId || storedVerify?.userId || '')
+  const [pendingUserId] = useState(propUserId || storedVerify?.userId || '')
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendLoading, setResendLoading] = useState(false)
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
@@ -50,24 +51,63 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
     setMessage('')
   }, [mode, clearError])
 
-  // Poll for verification completion when on verify screen
-  // (handles the case where the user opens the email link in a new tab)
+  // Poll for verification completion when on the verify screen.
+  // Two paths:
+  //   A. Session present (autoconfirm ON or partial session): check
+  //      session.user.email_confirmed_at and refresh so SIGNED_IN re-fires.
+  //   B. No session (autoconfirm OFF — the common partner-configured case):
+  //      call our unauthenticated /check-verified endpoint. When the phone's
+  //      magic-link confirms the address in Supabase Auth, the backend sees
+  //      email_confirmed_at and returns verified=true. We then auto-sign-in
+  //      using the password still held in component state (typed during signup
+  //      and never cleared on mode-switch). If the page was reloaded and the
+  //      password is gone, we fall back to a "Verified — please sign in" state.
   useEffect(() => {
     if (mode !== 'verify') {
       if (pollRef.current) clearInterval(pollRef.current)
       return
     }
-    pollRef.current = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user?.email_confirmed_at) {
+
+    const checkAndAdvance = async () => {
+      try {
+        // Path A: we already have a session on this device
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email_confirmed_at) {
+          clearInterval(pollRef.current)
+          sessionStorage.removeItem('symbolos_verify')
+          await supabase.auth.refreshSession()
+          return
+        }
+
+        // Path B: no session — poll our unauthenticated endpoint
+        if (!pendingUserId) return
+        const { verified } = await authAPI.checkVerified(pendingUserId)
+        if (!verified) return
+
         clearInterval(pollRef.current)
         sessionStorage.removeItem('symbolos_verify')
-        // Trigger a full session refresh so onAuthStateChange fires
-        await supabase.auth.refreshSession()
-      }
-    }, 3000)
+
+        if (password) {
+          // Auto-sign-in using the credentials still in state
+          const { error: signInErr } = await signIn(pendingEmail || email, password)
+          if (signInErr) {
+            // Sign-in failed — surface the login form so user can retry
+            sessionStorage.removeItem('symbolos_verify')
+            setMode('login')
+          }
+          // On success SIGNED_IN fires → AuthContext loads profile → app advances
+        } else {
+          // Page was reloaded; password is gone. Show login with a success hint.
+          setMessage(t('auth.verifiedSignIn') || 'Email verified! Please sign in to continue.')
+          setMode('login')
+        }
+      } catch { /* network errors are silent — next tick retries */ }
+    }
+
+    pollRef.current = setInterval(checkAndAdvance, 3000)
     return () => clearInterval(pollRef.current)
-  }, [mode])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, pendingUserId])
 
   // Resend cooldown countdown
   useEffect(() => {

@@ -240,6 +240,53 @@ async def send_verification(
     return {"ok": True}
 
 
+@router.get("/check-verified/{user_id}")
+async def check_verified(user_id: str):
+    """Unauthenticated poll used by the verify screen on the original signup
+    tab.  When Supabase autoconfirm is OFF the tab has no session, so we
+    cannot use any authenticated endpoint.  This returns whether the address
+    has been confirmed via either Supabase's own magic-link or our custom
+    Resend token, and syncs our users.email_verified column as a side-effect.
+
+    Information-disclosure risk is low: the response is a boolean, the
+    user_id is a UUID (not guessable), and this is rate-limited by the
+    existing IP-level FastAPI middleware.
+    """
+    sb = get_supabase()
+    verified = False
+
+    # 1. Check Supabase Auth — set by partner's magic-link flow.
+    try:
+        u = sb.auth.admin.get_user_by_id(user_id)
+        if u.user and getattr(u.user, "email_confirmed_at", None):
+            verified = True
+    except Exception:
+        pass
+
+    # 2. Fall back to our own column (set by /verify-email Resend flow).
+    if not verified:
+        try:
+            row = (
+                sb.table("users")
+                .select("email_verified")
+                .eq("id", user_id)
+                .single()
+                .execute()
+            )
+            verified = bool((row.data or {}).get("email_verified"))
+        except Exception:
+            pass
+
+    # Sync our column so authenticated profile fetches also see the flag.
+    if verified:
+        try:
+            sb.table("users").update({"email_verified": True}).eq("id", user_id).execute()
+        except Exception:
+            pass
+
+    return {"verified": verified}
+
+
 @router.post("/verify-email")
 async def verify_email(req: VerifyEmailRequest):
     """Consume a verification token. Unauthenticated (the click comes from

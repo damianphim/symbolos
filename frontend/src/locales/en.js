@@ -642,6 +642,7 @@ const EN_TRANSLATIONS = {
     'auth.passwordUpdated': 'Password updated! Redirecting to sign in…',
     'auth.titleVerify': 'Check your inbox',
     'auth.subVerify': 'We sent a confirmation link to your email. Click it to activate your account, then sign in.',
+    'auth.verifiedSignIn': 'Email verified! Please sign in to continue.',
 
     // ── Onboarding / ProfileSetup ───────────────────────
     'ps.txTitle': 'Import your transcript',
