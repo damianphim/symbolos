@@ -4,7 +4,7 @@ from fastapi import HTTPException, Depends
 import logging
 
 from ...utils.supabase_client import get_supabase
-from ...auth import get_current_user_id
+from ...auth import get_current_user_id, require_mcgill_email
 from ._router import router
 
 logger = logging.getLogger(__name__)
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @router.post("/{club_id}/subscribe")
 async def toggle_subscribe(club_id: str, current_user_id: str = Depends(get_current_user_id)):
     """Toggle Subscription to a club's events/news. Returns the new state."""
+    require_mcgill_email(current_user_id)
     try:
         supabase = get_supabase()
         # Verify club exists

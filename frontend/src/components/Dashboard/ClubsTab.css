@@ -1711,6 +1711,18 @@
 }
 .club-join-btn--primary:hover { filter: brightness(1.08); }
 .club-join-btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.club-join-btn--locked {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+  background: var(--bg-tertiary, #1e293b); color: var(--text-muted, #94a3b8);
+  border: 1px solid var(--border-color, #334155); cursor: default; opacity: 0.75;
+}
+.club-action-btn--locked {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg-tertiary, #1e293b); color: var(--text-muted, #94a3b8);
+  border: 1px solid var(--border-color, #334155); cursor: default; opacity: 0.75;
+}
 
 /* ── #16 Owner Manage button ──────────────────────────────────── */
 .club-manage-btn {

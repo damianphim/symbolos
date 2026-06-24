@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import logging
 
 from ...utils.supabase_client import get_supabase
-from ...auth import get_current_user_id, require_self, get_user_db
+from ...auth import get_current_user_id, require_self, get_user_db, require_mcgill_email
 from ._router import router
 from .permissions import is_admin_user, is_club_owner_or_admin
 from .schemas import JoinClubRequest, JoinRequestAction
@@ -114,26 +114,14 @@ async def join_club(user_id: str, body: JoinClubRequest, req: Request, current_u
     """Join a public club directly, or create a Join Request for a private club."""
     require_self(current_user_id, user_id)
 
-    # SEC FIX #2 / #5: McGill check + verified email.
-    # The previous gate read users.email (user-editable), so anyone could
-    # set their profile email to *@mail.mcgill.ca and join private clubs.
-    # Now we trust ONLY auth.users.email — which the user proved control
-    # of during Supabase Auth signup.
     from ...utils.verified_user import is_email_verified
     from ...utils.anomaly import record_action
+    require_mcgill_email(current_user_id)
+    if not is_email_verified(current_user_id):
+        raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to join clubs."})
     record_action(current_user_id, "club_join")
     try:
         supabase = get_supabase()
-        if not is_admin_user(user_id):
-            try:
-                auth_user = supabase.auth.admin.get_user_by_id(user_id)
-                auth_email = (getattr(auth_user.user, "email", None) or "").lower()
-            except Exception:
-                auth_email = ""
-            if not auth_email.endswith("@mail.mcgill.ca"):
-                raise HTTPException(status_code=403, detail="Only accounts with a @mail.mcgill.ca email can join clubs.")
-            if not is_email_verified(user_id):
-                raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to join clubs."})
 
         # Check if club exists and whether it's private
         club_result = supabase.table("clubs").select("*").eq("id", body.club_id).execute()

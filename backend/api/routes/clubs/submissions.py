@@ -6,7 +6,7 @@ from html import escape
 import logging
 
 from ...utils.supabase_client import get_supabase
-from ...auth import get_current_user_id
+from ...auth import get_current_user_id, require_mcgill_email
 from ...config import settings
 from ._router import router
 from .permissions import is_admin_user, verify_admin_token
@@ -19,24 +19,14 @@ logger = logging.getLogger(__name__)
 async def submit_club(submission: ClubSubmission, current_user_id: str = Depends(get_current_user_id)):
     """Submit a new club for admin review."""
     from html import escape as _esc
+    from ...utils.verified_user import is_email_verified
     from ...utils.anomaly import record_action
+    require_mcgill_email(current_user_id)
+    if not is_email_verified(current_user_id):
+        raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to submit a club."})
     record_action(current_user_id, "club_submit")
     try:
         supabase = get_supabase()
-
-        # SEC FIX #2 / #5: McGill check + verified email — pulled from the
-        # verified auth identity, NOT users.email which the user controls.
-        if not is_admin_user(current_user_id):
-            try:
-                auth_user = supabase.auth.admin.get_user_by_id(current_user_id)
-                auth_email = (getattr(auth_user.user, "email", None) or "").lower()
-            except Exception:
-                auth_email = ""
-            if not auth_email.endswith("@mail.mcgill.ca"):
-                raise HTTPException(status_code=403, detail="Only accounts with a @mail.mcgill.ca email can submit clubs.")
-            from ...utils.verified_user import is_email_verified
-            if not is_email_verified(current_user_id):
-                raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to submit a club."})
 
         # SEC FIX #9: escape user-controlled free-text on write so even if
         # a future renderer treats these as HTML it can't smuggle markup.

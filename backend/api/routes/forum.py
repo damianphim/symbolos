@@ -25,7 +25,7 @@ import logging
 from html import escape
 
 from ..utils.supabase_client import get_supabase, with_retry
-from ..auth import get_current_user_id, get_user_db
+from ..auth import get_current_user_id, get_user_db, require_mcgill_email
 from ..exceptions import DatabaseException
 from ..config import settings
 
@@ -281,6 +281,7 @@ async def create_post(
     from ..utils.anomaly import record_action
     if not is_email_verified(current_user_id):
         raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to post."})
+    require_mcgill_email(current_user_id)
     record_action(current_user_id, "forum_post")
 
     # Validate review fields are present when category is a review
@@ -406,6 +407,7 @@ async def create_reply(
     from ..utils.anomaly import record_action
     if not is_email_verified(current_user_id):
         raise HTTPException(status_code=403, detail={"code": "email_not_verified", "message": "Verify your email to reply."})
+    require_mcgill_email(current_user_id)
     record_action(current_user_id, "forum_reply")
     payload.body = escape(payload.body or "")
     if payload.author:
@@ -481,6 +483,7 @@ async def toggle_post_like(
     Toggle like on a post.
     Returns {liked: bool, like_count: int}.
     """
+    require_mcgill_email(current_user_id)
     try:
         # Check if already liked
         existing = (

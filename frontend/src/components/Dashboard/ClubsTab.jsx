@@ -313,7 +313,7 @@ function MembersSection({ clubId, clubOwnerId, meta, refreshKey }) {
   )
 }
 
-function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe, onLogoChanged }) {
+function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest, onJoin, onLeave, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe, onLogoChanged, isMcGill }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
   const [activity, setActivity] = useState(null)        // #11 — recent announcements/events
   const [facultyStats, setFacultyStats] = useState(null) // #12 — faculty social proof
@@ -409,7 +409,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
               <span className="club-action-btn club-action-btn--subscribed" style={{ cursor: 'default', opacity: 0.75 }}>
                 ✓ {t('clubs.manage.owner') || 'Manager'}
               </span>
-            ) : (
+            ) : isMcGill ? (
               <>
                 <button
                   className={`club-action-btn ${isSubscribed ? 'club-action-btn--subscribed' : 'club-action-btn--subscribe'}`}
@@ -443,6 +443,10 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
                   </button>
                 )}
               </>
+            ) : (
+              <span className="club-action-btn club-action-btn--locked" title="McGill email required">
+                <FaLock size={11} /> McGill only
+              </span>
             )}
           </div>
         </div>
@@ -450,7 +454,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
         <div className="club-drawer__body">
           {/* #10 Four-chip quick-action row at the top of the body */}
           <div className="club-drawer__quick-actions">
-            {canManage ? null : (
+            {canManage ? null : isMcGill ? (
               <>
                 {display.application_url ? (
                   <a
@@ -490,6 +494,10 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
                   <FaBell size={11} /> {isSubscribed ? t('clubs.subscribed') : t('clubs.notifyMe') || 'Notify me'}
                 </button>
               </>
+            ) : (
+              <span className="club-drawer__chip" style={{ opacity: 0.6, cursor: 'default', pointerEvents: 'none' }} title="McGill email required">
+                <FaLock size={11} /> McGill email required to join or subscribe
+              </span>
             )}
             <button
               className="club-drawer__chip"
@@ -657,7 +665,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   )
 }
 
-function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, language, isFeatured = false }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, language, isFeatured = false, isMcGill = false }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
@@ -688,13 +696,6 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
     } finally {
       setLogoBusy(false)
     }
-  }
-
-  const handleJoin = async (e) => {
-    e.stopPropagation()
-    await onJoin(club.id)
-    setJustJoined(true)
-    setTimeout(() => setJustJoined(false), 2500)
   }
 
   return (
@@ -795,36 +796,48 @@ function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, on
           // user's calendar; Join links OUT to the club's external apply
           // URL or scrolls the drawer to their join_instructions.
           <div className="club-card__cta-row">
-            <button
-              className={`club-bell-toggle ${isSubscribed ? 'club-bell-toggle--on' : ''}`}
-              onClick={(e) => { e.stopPropagation(); onToggleSubscribe(club.id) }}
-              disabled={isLoading}
-              title={isSubscribed ? (t('clubs.subscribed') || 'Subscribed') : (t('clubs.subscribe') || 'Subscribe')}
-              aria-label={isSubscribed ? 'Unsubscribe from updates' : 'Subscribe for updates'}
-            >
-              <FaBell size={12} />
-            </button>
-            {club.application_url ? (
-              <a
-                href={club.application_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="club-join-btn club-join-btn--primary"
+            {isMcGill ? (
+              <>
+                <button
+                  className={`club-bell-toggle ${isSubscribed ? 'club-bell-toggle--on' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); onToggleSubscribe(club.id) }}
+                  disabled={isLoading}
+                  title={isSubscribed ? (t('clubs.subscribed') || 'Subscribed') : (t('clubs.subscribe') || 'Subscribe')}
+                  aria-label={isSubscribed ? 'Unsubscribe from updates' : 'Subscribe for updates'}
+                >
+                  <FaBell size={12} />
+                </button>
+                {club.application_url ? (
+                  <a
+                    href={club.application_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="club-join-btn club-join-btn--primary"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {t('clubs.joinClub')}
+                  </a>
+                ) : club.join_instructions ? (
+                  <button
+                    className="club-join-btn club-join-btn--primary"
+                    onClick={e => { e.stopPropagation(); onOpen(club) }}
+                  >
+                    {t('clubs.joinClub')}
+                  </button>
+                ) : (
+                  <button className="club-join-btn club-join-btn--primary" disabled title={t('clubs.noJoinInfo')}>
+                    {t('clubs.joinClub')}
+                  </button>
+                )}
+              </>
+            ) : (
+              <span
+                className="club-join-btn club-join-btn--locked"
+                title="McGill email required"
                 onClick={e => e.stopPropagation()}
               >
-                {t('clubs.joinClub')}
-              </a>
-            ) : club.join_instructions ? (
-              <button
-                className="club-join-btn club-join-btn--primary"
-                onClick={e => { e.stopPropagation(); onOpen(club) }}
-              >
-                {t('clubs.joinClub')}
-              </button>
-            ) : (
-              <button className="club-join-btn club-join-btn--primary" disabled title={t('clubs.noJoinInfo')}>
-                {t('clubs.joinClub')}
-              </button>
+                <FaLock size={10} /> McGill only
+              </span>
             )}
           </div>
         )}
@@ -1759,7 +1772,8 @@ const PAGE_SIZE = 24
 export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   const { t, language } = useLanguage()
   const { profile } = useAuth()
-  const isAdmin = authFlags?.is_admin ?? false
+  const isAdmin   = authFlags?.is_admin        ?? false
+  const isMcGill  = authFlags?.is_mcgill_email ?? false
   const [activeView, setActiveView] = useState('explore')
   const [clubs, setClubs] = useState([])
   const [categories, setCategories] = useState([])
@@ -1935,8 +1949,8 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   const handleJoin = async (clubId, joinInfo) => {
     if (!user?.id) return
     // Only @mail.mcgill.ca emails can join clubs
-    if (!user.email?.endsWith('@mail.mcgill.ca') && !authFlags?.is_admin) {
-      setError('Only accounts with a @mail.mcgill.ca email can join clubs.')
+    if (!isMcGill) {
+      setError('Only McGill email addresses (@mcgill.ca or @mail.mcgill.ca) can join clubs.')
       return
     }
     // For private clubs, show the join request modal first (unless joinInfo already provided)
@@ -2249,6 +2263,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onLogoChanged={handleLogoChanged}
                     isFeatured
                     isAdmin={isAdmin}
+                    isMcGill={isMcGill}
                     clubLoading={clubLoading}
                     userId={user?.id}
                     language={language}
@@ -2284,6 +2299,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onManage={setManagingClub}
                     onLogoChanged={handleLogoChanged}
                     isAdmin={isAdmin}
+                    isMcGill={isMcGill}
                     clubLoading={clubLoading}
                     userId={user?.id}
                     language={language}
@@ -2355,6 +2371,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     onDelete={handleDeleteClub}
                     onEdit={setEditingClub}
                     isAdmin={isAdmin}
+                    isMcGill={isMcGill}
                     clubLoading={clubLoading}
                     userId={user?.id}
                     t={t}
@@ -2484,6 +2501,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                         onManage={setManagingClub}
                     onLogoChanged={handleLogoChanged}
                         isAdmin={isAdmin}
+                    isMcGill={isMcGill}
                         clubLoading={clubLoading}
                         userId={user?.id}
                         language={language}
@@ -2516,6 +2534,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
           t={t}
           isAdmin={isAdmin}
           userId={user?.id}
+          isMcGill={isMcGill}
         />
       )}
 

@@ -547,14 +547,18 @@ async def auth_flags(current_user_id: str = Depends(get_current_user_id)):
         # control of the new mailbox via Supabase Auth's own email-change
         # confirmation flow.
         auth_email = ""
+        email_confirmed = False
         try:
             u = sb.auth.admin.get_user_by_id(current_user_id)
             auth_email = (getattr(u.user, "email", None) or "").lower()
+            email_confirmed = bool(getattr(u.user, "email_confirmed_at", None))
         except Exception:
             pass
 
         is_admin = auth_email in admin_emails
-        is_mcgill = any(auth_email.endswith(d) for d in mcgill_domains) or is_admin
+        # Require BOTH correct domain AND confirmed email — prevents a fake
+        # signup with an unverified @mcgill.ca address from gaining McGill access.
+        is_mcgill = (any(auth_email.endswith(d) for d in mcgill_domains) and email_confirmed) or is_admin
         return {"is_admin": is_admin, "is_mcgill_email": is_mcgill}
     except Exception:
         return {"is_admin": False, "is_mcgill_email": False}

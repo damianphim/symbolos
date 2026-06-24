@@ -94,6 +94,44 @@ async def get_user_db(request: Request) -> Client:
     return get_user_supabase(jwt)
 
 
+_MCGILL_DOMAINS = ("@mcgill.ca", "@mail.mcgill.ca")
+
+
+def require_mcgill_email(user_id: str) -> None:
+    """
+    Raise HTTP 403 if the user's verified auth email is not a McGill address.
+    Uses auth.users (Supabase-managed, cannot be spoofed via profile edits).
+    Admins always pass.
+    """
+    from .config import settings as _settings
+    admin_emails = {e.strip().lower() for e in _settings.ADMIN_EMAILS.split(",") if e.strip()}
+    try:
+        sb = get_supabase()
+        u = sb.auth.admin.get_user_by_id(user_id)
+        email = (getattr(u.user, "email", None) or "").lower()
+        confirmed = bool(getattr(u.user, "email_confirmed_at", None))
+        if email in admin_emails:
+            return
+        # Domain check AND confirmed — prevents fake signup with an unverified
+        # McGill address from gaining access even if Supabase confirm-email is off.
+        if not (any(email.endswith(d) for d in _MCGILL_DOMAINS) and confirmed):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "mcgill_email_required",
+                    "message": "This feature is only available for McGill students (@mcgill.ca or @mail.mcgill.ca).",
+                },
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning("McGill email check failed for %s: %s", user_id, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "mcgill_email_required", "message": "Could not verify McGill email."},
+        )
+
+
 def require_self(current_user_id: str, user_id: str) -> None:
     """
     FIX F-03: Assert the authenticated user is operating on their own data.

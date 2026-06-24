@@ -7,7 +7,7 @@ import {
   FaClock, FaStar, FaRegStar, FaPlus, FaTimes, FaChevronDown,
   FaChevronUp, FaBookOpen, FaUsers, FaChalkboardTeacher,
   FaBullhorn, FaCog, FaPaperPlane, FaSpinner,
-  FaTag, FaTrash, FaFlag,
+  FaTag, FaTrash, FaFlag, FaLock,
 } from 'react-icons/fa'
 import './Forum.css'
 
@@ -545,8 +545,9 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
 
 // ── Main ──────────────────────────────────────────────────────────
 export default function Forum() {
-  const { user, profile } = useAuth()
+  const { user, profile, authFlags } = useAuth()
   const { t } = useLanguage()
+  const isMcGill = authFlags?.is_mcgill_email ?? false
 
   const SORT_OPTIONS = getSortOptions(t)
 
@@ -665,9 +666,15 @@ export default function Forum() {
             <p className="forum-header__sub">Reviews · Clubs · Discussion · Feedback</p>
           </div>
         </div>
-        <button className="forum-new-btn" onClick={() => setShowNewPost(true)}>
-          <FaPlus size={12} /> {t('forum.newPostBtn')}
-        </button>
+        {isMcGill ? (
+          <button className="forum-new-btn" onClick={() => setShowNewPost(true)}>
+            <FaPlus size={12} /> {t('forum.newPostBtn')}
+          </button>
+        ) : (
+          <div className="forum-new-btn forum-new-btn--locked" title="McGill email required to post">
+            <FaLock size={12} /> McGill only
+          </div>
+        )}
       </div>
 
       {/* Section tabs */}
@@ -751,9 +758,16 @@ export default function Forum() {
                     ? 'No app feedback yet — share what could be better.'
                     : t('forum.noPostsYet')}
           </p>
-          <button className="forum-btn forum-btn--primary" onClick={() => setShowNewPost(true)}>
-            <FaPlus /> {t('forum.createPostBtn')}
-          </button>
+          {isMcGill ? (
+            <button className="forum-btn forum-btn--primary" onClick={() => setShowNewPost(true)}>
+              <FaPlus /> {t('forum.createPostBtn')}
+            </button>
+          ) : (
+            <div className="forum-mcgill-gate">
+              <FaLock size={13} />
+              <span>McGill email required to post</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="forum-posts">
