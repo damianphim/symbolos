@@ -43,10 +43,10 @@ jobs:
 
       - name: Python dependency audit (SCA)
         working-directory: backend
-        # Blocks on critical CVEs. pip-audit checks PyPI advisory database.
+        # Blocks on any known CVE. pip-audit exits non-zero if vulnerabilities found.
         run: |
           pip install pip-audit
-          pip-audit -r requirements.txt --severity critical
+          pip-audit -r requirements.txt
 
       - name: Run security smoke tests
         working-directory: backend
