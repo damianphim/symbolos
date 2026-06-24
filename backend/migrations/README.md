@@ -11,6 +11,14 @@ Run these in the Supabase SQL Editor, in order.
 | `2026_05_18_backfill_username_from_email.sql` | Sets `username` to the first name derived from McGill email for any existing user with NULL/empty username (e.g. `first.last@mail.mcgill.ca` → `First`) |
 | `2026_05_18_club_manager_requests.sql` | New `club_manager_requests` table for the manager-invite flow — owners/admins request other Symbolos users to become managers, target accepts/denies from their Clubs tab |
 | `2026_05_18_club_logo_admin_upload.sql` | Widens the club-logos storage RLS so invited admins (not just the owner) can upload/update/delete their club's logo |
+| `2026_05_21_add_join_link.sql` | Adds `join_link` column to clubs |
+| `2026_06_01_sec_rls_clubs_pii.sql` | **SEC FIX**: RLS on `clubs` (hide private clubs from anon/non-members); revoke verification_token columns from anon/auth roles |
+| `2026_06_02_email_bounce_columns.sql` | Adds email bounce/complaint tracking columns to `users` |
+| `2026_06_03_feedback_and_webhook_dedup.sql` | Adds `feedback` table and `seen_resend_events` idempotency table |
+| `2026_06_10_tos_acceptance.sql` | Adds `tos_accepted_at` and `tos_version` columns to `users` |
+| `2026_06_11_course_allocations.sql` | New `course_allocations` table with RLS for degree-planning course→program choices |
+| `2026_06_11_year_anchor.sql` | Adds `year_anchor` column to users for cohort-relative year calculation |
+| `2026_06_23_rls_forum_and_club_tables.sql` | **SEC FIX**: RLS on 11 previously unprotected tables — `club_managers`, `club_subscriptions`, `club_join_requests`, `club_manager_requests`, `club_events`, `club_announcements`, `club_submissions`, `forum_posts`, `forum_replies`, `forum_post_likes`, `forum_reply_likes` |
 
 All migrations are idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `DO $$ ... END $$` guards) so re-running them is a no-op.
 

@@ -384,6 +384,11 @@ async def rate_limit_middleware(request: Request, call_next):
         or "/syllabus/parse"      in normalised_path
     ):
         rpm = settings.CLAUDE_RATE_LIMIT_PER_MINUTE
+    elif "/auth/check-verified" in normalised_path or "/auth/verify-email" in normalised_path:
+        # Unauthenticated verification endpoints: tighter limit to block UUID
+        # enumeration. Legitimate polling is every 3 s (~20/min), so 20 rpm
+        # per IP covers normal use while blocking brute-force UUID scans.
+        rpm = 20
     else:
         rpm = settings.RATE_LIMIT_PER_MINUTE
 
