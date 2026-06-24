@@ -103,7 +103,7 @@ afterEach(() => {
 })
 
 function renderTab(props = {}) {
-  return render(<ClubsTab user={USER} authFlags={{ is_admin: false }} {...props} />)
+  return render(<ClubsTab user={USER} authFlags={{ is_admin: false, is_mcgill_email: true }} {...props} />)
 }
 
 // ── buildClubCalendarEvents (pure function) ───────────────────────────────────
