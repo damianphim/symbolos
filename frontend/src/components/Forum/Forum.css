@@ -483,9 +483,9 @@
 }
 
 .forum-action-btn--report:hover {
-  background: #fff7ed;
-  border-color: #f97316;
-  color: #f97316;
+  background: var(--tab-forum-accent-light);
+  border-color: var(--tab-forum-accent-hover);
+  color: var(--tab-forum-accent-hover);
   opacity: 1;
 }
 
@@ -991,11 +991,11 @@
   transition: transform 0.1s ease;
 }
 .forum-stars--picker .forum-star:hover { transform: scale(1.15); }
-.forum-star--on { color: #f59e0b; }
+.forum-star--on { color: var(--tab-forum-accent); }
 
 /* ── Review post header strip ───────────────────────────────────── */
 .forum-post-card--review {
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid var(--tab-forum-accent);
 }
 .forum-review-strip {
   display: flex;
@@ -1016,7 +1016,7 @@
   font-weight: 700;
   color: var(--text-primary);
 }
-.forum-review-strip__target svg { color: #f59e0b; }
+.forum-review-strip__target svg { color: var(--tab-forum-accent); }
 
 /* ── 2-column grid for review sub-type ─────────────────────────── */
 .forum-modal__cat-grid--2 {
@@ -1052,7 +1052,7 @@
   padding: 10px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--tab-courses-accent);
   border-radius: 8px;
   color: var(--text-secondary);
   font-size: 0.8125rem;
@@ -1061,10 +1061,10 @@
 }
 .forum-linkout-banner:hover {
   background: var(--bg-primary);
-  border-color: #3b82f6;
+  border-color: var(--tab-courses-accent);
 }
 .forum-linkout-banner__icon {
-  color: #3b82f6;
+  color: var(--tab-courses-accent);
   flex-shrink: 0;
 }
 .forum-linkout-banner__text {

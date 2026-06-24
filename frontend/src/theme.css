@@ -169,6 +169,35 @@
   /* ─── Loading Spinner ─── */
   --spinner-color: #ed1b2f;
   --spinner-bg: rgba(237, 27, 47, 0.2);
+
+  /* ─── Per-tab accent colors ──────────────────────────────────────────
+     One identity color per major section. Use these instead of hardcoding
+     hex values inside individual component CSS files.
+     Chat re-uses --accent-primary (brand red). Degree re-uses --success-*. */
+
+  /* Courses — informational blue */
+  --tab-courses-accent:       #3b82f6;
+  --tab-courses-accent-hover: #2563eb;
+  --tab-courses-accent-light: #dbeafe;
+  --tab-courses-accent-text:  #1e40af;
+
+  /* Calendar — emerald (events, today ring) */
+  --tab-calendar-accent:       #10b981;
+  --tab-calendar-accent-hover: #059669;
+  --tab-calendar-accent-light: #d1fae5;
+  --tab-calendar-accent-text:  #065f46;
+
+  /* Clubs — violet (category colors layer on top) */
+  --tab-clubs-accent:       #8b5cf6;
+  --tab-clubs-accent-hover: #7c3aed;
+  --tab-clubs-accent-light: #ede9fe;
+  --tab-clubs-accent-text:  #5b21b6;
+
+  /* Forum — amber (section pills, like counts) */
+  --tab-forum-accent:       #f59e0b;
+  --tab-forum-accent-hover: #d97706;
+  --tab-forum-accent-light: #fef3c7;
+  --tab-forum-accent-text:  #92400e;
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -346,6 +375,27 @@
   /* ─── Loading Spinner ─── */
   --spinner-color: #ed1b2f;
   --spinner-bg: rgba(237, 27, 47, 0.2);
+
+  /* ─── Per-tab accent colors (dark) ─── */
+  --tab-courses-accent:       #60a5fa;
+  --tab-courses-accent-hover: #93c5fd;
+  --tab-courses-accent-light: #1e3a8a;
+  --tab-courses-accent-text:  #93c5fd;
+
+  --tab-calendar-accent:       #34d399;
+  --tab-calendar-accent-hover: #6ee7b7;
+  --tab-calendar-accent-light: #064e3b;
+  --tab-calendar-accent-text:  #6ee7b7;
+
+  --tab-clubs-accent:       #a78bfa;
+  --tab-clubs-accent-hover: #c4b5fd;
+  --tab-clubs-accent-light: #4c1d95;
+  --tab-clubs-accent-text:  #ddd6fe;
+
+  --tab-forum-accent:       #fbbf24;
+  --tab-forum-accent-hover: #fcd34d;
+  --tab-forum-accent-light: #78350f;
+  --tab-forum-accent-text:  #fde68a;
 }
 
 /* ────────────────────────────────────────────────────────────────
