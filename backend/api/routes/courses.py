@@ -101,7 +101,7 @@ async def search(
             return cached
 
         # ── Call the search_courses RPC ────────────────────────────────────────
-        response = supabase.rpc(
+        rpc_result = supabase.rpc(
             "search_courses",
             {
                 "p_query":   clean_query,
@@ -110,7 +110,7 @@ async def search(
             },
         ).execute()
 
-        rows = response.data or []
+        rows = rpc_result.data or []
 
         # Map RPC rows → response shape expected by the frontend
         result_courses = []
