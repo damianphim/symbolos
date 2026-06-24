@@ -1,16 +1,15 @@
 # Symbolos — robots.txt
-# https://ai-advisor-pi.vercel.app
+# https://symbolos.ca
 
 User-agent: *
 
-# Allow the login / landing page to be indexed
+# Allow the landing page to be indexed
 Allow: /
 
-# Block any internal app routes from being indexed.
-# These are behind auth anyway, but this prevents crawlers from wasting
-# time on pages they can't access.
+# Block authenticated app routes — crawlers can't access them anyway
+# but this avoids wasted crawl budget.
 Disallow: /dashboard
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://ai-advisor-pi.vercel.app/sitemap.xml
+Sitemap: https://symbolos.ca/sitemap.xml
