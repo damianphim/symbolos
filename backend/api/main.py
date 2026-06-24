@@ -66,7 +66,7 @@ from .routes import (
     chat, courses, users, favorites, completed, notifications,
     current, suggestions, cards, transcript, degree_requirements,
     electives, clubs, syllabus, professors, admin, newsletters, forum,
-    verification, webhooks, feedback, course_allocations,
+    verification, webhooks, feedback, course_allocations, jobs,
 )
 
 logger = setup_logging()
@@ -384,6 +384,9 @@ async def rate_limit_middleware(request: Request, call_next):
         or "/syllabus/parse"      in normalised_path
     ):
         rpm = settings.CLAUDE_RATE_LIMIT_PER_MINUTE
+    elif "/inngest" in normalised_path:
+        # Inngest callback — verified by HMAC signature, not rate-limited
+        return await call_next(request)
     elif "/auth/check-verified" in normalised_path or "/auth/verify-email" in normalised_path:
         # Unauthenticated verification endpoints: tighter limit to block UUID
         # enumeration. Legitimate polling is every 3 s (~20/min), so 20 rpm
@@ -462,6 +465,14 @@ app.include_router(verification.router,        prefix=f"{settings.API_PREFIX}/au
 app.include_router(webhooks.router,             prefix=f"{settings.API_PREFIX}/webhooks",            tags=["Webhooks"])
 app.include_router(feedback.router,             prefix=f"{settings.API_PREFIX}/feedback",            tags=["Feedback"])
 app.include_router(course_allocations.router,   prefix=f"{settings.API_PREFIX}/users",               tags=["Course Allocations"])
+app.include_router(jobs.router,                 prefix=f"{settings.API_PREFIX}/jobs",                tags=["Jobs"])
+
+# ── Inngest serve endpoint ───────────────────────────────────────────────────
+# Registers /api/inngest so Inngest can call back our background functions.
+# Must come after all routers are included.
+from .inngest_app import inngest_client, INNGEST_FUNCTIONS
+import inngest.fast_api
+inngest.fast_api.serve(app, inngest_client, INNGEST_FUNCTIONS)
 
 
 @app.get("/")

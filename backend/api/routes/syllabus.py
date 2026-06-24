@@ -7,18 +7,23 @@ then populates calendar_events and enriches current_courses.
 
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Request
+from fastapi.responses import JSONResponse
 from typing import List, Optional
 import anthropic
 import base64
 import logging
 import json
 import re
+import uuid
 from datetime import date, datetime, timedelta  # FIX #2: import timedelta directly
 
 from difflib import SequenceMatcher
 
+import inngest
+
 from ..routes.professors import _escape_like
 from ..utils.supabase_client import get_supabase, get_user_by_id
+from ..utils.jobs import create_job
 from ..exceptions import UserNotFoundException
 from ..config import settings
 from ..auth import get_current_user_id, require_self, get_user_db
@@ -337,6 +342,258 @@ def _next_weekday_date(day_name: str, term: str, year: int) -> Optional[str]:
     return result_date.isoformat()
 
 
+# ── Persist helper (called by the Inngest background job) ────────────────────
+
+def _persist_syllabus_result(user_id: str, filename: str, extracted: dict, supabase) -> dict:
+    """Save extracted syllabus data to the DB. Returns the per-file result dict."""
+    result = {
+        "filename": filename,
+        "success": True,
+        "saved": True,
+        "course_code": extracted.get("course_code"),
+        "course_title": extracted.get("course_title"),
+        "section": extracted.get("section"),
+        "term": extracted.get("term"),
+        "year": extracted.get("year"),
+        "instructor_name": extracted.get("instructor", {}).get("name"),
+        "instructor_email": extracted.get("instructor", {}).get("email"),
+        "schedule": extracted.get("schedule") or [],
+        "calendar_events_added": 0,
+        "current_course_updated": False,
+        "rmp_data": None,
+    }
+
+    raw_code = extracted.get("course_code") or ""
+    course_code = normalize_course_code(raw_code) if raw_code else ""
+    result["course_code"] = course_code or None
+
+    course_title = extracted.get("course_title") or course_code
+    term = extracted.get("term") or "Winter"
+    year = extracted.get("year") or date.today().year
+    instructor = extracted.get("instructor") or {}
+    schedule_slots = extracted.get("schedule") or []
+    assessments = extracted.get("assessments") or []
+
+    # ── RMP lookup ────────────────────────────────────────────────────────────
+    instr_name = instructor.get("name")
+    if instr_name:
+        try:
+            parts = instr_name.split()
+            last_name = parts[-1] if parts else instr_name
+            subject_hint = course_code.split()[0] if course_code and " " in course_code else None
+
+            rmp_qb = supabase.from_("courses").select(
+                'instructor, rmp_rating, rmp_difficulty, rmp_num_ratings, rmp_would_take_again, rmp_url'
+            ).ilike("instructor", f"%{_escape_like(last_name)}%").not_.is_("rmp_rating", "null")
+            if subject_hint:
+                rmp_qb = rmp_qb.like("Course", f"{_escape_like(subject_hint)}%")
+            rmp_rows = (rmp_qb.limit(100).execute().data) or []
+
+            best_row, best_score = None, 0.0
+            for rrow in rmp_rows:
+                if not rrow.get("rmp_rating"):
+                    continue
+                score = SequenceMatcher(None, instr_name.lower(), (rrow.get("instructor") or "").lower()).ratio()
+                if score > best_score:
+                    best_score, best_row = score, rrow
+
+            if best_row and best_score >= 0.60:
+                result["rmp_data"] = {
+                    "avg_rating":               best_row.get("rmp_rating"),
+                    "avg_difficulty":           best_row.get("rmp_difficulty"),
+                    "num_ratings":              int(best_row.get("rmp_num_ratings") or 0),
+                    "would_take_again_percent": (
+                        round(float(best_row["rmp_would_take_again"]))
+                        if best_row.get("rmp_would_take_again") is not None else None
+                    ),
+                    "rmp_url": best_row.get("rmp_url"),
+                    "match_score": round(best_score, 3),
+                }
+        except Exception as rmp_err:
+            logger.warning("RMP lookup failed for '%s': %s", instr_name, rmp_err)
+
+    # ── Enrich current_courses ────────────────────────────────────────────────
+    if course_code:
+        try:
+            if schedule_slots:
+                day_parts, seen = [], set()
+                for slot in schedule_slots:
+                    d = _day_abbrev(slot.get("day", ""))
+                    if d not in seen:
+                        day_parts.append(d); seen.add(d)
+                days_str = "/".join(day_parts)
+                first = schedule_slots[0]
+                time_str = f"{first.get('start_time', '')}–{first.get('end_time', '')}"
+                loc_str = first.get("location") or ""
+                schedule_str = f"{days_str} {time_str} {loc_str}".strip()
+            else:
+                schedule_str = None
+
+            updates: dict = {}
+            if instructor.get("name"):     updates["professor"]       = instructor["name"]
+            if schedule_str:               updates["schedule"]         = schedule_str
+            if instructor.get("email"):    updates["professor_email"]  = instructor["email"]
+            if instructor.get("office"):   updates["professor_office"] = instructor["office"]
+            if schedule_slots and schedule_slots[0].get("location"):
+                updates["room"] = schedule_slots[0]["location"]
+
+            if updates:
+                res = supabase.table("current_courses") \
+                    .update(updates) \
+                    .eq("user_id", user_id) \
+                    .eq("course_code", course_code) \
+                    .execute()
+                if res.data:
+                    result["current_course_updated"] = True
+        except Exception as e:
+            logger.warning("Could not update current_courses for %s: %s", course_code, e)
+
+    # ── Delete stale academic events then bulk-insert fresh ones ─────────────
+    if course_code:
+        try:
+            supabase.table("calendar_events") \
+                .delete() \
+                .eq("user_id", user_id) \
+                .eq("course_code", course_code) \
+                .eq("type", "academic") \
+                .execute()
+        except Exception as e:
+            logger.warning("Could not clear events for %s: %s", course_code, e)
+
+    calendar_rows: list[dict] = []
+    for slot in schedule_slots:
+        slot_date = _next_weekday_date(slot.get("day", ""), term, year)
+        if not slot_date:
+            continue
+        start_time = _normalize_time(slot.get("start_time"))
+        end_time   = _normalize_time(slot.get("end_time"))
+        location   = slot.get("location") or ""
+        slot_type  = slot.get("type") or "Lecture"
+        calendar_rows.append({
+            "user_id": user_id,
+            "title": f"{course_code} {slot_type}",
+            "date": slot_date, "time": start_time, "end_time": end_time,
+            "type": "academic", "category": course_code,
+            "description": (
+                f"{course_title}\nEvery {slot.get('day')} {start_time}–{end_time}\n"
+                f"Location: {location}\nInstructor: {instructor.get('name') or 'TBD'}"
+            ),
+            "location": location or None, "course_code": course_code,
+            "recurrence": f"weekly_{slot.get('day', '').lower()}",
+            "notify_enabled": False, "notify_email": False, "notify_sms": False,
+            "notify_email_addr": None, "notify_phone": None,
+            "notify_same_day": False, "notify_1day": False, "notify_7days": False,
+        })
+
+    for assessment in assessments:
+        event_date = assessment.get("date") or assessment.get("due_date")
+        if not event_date:
+            continue
+        a_type    = assessment.get("type", "other")
+        a_title   = assessment.get("title") or a_type.capitalize()
+        a_time    = _normalize_time(assessment.get("time"))
+        a_location = assessment.get("location") or ""
+        a_weight   = assessment.get("weight")
+        is_exam    = a_type in ("midterm", "final", "quiz")
+        weight_str = f" ({a_weight}%)" if a_weight else ""
+        desc_parts = [f"{course_code} — {a_title}{weight_str}"]
+        if assessment.get("description"): desc_parts.append(assessment["description"])
+        if a_location:                    desc_parts.append(f"Location: {a_location}")
+        calendar_rows.append({
+            "user_id": user_id,
+            "title": f"{course_code} — {a_title}",
+            "date": event_date, "time": a_time,
+            "type": "academic",
+            "category": f"{course_code} · {'Exam' if is_exam else 'Assignment'}",
+            "description": "\n".join(desc_parts),
+            "location": a_location or None, "course_code": course_code,
+            "notify_enabled": True, "notify_email": True, "notify_sms": False,
+            "notify_email_addr": None, "notify_phone": None,
+            "notify_same_day": False, "notify_1day": True, "notify_7days": True,
+        })
+
+    oh_rows: list[dict] = []
+    for oh in (instructor.get("office_hours") or []):
+        oh_date = _next_weekday_date(oh.get("day", ""), term, year)
+        if not oh_date:
+            continue
+        oh_rows.append({
+            "user_id": user_id,
+            "title": f"{course_code} Office Hours — {instructor.get('name') or 'Instructor'}",
+            "date": oh_date,
+            "time": _normalize_time(oh.get("start_time")),
+            "end_time": _normalize_time(oh.get("end_time")),
+            "type": "personal", "category": course_code,
+            "description": (
+                f"Office hours for {course_code}\nInstructor: {instructor.get('name') or 'TBD'}\n"
+                f"Location: {oh.get('location') or instructor.get('office') or 'TBD'}\n"
+                f"Every {oh.get('day')} {oh.get('start_time')}–{oh.get('end_time')}"
+            ),
+            "location": oh.get("location") or instructor.get("office") or None,
+            "course_code": course_code,
+            "recurrence": f"weekly_{oh.get('day', '').lower()}",
+            "notify_enabled": False, "notify_email": False, "notify_sms": False,
+            "notify_email_addr": None, "notify_phone": None,
+            "notify_same_day": False, "notify_1day": False, "notify_7days": False,
+        })
+
+    for rows, label in [(calendar_rows, "academic"), (oh_rows, "office hours")]:
+        if not rows:
+            continue
+        try:
+            supabase.table("calendar_events").insert(rows).execute()
+            result["calendar_events_added"] += len(rows)
+        except Exception as e:
+            logger.warning("Bulk insert of %s events failed for %s: %s", label, course_code, e)
+            for row in rows:
+                try:
+                    supabase.table("calendar_events").insert(row).execute()
+                    result["calendar_events_added"] += 1
+                except Exception as row_err:
+                    logger.warning("Could not save event '%s': %s", row.get("title"), row_err)
+
+    # ── Queue notifications for assessment events ─────────────────────────────
+    try:
+        user_row = supabase.table("users").select("email").eq("id", user_id).execute()
+        user_email = user_row.data[0].get("email") if user_row.data else None
+        if user_email and course_code:
+            notif_events = (
+                supabase.table("calendar_events")
+                .select("id, title, date, time, type, notify_enabled, notify_email, notify_sms, notify_same_day, notify_1day, notify_7days")
+                .eq("user_id", user_id).eq("course_code", course_code).eq("notify_enabled", True)
+                .execute()
+            )
+            today_str = date.today().isoformat()
+            notif_rows = []
+            for ev in (notif_events.data or []):
+                if not ev.get("date") or ev["date"] < today_str:
+                    continue
+                ev_date = date.fromisoformat(ev["date"])
+                offsets = []
+                if ev.get("notify_7days"): offsets.append(7)
+                if ev.get("notify_1day"):  offsets.append(1)
+                if ev.get("notify_same_day"): offsets.append(0)
+                for days_before in offsets:
+                    send_on = ev_date - timedelta(days=days_before)
+                    if send_on >= date.today():
+                        notif_rows.append({
+                            "user_id": user_id, "event_id": ev["id"],
+                            "event_title": ev["title"], "event_type": ev.get("type", "academic"),
+                            "send_on": send_on.isoformat(), "method": "email",
+                            "email": user_email, "phone": None, "sent": False,
+                        })
+            if notif_rows:
+                supabase.table("notification_queue").insert(notif_rows).execute()
+    except Exception as notif_err:
+        logger.warning("Could not queue notifications for %s: %s", course_code, notif_err)
+
+    logger.info(
+        "Syllabus import user=%s course=%s events=%d course_updated=%s",
+        user_id, course_code, result["calendar_events_added"], result["current_course_updated"]
+    )
+    return result
+
+
 # ── Route ──────────────────────────────────────────────────────────────────────
 
 @router.post("/parse/{user_id}")
@@ -373,92 +630,81 @@ async def parse_syllabuses(
             detail=f"Too many files. Maximum {MAX_SYLLABUS_FILES} syllabuses per upload.",
         )
 
-    supabase = user_sb
-    all_results = []
+    job_id = str(uuid.uuid4())
+    storage = get_supabase().storage.from_("job-uploads")
+    storage_paths: list[str] = []
+    filenames: list[str] = []
+    validation_errors: list[dict] = []
 
-    for upload in files:
-        if not upload.filename.lower().endswith(".pdf"):
-            all_results.append({
-                "filename": upload.filename,
+    for i, upload in enumerate(files):
+        filename = upload.filename or f"syllabus_{i}.pdf"
+
+        if not filename.lower().endswith(".pdf"):
+            validation_errors.append({
+                "filename": filename,
                 "success": False,
                 "error": "Only PDF files are accepted",
             })
             continue
 
-        # F-06: Check Content-Length header before reading to avoid allocating
-        # memory for oversized uploads (header is advisory, full read still authoritative).
         cl = upload.headers.get("content-length") if hasattr(upload, "headers") else None
         if cl:
             try:
                 if int(cl) > 15 * 1024 * 1024:
-                    all_results.append({
-                        "filename": upload.filename,
-                        "success": False,
-                        "error": "File too large (max 15MB)",
-                    })
+                    validation_errors.append({"filename": filename, "success": False, "error": "File too large (max 15MB)"})
                     continue
             except (ValueError, TypeError):
-                pass  # malformed header — let the authoritative size check below decide
+                pass
 
         pdf_bytes = await upload.read()
         if len(pdf_bytes) > 15 * 1024 * 1024:
-            all_results.append({
-                "filename": upload.filename,
-                "success": False,
-                "error": "File too large (max 15MB)",
-            })
+            validation_errors.append({"filename": filename, "success": False, "error": "File too large (max 15MB)"})
             continue
 
-        # FIX F-07: Validate magic bytes before sending to Claude
         if len(pdf_bytes) < 4 or pdf_bytes[:4] != PDF_MAGIC:
-            all_results.append({
-                "filename": upload.filename,
-                "success": False,
-                "error": "File does not appear to be a valid PDF",
-            })
+            validation_errors.append({"filename": filename, "success": False, "error": "File does not appear to be a valid PDF"})
             continue
 
-        # SEC-025: Structural PDF validation — verify trailer markers
         tail = pdf_bytes[-1024:] if len(pdf_bytes) > 1024 else pdf_bytes
         if b"%%EOF" not in tail or (b"startxref" not in tail and b"xref" not in pdf_bytes):
-            all_results.append({
-                "filename": upload.filename,
-                "success": False,
-                "error": "File does not appear to be a valid PDF",
-            })
+            validation_errors.append({"filename": filename, "success": False, "error": "File does not appear to be a valid PDF"})
             continue
 
-        try:
-            extracted = await _extract_syllabus_data(pdf_bytes)
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from Claude for {upload.filename}: {type(e).__name__}")
-            all_results.append({
-                "filename": upload.filename,
-                "success": False,
-                "error": "Failed to parse syllabus — Claude returned invalid data.",
-            })
-            continue
-        except Exception as e:
-            logger.exception(f"Extraction failed for {upload.filename}: {e}")
-            all_results.append({
-                "filename": upload.filename,
-                "success": False,
-                "error": "Extraction failed. Please try again.",
-            })
-            continue
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", filename)
+        storage_path = f"{job_id}/{i}_{safe_name}"
+        storage.upload(storage_path, pdf_bytes, file_options={"content-type": "application/pdf"})
+        storage_paths.append(storage_path)
+        filenames.append(filename)
 
-        if is_dry_run:
-            all_results.append({
-                "filename": upload.filename,
-                "success": True,
-                "parsed": extracted,
-                "saved": False,
-            })
-            continue
+    if not storage_paths and validation_errors:
+        # All files failed validation — return errors synchronously, no job needed
+        return {
+            "results": validation_errors,
+            "total_files": len(files),
+            "total_events_added": 0,
+            "total_courses_updated": 0,
+        }
 
-        # ── Persist ──────────────────────────────────────────────────────────
+    create_job(job_id, user_id, "syllabus", dry_run=is_dry_run)
+
+    from ..inngest_app import inngest_client
+    await inngest_client.send(inngest.Event(
+        name="syllabus/process",
+        data={
+            "job_id": job_id,
+            "user_id": user_id,
+            "storage_paths": storage_paths,
+            "filenames": filenames,
+            "validation_errors": validation_errors,
+            "dry_run": is_dry_run,
+        },
+    ))
+
+    return JSONResponse({"job_id": job_id, "status": "pending"}, status_code=202)
+
+    if False:  # pragma: no cover  (dead — prevents linter unused-var warnings)
         result = {
-            "filename": upload.filename,
+            "filename": "",
             "success": True,
             "saved": True,
             "course_code": extracted.get("course_code"),

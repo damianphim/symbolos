@@ -21,6 +21,19 @@ import './ProfileSetup.css'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const BASE_URL = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '')
 
+async function pollJob(jobId, getHeaders, maxWaitMs = 5 * 60 * 1000) {
+  const start = Date.now()
+  while (Date.now() - start < maxWaitMs) {
+    await new Promise(r => setTimeout(r, 2000))
+    const r = await fetch(`${BASE_URL}/api/jobs/${jobId}`, { headers: await getHeaders() })
+    if (!r.ok) throw new Error(`Poll failed (${r.status})`)
+    const job = await r.json()
+    if (job.status === 'done') return job
+    if (job.status === 'failed') throw new Error(job.error || 'Processing failed')
+  }
+  throw new Error('Processing timed out. Please try again.')
+}
+
 export default function ProfileSetup() {
   const { user, completeOnboarding } = useAuth()
   const { t, language, setLanguage } = useLanguage()
@@ -95,7 +108,14 @@ export default function ProfileSetup() {
         throw new Error(data.detail || `Upload failed (${res.status})`)
       }
       const data = await res.json()
-      setTxResults(data.results)
+      if (res.status === 202 && data.job_id) {
+        // Async path — poll until Inngest job completes
+        const job = await pollJob(data.job_id, getAuthHeaders)
+        setTxResults(job.result?.results || job.result || {})
+      } else {
+        // Legacy sync path (fallback)
+        setTxResults(data.results)
+      }
       setTxStep('done')
     } catch (err) {
       setTxError(err.message)
@@ -143,7 +163,14 @@ export default function ProfileSetup() {
         throw new Error(data.detail || `Upload failed (${res.status})`)
       }
       const data = await res.json()
-      setSylResults(data)
+      if (res.status === 202 && data.job_id) {
+        // Async path — poll until Inngest job completes
+        const job = await pollJob(data.job_id, getAuthHeaders)
+        setSylResults(job.result || {})
+      } else {
+        // Legacy sync path / all-validation-error fast path
+        setSylResults(data)
+      }
       setSylStep('done')
     } catch (err) {
       setSylError(err.message)

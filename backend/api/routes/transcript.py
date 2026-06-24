@@ -4,6 +4,7 @@ Parse a McGill unofficial transcript PDF using Claude,
 then bulk-import completed + current courses and update the user profile.
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Request
+from fastapi.responses import JSONResponse
 from typing import Optional
 import anthropic
 import asyncio
@@ -11,9 +12,13 @@ import base64
 import logging
 import re
 import json
+import uuid
+
+import inngest
 
 from ..utils.supabase_client import get_supabase, get_user_by_id, update_user
 from ..utils.audit import log_access
+from ..utils.jobs import create_job
 from ..exceptions import UserNotFoundException
 from ..config import settings
 from ..auth import get_current_user_id, require_self, get_user_db
@@ -331,43 +336,44 @@ async def parse_transcript(
         raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
 
     # SEC-025: Structural PDF validation — verify the file has a valid PDF trailer.
-    # Magic bytes alone can be faked; a real PDF must contain a %%EOF marker and
-    # at least one xref or startxref reference.
     tail = pdf_bytes[-1024:] if len(pdf_bytes) > 1024 else pdf_bytes
     if b"%%EOF" not in tail:
         raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
     if b"startxref" not in tail and b"xref" not in pdf_bytes:
         raise HTTPException(status_code=422, detail="File does not appear to be a valid PDF")
 
+    # ── Async path: store PDF → create job → enqueue Inngest event → 202 ──────
+    job_id = str(uuid.uuid4())
+    safe_filename = re.sub(r"[^a-zA-Z0-9._-]", "_", file.filename or "transcript.pdf")
+    storage_path = f"{job_id}/{safe_filename}"
+
     try:
-        extracted = await extract_transcript_data(pdf_bytes)
-    except json.JSONDecodeError as e:
-        logger.error(f"Claude returned invalid JSON: {e}")
-        raise HTTPException(status_code=500, detail="Failed to parse transcript — Claude returned invalid data. Please try again.")
-    except Exception as e:
-        logger.exception(f"Transcript extraction failed: {e}")
-        raise HTTPException(status_code=500, detail="Transcript extraction failed. Please try again.")
+        get_supabase().storage.from_("job-uploads").upload(
+            storage_path,
+            pdf_bytes,
+            file_options={"content-type": "application/pdf"},
+        )
+    except Exception as exc:
+        logger.exception("Failed to store transcript PDF for job %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to store uploaded file. Please try again.")
 
-    # Normalize course codes
-    for course in extracted.get("completed_courses", []):
-        if course.get("course_code"):
-            course["course_code"] = normalize_course_code(course["course_code"])
-    for course in extracted.get("current_courses", []):
-        if course.get("course_code"):
-            course["course_code"] = normalize_course_code(course["course_code"])
-    for course in (extracted.get("student_info") or {}).get("advanced_standing", []):
-        if course.get("course_code"):
-            course["course_code"] = normalize_course_code(course["course_code"])
+    create_job(job_id, user_id, "transcript", dry_run=is_dry_run)
 
-    # Dedupe extracted lists BEFORE returning so the preview matches what will be imported.
-    _dedupe_extracted(extracted)
+    from ..inngest_app import inngest_client
+    await inngest_client.send(
+        inngest.Event(
+            name="transcript/process",
+            data={
+                "job_id":       job_id,
+                "user_id":      user_id,
+                "storage_path": storage_path,
+                "dry_run":      is_dry_run,
+            },
+        )
+    )
 
-    if is_dry_run:
-        return {"parsed": extracted, "saved": False}
-
-    # Non-dry-run: persist the extracted data
-    results = _persist_transcript_data(user_id, extracted, user_sb=user_sb)
-    return {"results": results, "saved": True}
+    logger.info("Transcript job %s queued for user %s", job_id, user_id)
+    return JSONResponse({"job_id": job_id, "status": "pending"}, status_code=202)
 
 
 # ── Persist helper (shared by parse and import endpoints) ────────────────────
