@@ -14,7 +14,7 @@
   "dependencies": {
     "@sentry/react": "^8.45.1",
     "@supabase/supabase-js": "^2.87.1",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "axios": "^1.13.2",
     "posthog-js": "^1.205.0",
     "react": "^19.2.0",
