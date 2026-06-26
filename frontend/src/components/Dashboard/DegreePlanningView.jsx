@@ -268,40 +268,9 @@ function CourseRow({ course, onClick, actions }) {
 
 // ── Electives Panel ────────────────────────────────────────────────────────────
 function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramData, courseAllocations, assignCourse }) {
-  const { t } = useLanguage()
   const { openCourse } = useCourseDetail()
-  // Elective recs are cached in localStorage with a 24h TTL keyed by user.
-  // On mount we hydrate from cache so the section renders instantly on
-  // subsequent visits — the user can still hit "Refresh" to regenerate.
-  const RECS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-  const _recsCacheKey = profile?.id ? `elective_recs_${profile.id}` : null
+  const [assignedNote, setAssignedNote] = useState(null)
 
-  const _loadCachedRecs = () => {
-    if (!_recsCacheKey) return null
-    try {
-      const raw = localStorage.getItem(_recsCacheKey)
-      if (!raw) return null
-      const { data, ts } = JSON.parse(raw)
-      if (!data || !ts) return null
-      // eslint-disable-next-line react-hooks/purity
-      if (Date.now() - ts > RECS_CACHE_TTL_MS) return null
-      return data
-    } catch { return null }
-  }
-
-  // Hydrate from cache on first render so the recs panel can show its
-  // previous output instantly instead of forcing the user to hit "Generate"
-  // every visit (which also burned an Anthropic call each time).
-  // eslint-disable-next-line react-hooks/purity
-  const _initialCached = _loadCachedRecs()
-  const [recs, setRecs]           = useState(() => _initialCached)
-  const [recsLoading, setRecsLoading] = useState(false)
-  const [recsError, setRecsError] = useState(null)
-  const [showRecs, setShowRecs]   = useState(() => !!_initialCached)
-  const hasLoaded                 = useRef(!!_initialCached)
-  const [assignedNote, setAssignedNote] = useState(null) // show warning when user assigns an elective
-
-  // Build a set of ALL course codes that count toward ANY major or minor
   const requiredCodes = useMemo(() => {
     const codes = new Set()
     allProgramData.forEach(prog => {
@@ -312,9 +281,6 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
     return codes
   }, [allProgramData])
 
-  // Wildcard bands across all programs — a user course that satisfies one of
-  // these (via blockWildcardMatches) counts toward a program, so it's NOT an
-  // elective. Collect every program's blocks; we test membership per-course.
   const wildcardAllBlocks = useMemo(() => {
     const blocks = []
     allProgramData.forEach(prog => prog?.blocks?.forEach(b => blocks.push(b)))
@@ -329,7 +295,6 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
     }
   }
 
-  // Find courses the user has taken that don't go toward any major/minor
   const electiveCourses = useMemo(() => {
     const advancedStanding = profile?.advanced_standing || []
     const allTaken = [
@@ -351,9 +316,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
       if (!c.subject || !c.catalog) return false
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
       if (requiredCodes.has(key)) return false
-      if (courseAllocations[key]) return false // manually assigned to a program
-      // Satisfies a wildcard placeholder / null-catalog / min_level band in
-      // ANY program → it's counting there, so it's not an elective.
+      if (courseAllocations[key]) return false
       for (const b of wildcardAllBlocks) {
         if (blockWildcardMatches(b, [c]).length > 0) return false
       }
@@ -361,13 +324,123 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
     })
   }, [completedCourses, currentCourses, profile, requiredCodes, wildcardAllBlocks, courseAllocations])
 
+  const SOURCE_LABELS = { completed: 'Done', current: 'Taking', transfer: 'Transfer' }
+  const SOURCE_COLORS = {
+    completed: { bg: '#f0fdf4', color: '#15803d' },
+    current:   { bg: '#eff6ff', color: '#1d4ed8' },
+    transfer:  { bg: '#fef9c3', color: '#92400e' },
+  }
+
+  return (
+    <div className="dp-electives">
+      <div className="dp-electives-header">
+        <div className="dp-electives-title-row">
+          <span className="dp-electives-spark"><FaBook /></span>
+          <div>
+            <h3 className="dp-electives-title">My Elective Courses</h3>
+            <p className="dp-electives-sub">
+              Courses you've taken that don't count toward{' '}
+              {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
+              {(profile?.major || profile?.minor) && ' Majors/Minors'}
+            </p>
+          </div>
+        </div>
+        <span className="dp-electives-badge">{electiveCourses.length}</span>
+      </div>
+
+      {electiveCourses.length === 0 ? (
+        <div className="dp-electives-empty">
+          <span style={{ fontSize: '2rem', opacity: 0.3 }}><FaGraduationCap /></span>
+          <p>No elective courses found yet.</p>
+          <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+            Courses you complete outside your major &amp; minor requirements will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="dp-electives-grid">
+          {electiveCourses.map((c, i) => {
+            const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
+            return (
+              <div key={i} className="dp-elective-card dp-elective-card--taken" onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
+                <div className="dp-elective-top">
+                  <span className="dp-elective-code">{c.subject} {c.catalog}</span>
+                  <span className="dp-elective-cat" style={{ background: srcStyle.bg, color: srcStyle.color }}>
+                    {SOURCE_LABELS[c._source] || 'Done'}
+                  </span>
+                </div>
+                <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
+                <div className="dp-elective-assign">
+                  <select
+                    className="dp-elective-assign-select"
+                    value={courseAllocations[`${c.subject} ${c.catalog}`.toUpperCase()] || ''}
+                    onChange={e => handleAssign(`${c.subject} ${c.catalog}`.toUpperCase(), e.target.value)}
+                  >
+                    <option value="">Count toward...</option>
+                    {allProgramData.map(prog => prog && (
+                      <option key={prog.program_key} value={prog.program_key}>
+                        {prog.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || prog.program_key}
+                      </option>
+                    ))}
+                  </select>
+                  {assignedNote === `${c.subject} ${c.catalog}`.toUpperCase() && (
+                    <p className="dp-elective-assign-note"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Double-check with your academic advisor whether this course actually counts toward this program.</p>
+                  )}
+                </div>
+                {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Recommendations Panel ─────────────────────────────────────────────────────
+function RecommendationsPanel({ profile, completedCourses, currentCourses, allProgramData }) {
+  const { t } = useLanguage()
+  const { openCourse } = useCourseDetail()
+
+  const RECS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+  const _recsCacheKey = profile?.id ? `elective_recs_${profile.id}` : null
+
+  const _loadCachedRecs = () => {
+    if (!_recsCacheKey) return null
+    try {
+      const raw = localStorage.getItem(_recsCacheKey)
+      if (!raw) return null
+      const { data, ts } = JSON.parse(raw)
+      if (!data || !ts) return null
+      // eslint-disable-next-line react-hooks/purity
+      if (Date.now() - ts > RECS_CACHE_TTL_MS) return null
+      return data
+    } catch { return null }
+  }
+
+  const _initialCached = _loadCachedRecs()
+  const [recs, setRecs]               = useState(() => _initialCached)
+  const [recsLoading, setRecsLoading] = useState(false)
+  const [recsError, setRecsError]     = useState(null)
+  const [showRecs, setShowRecs]       = useState(() => !!_initialCached)
+  const hasLoaded                     = useRef(!!_initialCached)
+
+  const requiredCodes = useMemo(() => {
+    const codes = new Set()
+    allProgramData.forEach(prog => {
+      prog?.blocks?.forEach(b => b.courses?.forEach(c => {
+        if (c.catalog) codes.add(`${c.subject} ${c.catalog}`.toUpperCase())
+      }))
+    })
+    return codes
+  }, [allProgramData])
+
   const _recsRateLimited = () => {
     const key = 'elective_recs_timestamps'
     const now = Date.now()
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000
     try {
-      const stamps = JSON.parse(localStorage.getItem(key) || '[]').filter(t => t > weekAgo)
-      if (stamps.length >= 2) return true // max 2 per week
+      const stamps = JSON.parse(localStorage.getItem(key) || '[]').filter(ts => ts > weekAgo)
+      if (stamps.length >= 2) return true
       stamps.push(now)
       localStorage.setItem(key, JSON.stringify(stamps))
       return false
@@ -376,27 +449,20 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
 
   const generateRecs = async (skipRateLimit = false) => {
     if (!skipRateLimit && _recsRateLimited()) {
-      setRecsError('You can refresh elective suggestions up to 2 times per week. Try again later.')
+      setRecsError('You can refresh suggestions up to 2 times per week. Try again later.')
       return
     }
     setRecsLoading(true)
     setRecsError(null)
     try {
       const advancedStanding = profile?.advanced_standing || []
-      const allCourses = [...completedCourses, ...currentCourses]
       const coursesTaken = [
-        ...allCourses
+        ...[...completedCourses, ...currentCourses]
           .filter(c => c.subject && c.catalog)
           .map(c => `${c.subject} ${c.catalog}`.trim()),
-        ...advancedStanding
-          .filter(t => t.course_code)
-          .map(t => t.course_code.trim()),
+        ...advancedStanding.filter(t => t.course_code).map(t => t.course_code.trim()),
       ].filter(Boolean)
 
-      const excludeCourses = Array.from(requiredCodes)
-
-      // Pull recently-recommended courses from localStorage so the AI doesn't
-      // repeat them on refresh. Keep a rolling window of the last ~32 codes.
       const recentKey = profile?.id ? `electives_recent_${profile.id}` : 'electives_recent'
       let recentlyRecommended = []
       try {
@@ -410,49 +476,36 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
 
       const res = await fetch(`${API_BASE}/api/electives/recommend`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
-          major:                profile?.major        || null,
-          minor:                profile?.minor        || null,
-          concentration:        profile?.concentration|| null,
+          major:                profile?.major         || null,
+          minor:                profile?.minor         || null,
+          concentration:        profile?.concentration || null,
           year:                 (profile?.year >= 0 && profile?.year <= 10) ? profile.year : null,
-          interests:            profile?.interests    || null,
+          interests:            profile?.interests     || null,
           courses_taken:        coursesTaken,
-          exclude_courses:      excludeCourses,
+          exclude_courses:      Array.from(requiredCodes),
           recently_recommended: recentlyRecommended.slice(0, 32),
-        })
+        }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       if (!data.success) throw new Error(data.detail || 'Failed')
       setRecs(data.data)
 
-      // Persist the result so the user doesn't see this section regenerate
-      // on every page visit. 24h TTL; the Refresh button bypasses it.
       try {
-        if (_recsCacheKey) {
-          localStorage.setItem(_recsCacheKey, JSON.stringify({ data: data.data, ts: Date.now() }))
-        }
-      } catch { /* localStorage full or unavailable */ }
+        if (_recsCacheKey) localStorage.setItem(_recsCacheKey, JSON.stringify({ data: data.data, ts: Date.now() }))
+      } catch { /* ignore */ }
 
-      // Append the new recommendations to the recent list (keep last 32 unique)
       try {
         const newCodes = (data.data?.recommendations || [])
-          .map(r => `${r.subject || ''} ${r.catalog || ''}`.trim())
-          .filter(Boolean)
-        const merged = [...newCodes, ...recentlyRecommended]
+          .map(r => `${r.subject || ''} ${r.catalog || ''}`.trim()).filter(Boolean)
         const seen = new Set()
-        const dedup = merged.filter(c => {
-          const k = c.toUpperCase()
-          if (seen.has(k)) return false
-          seen.add(k)
-          return true
+        const dedup = [...newCodes, ...recentlyRecommended].filter(c => {
+          const k = c.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true
         }).slice(0, 32)
         localStorage.setItem(recentKey, JSON.stringify(dedup))
-      } catch { /* localStorage full or unavailable, ignore */ }
+      } catch { /* ignore */ }
     } catch {
       setRecsError('Could not generate recommendations. Try again.')
     } finally {
@@ -462,12 +515,9 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
 
   const handleShowRecs = () => {
     setShowRecs(true)
-    // Only burn a generation if we don't already have recs (from cache or a
-    // previous call this session). Hitting "↻" still calls generateRecs
-    // directly so manual refresh still works.
     if (!hasLoaded.current && !recs) {
       hasLoaded.current = true
-      generateRecs(true) // initial load doesn't count toward rate limit
+      generateRecs(true)
     }
   }
 
@@ -477,7 +527,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
     if (!hasLoaded.current) return
     if (prevProfileKey.current === profileKey) return
     prevProfileKey.current = profileKey
-    generateRecs(true) // profile change doesn't count toward rate limit
+    generateRecs(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileKey])
 
@@ -489,155 +539,68 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
     'Interest':          { bg: '#fef9c3', color: '#92400e' },
   }
 
-  const SOURCE_LABELS = { completed: 'Done', current: 'Taking', transfer: 'Transfer' }
-  const SOURCE_COLORS = {
-    completed: { bg: '#f0fdf4', color: '#15803d' },
-    current:   { bg: '#eff6ff', color: '#1d4ed8' },
-    transfer:  { bg: '#fef9c3', color: '#92400e' },
-  }
-
   return (
     <div className="dp-electives">
-      {/* ── Left: My Elective Courses ───────────────────── */}
-      <div className="dp-electives-left">
-        <div className="dp-electives-header">
-          <div className="dp-electives-title-row">
-            <span className="dp-electives-spark"><FaBook /></span>
-            <div>
-              <h3 className="dp-electives-title">My Elective Courses</h3>
-              <p className="dp-electives-sub">
-                Courses you've taken that don't count toward{' '}
-                {[profile?.major, profile?.minor].filter(Boolean).join(' or ') || 'your program'}
-                {(profile?.major || profile?.minor) && ' Majors/Minors'}
-              </p>
-            </div>
-          </div>
-          <span className="dp-electives-badge">{electiveCourses.length}</span>
-        </div>
-
-        {electiveCourses.length === 0 ? (
-          <div className="dp-electives-empty">
-            <span style={{ fontSize: '2rem', opacity: 0.3 }}><FaGraduationCap /></span>
-            <p>No elective courses found yet.</p>
-            <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>
-              Courses you complete outside your major &amp; minor requirements will appear here.
+      <div className="dp-electives-recs-section">
+        <div className="dp-electives-recs-header">
+          <span className="dp-electives-spark">✦</span>
+          <div>
+            <h3 className="dp-electives-title">Course Recommendations</h3>
+            <p className="dp-electives-sub">
+              AI picks for {[profile?.major, profile?.minor].filter(Boolean).join(' + ')}
+              {profile?.interests ? ` · ${profile.interests}` : ''}
             </p>
           </div>
-        ) : (
-          <div className="dp-electives-grid dp-electives-grid--single">
-            {electiveCourses.map((c, i) => {
-              const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
-              return (
-                <div key={i} className="dp-elective-card dp-elective-card--taken" onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
-                  <div className="dp-elective-top">
-                    <span className="dp-elective-code">{c.subject} {c.catalog}</span>
-                    <span
-                      className="dp-elective-cat"
-                      style={{ background: srcStyle.bg, color: srcStyle.color }}
-                    >
-                      {SOURCE_LABELS[c._source] || 'Done'}
-                    </span>
-                  </div>
-                  <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
-                  <div className="dp-elective-assign">
-                    <select
-                      className="dp-elective-assign-select"
-                      value={courseAllocations[`${c.subject} ${c.catalog}`.toUpperCase()] || ''}
-                      onChange={e => handleAssign(`${c.subject} ${c.catalog}`.toUpperCase(), e.target.value)}
-                    >
-                      <option value="">Count toward...</option>
-                      {allProgramData.map(prog => prog && (
-                        <option key={prog.program_key} value={prog.program_key}>
-                          {prog.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || prog.program_key}
-                        </option>
-                      ))}
-                    </select>
-                    {assignedNote === `${c.subject} ${c.catalog}`.toUpperCase() && (
-                      <p className="dp-elective-assign-note"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Double-check with your academic advisor whether this course actually counts toward this program.</p>
-                    )}
-                  </div>
-                  {c.credits && <span className="dp-elective-credits">{c.credits} cr</span>}
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Right: AI Recommendations ───────────────────── */}
-      <div className="dp-electives-right">
-        <div className="dp-electives-recs-section">
-          <div className="dp-electives-recs-header">
-            <span className="dp-electives-spark">✦</span>
-            <div>
-              <h3 className="dp-electives-title">Course Recommendations</h3>
-              <p className="dp-electives-sub">
-                AI picks for {[profile?.major, profile?.minor].filter(Boolean).join(' + ')}
-                {profile?.interests ? ` · ${profile.interests}` : ''}
-              </p>
-            </div>
-            {showRecs ? (
-              <button className="dp-electives-refresh" onClick={generateRecs} disabled={recsLoading}>
-                {recsLoading ? '...' : '↻'}
-              </button>
-            ) : (
-              <button className="dp-electives-refresh dp-electives-refresh--generate" onClick={handleShowRecs}>
-                Generate ✦
-              </button>
-            )}
-          </div>
-
-          {showRecs && recsLoading && (
-            <div className="dp-electives-loading">
-              <div className="dp-req-spinner" />
-              <span>{t('dp.generatingRecs')}</span>
-            </div>
-          )}
-
-          {showRecs && recsError && !recsLoading && (
-            <div className="dp-electives-error">
-              {recsError}
-              <button onClick={generateRecs}>{t('dp.retry')}</button>
-            </div>
-          )}
-
-          {showRecs && recs && !recsLoading && (
-            <>
-              {recs.theme && (
-                <p className="dp-electives-theme"><FaLightbulb style={{ marginRight: '5px', verticalAlign: 'middle' }} />{recs.theme}</p>
-              )}
-              <div className="dp-electives-grid dp-electives-grid--single">
-                {recs.recommendations?.map((c, i) => {
-                  const alreadyTaken = [...completedCourses, ...currentCourses].some(uc =>
-                    `${uc.subject} ${uc.catalog}`.toUpperCase() === `${c.subject} ${c.catalog}`.toUpperCase()
-                  )
-                  const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
-                  return (
-                    <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`} onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
-                      <div className="dp-elective-top">
-                        <span className="dp-elective-code">{c.subject} {c.catalog}</span>
-                        <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>
-                          {c.category}
-                        </span>
-                        {alreadyTaken && <span className="dp-elective-taken">✓ {t('dp.statusTaking')}</span>}
-                      </div>
-                      <p className="dp-elective-title">{c.title}</p>
-                      <p className="dp-elective-why">{c.why}</p>
-                      <span className="dp-elective-credits">{c.credits} cr</span>
-                    </div>
-                  )
-                })}
-              </div>
-              <p className="rsb-disclaimer">{t('rsb.disclaimer')}</p>
-            </>
-          )}
-
-          {!showRecs && (
-            <div className="dp-electives-recs-prompt">
-              <p>Get personalized course suggestions based on your program and interests.</p>
-            </div>
+          {showRecs ? (
+            <button className="dp-electives-refresh" onClick={generateRecs} disabled={recsLoading}>
+              {recsLoading ? '...' : '↻'}
+            </button>
+          ) : (
+            <button className="dp-electives-refresh dp-electives-refresh--generate" onClick={handleShowRecs}>
+              Generate ✦
+            </button>
           )}
         </div>
+
+        {showRecs && recsLoading && (
+          <div className="dp-electives-loading"><div className="dp-req-spinner" /><span>{t('dp.generatingRecs')}</span></div>
+        )}
+        {showRecs && recsError && !recsLoading && (
+          <div className="dp-electives-error">{recsError}<button onClick={generateRecs}>{t('dp.retry')}</button></div>
+        )}
+        {showRecs && recs && !recsLoading && (
+          <>
+            {recs.theme && (
+              <p className="dp-electives-theme"><FaLightbulb style={{ marginRight: '5px', verticalAlign: 'middle' }} />{recs.theme}</p>
+            )}
+            <div className="dp-electives-grid">
+              {recs.recommendations?.map((c, i) => {
+                const alreadyTaken = [...completedCourses, ...currentCourses].some(uc =>
+                  `${uc.subject} ${uc.catalog}`.toUpperCase() === `${c.subject} ${c.catalog}`.toUpperCase()
+                )
+                const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
+                return (
+                  <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`} onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
+                    <div className="dp-elective-top">
+                      <span className="dp-elective-code">{c.subject} {c.catalog}</span>
+                      <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>{c.category}</span>
+                      {alreadyTaken && <span className="dp-elective-taken">✓ {t('dp.statusTaking')}</span>}
+                    </div>
+                    <p className="dp-elective-title">{c.title}</p>
+                    <p className="dp-elective-why">{c.why}</p>
+                    <span className="dp-elective-credits">{c.credits} cr</span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="rsb-disclaimer">{t('rsb.disclaimer')}</p>
+          </>
+        )}
+        {!showRecs && (
+          <div className="dp-electives-recs-prompt">
+            <p>Get personalized course suggestions based on your program and interests.</p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1565,6 +1528,12 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
             >
               ✦ Electives
             </button>
+            <button
+              className={`dp-prog-tab ${activeTab === 'recommendations' ? 'dp-prog-tab--active dp-prog-tab--electives' : ''}`}
+              onClick={() => setActiveTab('recommendations')}
+            >
+              ✦ Recommendations
+            </button>
           </div>
 
           {/* Foundation year waived banner */}
@@ -1582,7 +1551,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
           )}
 
           {/* Active program blocks */}
-          {activeTab !== 'electives' && currentTabData && (
+          {activeTab !== 'electives' && activeTab !== 'recommendations' && currentTabData && (
             <ProgramSection
               prog={currentTabData}
               completedCourses={completedCourses}
@@ -1598,7 +1567,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
           )}
 
           {/* Unavailable tab message */}
-          {activeTab !== 'electives' && !currentTabData && currentTabUnavailable && (
+          {activeTab !== 'electives' && activeTab !== 'recommendations' && !currentTabData && currentTabUnavailable && (
             <div className="dp-req-empty" style={{ padding: '1.5rem', textAlign: 'center' }}>
               <p style={{ color: 'var(--text-secondary, #6b7280)', fontSize: '0.9rem', margin: 0 }}>
                 {t('dp.notAvailableShort').replace('{program}', currentTab?.label ?? '')}
@@ -1615,11 +1584,19 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
               profile={profile}
               completedCourses={completedCourses}
               currentCourses={currentCourses}
-              programData={programData}
-              minorData={minorData}
               allProgramData={allProgramDataArray}
               courseAllocations={courseAllocations}
               assignCourse={assignCourse}
+            />
+          </div>
+
+          {/* Recommendations tab — always mounted to preserve state, hidden when inactive */}
+          <div style={{ display: activeTab === 'recommendations' ? 'block' : 'none' }}>
+            <RecommendationsPanel
+              profile={profile}
+              completedCourses={completedCourses}
+              currentCourses={currentCourses}
+              allProgramData={allProgramDataArray}
             />
           </div>
         </div>

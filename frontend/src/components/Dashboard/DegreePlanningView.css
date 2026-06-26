@@ -871,22 +871,9 @@
 
 /* ── Electives Panel ───────────────────────────────────────── */
 .dp-electives {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-
-.dp-electives-left,
-.dp-electives-right {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.dp-electives-right {
-  position: sticky;
-  top: 0;
 }
 
 .dp-electives-header {
@@ -1020,17 +1007,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-}
-.dp-electives-grid--single {
-  grid-template-columns: 1fr;
-}
-@media (max-width: 700px) {
-  .dp-electives {
-    grid-template-columns: 1fr;
-  }
-  .dp-electives-right {
-    position: static;
-  }
 }
 @media (max-width: 640px) {
   .dp-electives-grid { grid-template-columns: 1fr; }
