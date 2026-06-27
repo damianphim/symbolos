@@ -4,13 +4,10 @@
 
 .dp-view {
   width: 100%;
-  max-width: min(900px, calc(100% - var(--rsb-width, 0px)));
-  margin: 0 auto;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Degree Progress card ───────────────────────────── */
