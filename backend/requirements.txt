@@ -14,4 +14,4 @@ python-dotenv==1.2.2
 sentry-sdk[fastapi]==2.64.0
 posthog>=3.5.0
 langfuse>=2.0.0
-inngest>=0.4.0
+inngest>=0.5.19
