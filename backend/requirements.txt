@@ -12,6 +12,6 @@ twilio==9.10.9
 email-validator==2.3.0
 python-dotenv==1.2.2
 sentry-sdk[fastapi]==2.64.0
-posthog>=3.5.0
+posthog>=7.21.2
 langfuse>=2.0.0
 inngest>=0.4.0
