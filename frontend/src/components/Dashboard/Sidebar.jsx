@@ -108,6 +108,7 @@ export default function Sidebar({
               {navItems.map(({ key, icon, label }, index) => (
                 <button
                   key={key}
+                  data-tour={key}
                   className={`nav-item ${activeTab === key ? 'active' : ''}`}
                   onClick={() => onTabChange(key)}
                   style={{ '--nav-index': index }}

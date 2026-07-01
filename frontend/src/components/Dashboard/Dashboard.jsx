@@ -4,7 +4,7 @@ import { coursesAPI } from '../../lib/api'
 import favoritesAPI from '../../lib/favoritesAPI'
 import completedCoursesAPI from '../../lib/completedCoursesAPI'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
-import { getCourseCredits } from '../../utils/courseCredits'
+import { getCourseCredits as _getCourseCredits } from '../../utils/courseCredits'
 import { normalizeQuery, buildCorrectionCandidates } from '../../utils/fuzzySearch'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import cardsAPI from '../../lib/cardsAPI'
@@ -57,7 +57,7 @@ export default function Dashboard() {
   // adding `language` to their dependency arrays (which would cause
   // unnecessary re-creation and effect re-fires on every switch).
   const languageRef = useRef(language)
-  languageRef.current = language
+  useEffect(() => { languageRef.current = language }, [language])
 
   // ── Layout ─────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState(() =>
@@ -76,7 +76,7 @@ export default function Dashboard() {
     }
   })
   useEffect(() => {
-    try { localStorage.setItem('sidebar_open', String(sidebarOpen)) } catch {}
+    try { localStorage.setItem('sidebar_open', String(sidebarOpen)) } catch { /* ignore */ }
   }, [sidebarOpen])
 
   // ── Dynamic browser tab title ────────────────────────
@@ -98,6 +98,10 @@ export default function Dashboard() {
   const [showTutorial, setShowTutorial] = useState(
     () => !!user?.id && !localStorage.getItem(`symbolos_tour_done_${user?.id}`)
   )
+  // Keep sidebar expanded so data-tour targets are in the DOM during the walkthrough
+  useEffect(() => {
+    if (showTutorial) setSidebarOpen(true)
+  }, [showTutorial])
   const [profileImage, setProfileImage] = useState(profile?.profile_image || null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const fileInputRef = useRef(null)
@@ -291,7 +295,7 @@ export default function Dashboard() {
               setAdvisorCards(cards)
               setCardsGeneratedAt(data.generated_at || null)
               _cacheCards(cards, data.generated_at, confirmedLang)
-              try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
+              try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch { /* ignore */ }
             }).catch(() => {})
           }
         },
@@ -363,7 +367,7 @@ export default function Dashboard() {
               setAdvisorCards(retranslated.cards)
               _cacheCards(retranslated.cards, retranslated.generated_at, currentLang)
               // retranslated.cards_language is confirmed by backend
-              try { localStorage.setItem(`cards_language_${user.id}`, retranslated.cards_language || currentLang) } catch {}
+              try { localStorage.setItem(`cards_language_${user.id}`, retranslated.cards_language || currentLang) } catch { /* ignore */ }
             } else {
               await refreshAdvisorCards(true, currentLang, true)
             }
@@ -389,7 +393,7 @@ export default function Dashboard() {
         }
         if (serverLang) {
           _cacheCards(cards, data.generated_at, serverLang)
-          try { localStorage.setItem(`cards_language_${user.id}`, serverLang) } catch {}
+          try { localStorage.setItem(`cards_language_${user.id}`, serverLang) } catch { /* ignore */ }
         }
       } else if (!isGeneratingCardsRef.current) {
         await refreshAdvisorCards(false)
@@ -524,7 +528,7 @@ export default function Dashboard() {
         setCardsGeneratedAt(data.generated_at || null)
         const confirmedLang = data.cards_language || language
         _cacheCards(data.cards, data.generated_at, confirmedLang)
-        try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch {}
+        try { localStorage.setItem(`cards_language_${user.id}`, confirmedLang) } catch { /* ignore */ }
       } else {
         // Empty response — fall back to full regeneration (force=true to bypass "fresh" check)
         return refreshAdvisorCards(true, language, true)
@@ -1067,6 +1071,7 @@ export default function Dashboard() {
       {showTutorial && (
         <Suspense fallback={null}>
           <OnboardingTutorial
+            onTabChange={setActiveTab}
             onComplete={() => {
               localStorage.setItem(tourKey, '1')
               setShowTutorial(false)

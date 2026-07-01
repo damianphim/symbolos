@@ -4,13 +4,10 @@
 
 .dp-view {
   width: 100%;
-  max-width: min(900px, calc(100% - var(--rsb-width, 0px)));
-  margin: 0 auto;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Degree Progress card ───────────────────────────── */
@@ -871,22 +868,9 @@
 
 /* ── Electives Panel ───────────────────────────────────────── */
 .dp-electives {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-
-.dp-electives-left,
-.dp-electives-right {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.dp-electives-right {
-  position: sticky;
-  top: 0;
 }
 
 .dp-electives-header {
@@ -1020,17 +1004,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-}
-.dp-electives-grid--single {
-  grid-template-columns: 1fr;
-}
-@media (max-width: 700px) {
-  .dp-electives {
-    grid-template-columns: 1fr;
-  }
-  .dp-electives-right {
-    position: static;
-  }
 }
 @media (max-width: 640px) {
   .dp-electives-grid { grid-template-columns: 1fr; }
