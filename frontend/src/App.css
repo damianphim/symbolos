@@ -6,6 +6,12 @@
   --bot-msg-bg: #f3f4f6; /* Softer grey */
   --shadow-color: rgba(0, 0, 0, 0.1);
   --input-focus-shadow: rgba(237, 27, 47, 0.15);
+  /* Declare the page's colour scheme so the browser paints native UI
+     (scrollbars, the canvas behind the document) light — instead of
+     following the OS setting. Without this, an OS-dark user on the light
+     app sees a dark scrollbar + a dark bar at the top of the landing until
+     React mounts and forces it. Dark theme opts back into dark below. */
+  color-scheme: light;
 }
 
 /* Dark mode: the <body> background (var(--bg-color)) must be the dark base
@@ -15,6 +21,7 @@
   --bg-color: #0a0c10;
   --chat-bg: #0a0c10;
   --shadow-color: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 /* --- LAYOUT FIXES --- */
