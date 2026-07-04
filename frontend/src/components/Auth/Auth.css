@@ -599,7 +599,11 @@
 /* Compact laptop / large tablet in portrait */
 @media (max-width: 640px) {
   .auth-form-panel {
-    padding: 2rem 1.5rem;
+    /* The card goes full-width from here down, so the fixed corner controls
+       (Home / lang / theme, ~48px tall from the top) would overlap its
+       top-right corner. Top-align the card and reserve clearance for them. */
+    align-items: flex-start;
+    padding: 4.5rem 1.5rem 2rem;
   }
 
   .auth-card {
@@ -613,7 +617,7 @@
   .auth-form-panel {
     padding: 1.5rem 1rem;
     align-items: flex-start;
-    padding-top: max(2rem, env(safe-area-inset-top));
+    padding-top: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem));
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 
@@ -635,7 +639,7 @@
 @media (max-width: 360px) {
   .auth-form-panel {
     padding: 1rem 0.75rem;
-    padding-top: 1.5rem;
+    padding-top: 4.5rem;
   }
 }
 /* ── Corner controls wrapper ── */
