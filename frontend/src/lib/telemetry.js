@@ -33,7 +33,7 @@ export function getConsent() {
 }
 
 export function setConsent(value) {
-  try { localStorage.setItem(CONSENT_KEY, value) } catch {}
+  try { localStorage.setItem(CONSENT_KEY, value) } catch { /* ignore */ }
   if (value === 'accepted') startAnalytics()
 }
 
@@ -88,7 +88,7 @@ async function _initSentry() {
             if (u.searchParams.has('verify_token')) u.searchParams.set('verify_token', '<redacted>')
             event.request.url = u.toString()
           }
-        } catch {}
+        } catch { /* ignore */ }
         return event
       },
     })
@@ -114,6 +114,13 @@ async function _initPostHog() {
       // Don't autocapture form inputs — too much PII risk for a student app.
       autocapture: { url_allowlist: [], dom_event_allowlist: ['click', 'change', 'submit'] },
       session_recording: { maskAllInputs: true, maskTextSelector: '*' },
+      // Surveys and web experiments are loaded as remote scripts that call
+      // eval()/new Function() at runtime. Our CSP (frontend/vercel.json) has a
+      // hardened script-src with no 'unsafe-eval' (SEC-009), so those calls
+      // throw an unhandled EvalError. We use neither feature — disable them so
+      // the CSP can stay strict.
+      disable_web_experiments: true,
+      disable_surveys: true,
     })
     _posthog = posthog
   } catch (err) {
@@ -129,7 +136,7 @@ export async function identifyUser({ id, email }) {
     try {
       const Sentry = await import('@sentry/react')
       Sentry.setUser({ id })  // intentionally no email — PII-light
-    } catch {}
+    } catch { /* ignore */ }
   }
   // PostHog
   if (_posthog) {
@@ -137,7 +144,7 @@ export async function identifyUser({ id, email }) {
       // We hash the email so we can group by user in PostHog without
       // storing the plaintext address there.
       _posthog.identify(id, { email_domain: (email || '').split('@')[1] || null })
-    } catch {}
+    } catch { /* ignore */ }
   }
 }
 
@@ -147,17 +154,17 @@ export async function resetTelemetryIdentity() {
     try {
       const Sentry = await import('@sentry/react')
       Sentry.setUser(null)
-    } catch {}
+    } catch { /* ignore */ }
   }
   if (_posthog) {
-    try { _posthog.reset() } catch {}
+    try { _posthog.reset() } catch { /* ignore */ }
   }
 }
 
 /** Fire a product-funnel event. PostHog dashboard groups these into funnels. */
 export function track(event, props = {}) {
   if (!_posthog) return
-  try { _posthog.capture(event, props) } catch {}
+  try { _posthog.capture(event, props) } catch { /* ignore */ }
 }
 
 /** Funnel event names — keep all of them here so they can't drift. */
