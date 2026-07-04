@@ -46,7 +46,8 @@ def capture(distinct_id: str, event: str, properties: dict[str, Any] | None = No
     if client is None:
         return
     try:
-        client.capture(distinct_id, event, properties or {})
+        # posthog-python 6+ changed capture() to capture(event, *, distinct_id=, properties=).
+        client.capture(event, distinct_id=distinct_id, properties=properties or {})
     except Exception as exc:
         logger.debug("PostHog capture failed: %s", exc)
 
