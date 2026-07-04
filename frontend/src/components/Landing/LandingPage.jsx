@@ -36,7 +36,6 @@ const degree2  = _findShot('degree2')
 const calendar = _findShot('calendar')
 const clubs1   = _findShot('clubs1') || _findShot('clubs')     // backwards compat
 const clubs2   = _findShot('clubs2')
-const forum    = _findShot('forum')
 
 function Screenshot({ src, alt, caption }) {
   if (!src) {
@@ -96,10 +95,10 @@ export default function LandingPage({ onSignIn }) {
   // The visual is one long scroll. "Sign in" is in the sticky top nav and
   // appears again as the final CTA — both call the same handler.
   const [navScrolled, setNavScrolled] = useState(false)
-  // Tiny throttle: only update state at most once per animation frame
-  if (typeof window !== 'undefined') {
+  // Tiny throttle: only update state at most once per animation frame.
+  useEffect(() => {
     let pending = false
-    window.onscroll = () => {
+    const onScroll = () => {
       if (pending) return
       pending = true
       requestAnimationFrame(() => {
@@ -107,7 +106,10 @@ export default function LandingPage({ onSignIn }) {
         pending = false
       })
     }
-  }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll() // sync initial state (e.g. reload while scrolled)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <div className="landing-root">
@@ -135,7 +137,7 @@ export default function LandingPage({ onSignIn }) {
           </Reveal>
           <Reveal delay={120} as="p" className="landing-hero__sub">
             Your personal AI advisor, degree progress, course planner, calendar,
-            club directory, and student forum — built by McGill students, for
+            club directory, and student forum, built by McGill students, for
             McGill students.
           </Reveal>
           <Reveal delay={240} className="landing-hero__cta-row">
@@ -165,13 +167,13 @@ export default function LandingPage({ onSignIn }) {
               miss. Ask follow-up questions on any card in plain English.
             </p>
             <ul className="landing-feature__bullets">
-              <li>Cards stream in card-by-card — no waiting screen</li>
+              <li>Cards stream in card-by-card, no waiting screen</li>
               <li>Tap any card to chat with the advisor about it</li>
               <li>Pin the ones that matter, dismiss the rest</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={brief} alt="Advisor brief — eight cards covering deadlines, degree progress, and opportunities" />
+            <Screenshot src={brief} alt="Advisor brief: eight cards covering deadlines, degree progress, and opportunities" />
           </Reveal>
         </div>
       </section>
@@ -185,7 +187,7 @@ export default function LandingPage({ onSignIn }) {
             <p className="landing-feature__text">
               Upload your unofficial transcript and your major's requirements
               fill in automatically. See exactly which courses count, which
-              blocks are done, and which electives you still need — no more
+              blocks are done, and which electives you still need. No more
               mental accounting.
             </p>
             <ul className="landing-feature__bullets">
@@ -216,7 +218,7 @@ export default function LandingPage({ onSignIn }) {
             <ul className="landing-feature__bullets">
               <li>Final exams auto-loaded for your registered courses</li>
               <li>Syllabus PDF → calendar in seconds</li>
-              <li>Reminder emails 1 day and 7 days out — opt out anytime</li>
+              <li>Reminder emails 1 day and 7 days out, opt out anytime</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
@@ -270,12 +272,12 @@ export default function LandingPage({ onSignIn }) {
             <Reveal className="landing-forum__card" delay={160}>
               <span className="landing-forum__pill">The site</span>
               <h3>Feedback on Symbolos.</h3>
-              <p>Spot a bug? Want a feature? Post it here — built features get prioritized by what students actually ask for.</p>
+              <p>Spot a bug? Want a feature? Post it here. Built features get prioritized by what students actually ask for.</p>
             </Reveal>
             <Reveal className="landing-forum__card" delay={240}>
               <span className="landing-forum__pill">General</span>
               <h3>Everything else.</h3>
-              <p>Apartment hunts, study spots, the latest on union elections — anything McGill students would want to discuss.</p>
+              <p>Apartment hunts, study spots, the latest on union elections. Anything McGill students would want to discuss.</p>
             </Reveal>
           </div>
         </div>
@@ -294,7 +296,7 @@ export default function LandingPage({ onSignIn }) {
             </Reveal>
             <Reveal delay={80} className="landing-privacy__card">
               <h3>Hosted in Canada / US</h3>
-              <p>Database on Supabase, files on Vercel — both compliant with Canadian privacy law.</p>
+              <p>Database on Supabase, files on Vercel, both compliant with Canadian privacy law.</p>
             </Reveal>
             <Reveal delay={160} className="landing-privacy__card">
               <h3>Delete anytime</h3>
