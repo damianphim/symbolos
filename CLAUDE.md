@@ -62,6 +62,27 @@ frontend/src/
 - **Add a route**: create `backend/api/routes/<name>.py` → register in `main.py`
 - **Change Claude model**: set `CLAUDE_MODEL` / `CLAUDE_CARDS_MODEL` in env or `config.py`
 
+## Feature map (what each part of the site is for)
+- **Home** — daily dashboard: AI "Brief" cards, current courses (active term only), Up Next deadlines, degree progress, quick actions.
+- **Brief / Chat** — AI advisor cards generated per-user from their academic data (`cards.py`); freeform Q&A grounded in student context (`chat.py`).
+- **Courses** — search McGill catalogue with grade history + RateMyProfessor; "My Courses" = saved / current (grouped by term) / completed.
+- **Degree Planning** — seed-driven requirement blocks per program, progress tracking, AI recommendations.
+- **Calendar** — events from syllabus import + manual entry + club events.
+- **Transcript import** — PDF → Claude extraction → preview → import (async Inngest job). Populates completed/current courses, GPA, program.
+- **Syllabus import** — PDF(s) → Claude → calendar events (async Inngest job).
+- **Clubs / Forum** — student club directory + newsletters; course/prof discussion.
+- **Profile** — settings, language, notifications, data deletion.
+
+## Engineering invariants (apply to every change)
+- **Security**: every new route takes `Depends(get_current_user_id)` + `require_self()`. Sanitize user input (`utils/sanitise.py`). Bound/validate all Claude-extracted values before persisting. New tables need RLS.
+- **PII**: never store or output student IDs, permanent codes, or other government identifiers. Transcript extraction scrubs `26\d{7}` and `[A-Z]{4}\d{8}` patterns (`transcript.py _scrub_pii`) — keep this working.
+- **i18n**: every user-facing string goes through `t()` with keys added to **all three** of `locales/en.js`, `fr.js`, `zh.js`. Never hardcode UI text.
+- **No emojis in UI**: use `react-icons` components only. Backend-generated emoji (e.g. advisor-card `icon`) must be mapped to a react-icon before rendering.
+- **Term-awareness**: `current_courses` rows carry `term`/`year`; UI filters by active term via `frontend/src/lib/termDates.js`. Rows with NULL term are legacy and always shown.
+- **External calls**: wrap outbound HTTP (Resend, Slack, Inngest send) in try/except with a clean 5xx + friendly message — never leak raw tracebacks. Distinguish transient (connection/timeout/429/5xx → "try again") from permanent errors in user-facing messages.
+- **Async jobs**: transcript/syllabus parsing returns `202 {job_id}`; frontends must poll `/api/jobs/{id}` (see `pollJob` in `ProfileSetup.jsx` / `TranscriptUpload.jsx`).
+- **Local dev**: full stack = `backend` (uvicorn :8000) + `inngest` (dev server :8288) + `frontend` (:5173) — all in `.claude/launch.json`. Without Inngest, uploads 503.
+
 ## Agent skills
 
 ### Issue tracker

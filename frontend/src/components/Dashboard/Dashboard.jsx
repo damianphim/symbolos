@@ -67,6 +67,14 @@ export default function Dashboard() {
     localStorage.getItem('symbolos_open_pw_change') ? 'profile' : 'home'
   )
 
+  // Deep link into the Courses tab (e.g. Home → "View upcoming courses"
+  // lands on My Courses → Current). Cleared when leaving the tab so a normal
+  // visit gets the default view again.
+  const [coursesDeepLink, setCoursesDeepLink] = useState(null)
+  useEffect(() => {
+    if (activeTab !== 'courses') setCoursesDeepLink(null)
+  }, [activeTab])
+
   // Sidebar open/closed state — persisted across reloads but defaults to OPEN
   // on first visit so new users see the navigation rail.
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -905,6 +913,10 @@ export default function Dashboard() {
               eventsLoading={upcomingEventsLoading}
               hasCourseEvents={hasUpcomingCourseEvents}
               onTabChange={handleTabChange}
+              onViewCurrentCourses={() => {
+                setCoursesDeepLink({ subTab: 'my_courses', savedTab: 'current' })
+                handleTabChange('courses')
+              }}
               onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
               onImportSyllabus={() => { setTranscriptUploadTab('syllabus'); setShowTranscriptUpload(true) }}
             />
@@ -951,6 +963,8 @@ export default function Dashboard() {
 
           {activeTab === 'courses' && (
             <CoursesView
+              defaultSubTab={coursesDeepLink?.subTab ?? 'course_search'}
+              defaultSavedTab={coursesDeepLink?.savedTab ?? 'saved'}
               favorites={favorites}
               completedCourses={completedCourses}
               completedCoursesMap={completedCoursesMap}

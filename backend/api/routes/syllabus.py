@@ -688,17 +688,31 @@ async def parse_syllabuses(
     create_job(job_id, user_id, "syllabus", dry_run=is_dry_run)
 
     from ..inngest_app import inngest_client
-    await inngest_client.send(inngest.Event(
-        name="syllabus/process",
-        data={
-            "job_id": job_id,
-            "user_id": user_id,
-            "storage_paths": storage_paths,
-            "filenames": filenames,
-            "validation_errors": validation_errors,
-            "dry_run": is_dry_run,
-        },
-    ))
+    try:
+        await inngest_client.send(inngest.Event(
+            name="syllabus/process",
+            data={
+                "job_id": job_id,
+                "user_id": user_id,
+                "storage_paths": storage_paths,
+                "filenames": filenames,
+                "validation_errors": validation_errors,
+                "dry_run": is_dry_run,
+            },
+        ))
+    except Exception as exc:
+        # Event queue (Inngest) unreachable — e.g. local dev server not running.
+        # Fail the job and return a clean 503 instead of an unhandled traceback.
+        logger.error("Failed to queue syllabus job %s: %s", job_id, type(exc).__name__)
+        try:
+            from ..utils.jobs import update_job
+            update_job(job_id, "failed", error="Background processing is unavailable.")
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=503,
+            detail="Background processing is temporarily unavailable. Please try again in a moment.",
+        )
 
     return JSONResponse({"job_id": job_id, "status": "pending"}, status_code=202)
 

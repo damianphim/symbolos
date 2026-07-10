@@ -220,21 +220,28 @@ async def send_verification(
 
     html = _verification_html(verify_url)
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-            json={
-                "from": "Symbolos <noreply@symbolos.ca>",
-                "to": [email],
-                "subject": "Verify your Symbolos account",
-                "html": html,
-            },
-            timeout=10,
-        )
-        if resp.status_code not in (200, 201):
-            logger.error("Resend error %s", resp.status_code)
-            raise HTTPException(status_code=502, detail="Failed to send verification email")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": "Symbolos <noreply@symbolos.ca>",
+                    "to": [email],
+                    "subject": "Verify your Symbolos account",
+                    "html": html,
+                },
+                timeout=10,
+            )
+    except httpx.HTTPError as exc:
+        # Transient network/DNS/timeout reaching Resend — surface a clean 502
+        # instead of leaking an unhandled ConnectError traceback.
+        logger.error("Resend request failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Failed to send verification email")
+
+    if resp.status_code not in (200, 201):
+        logger.error("Resend error %s", resp.status_code)
+        raise HTTPException(status_code=502, detail="Failed to send verification email")
 
     logger.info("Verification email sent to user %s", current_user_id)
     return {"ok": True}

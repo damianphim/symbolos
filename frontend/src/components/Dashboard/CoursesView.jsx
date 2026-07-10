@@ -37,6 +37,7 @@ export default function CoursesView({
   searchCorrection,
   hasSearched,
   defaultSubTab = 'course_search',
+  defaultSavedTab = 'saved',
 }) {
   const { t } = useLanguage()
   const [subTab, setSubTab] = useState(defaultSubTab)
@@ -72,6 +73,7 @@ export default function CoursesView({
       {subTab === 'my_courses' && (
         <div className="courses-my-panel">
           <SavedCoursesView
+            defaultTab={defaultSavedTab}
             favorites={favorites}
             completedCourses={completedCourses}
             currentCourses={currentCourses}

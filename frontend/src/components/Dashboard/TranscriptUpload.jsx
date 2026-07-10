@@ -15,6 +15,20 @@ async function getAuthHeaders() {
   return { Authorization: `Bearer ${session.access_token}` }
 }
 
+/** Polls /api/jobs/{id} until the Inngest job finishes (same as ProfileSetup). */
+async function pollJob(jobId, maxWaitMs = 5 * 60 * 1000) {
+  const start = Date.now()
+  for (;;) {
+    await new Promise(r => setTimeout(r, 2000))
+    if (Date.now() - start > maxWaitMs) throw new Error('Processing timed out. Please try again.')
+    const r = await fetch(`${BASE_URL}/api/jobs/${jobId}`, { headers: await getAuthHeaders() })
+    if (!r.ok) continue
+    const job = await r.json()
+    if (job.status === 'done') return job
+    if (job.status === 'failed') throw new Error(job.error || 'Processing failed')
+  }
+}
+
 export default function TranscriptUpload({ userId, onImportComplete, onClose, defaultTab = 'transcript' }) {
   const [activeTab, setActiveTab] = useState(defaultTab)
 
@@ -46,7 +60,14 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       const res = await fetch(`${BASE_URL}/api/transcript/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Parsing failed') }
       const data = await res.json()
-      setParsed(data.parsed)
+      let parsedData = data.parsed
+      if (res.status === 202 && data.job_id) {
+        // Async path — poll until the Inngest job completes
+        const job = await pollJob(data.job_id)
+        parsedData = job.result?.parsed
+      }
+      if (!parsedData) throw new Error('Parsing returned no data. Please try again.')
+      setParsed(parsedData)
       setStep('preview')
     } catch (e) { setErrorMsg(e.message); setStep('error') }
   }
@@ -105,7 +126,12 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       form.append('dry_run', 'false')
       const res = await fetch(`${BASE_URL}/api/syllabus/parse/${userId}`, { method: 'POST', headers: await getAuthHeaders(), body: form })
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Upload failed') }
-      const data = await res.json()
+      let data = await res.json()
+      if (res.status === 202 && data.job_id) {
+        // Async path — poll until the Inngest job completes
+        const job = await pollJob(data.job_id)
+        data = job.result || {}
+      }
       setSylResults(data); setSylStep('done'); onImportComplete?.()
     } catch (e) { setSylError(e.message); setSylStep('error') }
   }

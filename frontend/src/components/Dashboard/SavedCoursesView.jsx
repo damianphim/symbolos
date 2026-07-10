@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { FaHeart, FaRegHeart, FaCheckCircle, FaCheck, FaStar, FaBook, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
+import { groupCoursesByTerm } from '../../lib/termDates'
 import './SavedCoursesView.css'
 
-export default function SavedCoursesView({ 
-  favorites = [], 
+export default function SavedCoursesView({
+  favorites = [],
   completedCourses = [],
   currentCourses = [],
   completedCoursesMap = new Set(),
@@ -14,10 +15,11 @@ export default function SavedCoursesView({
   onToggleFavorite,
   onToggleCompleted,
   onToggleCurrent,
+  defaultTab = 'saved',
 }) {
   const { t, language } = useLanguage()
   const { openCourse } = useCourseDetail()
-  const [activeView, setActiveView] = useState('saved')
+  const [activeView, setActiveView] = useState(defaultTab)
 
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
   const isCurrent   = (subject, catalog) => currentCoursesMap.has(`${subject} ${catalog}`)
@@ -142,13 +144,33 @@ export default function SavedCoursesView({
               <p>Add courses you're enrolled in this semester from the Course Explorer</p>
             </div>
           ) : (
-            <div className="course-list">
-              {currentCourses.map((course, idx) => (
+            groupCoursesByTerm(currentCourses).map(group => (
+            <div key={group.key} className="course-list" style={{ marginBottom: 18 }}>
+              <div className="term-group-header" style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                margin: '4px 2px 10px', fontWeight: 700, fontSize: 14,
+                gridColumn: '1 / -1',
+              }}>
+                <FaCalendarAlt style={{ opacity: 0.6 }} />
+                <span>{group.key === 'Term not set' ? 'Term not set' : group.key}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
+                  background: group.isActive ? '#dcfce7' : '#f1f5f9',
+                  color: group.isActive ? '#15803d' : '#64748b',
+                }}>
+                  {group.isActive ? 'Current term' : 'Upcoming'}
+                </span>
+              </div>
+              {group.courses.map((course, idx) => (
                 <div key={idx} className="course-card">
                   <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
-                      <div className="course-grade-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>Current</div>
+                      {group.isActive ? (
+                        <div className="course-grade-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>Current</div>
+                      ) : (
+                        <div className="course-grade-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>Upcoming</div>
+                      )}
                     </div>
                     <h4 className="course-title">{course.course_title}</h4>
                     {course.credits && (
@@ -189,6 +211,7 @@ export default function SavedCoursesView({
                 </div>
               ))}
             </div>
+            ))
           )}
         </div>
       )}

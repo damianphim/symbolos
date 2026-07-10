@@ -186,6 +186,11 @@ If the transcript lists instructor / professor names next to each course
 capture the name in the "professor" field for both completed_courses and
 current_courses. If no instructor name appears on the transcript, set
 professor to null — do NOT guess.
+== PRIVACY — DO NOT EXTRACT ==
+NEVER include the student's McGill ID number, permanent code (code permanent),
+date of birth, address, phone number, or any other government/institutional
+identifier anywhere in your output — not in any field, not even partially.
+These are PII and must be treated as if they were blacked out.
 Return ONLY this JSON — no markdown, no explanation:
 {
   "student_info": {
@@ -217,6 +222,8 @@ Return ONLY this JSON — no markdown, no explanation:
       "course_title": "Algorithms and Data Structures",
       "subject": "COMP",
       "catalog": "251",
+      "term": "Winter",
+      "year": 2025,
       "credits": 3,
       "professor": null
     }
@@ -225,10 +232,37 @@ Return ONLY this JSON — no markdown, no explanation:
 Additional rules:
   - term must be exactly "Fall", "Winter", or "Summer"
   - year is the 4-digit calendar year the term occurred (e.g. 2024)
+  - current_courses MUST also carry term and year — use the term heading the
+    registered (RW / no-grade) course appears under on the transcript. A student
+    is often registered for BOTH the upcoming Fall and Winter terms; keep each
+    course under its own term, never merge them.
   - credits: use the numeric value on the transcript (typically 3 or 4)
   - catalog for multi-term courses includes the full suffix: "207D1", "207D2"
   - professor: full name as printed on the transcript, or null if absent
   - If any other field is unknown, use null"""
+
+
+# ── PII scrub (defense in depth after the prompt-level ban) ─────────────────
+# McGill student IDs are 9 digits starting with 26; Quebec permanent codes are
+# 4 letters + 8 digits (e.g. ABCD12345678). If the model ever echoes one
+# despite the prompt instruction, strip it before preview/persist.
+_PII_PATTERNS = [
+    re.compile(r"\b26\d{7}\b"),            # McGill student ID
+    re.compile(r"\b[A-Z]{4}\d{8}\b"),      # Permanent code
+]
+
+
+def _scrub_pii(value):
+    """Recursively remove student-ID / permanent-code patterns from all strings."""
+    if isinstance(value, str):
+        for pat in _PII_PATTERNS:
+            value = pat.sub("[redacted]", value)
+        return value
+    if isinstance(value, list):
+        return [_scrub_pii(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _scrub_pii(v) for k, v in value.items()}
+    return value
 
 
 # ── Claude extraction (with retry on transient 500s) ─────────────────────────
@@ -285,7 +319,7 @@ async def extract_transcript_data(pdf_bytes: bytes) -> dict:
     raw = message.content[0].text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
     raw = re.sub(r"\s*```\s*$", "", raw, flags=re.MULTILINE)
-    return json.loads(raw.strip())
+    return _scrub_pii(json.loads(raw.strip()))
 
 
 # ── Route ─────────────────────────────────────────────────────────────────────
@@ -360,17 +394,32 @@ async def parse_transcript(
     create_job(job_id, user_id, "transcript", dry_run=is_dry_run)
 
     from ..inngest_app import inngest_client
-    await inngest_client.send(
-        inngest.Event(
-            name="transcript/process",
-            data={
-                "job_id":       job_id,
-                "user_id":      user_id,
-                "storage_path": storage_path,
-                "dry_run":      is_dry_run,
-            },
+    try:
+        await inngest_client.send(
+            inngest.Event(
+                name="transcript/process",
+                data={
+                    "job_id":       job_id,
+                    "user_id":      user_id,
+                    "storage_path": storage_path,
+                    "dry_run":      is_dry_run,
+                },
+            )
         )
-    )
+    except Exception as exc:
+        # The event queue (Inngest) is unreachable — e.g. the local dev server
+        # isn't running. Fail the job and return a clean 503 rather than
+        # leaking an unhandled ConnectError traceback.
+        logger.error("Failed to queue transcript job %s: %s", job_id, type(exc).__name__)
+        try:
+            from ..utils.jobs import update_job
+            update_job(job_id, "failed", error="Background processing is unavailable.")
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=503,
+            detail="Background processing is temporarily unavailable. Please try again in a moment.",
+        )
 
     logger.info("Transcript job %s queued for user %s", job_id, user_id)
     return JSONResponse({"job_id": job_id, "status": "pending"}, status_code=202)
@@ -469,14 +518,28 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
                 continue
 
             existing = supabase.table("current_courses") \
-                .select("id") \
+                .select("*") \
                 .eq("user_id", user_id) \
                 .eq("course_code", course["course_code"]) \
                 .execute()
             if existing.data:
+                # Backfill term/year onto pre-migration rows so re-importing a
+                # transcript upgrades legacy data instead of leaving it term-less.
+                new_term = (course.get("term") or "").strip().capitalize()
+                new_year = course.get("year")
+                if new_term in ("Fall", "Winter", "Summer") and not existing.data[0].get("term"):
+                    try:
+                        supabase.table("current_courses").update({
+                            "term": new_term,
+                            "year": int(new_year) if isinstance(new_year, (int, float)) and 2000 <= int(new_year) <= 2100 else None,
+                        }).eq("id", existing.data[0]["id"]).execute()
+                    except Exception:
+                        pass  # columns may not exist yet — harmless
                 results["current_skipped"] += 1
                 continue
 
+            term = (course.get("term") or "").strip().capitalize()
+            year = course.get("year")
             row = {
                 "user_id": user_id,
                 "course_code": course["course_code"],
@@ -485,8 +548,19 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
                 "catalog": course.get("catalog", course["course_code"].split()[-1]),
                 "credits": int(float(course.get("credits") or 3)),
                 "professor": (course.get("professor") or "").strip()[:120] or None,
+                # Term-aware display: keep which semester the registration is for.
+                "term": term if term in ("Fall", "Winter", "Summer") else None,
+                "year": int(year) if isinstance(year, (int, float)) and 2000 <= int(year) <= 2100 else None,
             }
-            supabase.table("current_courses").insert(row).execute()
+            try:
+                supabase.table("current_courses").insert(row).execute()
+            except Exception as col_err:
+                # Migration 2026_07_10 not applied yet — retry without term/year
+                if "term" in str(col_err) or "year" in str(col_err):
+                    row.pop("term", None); row.pop("year", None)
+                    supabase.table("current_courses").insert(row).execute()
+                else:
+                    raise
             results["current_added"] += 1
         except Exception as e:
             logger.warning(f"Skipping current course {course.get('course_code')}: {e}")

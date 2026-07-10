@@ -38,6 +38,8 @@ class CurrentCourse(BaseModel):
     subject: str = Field(..., min_length=2, max_length=4)
     catalog: str = Field(..., min_length=1, max_length=10)
     credits: int = Field(default=3, ge=0, le=12)
+    term: Optional[str] = Field(default=None, pattern="^(Fall|Winter|Summer)$")
+    year: Optional[int] = Field(default=None, ge=2000, le=2100)
 
 
 @router.get("/{user_id}")
@@ -88,8 +90,18 @@ async def add_current_course(user_id: str, course: CurrentCourse, req: Request, 
             "subject": course.subject.upper(),
             "catalog": course.catalog,
             "credits": course.credits,
+            "term": course.term,
+            "year": course.year,
         }
-        response = user_sb.table("current_courses").insert(data).execute()
+        try:
+            response = user_sb.table("current_courses").insert(data).execute()
+        except Exception as col_err:
+            # Migration 2026_07_10 not applied yet — retry without term/year
+            if "term" in str(col_err) or "year" in str(col_err):
+                data.pop("term", None); data.pop("year", None)
+                response = user_sb.table("current_courses").insert(data).execute()
+            else:
+                raise
         if not response.data:
             raise DatabaseException("add_current", "No data returned")
 

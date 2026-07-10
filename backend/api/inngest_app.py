@@ -87,8 +87,25 @@ async def process_transcript(ctx: inngest.Context, step: inngest.Step) -> dict:
         return result
 
     except Exception as exc:
-        logger.exception("Transcript job %s failed: %s", job_id, exc)
-        update_job(job_id, "failed", error=str(exc))
+        # Classify the failure so the student sees an accurate, actionable
+        # message instead of a raw exception string (mirrors process_syllabus).
+        import json as _json
+        import anthropic
+        if isinstance(exc, (anthropic.APIConnectionError, anthropic.APITimeoutError)):
+            msg = "Couldn't reach the AI service. Please try again in a moment."
+        elif isinstance(exc, anthropic.APIStatusError):
+            status = getattr(exc, "status_code", None)
+            msg = (
+                "The AI service is busy right now. Please try again in a moment."
+                if status == 429 or (isinstance(status, int) and status >= 500)
+                else "Extraction failed. Please try again."
+            )
+        elif isinstance(exc, _json.JSONDecodeError):
+            msg = "Failed to parse transcript — Claude returned invalid data."
+        else:
+            msg = "Extraction failed. Please try again."
+        logger.exception("Transcript job %s failed (%s): %s", job_id, type(exc).__name__, exc)
+        update_job(job_id, "failed", error=msg)
         raise
 
     finally:
@@ -122,6 +139,7 @@ async def process_syllabus(ctx: inngest.Context, step: inngest.Step) -> dict:
     try:
         from .routes.syllabus import _extract_syllabus_data, _persist_syllabus_result
         import json
+        import anthropic
 
         sb = get_supabase()
         all_results = []
@@ -143,10 +161,38 @@ async def process_syllabus(ctx: inngest.Context, step: inngest.Step) -> dict:
                     all_results.append(file_result)
 
             except json.JSONDecodeError:
+                # Permanent: Claude replied but the output wasn't valid JSON.
                 all_results.append({
                     "filename": filename,
                     "success": False,
                     "error": "Failed to parse syllabus — Claude returned invalid data.",
+                })
+            except (anthropic.APIConnectionError, anthropic.APITimeoutError) as exc:
+                # Transient: couldn't reach the AI service (network blip / timeout).
+                # Distinct message so the student knows to simply retry.
+                logger.warning(
+                    "Syllabus extraction hit a transient AI/network error for %s: %s",
+                    filename, type(exc).__name__,
+                )
+                all_results.append({
+                    "filename": filename,
+                    "success": False,
+                    "error": "Couldn't reach the AI service. Please try uploading again in a moment.",
+                })
+            except anthropic.APIStatusError as exc:
+                # 429 / 5xx are transient; other 4xx are permanent.
+                status = getattr(exc, "status_code", None)
+                transient = status == 429 or (isinstance(status, int) and status >= 500)
+                logger.warning(
+                    "Syllabus extraction API error %s for %s", status, filename,
+                )
+                all_results.append({
+                    "filename": filename,
+                    "success": False,
+                    "error": (
+                        "The AI service is busy right now. Please try again in a moment."
+                        if transient else "Extraction failed. Please try again."
+                    ),
                 })
             except Exception as exc:
                 logger.exception("Syllabus processing failed for %s: %s", filename, exc)

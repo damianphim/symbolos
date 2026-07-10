@@ -12,9 +12,11 @@ import { useMemo, useState } from 'react'
 import {
   FaFileUpload, FaGraduationCap, FaFilePdf, FaComments, FaCalendarPlus,
   FaCheckCircle, FaRegCircle, FaArrowRight, FaTimes, FaRegLightbulb,
-  FaBook, FaCalendarAlt, FaChartLine,
+  FaBook, FaCalendarAlt, FaChartLine, FaClipboardList, FaFileAlt, FaPenAlt,
+  FaExclamationTriangle, FaExclamationCircle,
 } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
+import { isCourseInActiveTerm } from '../../lib/termDates'
 import DegreeProgressTracker from './DegreeProgressTracker'
 import EmptyState from '../ui/EmptyState'
 import Skeleton from '../ui/Skeleton'
@@ -38,9 +40,18 @@ function courseAccent(code = '') {
   return COURSE_ACCENTS[h % COURSE_ACCENTS.length]
 }
 
-const EVENT_EMOJI = {
-  exam: '📝', midterm: '📝', assignment: '📄', quiz: '📋',
-  academic: '🎓', personal: '📅',
+// Invariant: no raw emojis in the UI — react-icons only.
+const EVENT_ICONS = {
+  exam: <FaPenAlt />, midterm: <FaPenAlt />, assignment: <FaFileAlt />,
+  quiz: <FaClipboardList />, academic: <FaGraduationCap />, personal: <FaCalendarAlt />,
+}
+
+// Advisor cards arrive with a backend-generated emoji in `card.icon`;
+// map the card type to a react-icon instead of rendering the emoji.
+const CARD_TYPE_ICONS = {
+  urgent: <FaExclamationCircle />,
+  warning: <FaExclamationTriangle />,
+  insight: <FaRegLightbulb />,
 }
 
 const LOCALE_MAP = { en: 'en-CA', fr: 'fr-CA', zh: 'zh-CN' }
@@ -63,9 +74,19 @@ export default function HomeTab({
   advisorCards = [], cardsLoading = false,
   currentCourses = [], completedCourses = [],
   events = [], eventsLoading = false, hasCourseEvents = false,
-  onTabChange, onImportTranscript, onImportSyllabus,
+  onTabChange, onViewCurrentCourses, onImportTranscript, onImportSyllabus,
 }) {
+  // Deep-link to My Courses → Current when available.
+  const goToCurrentCourses = onViewCurrentCourses ?? (() => onTabChange('courses'))
   const { t, language } = useLanguage()
+
+  // Term-aware current courses: only show registrations for the semester we
+  // are actually in (Fall vs Winter vs Summer); the rest are "upcoming".
+  const activeCourses = useMemo(
+    () => currentCourses.filter(c => isCourseInActiveTerm(c)),
+    [currentCourses],
+  )
+  const upcomingCount = currentCourses.length - activeCourses.length
 
   // ── Setup checklist ────────────────────────────────────
   const dismissKey = `symbolos_setup_dismissed_${user?.id}`
@@ -197,7 +218,7 @@ export default function HomeTab({
               <div className="home-brief__list">
                 {topCards.map(card => (
                   <button key={card.id} className="home-brief__item" onClick={() => onTabChange('chat')}>
-                    <span className="home-brief__icon">{card.icon}</span>
+                    <span className="home-brief__icon">{CARD_TYPE_ICONS[card.card_type] || <FaRegLightbulb />}</span>
                     <div className="home-brief__item-text">
                       <span className="home-brief__title">{card.title}</span>
                       <span className="home-brief__body">{card.body}</span>
@@ -230,14 +251,14 @@ export default function HomeTab({
                 </button>
               }
             />
-            {currentCourses.length > 0 ? (
+            {activeCourses.length > 0 ? (
               <div className="home-courses">
-                {currentCourses.map(course => (
+                {activeCourses.map(course => (
                   <button
                     key={course.course_code}
                     className="home-course-chip"
                     style={{ '--course-accent': courseAccent(course.course_code) }}
-                    onClick={() => onTabChange('courses')}
+                    onClick={goToCurrentCourses}
                   >
                     <span className="home-course-chip__code">{course.course_code}</span>
                     {course.course_title && (
@@ -246,6 +267,17 @@ export default function HomeTab({
                   </button>
                 ))}
               </div>
+            ) : upcomingCount > 0 ? (
+              <EmptyState
+                icon={<FaBook />}
+                title={t('home.coursesNoneThisTerm')}
+                subtitle={t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))}
+                action={
+                  <button className="btn btn-secondary" onClick={goToCurrentCourses}>
+                    {t('home.coursesUpcomingCta')} <FaArrowRight />
+                  </button>
+                }
+              />
             ) : (
               <EmptyState
                 icon={<FaBook />}
@@ -257,6 +289,11 @@ export default function HomeTab({
                   </button>
                 }
               />
+            )}
+            {activeCourses.length > 0 && upcomingCount > 0 && (
+              <button className="home-link" style={{ marginTop: 10 }} onClick={goToCurrentCourses}>
+                {t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))} <FaArrowRight />
+              </button>
             )}
           </section>
         </div>
@@ -282,7 +319,7 @@ export default function HomeTab({
               <ul className="home-upnext__list">
                 {events.map(ev => (
                   <li key={ev.id} className="home-upnext__item">
-                    <span className="home-upnext__emoji">{EVENT_EMOJI[ev.type] || '📅'}</span>
+                    <span className="home-upnext__emoji">{EVENT_ICONS[ev.type] || <FaCalendarAlt />}</span>
                     <div className="home-upnext__text">
                       <span className="home-upnext__title">{ev.title}</span>
                       <span className="home-upnext__meta">
