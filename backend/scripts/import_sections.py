@@ -201,9 +201,11 @@ def _flt(v: str | None) -> float | None:
 # CRN) carry extra meeting patterns. Columns are matched by header name so
 # small column-order changes don't break it.
 def parse_lookup_classes(html: str, default_term: str | None = None) -> list[dict]:
-    # Scan every datadisplaytable for a *header row* with CRN + (Instructor or
+    # Scan EVERY datadisplaytable for a *header row* with CRN + (Instructor or
     # Select). The real header is often NOT row 0 — Banner puts a subject-banner
-    # (ddtitle) row above it — so we search all rows, not just the first.
+    # (ddtitle) row above it. A multi-subject page has one such table per
+    # subject, so accumulate across all of them (don't stop at the first).
+    all_out: list[dict] = []
     for body in _INNER_TABLE.findall(html):
         rows = _ROW.findall(body)
         hdr_i = header = None
@@ -229,7 +231,6 @@ def parse_lookup_classes(html: str, default_term: str | None = None) -> list[dic
             "title": idx("title"), "days": idx("days"), "time": idx("time"),
             "instr": idx("instructor"), "loc": idx("location", "where"),
         }
-        out: list[dict] = []
         cur: dict | None = None
         for r in rows[hdr_i + 1:]:
             cells = [_text(c) for c in _CELL.findall(r)]
@@ -256,7 +257,7 @@ def parse_lookup_classes(html: str, default_term: str | None = None) -> list[dic
                     "credits": _flt(g("cred")),
                     "title": g("title"),
                 }
-                out.append(cur)
+                all_out.append(cur)
             elif cur:  # continuation meeting row for the current section
                 for k, key in (("days", "days"), ("time", "times"), ("loc", "location")):
                     v = g(k)
@@ -264,9 +265,7 @@ def parse_lookup_classes(html: str, default_term: str | None = None) -> list[dic
                         cur[key] = f"{cur[key]}; {v}" if cur[key] else v
                 if not cur["instructor"]:
                     cur["instructor"] = _clean_instructor(g("instr"))
-        if out:
-            return out
-    return []
+    return all_out
 
 
 def _detect_term(html: str) -> str | None:
@@ -351,14 +350,23 @@ _FIXTURE_LOOKUP = """
      <td>Linear Algebra</td><td>TR</td><td>08:35 am-09:55 am</td><td>150</td>
      <td>TBA</td><td>09/02-12/04</td><td>Burnside 1B23</td></tr>
 </table>
+<table class="datadisplaytable" summary="second subject">
+ <tr><th colspan="13" class="ddtitle">Physics (Sci)</th></tr>
+ <tr><th>Select</th><th>CRN</th><th>Subj</th><th>Crse</th><th>Sec</th><th>Cred</th>
+     <th>Title</th><th>Days</th><th>Time</th><th>Cap</th><th>Instructor</th>
+     <th>Date (MM/DD)</th><th>Location</th></tr>
+ <tr><td>C</td><td>11111</td><td>PHYS</td><td>101</td><td>001</td><td>4.000</td>
+     <td>Intro Physics</td><td>MWF</td><td>09:35 am-10:25 am</td><td>300</td>
+     <td>Alan Weeks (P)</td><td>09/02-12/04</td><td>Rutherford 112</td></tr>
+</table>
 """
 
 
 def _self_test() -> int:
-    # ── Format 2: Look Up Classes ──
+    # ── Format 2: Look Up Classes (two subject tables on one page) ──
     lk = parse_file(_FIXTURE_LOOKUP)
-    assert len(lk) == 2, f"lookup: expected 2, got {len(lk)}"
-    c202, m133 = lk
+    assert len(lk) == 3, f"lookup: expected 3 across 2 tables, got {len(lk)}"
+    c202, m133, phys = lk
     assert c202["course_code"] == "COMP 202" and c202["crn"] == "12345", c202
     assert c202["term"] == "Fall 2026", c202
     assert c202["instructor"] == "Jane Doe", c202
@@ -366,6 +374,8 @@ def _self_test() -> int:
     assert "McConnell 11" in c202["location"], c202
     assert c202["credits"] == 3.0, c202
     assert m133["instructor"] is None, "TBA -> None"
+    assert phys["course_code"] == "PHYS 101", phys  # 2nd table accumulated
+    assert phys["instructor"] == "Alan Weeks", phys
     print("lookup-classes self-test PASSED:")
     for s in lk:
         print(f"  {s['course_code']} CRN {s['crn']} [{s['term']}] "
