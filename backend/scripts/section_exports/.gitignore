@@ -1,0 +1,5 @@
+# Your exported Minerva/VSB HTML — keep the folder, never commit the data.
+*.html
+*.htm
+*.csv
+parsed_*.json
