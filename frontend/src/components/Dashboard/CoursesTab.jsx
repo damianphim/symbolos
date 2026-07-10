@@ -146,6 +146,8 @@ export default function CoursesTab({
                 <option value="name-za">{t('courses.sortNameZA')}</option>
                 <option value="instructor-az">{t('courses.sortInstructorAZ')}</option>
                 <option value="instructor-za">{t('courses.sortInstructorZA')}</option>
+                <option value="number">{t('courses.sortNumber')}</option>
+                <option value="grade-high">{t('courses.sortGradeHigh')}</option>
               </select>
             </div>
           </div>
@@ -170,6 +172,20 @@ export default function CoursesTab({
                       )}
                     </div>
                     <h4 className="course-title">{course.title}</h4>
+
+                    {course.term_instructor && (
+                      <div className="course-term-prof">
+                        <FaUser /> {searchTerm}: <strong>{course.term_instructor}</strong>
+                        {course.prof_historical_avg != null ? (
+                          <span className="term-prof-avg">
+                            {' · '}{t('courses.profHistAvg')}: {course.prof_historical_avg.toFixed(1)} ({gpaToLetterGrade(course.prof_historical_avg)}
+                            {course.prof_historical_n ? `, ${course.prof_historical_n}` : ''})
+                          </span>
+                        ) : (
+                          <span className="term-prof-avg term-prof-avg--none">{' · '}{t('courses.profNoHist')}</span>
+                        )}
+                      </div>
+                    )}
 
                     {course.instructor && (
                       <div className="course-instructor-section">
