@@ -75,7 +75,7 @@ frontend/src/
 
 ## Engineering invariants (apply to every change)
 - **Security**: every new route takes `Depends(get_current_user_id)` + `require_self()`. Sanitize user input (`utils/sanitise.py`). Bound/validate all Claude-extracted values before persisting. New tables need RLS.
-- **PII**: never store or output student IDs, permanent codes, or other government identifiers. Transcript extraction scrubs `26\d{7}` and `[A-Z]{4}\d{8}` patterns (`transcript.py _scrub_pii`) — keep this working.
+- **PII**: never store or output student IDs, permanent codes, or other government identifiers. Transcripts are redacted **before** the Claude call — text is extracted locally (pypdf) and `26\d{7}` / `[A-Z]{4}\d{8}` patterns stripped (`transcript.py _redact_transcript_text`); only scanned/no-text PDFs fall back to sending the file. `_scrub_pii` on the model output is the defense-in-depth backstop. Keep both working.
 - **i18n**: every user-facing string goes through `t()` with keys added to **all three** of `locales/en.js`, `fr.js`, `zh.js`. Never hardcode UI text.
 - **No emojis in UI**: use `react-icons` components only. Backend-generated emoji (e.g. advisor-card `icon`) must be mapped to a react-icon before rendering.
 - **Term-awareness**: `current_courses` rows carry `term`/`year`; UI filters by active term via `frontend/src/lib/termDates.js`. Rows with NULL term are legacy and always shown.

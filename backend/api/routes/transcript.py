@@ -265,11 +265,55 @@ def _scrub_pii(value):
     return value
 
 
+def _redact_transcript_text(pdf_bytes: bytes) -> str | None:
+    """Extract the transcript's text locally and redact PII *before* anything is
+    sent to Claude, so the student ID and permanent code never leave our server.
+
+    Returns redacted plain text, or None when the PDF has no usable text layer
+    (scanned/image transcript) — in which case the caller falls back to sending
+    the PDF itself, still protected by the post-extraction _scrub_pii.
+    """
+    try:
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+    except Exception as e:
+        logger.warning("Transcript text extraction failed (%s); sending PDF instead", type(e).__name__)
+        return None
+    if len(text.strip()) < 100:
+        # No meaningful text layer — likely a scanned image PDF.
+        return None
+    for pat in _PII_PATTERNS:
+        text = pat.sub("[REDACTED]", text)
+    return text
+
+
 # ── Claude extraction (with retry on transient 500s) ─────────────────────────
 
 async def extract_transcript_data(pdf_bytes: bytes) -> dict:
     client = _get_async_client()
-    pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
+
+    # Redact the student ID / permanent code locally BEFORE the call. We send
+    # Claude the redacted text so those identifiers never leave our server.
+    # Only a scanned/image transcript (no text layer) falls back to the PDF.
+    redacted_text = _redact_transcript_text(pdf_bytes)
+    if redacted_text is not None:
+        logger.info("Transcript redacted locally; sending text to Claude")
+        content = [
+            {"type": "text",
+             "text": "STUDENT TRANSCRIPT (personal identifiers already redacted):\n\n"
+                     + redacted_text},
+            {"type": "text", "text": EXTRACTION_PROMPT},
+        ]
+    else:
+        logger.info("Transcript has no text layer; sending PDF (output still PII-scrubbed)")
+        pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
+        content = [
+            {"type": "document",
+             "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64}},
+            {"type": "text", "text": EXTRACTION_PROMPT},
+        ]
 
     last_exc: Exception = RuntimeError("unreachable")
     for attempt in range(_ANTHROPIC_MAX_RETRIES + 1):
@@ -277,22 +321,7 @@ async def extract_transcript_data(pdf_bytes: bytes) -> dict:
             message = await client.messages.create(
                 model=settings.CLAUDE_MODEL,
                 max_tokens=4000,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "document",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": "application/pdf",
-                                    "data": pdf_b64,
-                                },
-                            },
-                            {"type": "text", "text": EXTRACTION_PROMPT},
-                        ],
-                    }
-                ],
+                messages=[{"role": "user", "content": content}],
             )
             break  # success — exit retry loop
         except anthropic.InternalServerError as e:
