@@ -314,6 +314,8 @@ const ZH_TRANSLATIONS = {
     'courses.searching': '搜索中...',
     'courses.filters': '筛选',
     'courses.sortBy': '排序：',
+    'courses.semester': '学期：',
+    'courses.allSemesters': '所有学期',
     'courses.relevance': '相关性',
     'courses.addToSaved': '添加到收藏',
     'courses.removeFromSaved': '从收藏移除',

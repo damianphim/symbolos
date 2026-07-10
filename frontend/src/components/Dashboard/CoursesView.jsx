@@ -26,6 +26,9 @@ export default function CoursesView({
   sortBy,
   setSortBy,
   sortCourses,
+  searchTerm,
+  setSearchTerm,
+  availableTerms = [],
   isFavorited,
   isCompleted,
   isCurrent,
@@ -93,6 +96,9 @@ export default function CoursesView({
         style={{ display: subTab === 'course_search' ? 'block' : 'none' }}
       >
         <CoursesTab
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          availableTerms={availableTerms}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           searchResults={searchResults}

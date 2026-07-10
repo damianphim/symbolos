@@ -170,6 +170,8 @@ export default function Dashboard() {
   const [searchCorrection, setSearchCorrection] = useState(null) // { original, corrected }
   const [hasSearched, setHasSearched] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
+  const [searchTerm, setSearchTerm] = useState('')      // semester filter, '' = all
+  const [availableTerms, setAvailableTerms] = useState([])
 
   // ── Favorites & completed ──────────────────────────────
   // SWR-style: hydrate user-data state from localStorage so the UI paints
@@ -671,7 +673,7 @@ export default function Dashboard() {
         searchQuery   = codeMatch[2]
       }
 
-      const data = await coursesAPI.search(searchQuery, searchSubject, 50)
+      const data = await coursesAPI.search(searchQuery, searchSubject, 50, searchTerm || null)
       let courses = data.courses || data || []
       if (!Array.isArray(courses)) courses = []
 
@@ -682,7 +684,7 @@ export default function Dashboard() {
           const corrCode = candidate.query.match(/^([A-Z]{2,6})\s+(\d{3}[A-Z]?)$/)
           const retrySub = corrCode ? corrCode[1] : null
           const retryQ   = corrCode ? corrCode[2] : candidate.query
-          const retry = await coursesAPI.search(retryQ, retrySub, 50)
+          const retry = await coursesAPI.search(retryQ, retrySub, 50, searchTerm || null)
           const retryList = retry.courses || retry || []
           if (Array.isArray(retryList) && retryList.length > 0) {
             setSearchCorrection({ original: rawQuery, corrected: candidate.note })
@@ -702,6 +704,17 @@ export default function Dashboard() {
       setIsSearching(false)
     }
   }
+
+  // Load the list of semesters we have section data for (for the filter).
+  useEffect(() => {
+    coursesAPI.getTerms().then(d => setAvailableTerms(d?.terms || [])).catch(() => {})
+  }, [])
+
+  // Re-run the current search whenever the semester filter changes.
+  useEffect(() => {
+    if (hasSearched && searchQuery.trim()) handleCourseSearch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm])
 
   // ── Toggle favorite ────────────────────────────────────
   const handleToggleFavorite = async (course) => {
@@ -984,6 +997,9 @@ export default function Dashboard() {
               sortBy={sortBy}
               setSortBy={setSortBy}
               sortCourses={sortCourses}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              availableTerms={availableTerms}
               isFavorited={isFavorited}
               isCompleted={isCompleted}
               isCurrent={isCurrent}

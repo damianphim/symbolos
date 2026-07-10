@@ -43,9 +43,57 @@ logger = logging.getLogger(__name__)
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 _SUBJECTS_CACHE_KEY = "all_subjects"
+_TERM_OFFERINGS_KEY = "section_term_offerings"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _norm_code(subject: str, catalog: str) -> str:
+    return f"{subject or ''}{catalog or ''}".upper().replace(" ", "")
+
+
+def _load_term_offerings():
+    """Scan mcgill_sections once → ({terms}, {term: {normalized course code}}).
+
+    Paginated because Supabase caps a select at 1000 rows. Cached 6h — a
+    term's course offerings don't change intra-day.
+    """
+    cached = search_cache.get(_TERM_OFFERINGS_KEY)
+    if cached is not None:
+        return cached
+    sb = get_supabase()
+    terms: set[str] = set()
+    offerings: dict[str, set] = {}
+    start, page = 0, 1000
+    while True:
+        rows = (
+            sb.table("mcgill_sections").select("term, course_code")
+            .range(start, start + page - 1).execute().data or []
+        )
+        if not rows:
+            break
+        for r in rows:
+            t, c = r.get("term"), r.get("course_code")
+            if not t:
+                continue
+            terms.add(t)
+            if c:
+                offerings.setdefault(t, set()).add(c.upper().replace(" ", ""))
+        if len(rows) < page:
+            break
+        start += page
+    result = (terms, offerings)
+    search_cache.set(_TERM_OFFERINGS_KEY, result, ttl=21600)
+    return result
+
+
+def _term_sort_key(term: str):
+    """Reverse-chronological: Winter 2027 → Fall 2026 → … (newest first)."""
+    parts = term.split()
+    year = int(parts[-1]) if parts and parts[-1].isdigit() else 0
+    month = {"Winter": 1, "Summer": 5, "Fall": 8}.get(parts[0] if parts else "", 0)
+    return (-year, -month)
+
 
 def parse_course_code(course_code: str):
     """Parse 'COMP202' → ('COMP', '202').  Returns (None, None) on failure."""
@@ -65,6 +113,7 @@ def parse_course_code(course_code: str):
 async def search(
     query: Optional[str] = Query(None, min_length=1, max_length=100),
     subject: Optional[str] = Query(None, min_length=2, max_length=6),
+    term: Optional[str] = Query(None, max_length=20),
     limit: int = Query(
         default=settings.DEFAULT_SEARCH_LIMIT,
         ge=1,
@@ -88,17 +137,30 @@ async def search(
         supabase = get_supabase()
         clean_query   = query.strip()          if query   else None
         clean_subject = subject.strip().upper() if subject else None
+        clean_term    = term.strip()            if term    else None
 
         # Nothing to search
         if not clean_query and not clean_subject:
             return {"courses": [], "count": 0, "query": None, "subject": None,
-                    "includes_ratings": True}
+                    "term": clean_term, "includes_ratings": True}
 
-        cache_key = f"search:{clean_subject}:{clean_query}:{limit}"
+        # Validate the term filter against the terms we actually have sections for.
+        offered = None
+        if clean_term:
+            all_terms, offerings = _load_term_offerings()
+            if clean_term not in all_terms:
+                raise HTTPException(status_code=400, detail=f"Unknown term: {clean_term}")
+            offered = offerings.get(clean_term, set())
+
+        cache_key = f"search:{clean_subject}:{clean_query}:{clean_term}:{limit}"
         cached = search_cache.get(cache_key)
         if cached is not None:
             logger.debug(f"Cache hit: {cache_key}")
             return cached
+
+        # When filtering by term we over-fetch from the RPC and intersect with
+        # the offered set below, so the final list can still reach `limit`.
+        rpc_limit = min(limit * 5, settings.MAX_SEARCH_LIMIT) if clean_term else limit
 
         # ── Call the search_courses RPC ────────────────────────────────────────
         rpc_result = supabase.rpc(
@@ -106,7 +168,7 @@ async def search(
             {
                 "p_query":   clean_query,
                 "p_subject": clean_subject,
-                "p_limit":   limit,
+                "p_limit":   rpc_limit,
             },
         ).execute()
 
@@ -139,9 +201,17 @@ async def search(
                     course_obj["blended_rating"] = row.get("blended_rating")
             result_courses.append(course_obj)
 
+        # ── Term filter: keep only courses offered in the selected semester ──
+        if offered is not None:
+            result_courses = [
+                c for c in result_courses
+                if _norm_code(c["subject"], c["catalog"]) in offered
+            ][:limit]
+
         logger.info(
             f"Course search (RPC): query='{clean_query}', "
-            f"subject='{clean_subject}', results={len(result_courses)}"
+            f"subject='{clean_subject}', term='{clean_term}', "
+            f"results={len(result_courses)}"
         )
 
         result = {
@@ -149,6 +219,7 @@ async def search(
             "count":            len(result_courses),
             "query":            clean_query,
             "subject":          clean_subject,
+            "term":             clean_term,
             "includes_ratings": include_ratings,
         }
         search_cache.set(cache_key, result, ttl=300)
@@ -165,6 +236,17 @@ async def search(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while searching courses",
         )
+
+
+@router.get("/terms", response_model=dict)
+async def get_terms(_: str = Depends(get_current_user_id)):
+    """Terms we have section data for, newest first (e.g. Winter 2027, Fall 2026).
+
+    Powers the "semester" filter in course search. MUST be declared before
+    /{subject}/{catalog} to avoid route shadowing.
+    """
+    terms, _offerings = _load_term_offerings()
+    return {"terms": sorted(terms, key=_term_sort_key)}
 
 
 @router.get("/subjects", response_model=dict)

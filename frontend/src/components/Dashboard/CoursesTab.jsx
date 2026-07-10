@@ -22,6 +22,7 @@ export default function CoursesTab({
   isSearching, searchError,
   handleCourseSearch,
   sortBy, setSortBy, sortCourses,
+  searchTerm, setSearchTerm, availableTerms = [],
   isFavorited, isCompleted, isCurrent,
   handleToggleFavorite, handleToggleCompleted, handleToggleCurrent,
   gpaToLetterGrade,
@@ -122,6 +123,20 @@ export default function CoursesTab({
               )}
             </h3>
             <div className="sort-controls">
+              {availableTerms.length > 0 && setSearchTerm && (
+                <>
+                  <label htmlFor="term-select" className="sort-label">{t('courses.semester')}</label>
+                  <select
+                    id="term-select"
+                    className="sort-select"
+                    value={searchTerm || ''}
+                    onChange={(e) => { setCurrentPage(1); setSearchTerm(e.target.value) }}
+                  >
+                    <option value="">{t('courses.allSemesters')}</option>
+                    {availableTerms.map(tm => <option key={tm} value={tm}>{tm}</option>)}
+                  </select>
+                </>
+              )}
               <label htmlFor="sort-select" className="sort-label">{t('courses.sortBy')}</label>
               <select id="sort-select" className="sort-select" value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
                 <option value="relevance">{t('courses.relevance')}</option>

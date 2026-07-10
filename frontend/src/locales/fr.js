@@ -314,6 +314,8 @@ const FR_TRANSLATIONS = {
     'courses.searching': 'Recherche...',
     'courses.filters': 'Filtres',
     'courses.sortBy': 'Trier par :',
+    'courses.semester': 'Trimestre :',
+    'courses.allSemesters': 'Tous les trimestres',
     'courses.relevance': 'Pertinence',
     'courses.addToSaved': 'Ajouter aux favoris',
     'courses.removeFromSaved': 'Retirer des favoris',

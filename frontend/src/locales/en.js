@@ -314,6 +314,8 @@ const EN_TRANSLATIONS = {
     'courses.searching': 'Searching...',
     'courses.filters': 'Filters',
     'courses.sortBy': 'Sort by:',
+    'courses.semester': 'Semester:',
+    'courses.allSemesters': 'All semesters',
     'courses.relevance': 'Relevance',
     'courses.addToSaved': 'Add to favorites',
     'courses.removeFromSaved': 'Remove from favorites',

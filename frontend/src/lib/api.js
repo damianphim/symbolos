@@ -167,13 +167,14 @@ export const chatAPI = {
 
 // Courses API
 export const coursesAPI = {
-  search: async (query = '', subject = null, limit = 50) => {
+  search: async (query = '', subject = null, limit = 50, term = null) => {
     try {
       const params = {}
       if (query) params.query = query
       if (subject) params.subject = subject
+      if (term) params.term = term
       params.limit = limit
-      
+
       const response = await api.get('/courses/search', { params })
       return response.data
     } catch (error) {
@@ -181,7 +182,17 @@ export const coursesAPI = {
       throw error
     }
   },
-  
+
+  getTerms: async () => {
+    try {
+      const response = await api.get('/courses/terms')
+      return response.data
+    } catch (error) {
+      console.error('Course terms error:', error)
+      return { terms: [] }
+    }
+  },
+
   getDetails: async (subject, catalog) => {
     try {
       const response = await api.get(`/courses/${subject}/${catalog}`)
