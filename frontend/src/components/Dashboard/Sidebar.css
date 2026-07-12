@@ -260,8 +260,8 @@
   transition: opacity 0.08s ease;
 }
 .sidebar--mini .nav-item:hover::after { opacity: 1; }
-/* Prevent icon color changing on hover when item is active */
-.nav-item.active:hover .nav-icon { color: var(--nav-accent, var(--accent-primary)); transform: scale(1.12); }
+/* Prevent icon color changing on hover when item is active — stay brand red */
+.nav-item.active:hover .nav-icon { color: var(--accent-primary, #ED1B2F); transform: scale(1.12); }
 
 .nav-label { font-weight: 500; font-size: 1rem; }
 
@@ -475,7 +475,7 @@
 }
 
 .mini-pill--active {
-  background: var(--nav-accent, var(--accent-primary));
+  background: var(--accent-primary, #ED1B2F);
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   animation: pill-enter 0.22s cubic-bezier(0.4, 0, 0.2, 1) both,
@@ -490,7 +490,7 @@
 }
 
 .mini-pill--active:hover {
-  background: var(--nav-accent, var(--accent-primary));
+  background: var(--accent-primary, #ED1B2F);
   color: white;
   transform: scale(1.12);
 }
