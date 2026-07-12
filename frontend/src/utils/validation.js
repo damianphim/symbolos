@@ -3,6 +3,8 @@
  */
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Symbolos is McGill-only: sign-up and sign-in require a McGill address.
+export const MCGILL_EMAIL_REGEX = /@(mail\.)?mcgill\.ca$/i
 export const PASSWORD_MIN_LENGTH = 8
 export const USERNAME_MIN_LENGTH = 3
 export const USERNAME_MAX_LENGTH = 20
@@ -17,6 +19,9 @@ export const validateEmail = (email) => {
   }
   if (!EMAIL_REGEX.test(email)) {
     return 'Please enter a valid email address'
+  }
+  if (!MCGILL_EMAIL_REGEX.test(email)) {
+    return 'Use your McGill email (@mcgill.ca or @mail.mcgill.ca)'
   }
   return null
 }

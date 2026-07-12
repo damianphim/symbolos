@@ -213,6 +213,23 @@ async def create_new_user(user: UserCreate, req: Request, current_user_id: str =
             detail="Profile email must match the address on your account.",
         )
 
+    # McGill-only: block account creation for non-McGill addresses (admins pass).
+    # Domain-only (no "confirmed" gate) so the app's own email verification still
+    # runs for legitimate McGill signups.
+    from ..auth import _MCGILL_DOMAINS, _ADMIN_USER_IDS
+    _admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+    if (current_user_id not in _ADMIN_USER_IDS
+            and auth_email not in _admin_emails
+            and not any(auth_email.endswith(d) for d in _MCGILL_DOMAINS)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "mcgill_email_required",
+                "message": "Symbolos is for McGill students. Please sign up with your "
+                           "@mcgill.ca or @mail.mcgill.ca email.",
+            },
+        )
+
     try:
         # Check for existing email
         existing = get_user_by_email(user.email)
