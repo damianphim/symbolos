@@ -18,16 +18,19 @@ import './Forum.css'
 //   - general       → general non-academic discussion
 //   - app_feedback  → feedback about Symbolos itself
 // ─────────────────────────────────────────────────────────────────────
+// Palette is deliberately restrained: red for general forum navigation,
+// blue for anything course/professor-related (reviews content), so the
+// forum doesn't read as a rainbow of unrelated section colors.
 const SECTIONS = [
-  { key: 'reviews',      label: 'Reviews',     icon: <FaStar />,              color: '#f59e0b' },
-  { key: 'clubs',        label: 'Clubs',       icon: <FaUsers />,             color: '#10b981' },
-  { key: 'general',      label: 'General',     icon: <FaBullhorn />,          color: '#8b5cf6' },
-  { key: 'app_feedback', label: 'App Feedback', icon: <FaCog />,              color: '#3b82f6' },
+  { key: 'reviews',      label: 'Reviews',     icon: <FaStar />,              color: '#ed1b2f' },
+  { key: 'clubs',        label: 'Clubs',       icon: <FaUsers />,             color: '#ed1b2f' },
+  { key: 'general',      label: 'General',     icon: <FaBullhorn />,          color: '#ed1b2f' },
+  { key: 'app_feedback', label: 'App Feedback', icon: <FaCog />,              color: '#ed1b2f' },
 ]
 
 const REVIEW_SUBTABS = [
   { key: 'course_review',    label: 'Courses',    icon: <FaBookOpen />,           color: '#3b82f6' },
-  { key: 'professor_review', label: 'Professors', icon: <FaChalkboardTeacher />, color: '#ed1b2f' },
+  { key: 'professor_review', label: 'Professors', icon: <FaChalkboardTeacher />, color: '#3b82f6' },
 ]
 
 function getSortOptions(t) {

@@ -5,9 +5,11 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Root ──────────────────────────────────────────────────── */
+/* Fill the content area (already sidebar-aware via Dashboard's flex layout
+   and --rsb-width padding) instead of capping at a fixed column width. */
 .forum-root {
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
   padding: 24px 20px 48px;
   display: flex;
   flex-direction: column;
