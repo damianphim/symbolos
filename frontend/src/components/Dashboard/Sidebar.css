@@ -221,9 +221,9 @@
 }
 
 .nav-icon {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   flex-shrink: 0;
-  width: 20px;
+  width: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,8 +234,32 @@
   transform: scale(1.15);
 }
 
-.nav-item:not(.active) .nav-icon { color: var(--accent-primary, #ED1B2F); }
-.nav-item.active .nav-icon { color: var(--nav-accent, var(--accent-primary)); }
+/* Consistent brand red for every sidebar icon, active or not. */
+.nav-item .nav-icon { color: var(--accent-primary, #ED1B2F); }
+
+/* Immediate hover label when the rail is collapsed (icons only). */
+.sidebar--mini .nav-item { position: relative; }
+.sidebar--mini .nav-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--bg-elevated, #1f2937);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border-primary, rgba(0,0,0,0.1));
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  transition: opacity 0.08s ease;
+}
+.sidebar--mini .nav-item:hover::after { opacity: 1; }
 /* Prevent icon color changing on hover when item is active */
 .nav-item.active:hover .nav-icon { color: var(--nav-accent, var(--accent-primary)); transform: scale(1.12); }
 

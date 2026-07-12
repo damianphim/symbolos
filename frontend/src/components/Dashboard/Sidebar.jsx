@@ -129,6 +129,9 @@ export default function Sidebar({
                   <button
                     key={key}
                     data-tour={key}
+                    data-label={label}
+                    title={label}
+                    aria-label={label}
                     className={`nav-item ${activeTab === key ? 'active' : ''}`}
                     onClick={() => onTabChange(key)}
                     style={{
