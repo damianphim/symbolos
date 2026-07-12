@@ -15,6 +15,15 @@
   margin: -2rem -2rem 2rem -2rem;
 }
 
+/* .content-area reserves an extra 36px of left padding in collapsed-sidebar
+   mode for the pill rail (Dashboard.css .sidebar--mini ~ .main-content
+   .content-area). Match that here so the header banner still bleeds flush
+   to the true left edge in both sidebar states — without the avatar ever
+   sitting under the rail. */
+.sidebar--mini ~ .main-content .content-area .profile-page-header {
+  margin-left: calc(-2rem - 36px);
+}
+
 .profile-hero {
   max-width: 1200px;
   margin: 0 auto;

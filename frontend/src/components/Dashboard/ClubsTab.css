@@ -66,12 +66,13 @@
   box-shadow: 0 4px 14px rgba(220,38,38,0.3);
   flex-shrink: 0;
 }
+/* Universal tab-title type: 1.5rem / 800 / -0.3px, matches Home/Forum/Calendar */
 .clubs-header__title {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary, #0a0c10);
   margin: 0 0 2px;
-  letter-spacing: -0.35px;
+  letter-spacing: -0.3px;
 }
 .clubs-header__sub {
   font-size: 0.85rem;
