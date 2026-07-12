@@ -2,11 +2,9 @@ import { useMemo, useState } from 'react'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import { getCreditsRequired } from '../../utils/mcgillData'
 import {
-  FaBook, FaBolt, FaCheck, FaBullseye, FaRegCircle, FaGraduationCap,
-  FaLightbulb, FaFlag, FaTimes, FaChevronDown, FaChevronUp,
+  FaBook, FaBolt, FaCheck, FaBullseye,
+  FaLightbulb, FaTimes, FaChevronDown, FaChevronUp,
 } from 'react-icons/fa'
-import { GiPartyPopper } from 'react-icons/gi'
-import { LuBicepsFlexed } from 'react-icons/lu'
 import './DegreeProgressTracker.css'
 
 // `compact` renders only the progress bar + credit totals (used on Home);
@@ -67,7 +65,6 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
   const progressSection = (
     <div className="progress-section">
       <div className="progress-header">
-        <h3 className="progress-title">{t('degree.completion')}</h3>
         <span className="progress-percentage">{Math.round(stats.progressPercentage)}%</span>
       </div>
       <div className="progress-bar-container">
@@ -150,34 +147,6 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
         </div>
       </div>
 
-      {/* Milestones */}
-      <div className="milestones">
-        {[
-          { pct: 0.25, icon: <FaFlag />,          labelKey: 'degree.milestone25' },
-          { pct: 0.5,  icon: <GiPartyPopper />,   labelKey: 'degree.milestone50' },
-          { pct: 0.75, icon: <LuBicepsFlexed />,  labelKey: 'degree.milestone75' },
-          { pct: 1,    icon: <FaGraduationCap />, labelKey: 'degree.milestone100' },
-        ].map(({ pct, icon, labelKey }) => {
-          const threshold = pct === 1 ? stats.totalRequired : Math.round(stats.totalRequired * pct)
-          const done = stats.totalEarnedCredits >= threshold
-          return (
-            <div key={pct} className={`milestone ${done ? 'completed' : ''}`}>
-              <div className="milestone-marker">
-                {done
-                  ? <FaCheck className="milestone-check" />
-                  : <FaRegCircle className="milestone-circle" />}
-              </div>
-              <div className="milestone-text">
-                <span className="milestone-credits">{threshold} {t('courses.credits').toLowerCase()}</span>
-                <span className="milestone-label">
-                  <span className="milestone-icon-inline">{icon}</span>
-                  {t(labelKey)}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
         </>
       )}
 

@@ -149,7 +149,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
             ? { top: tooltipTop, left: rect.right + PAD + 18, width: TOOLTIP_W }
             : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 420, maxWidth: 'calc(100vw - 32px)' }
           ),
-          background: '#0f0d1a',
+          background: 'var(--tour-bg)',
           border: '1px solid rgba(237,27,47,0.22)',
           borderRadius: 14,
           padding: '20px 22px',
@@ -170,7 +170,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
               position: 'absolute', left: -6, top: arrowOffset,
               width: 0, height: 0,
               borderTop: '7px solid transparent', borderBottom: '7px solid transparent',
-              borderRight: '7px solid #0f0d1a',
+              borderRight: '7px solid var(--tour-bg)',
               transform: 'translateY(-50%)',
             }} />
           </>
@@ -182,19 +182,19 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
             <div key={i} style={{
               height: 5, borderRadius: 3,
               width: i === step ? 14 : 5,
-              background: i === step ? '#ed1b2f' : i < step ? 'rgba(237,27,47,0.4)' : 'rgba(255,255,255,0.12)',
+              background: i === step ? '#ed1b2f' : i < step ? 'rgba(237,27,47,0.4)' : 'var(--tour-track)',
               transition: 'all 0.3s ease',
             }} />
           ))}
-          <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--tour-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
             {step + 1}/{STEPS.length}
           </span>
         </div>
 
-        <h3 style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700, margin: '0 0 8px', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
+        <h3 style={{ color: 'var(--tour-text)', fontSize: '1.05rem', fontWeight: 700, margin: '0 0 8px', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
           {current.title}
         </h3>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.855rem', lineHeight: 1.65, margin: '0 0 10px' }}>
+        <p style={{ color: 'var(--tour-text-muted)', fontSize: '0.855rem', lineHeight: 1.65, margin: '0 0 10px' }}>
           {current.description}
         </p>
 

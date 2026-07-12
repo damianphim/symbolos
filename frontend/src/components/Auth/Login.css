@@ -1,0 +1,8 @@
+
+/* Feature list bullets (replaced per-feature icons) */
+.auth-feature-bullet {
+  color: var(--accent-primary, #ed1b2f);
+  font-weight: 700;
+  line-height: 1;
+  margin-right: 2px;
+}

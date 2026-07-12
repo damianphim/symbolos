@@ -3,10 +3,20 @@
  */
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Symbolos is McGill-only: sign-up and sign-in require a McGill address.
+export const MCGILL_EMAIL_REGEX = /@(mail\.)?mcgill\.ca$/i
 export const PASSWORD_MIN_LENGTH = 8
 export const USERNAME_MIN_LENGTH = 3
 export const USERNAME_MAX_LENGTH = 20
 export const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/
+
+// Platform admins bypass the McGill-only gate on the sign-in/sign-up form,
+// mirroring the backend allowlist (api/auth.py _ADMIN_USER_IDS / ADMIN_EMAILS)
+// so admin accounts on non-McGill addresses can still log in.
+const ADMIN_EMAIL_ALLOWLIST = new Set([
+  'dphimister24@gmail.com',
+  'aduda2469@gmail.com',
+])
 
 /**
  * Validate email format
@@ -17,6 +27,12 @@ export const validateEmail = (email) => {
   }
   if (!EMAIL_REGEX.test(email)) {
     return 'Please enter a valid email address'
+  }
+  if (ADMIN_EMAIL_ALLOWLIST.has(email.trim().toLowerCase())) {
+    return null
+  }
+  if (!MCGILL_EMAIL_REGEX.test(email)) {
+    return 'Use your McGill email (@mcgill.ca or @mail.mcgill.ca)'
   }
   return null
 }

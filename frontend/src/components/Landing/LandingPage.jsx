@@ -16,7 +16,7 @@
  * Missing screenshots gracefully render as a styled "Screenshot placeholder"
  * so the page never breaks if you haven't dropped them yet.
  */
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import logoMark from '../../assets/loading-logo.png'
 import useScrollReveal from './useScrollReveal'
 import './LandingPage.css'
@@ -92,40 +92,9 @@ export default function LandingPage({ onSignIn }) {
     }
   }, [])
 
-  // The visual is one long scroll. "Sign in" is in the sticky top nav and
-  // appears again as the final CTA — both call the same handler.
-  const [navScrolled, setNavScrolled] = useState(false)
-  // Tiny throttle: only update state at most once per animation frame.
-  useEffect(() => {
-    let pending = false
-    const onScroll = () => {
-      if (pending) return
-      pending = true
-      requestAnimationFrame(() => {
-        setNavScrolled(window.scrollY > 12)
-        pending = false
-      })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll() // sync initial state (e.g. reload while scrolled)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   return (
     <div className="landing-root">
-
-      {/* ── Sticky top nav ───────────────────────────────────────── */}
-      <nav className={`landing-nav ${navScrolled ? 'landing-nav--scrolled' : ''}`}>
-        <div className="landing-nav__inner">
-          <a href="#top" className="landing-nav__brand">
-            <img src={logoMark} alt="Symbolos" className="landing-nav__logo" />
-            <span className="landing-nav__name">Symbolos</span>
-          </a>
-          <button className="landing-nav__cta" onClick={onSignIn}>
-            Sign in
-          </button>
-        </div>
-      </nav>
 
       {/* ── 1. Hero ──────────────────────────────────────────────── */}
       <section className="landing-section landing-hero" id="top">

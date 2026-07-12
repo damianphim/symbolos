@@ -114,9 +114,26 @@ export default function Dashboard() {
   }, [activeTab, t])
 
   const tourKey = `symbolos_tour_done_${user?.id}`
-  const [showTutorial, setShowTutorial] = useState(
-    () => !!user?.id && !localStorage.getItem(`symbolos_tour_done_${user?.id}`)
-  )
+  // Only auto-show the walkthrough for genuinely new accounts (≤3 days old and
+  // not yet completed) or returning users who've been away ≥30 days — never on
+  // every login.
+  const [showTutorial, setShowTutorial] = useState(() => {
+    if (!user?.id) return false
+    const DAY = 86400000, now = Date.now()
+    const firstSeenKey = `symbolos_first_seen_${user.id}`
+    if (!localStorage.getItem(firstSeenKey)) localStorage.setItem(firstSeenKey, String(now))
+    const created = profile?.created_at ? new Date(profile.created_at).getTime() : NaN
+    const createdMs = Number.isNaN(created) ? Number(localStorage.getItem(firstSeenKey)) : created
+    const lastSeen = Number(localStorage.getItem(`symbolos_last_seen_${user.id}`)) || 0
+    const done = !!localStorage.getItem(`symbolos_tour_done_${user.id}`)
+    const accountAgeDays = (now - createdMs) / DAY
+    const daysSinceSeen = lastSeen ? (now - lastSeen) / DAY : 0
+    return (accountAgeDays <= 3 && !done) || (lastSeen > 0 && daysSinceSeen >= 30)
+  })
+  // Record this visit so we can detect a ≥30-day gap next time.
+  useEffect(() => {
+    if (user?.id) localStorage.setItem(`symbolos_last_seen_${user.id}`, String(Date.now()))
+  }, [user?.id])
   // Keep sidebar expanded so data-tour targets are in the DOM during the walkthrough
   useEffect(() => {
     if (showTutorial) setSidebarOpen(true)

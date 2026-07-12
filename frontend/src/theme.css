@@ -579,3 +579,23 @@ textarea:focus-visible {
 .theme-text-primary { color: var(--text-primary) !important; }
 .theme-text-secondary { color: var(--text-secondary) !important; }
 .theme-border { border-color: var(--border-primary) !important; }
+
+/* ─── Onboarding tour tooltip (was hardcoded dark; now theme-aware) ─── */
+:root {
+  --tour-bg: #0f0d1a;
+  --tour-text: #ffffff;
+  --tour-text-muted: rgba(255, 255, 255, 0.6);
+  --tour-track: rgba(255, 255, 255, 0.12);
+}
+[data-theme='light'] {
+  --tour-bg: #ffffff;
+  --tour-text: #111827;
+  --tour-text-muted: #6b7280;
+  --tour-track: rgba(0, 0, 0, 0.10);
+}
+[data-theme='dark'] {
+  --tour-bg: #0f0d1a;
+  --tour-text: #ffffff;
+  --tour-text-muted: rgba(255, 255, 255, 0.6);
+  --tour-track: rgba(255, 255, 255, 0.12);
+}

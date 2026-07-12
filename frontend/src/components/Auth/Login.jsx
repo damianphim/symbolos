@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { HiLightBulb, HiAcademicCap, HiChartBar, HiClipboardList, HiChatAlt2 } from 'react-icons/hi'
+import { HiLightBulb } from 'react-icons/hi'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { supabase } from '../../lib/supabase'
@@ -258,16 +258,9 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           </div>
 
           <ul className="auth-feature-list">
-            {[
-              { text: t('auth.feature1'), Icon: HiAcademicCap,  color: 'courses'  },
-              { text: t('auth.feature2'), Icon: HiChartBar,      color: 'forum'    },
-              { text: t('auth.feature3'), Icon: HiClipboardList, color: 'calendar' },
-              { text: t('auth.feature4'), Icon: HiChatAlt2,      color: 'chat'     },
-            ].map(({ text, Icon, color }) => (
+            {[t('auth.feature1'), t('auth.feature2'), t('auth.feature3'), t('auth.feature4')].map(text => (
               <li key={text} className="auth-feature-item">
-                <span className={`auth-feature-icon auth-feature-icon--${color}`}>
-                  <Icon aria-hidden="true" />
-                </span>
+                <span className="auth-feature-bullet" aria-hidden="true">•</span>
                 <span>{text}</span>
               </li>
             ))}
