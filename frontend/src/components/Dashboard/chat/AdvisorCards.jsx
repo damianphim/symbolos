@@ -700,11 +700,14 @@ export default function AdvisorCards({
   const autoExpandedRef = useRef(false)
   useEffect(() => {
     if (autoExpandedRef.current || showSkeletons) return
+    // If Home deep-linked a specific card, let that effect own the expansion —
+    // don't also open the top card (which would leave two cards open).
+    if (openCardId) { autoExpandedRef.current = true; return }
     const topCard = visibleCards[0]
     if (!topCard) return
     autoExpandedRef.current = true
     setExpanded(prev => new Set([...prev, topCard.id]))
-  }, [showSkeletons, visibleCards])
+  }, [showSkeletons, visibleCards, openCardId])
 
   // Counts are all based on visibleCards (deleted cards excluded)
   const categoryCounts = visibleCards.reduce((acc, card) => {
