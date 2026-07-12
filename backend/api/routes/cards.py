@@ -331,6 +331,20 @@ CARD SCHEMA — every card must include:
 {CATEGORIES_PROMPT_LIST}
   "priority" : integer 1–8 (1 = most important)
 
+TERM AWARENESS
+The student's courses are separated into "COURSES THIS TERM" (the current
+semester) and "REGISTERED FOR UPCOMING TERMS" (future semesters, grouped by
+term). A student is often registered across MULTIPLE separate terms at once —
+e.g. some courses in Fall 2026 and others in Winter 2027. These are DISTINCT
+sequential semesters, not one block:
+  - Never call upcoming-term courses "this term", "this semester", or "currently
+    taking" — say "registered for <Term> <Year>".
+  - Never merge courses from different terms into a single count or workload; a
+    Fall course and a Winter course are not taken at the same time. If the
+    student has 2 Fall and 3 Winter courses, that is NOT "5 courses this term".
+  - Reason about workload, balance, and prerequisites per term (e.g. "your Fall
+    2026 load" vs "your Winter 2027 load"), never lumped across the whole year.
+
 PROFESSOR RECOMMENDATIONS FOR OPPORTUNITY CARDS
 For "opportunities" cards, when relevant, recommend specific McGill professors the
 student could reach out to based on their major, completed courses, and interests.
