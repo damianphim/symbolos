@@ -153,8 +153,6 @@
 .auth-form-panel {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 2rem;
   background: var(--bg-secondary);
   overflow-y: auto;
@@ -164,6 +162,10 @@
 .auth-card {
   width: 100%;
   max-width: 420px;
+  /* margin:auto centres the card when it fits AND, unlike align/justify-center
+     on the flex panel, collapses to 0 on overflow so the top stays reachable
+     and the whole card scrolls (fixes the notice being clipped off the top). */
+  margin: auto;
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
@@ -586,8 +588,6 @@
      stretched mobile layout on tablet / small-laptop. */
   .auth-form-panel {
     padding: 2.5rem 2rem;
-    align-items: center;
-    justify-content: center;
   }
 
   .auth-card {
@@ -609,6 +609,9 @@
   .auth-card {
     max-width: 100%;
     padding: 2rem 1.5rem 1.5rem;
+    /* Top-align (not vertically centred) to keep clearance for the fixed
+       corner controls; horizontal margin still centres, still scrolls. */
+    margin: 0 auto;
   }
 }
 
