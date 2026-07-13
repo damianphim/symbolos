@@ -839,6 +839,8 @@ const EN_TRANSLATIONS = {
     'calendar.prevMonth': 'Previous month',
     'calendar.nextMonth': 'Next month',
     'calendar.todayBtn': 'Today',
+    'calendar.monthView': 'Month',
+    'calendar.weekView': 'Week',
     'calendar.eventTitle': 'Event Title',
     'calendar.eventTitlePlaceholder': 'e.g. Study Group, Club Meeting',
     'calendar.date': 'Date',

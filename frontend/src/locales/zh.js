@@ -819,6 +819,8 @@ const ZH_TRANSLATIONS = {
     'calendar.prevMonth': '上个月',
     'calendar.nextMonth': '下个月',
     'calendar.todayBtn': '今天',
+    'calendar.monthView': '月',
+    'calendar.weekView': '周',
     'calendar.eventTitle': '事件标题',
     'calendar.eventTitlePlaceholder': '例如 学习小组、社团会议',
     'calendar.date': '日期',

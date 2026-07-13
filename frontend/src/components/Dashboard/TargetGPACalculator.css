@@ -431,3 +431,25 @@
     padding: 16px;
   }
 }
+/* Compact variant — used side-by-side with Degree Progress in Degree Planning */
+.target-gpa-calculator--compact {
+  padding: 16px;
+}
+.target-gpa-calculator--compact .calculator-header { margin-bottom: 14px; }
+.target-gpa-calculator--compact .calculator-title { font-size: 15px; }
+.target-gpa-calculator--compact .calculator-icon { font-size: 16px; }
+.target-gpa-calculator--compact .calculator-subtitle { font-size: 12px; }
+.target-gpa-calculator--compact .calculator-body { gap: 14px; }
+.target-gpa-calculator--compact .current-stats {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.target-gpa-calculator--compact .stat-box { padding: 8px; }
+.target-gpa-calculator--compact .stat-label { font-size: 10px; }
+.target-gpa-calculator--compact .stat-value { font-size: 18px; }
+.target-gpa-calculator--compact .gpa-input { padding: 10px 12px; font-size: 14px; }
+.target-gpa-calculator--compact .calculate-btn { padding: 10px 16px; font-size: 13px; }
+
+@media (max-width: 480px) {
+  .target-gpa-calculator--compact .current-stats { grid-template-columns: repeat(3, 1fr); }
+}

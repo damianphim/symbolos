@@ -6,7 +6,7 @@ import { FaBook } from 'react-icons/fa'
 import { HiMiniSparkles } from "react-icons/hi2";
 import './TargetGPACalculator.css'
 
-export default function TargetGPACalculator({ currentGPA, completedCredits, totalCreditsRequired = 120 }) {
+export default function TargetGPACalculator({ currentGPA, completedCredits, totalCreditsRequired = 120, compact = false }) {
   const { t } = useLanguage()
   const [targetGPA, setTargetGPA] = useState('')
   const [showResult, setShowResult] = useState(false)
@@ -113,7 +113,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
   }
 
   return (
-    <div className="target-gpa-calculator">
+    <div className={`target-gpa-calculator${compact ? ' target-gpa-calculator--compact' : ''}`}>
       <div className="calculator-header">
         <h3 className="calculator-title">
           <FaBullseye className="calculator-icon" /> {t('gpa.targetGpa')} {t('common.calculator')}

@@ -836,6 +836,8 @@ const FR_TRANSLATIONS = {
     'calendar.prevMonth': 'Mois précédent',
     'calendar.nextMonth': 'Mois suivant',
     'calendar.todayBtn': "Aujourd'hui",
+    'calendar.monthView': 'Mois',
+    'calendar.weekView': 'Semaine',
     'calendar.eventTitle': "Titre de l'événement",
     'calendar.eventTitlePlaceholder': "ex. Groupe d'étude, Réunion de club",
     'calendar.date': 'Date',

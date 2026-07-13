@@ -3,7 +3,6 @@ import { useLanguage } from '../../contexts/PreferencesContext'
 import PersonalInfoCard from './PersonalInfoCard'
 import DegreeProgressTracker from './DegreeProgressTracker'
 import GPATrendChart from './GPATrendChart'
-import TargetGPACalculator from './TargetGPACalculator'
 import Settings from './Settings'
 import './ProfileTab.css'
 
@@ -20,9 +19,6 @@ export default function ProfileTab({
   handleAvatarClick,
   // Data
   completedCourses,
-  favorites,
-  chatHistory,
-  onImportTranscript,
 }) {
   const { t } = useLanguage()
   
@@ -109,19 +105,6 @@ export default function ProfileTab({
                 currentGPA={profile?.current_gpa}
               />
             </div>
-          </div>
-
-
-          {/* Target GPA Calculator */}
-          <div className="profile-section-card card-full-width">
-            <TargetGPACalculator
-              currentGPA={profile?.current_gpa}
-              completedCredits={
-                completedCourses.reduce((total, course) => total + (course.credits || 3), 0) +
-                (profile?.advanced_standing?.reduce((total, course) => total + (course.credits || 3), 0) || 0)
-              }
-              totalCreditsRequired={120}
-            />
           </div>
 
           {/* Settings */}

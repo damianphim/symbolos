@@ -342,9 +342,38 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     return `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
   }, [MONTHS])
 
+  // "Jul 6 – Jul 12, 2026" (or "Jul 30 – Aug 5, 2026" across a month boundary)
+  const formatWeekRange = (start, end) => {
+    const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+    const startLabel = `${MONTHS[start.getMonth()].slice(0, 3)} ${start.getDate()}`
+    const endLabel = sameMonth
+      ? `${end.getDate()}, ${end.getFullYear()}`
+      : `${MONTHS[end.getMonth()].slice(0, 3)} ${end.getDate()}, ${end.getFullYear()}`
+    return `${startLabel} – ${endLabel}`
+  }
+
   const [view, setView]               = useState('calendar')
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
+  // Calendar granularity — 'month' (existing grid) or 'week' (full agenda per
+  // day, so users can see clearly what's due in the next 7 days).
+  const [calGranularity, setCalGranularity] = useState('month')
+  const startOfWeek = (d) => { const s = new Date(d); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() - s.getDay()); return s }
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(today))
+  const switchToWeek = () => {
+    const isCurrentRealMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth()
+    const anchor = isCurrentRealMonth ? today : new Date(currentYear, currentMonth, 1)
+    setWeekStart(startOfWeek(anchor))
+    setCalGranularity('week')
+  }
+  const switchToMonth = () => {
+    setCurrentYear(weekStart.getFullYear())
+    setCurrentMonth(weekStart.getMonth())
+    setCalGranularity('month')
+  }
+  const prevWeek = () => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })
+  const nextWeek = () => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })
+  const weekDates = Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d })
   const [filter, setFilter]           = useState({ course: true, academic: true, exam: true, personal: true, club: true, newsletter: true })
   const [showModal, setShowModal]     = useState(false)
   const [editEvent, setEditEvent]     = useState(null)
@@ -609,6 +638,13 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     }
   }
 
+  // Same as handleDayClick but for the week view, which works with Date
+  // objects directly since a week can straddle a month/year boundary.
+  const handleWeekDayAdd = (date) => {
+    const dateStr = toDateStr(date.getFullYear(), date.getMonth(), date.getDate())
+    setPreselectedDate(dateStr); setEditEvent(null); setShowModal(true)
+  }
+
   const handleAddFromDrawer = () => {
     const date = dayDrawer?.date
     setDayDrawer(null)
@@ -748,56 +784,119 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       {/* Calendar View */}
       {view === 'calendar' && !isLoadingEvents && (
         <div className="cal-body">
-          <div className="cal-month-nav">
-            <button onClick={prevMonth}><FaChevronLeft /></button>
-            <div className="cal-month-title">
-              <h3>{MONTHS[currentMonth]} {currentYear}</h3>
-              <button className="cal-today-btn" onClick={() => { setCurrentYear(today.getFullYear()); setCurrentMonth(today.getMonth()) }}>
-                {t('calendar.todayBtn')}
-              </button>
-            </div>
-            <button onClick={nextMonth}><FaChevronRight /></button>
+          <div className="cal-granularity-toggle">
+            <button className={calGranularity === 'month' ? 'active' : ''} onClick={switchToMonth}>
+              {t('calendar.monthView')}
+            </button>
+            <button className={calGranularity === 'week' ? 'active' : ''} onClick={switchToWeek}>
+              {t('calendar.weekView')}
+            </button>
           </div>
-          <div className="cal-grid-header">
-            {DAYS.map(d => <div key={d} className="cal-grid-day-label">{d}</div>)}
-          </div>
-          <div className="cal-grid">
-            {cells.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="cal-cell cal-cell-empty" />
-              const dateStr = toDateStr(currentYear, currentMonth, day)
-              const eventsOnDay = eventsByDate[dateStr] || []
-              const isToday = dateStr === getTodayStr()
-              return (
-                <div key={dateStr}
-                  className={`cal-cell ${isToday ? 'cal-cell-today' : ''} ${eventsOnDay.length > 0 ? 'cal-cell-has-events' : ''}`}
-                  onClick={() => handleDayClick(day)}>
-                  <span className={`cal-cell-number ${isToday ? 'today' : ''}`}>{day}</span>
-                  <div className="cal-cell-events">
-                    {eventsOnDay.slice(0, 3).map(e => {
-                      const style = getEventStyle(e, typeConfig)
-                      return (
-                        <div key={e.id} className="cal-event-dot" style={{ background: style.color, color: '#fff' }} title={e.title}>
-                          {(() => {
-                            const t = e.title
-                            const courseMatch = t.match(/^([A-Z]{2,6})\s*(\d{3}[A-Z]?)\s+(.+)$/)
-                            if (courseMatch) {
-                              const type = courseMatch[3]
-                              const abbr = type.startsWith('Lecture') ? 'Lec' : type.startsWith('Tutorial') ? 'Tut' : type.startsWith('Lab') ? 'Lab' : type.slice(0,3)
-                              return `${courseMatch[1]}${courseMatch[2]} ${abbr}`
-                            }
-                            return t.length > 13 ? t.slice(0, 12) + '…' : t
-                          })()}
-                        </div>
-                      )
-                    })}
-                    {eventsOnDay.length > 3 && (
-                      <div className="cal-event-more">+{eventsOnDay.length - 3} {t('cal.moreDots')}</div>
-                    )}
-                  </div>
+
+          {calGranularity === 'month' ? (
+            <>
+              <div className="cal-month-nav">
+                <button onClick={prevMonth}><FaChevronLeft /></button>
+                <div className="cal-month-title">
+                  <h3>{MONTHS[currentMonth]} {currentYear}</h3>
+                  <button className="cal-today-btn" onClick={() => { setCurrentYear(today.getFullYear()); setCurrentMonth(today.getMonth()) }}>
+                    {t('calendar.todayBtn')}
+                  </button>
                 </div>
-              )
-            })}
-          </div>
+                <button onClick={nextMonth}><FaChevronRight /></button>
+              </div>
+              <div className="cal-grid-header">
+                {DAYS.map(d => <div key={d} className="cal-grid-day-label">{d}</div>)}
+              </div>
+              <div className="cal-grid">
+                {cells.map((day, idx) => {
+                  if (!day) return <div key={`empty-${idx}`} className="cal-cell cal-cell-empty" />
+                  const dateStr = toDateStr(currentYear, currentMonth, day)
+                  const eventsOnDay = eventsByDate[dateStr] || []
+                  const isToday = dateStr === getTodayStr()
+                  return (
+                    <div key={dateStr}
+                      className={`cal-cell ${isToday ? 'cal-cell-today' : ''} ${eventsOnDay.length > 0 ? 'cal-cell-has-events' : ''}`}
+                      onClick={() => handleDayClick(day)}>
+                      <span className={`cal-cell-number ${isToday ? 'today' : ''}`}>{day}</span>
+                      <div className="cal-cell-events">
+                        {eventsOnDay.slice(0, 3).map(e => {
+                          const style = getEventStyle(e, typeConfig)
+                          return (
+                            <div key={e.id} className="cal-event-dot" style={{ background: style.color, color: '#fff' }} title={e.title}>
+                              {(() => {
+                                const t = e.title
+                                const courseMatch = t.match(/^([A-Z]{2,6})\s*(\d{3}[A-Z]?)\s+(.+)$/)
+                                if (courseMatch) {
+                                  const type = courseMatch[3]
+                                  const abbr = type.startsWith('Lecture') ? 'Lec' : type.startsWith('Tutorial') ? 'Tut' : type.startsWith('Lab') ? 'Lab' : type.slice(0,3)
+                                  return `${courseMatch[1]}${courseMatch[2]} ${abbr}`
+                                }
+                                return t.length > 13 ? t.slice(0, 12) + '…' : t
+                              })()}
+                            </div>
+                          )
+                        })}
+                        {eventsOnDay.length > 3 && (
+                          <div className="cal-event-more">+{eventsOnDay.length - 3} {t('cal.moreDots')}</div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="cal-month-nav">
+                <button onClick={prevWeek}><FaChevronLeft /></button>
+                <div className="cal-month-title">
+                  <h3>
+                    {formatWeekRange(weekDates[0], weekDates[6])}
+                  </h3>
+                  <button className="cal-today-btn" onClick={() => setWeekStart(startOfWeek(today))}>
+                    {t('calendar.todayBtn')}
+                  </button>
+                </div>
+                <button onClick={nextWeek}><FaChevronRight /></button>
+              </div>
+              <div className="cal-week-grid">
+                {weekDates.map(date => {
+                  const dateStr = toDateStr(date.getFullYear(), date.getMonth(), date.getDate())
+                  const eventsOnDay = (eventsByDate[dateStr] || []).slice().sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
+                  const isToday = dateStr === getTodayStr()
+                  return (
+                    <div key={dateStr} className={`cal-week-col ${isToday ? 'cal-week-col-today' : ''}`}>
+                      <div className="cal-week-col-header">
+                        <span className="cal-week-col-day">{DAYS[date.getDay()]}</span>
+                        <span className={`cal-week-col-num ${isToday ? 'today' : ''}`}>{date.getDate()}</span>
+                      </div>
+                      <div className="cal-week-col-events">
+                        {eventsOnDay.map(e => {
+                          const style = getEventStyle(e, typeConfig)
+                          return (
+                            <div
+                              key={e.id}
+                              className="cal-week-event"
+                              style={{ borderLeftColor: style.color, background: style.bg }}
+                              onClick={() => setPopupEvent(e)}
+                            >
+                              {e.time && <span className="cal-week-event-time">{e.time}</span>}
+                              <span className="cal-week-event-title">{e.title}</span>
+                            </div>
+                          )
+                        })}
+                        <button className="cal-week-add-btn" onClick={() => handleWeekDayAdd(date)}>
+                          <FaPlus size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
           <div className="cal-legend">
             {Object.entries(typeConfig).filter(([key]) => key !== 'newsletter' || isMcGillEmail).map(([key, cfg]) => (
               <div key={key} className="cal-legend-item">

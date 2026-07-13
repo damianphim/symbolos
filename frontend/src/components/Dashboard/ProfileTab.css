@@ -15,6 +15,27 @@
   margin: -2rem -2rem 2rem -2rem;
 }
 
+/* .content-area reserves an extra 36px of left padding in collapsed-sidebar
+   mode for the pill rail (Dashboard.css .sidebar--mini ~ .main-content
+   .content-area). Match that here so the header banner still bleeds flush
+   to the true left edge in both sidebar states — without the avatar ever
+   sitting under the rail. */
+.sidebar--mini ~ .main-content .content-area .profile-page-header {
+  margin-left: calc(-2rem - 36px);
+}
+
+/* The base (non-mini) 768px/480px header margins are already handled
+   further down (see the existing @media blocks below) and already match
+   .content-area's padding correctly. Only the collapsed-sidebar mini-rail
+   case was missing a mobile override: Dashboard.css bumps the rail
+   reserve from 36px to 44px at <=768px and never redefines it again at
+   <=480px, so this single override covers both. */
+@media (max-width: 768px) {
+  .sidebar--mini ~ .main-content .content-area .profile-page-header {
+    margin-left: calc(-1rem - 44px);
+  }
+}
+
 .profile-hero {
   max-width: 1200px;
   margin: 0 auto;

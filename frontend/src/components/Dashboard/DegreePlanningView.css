@@ -19,6 +19,24 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Degree Progress + Target GPA calculator side by side; GPA calc is the
+   smaller "companion" panel, stacks below on narrow screens. */
+.dp-progress-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.dp-progress-row__main { flex: 1 1 auto; min-width: 0; }
+.dp-progress-row__gpa {
+  flex: 0 0 300px;
+  padding: 0;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .dp-progress-row { flex-direction: column; }
+  .dp-progress-row__gpa { flex-basis: auto; width: 100%; }
+}
+
 .dp-import-btn {
   display: inline-flex;
   align-items: center;

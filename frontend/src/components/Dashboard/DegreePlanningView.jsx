@@ -10,6 +10,7 @@ import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { supabase } from '../../lib/supabase'
 import DegreeProgressTracker from './DegreeProgressTracker'
+import TargetGPACalculator from './TargetGPACalculator'
 import DegreeRequirementsView from './DegreeRequirementsView'
 import StudyAbroadView from './StudyAbroadView'
 import AdvisingResourcesView from './AdvisingResourcesView'
@@ -1693,27 +1694,41 @@ export default function DegreePlanningView({
       {/* ── My Degree tab ─────────────────────────────────── */}
       {subTab === 'my_courses' && (
         <>
-          {/* Degree Progress */}
-          <div className="dp-section-card">
-            <SectionHeader
-              icon={<FaBullseye />}
-              title={t('profile.degreeProgress')}
-              action={
-                <div className="dp-import-btns">
-                  {onImportTranscript && (
-                    <button className="dp-import-btn" onClick={onImportTranscript}>
-                      <FaFileUpload /> {t('dp.transcript')}
-                    </button>
-                  )}
-                  {onImportSyllabus && (
-                    <button className="dp-import-btn dp-import-btn--secondary" onClick={onImportSyllabus}>
-                      <FaBook /> {t('dp.syllabuses')}
-                    </button>
-                  )}
-                </div>
-              }
-            />
-            <DegreeProgressTracker completedCourses={completedCourses} profile={profile} />
+          {/* Degree Progress + Target GPA calculator, side by side */}
+          <div className="dp-progress-row">
+            <div className="dp-section-card dp-progress-row__main">
+              <SectionHeader
+                icon={<FaBullseye />}
+                title={t('profile.degreeProgress')}
+                action={
+                  <div className="dp-import-btns">
+                    {onImportTranscript && (
+                      <button className="dp-import-btn" onClick={onImportTranscript}>
+                        <FaFileUpload /> {t('dp.transcript')}
+                      </button>
+                    )}
+                    {onImportSyllabus && (
+                      <button className="dp-import-btn dp-import-btn--secondary" onClick={onImportSyllabus}>
+                        <FaBook /> {t('dp.syllabuses')}
+                      </button>
+                    )}
+                  </div>
+                }
+              />
+              <DegreeProgressTracker completedCourses={completedCourses} profile={profile} />
+            </div>
+
+            <div className="dp-section-card dp-progress-row__gpa">
+              <TargetGPACalculator
+                compact
+                currentGPA={profile?.current_gpa}
+                completedCredits={
+                  completedCourses.reduce((total, course) => total + (course.credits || 3), 0) +
+                  (profile?.advanced_standing?.reduce((total, course) => total + (course.credits || 3), 0) || 0)
+                }
+                totalCreditsRequired={120}
+              />
+            </div>
           </div>
 
           {/* My Program Requirements card */}
