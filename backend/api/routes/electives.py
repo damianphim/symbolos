@@ -100,6 +100,10 @@ async def recommend_electives(
         exclude_str  = ", ".join(safe_exclude_courses) if safe_exclude_courses else "None"
         recent_str   = ", ".join(safe_recent) if safe_recent else "None"
 
+        # PRIVACY: this prompt is intentionally anonymous — it sends only the
+        # student's academic data (program, year, interests, course codes) and
+        # never their name, email, username, or user_id. Keep it that way; do
+        # not add identifying fields when extending the profile block.
         prompt = f"""You are an academic advisor at McGill University Faculty of Arts.
 
 Student profile:

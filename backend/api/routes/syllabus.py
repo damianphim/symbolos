@@ -241,6 +241,11 @@ def normalize_course_code(code: str) -> str:
 # doesn't block FastAPI's event loop during the ~5–15 second extraction.
 # FIX #9: Use the module-level singleton client instead of creating one per call.
 async def _extract_syllabus_data(pdf_bytes: bytes) -> dict:
+    # PRIVACY: this receives ONLY the syllabus PDF and the static extraction
+    # prompt — no student name, email, username, user_id, or profile. The
+    # syllabus is the professor's document (any emails in it are the
+    # instructor's/TA's, which is the intended extraction output, not student
+    # PII). Do not add student-identifying context to this call.
     client = _get_async_client()
     b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
 
