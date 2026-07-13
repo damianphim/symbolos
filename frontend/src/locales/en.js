@@ -1514,7 +1514,7 @@ const EN_TRANSLATIONS = {
     'cookie.acceptAll': 'Accept all',
 
     // TEMPORARY — remove once verification-email delivery is fixed
-    'auth.tempAuthNotice': 'Heads up: some verification emails are currently held up by McGill\'s mail filter. If your code doesn\'t arrive, don\'t worry — we\'ve contacted McGill IT to fix it. Please check back in a day or two.',
+    'auth.tempAuthNotice': 'Heads up: McGill\'s mail filter is currently holding our verification emails, so we\'re approving new accounts by hand while McGill IT looks into it. We\'ve been notified of your signup — you don\'t need to do anything. This page will let you in automatically once you\'re approved (usually within a few hours), so feel free to check back soon. If a code does reach your inbox, you can enter it below instead.',
 };
 
 export default EN_TRANSLATIONS;

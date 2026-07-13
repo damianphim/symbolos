@@ -259,6 +259,13 @@ export const AuthProvider = ({ children }) => {
         track(Events.SignupCompleted, { email_domain: (email || '').split('@')[1] || null })
       } catch { /* telemetry is best-effort */ }
 
+      // TEMPORARY (McGill mail-filter workaround): notify an admin so the
+      // account can be approved by hand while verification emails are held up.
+      // Best-effort — never block or fail signup on this. Remove once fixed.
+      try {
+        await authAPI.requestApproval(data.user.id)
+      } catch { /* approval ping is best-effort */ }
+
       justSignedUp.current = false
 
       return { data, error: null, needsEmailVerification: true }

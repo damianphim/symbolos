@@ -309,6 +309,17 @@ export const authAPI = {
     const response = await api.get(`/auth/check-verified/${encodeURIComponent(userId)}`)
     return response.data
   },
+  /**
+   * TEMPORARY (McGill mail-filter workaround): ping the backend so an admin
+   * gets a one-click approve link for a brand-new signup. Best-effort — the
+   * new user has no confirmed session yet, so this is unauthenticated and the
+   * backend no-ops for unknown/confirmed ids. Remove with the manual-approval
+   * flow once verification-email delivery is fixed.
+   */
+  async requestApproval(userId) {
+    const response = await api.post('/admin-approval/notify', { user_id: userId })
+    return response.data
+  },
 }
 
 export default api

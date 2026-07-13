@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     ADMIN_SECRET: str = ""  # Separate from CRON_SECRET — used only for admin panel login
     ADMIN_EMAILS: str = ""  # Comma-separated admin emails — set via env var, never hardcode
     API_BASE_URL: str = "https://ai-advisor-backend-seven.vercel.app"  # Public backend URL for email action links
+    # TEMPORARY (McGill mail-filter workaround): where new-signup approval
+    # requests are sent while verification email delivery is broken. Remove
+    # with the manual-approval flow once McGill IT resolves the filtering.
+    APPROVAL_NOTIFY_EMAIL: str = "symbolosadvsry@gmail.com"
 
     @field_validator("ADMIN_SECRET")
     @classmethod

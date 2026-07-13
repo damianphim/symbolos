@@ -1493,7 +1493,7 @@ const ZH_TRANSLATIONS = {
     'cookie.acceptAll': '全部接受',
 
     // 临时提示 — 验证邮件送达问题解决后移除
-    'auth.tempAuthNotice': '请注意：部分验证邮件目前被McGill的邮件过滤器拦截。如果没有收到验证码，请放心——我们已联系McGill IT解决此问题。请过一两天再来试试。',
+    'auth.tempAuthNotice': '请注意：McGill的邮件过滤器目前正在拦截我们的验证邮件，因此在McGill IT处理此问题期间，我们会手动审批新账户。我们已收到您的注册通知——您无需做任何操作。账户获批后（通常在几小时内），此页面会自动让您登录，欢迎稍后再来查看。如果验证码确实送达您的收件箱，也可以在下方输入。',
 };
 
 export default ZH_TRANSLATIONS;

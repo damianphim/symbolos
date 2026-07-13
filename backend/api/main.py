@@ -67,6 +67,7 @@ from .routes import (
     current, suggestions, cards, transcript, degree_requirements,
     electives, clubs, syllabus, professors, admin, newsletters, forum,
     verification, webhooks, feedback, course_allocations, jobs,
+    admin_approval,
 )
 
 logger = setup_logging()
@@ -466,6 +467,7 @@ app.include_router(webhooks.router,             prefix=f"{settings.API_PREFIX}/w
 app.include_router(feedback.router,             prefix=f"{settings.API_PREFIX}/feedback",            tags=["Feedback"])
 app.include_router(course_allocations.router,   prefix=f"{settings.API_PREFIX}/users",               tags=["Course Allocations"])
 app.include_router(jobs.router,                 prefix=f"{settings.API_PREFIX}/jobs",                tags=["Jobs"])
+app.include_router(admin_approval.router,       prefix=f"{settings.API_PREFIX}/admin-approval",      tags=["Admin Approval"])
 
 # ── Inngest serve endpoint ───────────────────────────────────────────────────
 # Registers /api/inngest so Inngest can call back our background functions.
