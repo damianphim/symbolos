@@ -464,7 +464,8 @@ def build_rich_context(ctx: dict, saved_cards: list = None, recent_titles: list[
                 + "\n"
             )
 
-    safe_username      = sanitise_context_field(str(user.get('username') or user.get('email', 'Student')))
+    # PRIVACY: no name/email/username in the prompt — Claude only sees
+    # anonymous academic data (faculty, program, courses, credits).
     safe_faculty       = sanitise_context_field(str(user.get('faculty') or 'Not specified'))
     safe_majors        = sanitise_context_field(majors_str)
     safe_minors        = sanitise_context_field(minors_str)
@@ -476,7 +477,6 @@ def build_rich_context(ctx: dict, saved_cards: list = None, recent_titles: list[
     return f"""{saved_section}{recent_section}Today: {datetime.now(timezone.utc).date().isoformat()}
 
 STUDENT PROFILE
-  Name/email   : {safe_username}
   Faculty      : {safe_faculty}
   Major(s)     : {safe_majors}
   Minor(s)     : {safe_minors}

@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard/Dashboard'
 import ProfileSetup from './components/ProfileSetup/ProfileSetup'
 import Loading from './components/Loading/Loading'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
+import CookieConsent from './components/CookieConsent/CookieConsent'
 import ErrorScreen from './components/ErrorScreen/ErrorScreen'
 import { authAPI, usersAPI } from './lib/api'
 import './theme.css'
@@ -193,6 +194,8 @@ function App() {
         <AuthProvider>
           <AppContent />
         </AuthProvider>
+        {/* Inside PreferencesProvider: the banner needs t() for i18n */}
+        <CookieConsent />
       </PreferencesProvider>
     </ErrorBoundary>
   )

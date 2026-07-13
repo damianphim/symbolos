@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { HiLightBulb } from 'react-icons/hi'
+import { FiAlertCircle } from 'react-icons/fi'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { supabase } from '../../lib/supabase'
@@ -311,6 +312,15 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
       {/* ── Right form panel ── */}
       <main className="auth-form-panel">
         <div className={`auth-card ${animating ? 'auth-card--out' : 'auth-card--in'}`}>
+
+          {/* TEMPORARY: email-verification delivery issue notice for new users.
+              Remove once McGill IT resolves the mail filtering (see issue tracker). */}
+          {(isSignup || isVerify) && (
+            <div className="auth-temp-notice" role="status">
+              <FiAlertCircle aria-hidden="true" />
+              <span>{t('auth.tempAuthNotice')}</span>
+            </div>
+          )}
 
           {/* Email verification screen */}
           {isVerify && (

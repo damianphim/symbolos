@@ -16,6 +16,7 @@
  */
 import { useEffect, useState } from 'react'
 import { FaCookieBite } from 'react-icons/fa'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import { getConsent, setConsent } from '../../lib/telemetry'
 import './CookieConsent.css'
 
@@ -26,6 +27,7 @@ function dntEnabled() {
 }
 
 export default function CookieConsent() {
+  const { t } = useLanguage()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -46,25 +48,23 @@ export default function CookieConsent() {
   const decline = () => { setConsent('declined'); setVisible(false) }
 
   return (
-    <div className="cookie-consent" role="dialog" aria-live="polite" aria-label="Cookie consent">
+    <div className="cookie-consent" role="dialog" aria-live="polite" aria-label={t('cookie.ariaLabel')}>
       <div className="cookie-consent__inner">
         <div className="cookie-consent__icon" aria-hidden="true">
           <FaCookieBite />
         </div>
         <div className="cookie-consent__text">
-          <p className="cookie-consent__title">We use a few cookies</p>
+          <p className="cookie-consent__title">{t('cookie.title')}</p>
           <p className="cookie-consent__body">
-            Essential cookies keep you signed in and remember your settings.
-            With your OK, we also use privacy-friendly analytics to see which
-            features help students most. No ads, no selling your data, ever.
+            {t('cookie.body')}
           </p>
         </div>
         <div className="cookie-consent__actions">
           <button className="cookie-consent__btn cookie-consent__btn--ghost" onClick={decline}>
-            Essential only
+            {t('cookie.essentialOnly')}
           </button>
           <button className="cookie-consent__btn cookie-consent__btn--primary" onClick={accept}>
-            Accept all
+            {t('cookie.acceptAll')}
           </button>
         </div>
       </div>

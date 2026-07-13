@@ -18,6 +18,7 @@
  */
 import { useEffect } from 'react'
 import logoMark from '../../assets/loading-logo.png'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import useScrollReveal from './useScrollReveal'
 import './LandingPage.css'
 
@@ -73,6 +74,8 @@ function Reveal({ children, delay = 0, as: Tag = 'div', className = '', ...rest 
 }
 
 export default function LandingPage({ onSignIn }) {
+  const { t, language, setLanguage } = useLanguage()
+
   // ── Force LIGHT theme while the landing is mounted ────────────────────
   // The landing page is designed around a cream/light palette and the dark
   // variant looks broken (low contrast, wrong accents, dark scrollbars).
@@ -95,30 +98,35 @@ export default function LandingPage({ onSignIn }) {
 
   return (
     <div className="landing-root">
+      <button
+        className="landing-lang-btn"
+        onClick={() => setLanguage(language === 'en' ? 'fr' : language === 'fr' ? 'zh' : 'en')}
+        title={t('auth.langToggle')}
+      >
+        {language === 'en' ? 'FR' : language === 'fr' ? '中' : 'EN'}
+      </button>
 
       {/* ── 1. Hero ──────────────────────────────────────────────── */}
       <section className="landing-section landing-hero" id="top">
         <div className="landing-hero__bg" aria-hidden />
         <div className="landing-section__inner landing-hero__inner">
           <Reveal as="h1" className="landing-hero__headline">
-            The McGill student planner.<br />
-            <span className="landing-hero__accent">All in one place.</span>
+            {t('landing.heroHeadline1')}<br />
+            <span className="landing-hero__accent">{t('landing.heroHeadline2')}</span>
           </Reveal>
           <Reveal delay={120} as="p" className="landing-hero__sub">
-            Your personal AI advisor, degree progress, course planner, calendar,
-            club directory, and student forum, built by McGill students, for
-            McGill students.
+            {t('landing.heroSub')}
           </Reveal>
           <Reveal delay={240} className="landing-hero__cta-row">
             <button className="landing-btn landing-btn--primary" onClick={onSignIn}>
-              Sign in with your McGill email
+              {t('landing.ctaSignIn')}
             </button>
             <a href="#brief" className="landing-btn landing-btn--ghost">
-              See what's inside ↓
+              {t('landing.ctaSee')} ↓
             </a>
           </Reveal>
           <Reveal delay={400} className="landing-hero__hint">
-            Free, McGill-only, no tracking, your data stays yours.
+            {t('landing.heroHint')}
           </Reveal>
         </div>
       </section>
@@ -127,22 +135,19 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section landing-section--alt" id="brief">
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy" style={{'--section-color': '#ed1b2f'}}>
-            <span className="landing-eyebrow landing-eyebrow--chat">YOUR BRIEF</span>
-            <h2 className="landing-feature__title">A personal AI academic advisor.</h2>
+            <span className="landing-eyebrow landing-eyebrow--chat">{t('landing.briefEyebrow')}</span>
+            <h2 className="landing-feature__title">{t('landing.briefTitle')}</h2>
             <p className="landing-feature__text">
-              Open the app and read a briefing built from your transcript,
-              schedule, and goals. Eight cards every week: deadlines, gaps in
-              your degree, recommended professors, opportunities you'd otherwise
-              miss. Ask follow-up questions on any card in plain English.
+              {t('landing.briefText')}
             </p>
             <ul className="landing-feature__bullets">
-              <li>Cards stream in card-by-card, no waiting screen</li>
-              <li>Tap any card to chat with the advisor about it</li>
-              <li>Pin the ones that matter, dismiss the rest</li>
+              <li>{t('landing.briefB1')}</li>
+              <li>{t('landing.briefB2')}</li>
+              <li>{t('landing.briefB3')}</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={brief} alt="Advisor brief: eight cards covering deadlines, degree progress, and opportunities" />
+            <Screenshot src={brief} alt={t('landing.briefAlt')} />
           </Reveal>
         </div>
       </section>
@@ -151,23 +156,20 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section" id="degree">
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy" style={{'--section-color': '#059669'}}>
-            <span className="landing-eyebrow landing-eyebrow--degree">DEGREE PROGRESS</span>
-            <h2 className="landing-feature__title">Every requirement, every credit.</h2>
+            <span className="landing-eyebrow landing-eyebrow--degree">{t('landing.degreeEyebrow')}</span>
+            <h2 className="landing-feature__title">{t('landing.degreeTitle')}</h2>
             <p className="landing-feature__text">
-              Upload your unofficial transcript and your major's requirements
-              fill in automatically. See exactly which courses count, which
-              blocks are done, and which electives you still need. No more
-              mental accounting.
+              {t('landing.degreeText')}
             </p>
             <ul className="landing-feature__bullets">
-              <li>Auto-detects which transcript courses fill each requirement</li>
-              <li>AI elective recommendations based on your interests</li>
-              <li>Built-in support for joint, honours, and B.A. & Sc. programs</li>
+              <li>{t('landing.degreeB1')}</li>
+              <li>{t('landing.degreeB2')}</li>
+              <li>{t('landing.degreeB3')}</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual landing-feature__visual--double">
-            <Screenshot src={degree1} alt="Degree progress overview with credit totals and milestone bar" />
-            <Screenshot src={degree2} alt="Degree requirements view showing each block of courses" />
+            <Screenshot src={degree1} alt={t('landing.degreeAlt1')} />
+            <Screenshot src={degree2} alt={t('landing.degreeAlt2')} />
           </Reveal>
         </div>
       </section>
@@ -176,22 +178,19 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section landing-section--alt" id="calendar">
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy" style={{'--section-color': '#059669'}}>
-            <span className="landing-eyebrow landing-eyebrow--calendar">CALENDAR & REMINDERS</span>
-            <h2 className="landing-feature__title">Never miss a deadline.</h2>
+            <span className="landing-eyebrow landing-eyebrow--calendar">{t('landing.calEyebrow')}</span>
+            <h2 className="landing-feature__title">{t('landing.calTitle')}</h2>
             <p className="landing-feature__text">
-              Final exam dates auto-populate from McGill's schedule. Drop a
-              syllabus PDF and assignments, midterms, and lecture times all
-              land in your calendar. Pick what you want emails about and we
-              send them on the right day.
+              {t('landing.calText')}
             </p>
             <ul className="landing-feature__bullets">
-              <li>Final exams auto-loaded for your registered courses</li>
-              <li>Syllabus PDF → calendar in seconds</li>
-              <li>Reminder emails 1 day and 7 days out, opt out anytime</li>
+              <li>{t('landing.calB1')}</li>
+              <li>{t('landing.calB2')}</li>
+              <li>{t('landing.calB3')}</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={calendar} alt="Calendar grid with exam dates and assignment deadlines" />
+            <Screenshot src={calendar} alt={t('landing.calAlt')} />
           </Reveal>
         </div>
       </section>
@@ -200,23 +199,20 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section" id="clubs">
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy" style={{'--section-color': '#7c3aed'}}>
-            <span className="landing-eyebrow landing-eyebrow--clubs">CLUBS</span>
-            <h2 className="landing-feature__title">Discover McGill clubs without the hunt.</h2>
+            <span className="landing-eyebrow landing-eyebrow--clubs">{t('landing.clubsEyebrow')}</span>
+            <h2 className="landing-feature__title">{t('landing.clubsTitle')}</h2>
             <p className="landing-feature__text">
-              Every verified McGill club in one searchable directory. Subscribe
-              to follow updates and pull club events into your calendar. When
-              you're ready to join, the apply link takes you straight to the
-              club's own form.
+              {t('landing.clubsText')}
             </p>
             <ul className="landing-feature__bullets">
-              <li>Filter by category, faculty, or what you've already taken</li>
-              <li>Subscribe for announcements + auto-add events to your calendar</li>
-              <li>Run a club? Claim its page, post events, manage your exec team</li>
+              <li>{t('landing.clubsB1')}</li>
+              <li>{t('landing.clubsB2')}</li>
+              <li>{t('landing.clubsB3')}</li>
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual landing-feature__visual--double">
-            <Screenshot src={clubs1} alt="Clubs directory with category pills and club cards" />
-            <Screenshot src={clubs2} alt="Club detail drawer with subscribe and join buttons" />
+            <Screenshot src={clubs1} alt={t('landing.clubsAlt1')} />
+            <Screenshot src={clubs2} alt={t('landing.clubsAlt2')} />
           </Reveal>
         </div>
       </section>
@@ -225,28 +221,27 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section landing-section--alt" id="forum">
         <div className="landing-section__inner landing-forum">
           <Reveal>
-            <span className="landing-eyebrow landing-eyebrow--forum">FORUM</span>
-            <h2 className="landing-feature__title">Three places to talk to other McGill students.</h2>
+            <span className="landing-eyebrow landing-eyebrow--forum">{t('landing.forumEyebrow')}</span>
+            <h2 className="landing-feature__title">{t('landing.forumTitle')}</h2>
             <p className="landing-feature__text landing-forum__lead">
-              A focused, McGill-only forum split into three sections so
-              conversations stay on topic.
+              {t('landing.forumLead')}
             </p>
           </Reveal>
           <div className="landing-forum__grid">
             <Reveal className="landing-forum__card" delay={80}>
-              <span className="landing-forum__pill">Courses</span>
-              <h3>Talk about your classes.</h3>
-              <p>Compare profs, swap notes on what to expect, ask "is this course actually as hard as people say?".</p>
+              <span className="landing-forum__pill">{t('landing.forumPill1')}</span>
+              <h3>{t('landing.forumH1')}</h3>
+              <p>{t('landing.forumP1')}</p>
             </Reveal>
             <Reveal className="landing-forum__card" delay={160}>
-              <span className="landing-forum__pill">The site</span>
-              <h3>Feedback on Symbolos.</h3>
-              <p>Spot a bug? Want a feature? Post it here. Built features get prioritized by what students actually ask for.</p>
+              <span className="landing-forum__pill">{t('landing.forumPill2')}</span>
+              <h3>{t('landing.forumH2')}</h3>
+              <p>{t('landing.forumP2')}</p>
             </Reveal>
             <Reveal className="landing-forum__card" delay={240}>
-              <span className="landing-forum__pill">General</span>
-              <h3>Everything else.</h3>
-              <p>Apartment hunts, study spots, the latest on union elections. Anything McGill students would want to discuss.</p>
+              <span className="landing-forum__pill">{t('landing.forumPill3')}</span>
+              <h3>{t('landing.forumH3')}</h3>
+              <p>{t('landing.forumP3')}</p>
             </Reveal>
           </div>
         </div>
@@ -256,24 +251,24 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section landing-privacy" id="privacy">
         <div className="landing-section__inner">
           <Reveal as="h2" className="landing-privacy__title">
-            McGill-only. Your data stays yours.
+            {t('landing.privacyTitle')}
           </Reveal>
           <div className="landing-privacy__grid">
             <Reveal className="landing-privacy__card">
-              <h3>McGill emails only</h3>
-              <p>Accounts gated to @mail.mcgill.ca and @mcgill.ca. No outside spam, no anonymous posters.</p>
+              <h3>{t('landing.privacyH1')}</h3>
+              <p>{t('landing.privacyP1')}</p>
             </Reveal>
             <Reveal delay={80} className="landing-privacy__card">
-              <h3>Hosted in Canada / US</h3>
-              <p>Database on Supabase, files on Vercel, both compliant with Canadian privacy law.</p>
+              <h3>{t('landing.privacyH2')}</h3>
+              <p>{t('landing.privacyP2')}</p>
             </Reveal>
             <Reveal delay={160} className="landing-privacy__card">
-              <h3>Delete anytime</h3>
-              <p>One button in Settings wipes your account and all data. No retention, no recovery period.</p>
+              <h3>{t('landing.privacyH3')}</h3>
+              <p>{t('landing.privacyP3')}</p>
             </Reveal>
             <Reveal delay={240} className="landing-privacy__card">
-              <h3>Free, forever</h3>
-              <p>No paywall, no tracking pixels, no ad network. Built by a McGill student because nothing like this existed.</p>
+              <h3>{t('landing.privacyH4')}</h3>
+              <p>{t('landing.privacyP4')}</p>
             </Reveal>
           </div>
         </div>
@@ -283,14 +278,14 @@ export default function LandingPage({ onSignIn }) {
       <section className="landing-section landing-cta" id="cta">
         <div className="landing-section__inner landing-cta__inner">
           <Reveal as="h2" className="landing-cta__title">
-            Built by McGill students.<br />Free for every McGill student.
+            {t('landing.ctaTitle1')}<br />{t('landing.ctaTitle2')}
           </Reveal>
           <Reveal delay={120} as="p" className="landing-cta__sub">
-            Sign in with your McGill email and the brief is ready in seconds.
+            {t('landing.ctaSub')}
           </Reveal>
           <Reveal delay={240}>
             <button className="landing-btn landing-btn--primary landing-btn--xl" onClick={onSignIn}>
-              Sign in with your McGill email
+              {t('landing.ctaSignIn')}
             </button>
           </Reveal>
         </div>
@@ -301,21 +296,20 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-footer__inner">
           <div className="landing-footer__brand">
             <img src={logoMark} alt="Symbolos" className="landing-footer__logo" />
-            <span>Symbolos · McGill student planner</span>
+            <span>{t('landing.footerBrand')}</span>
           </div>
           <div className="landing-footer__links">
-            <a href="#brief">Brief</a>
-            <a href="#degree">Degree</a>
-            <a href="#calendar">Calendar</a>
-            <a href="#clubs">Clubs</a>
-            <a href="#forum">Forum</a>
-            <a href="#privacy">Privacy</a>
-            <button className="landing-footer__signin" onClick={onSignIn}>Sign in</button>
+            <a href="#brief">{t('landing.footerBrief')}</a>
+            <a href="#degree">{t('landing.footerDegree')}</a>
+            <a href="#calendar">{t('landing.footerCalendar')}</a>
+            <a href="#clubs">{t('landing.footerClubs')}</a>
+            <a href="#forum">{t('landing.footerForum')}</a>
+            <a href="#privacy">{t('landing.footerPrivacy')}</a>
+            <button className="landing-footer__signin" onClick={onSignIn}>{t('landing.footerSignIn')}</button>
           </div>
         </div>
         <p className="landing-footer__copy">
-          © {new Date().getFullYear()} Symbolos · Not affiliated with McGill University ·
-          Built independently by a McGill student.
+          © {new Date().getFullYear()} Symbolos · {t('landing.footerCopy')}
         </p>
       </footer>
     </div>
