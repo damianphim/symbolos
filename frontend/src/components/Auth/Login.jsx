@@ -34,6 +34,13 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const pendingMsgRef = useRef('')
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendLoading, setResendLoading] = useState(false)
+  // 6-digit OTP entry on the verify screen. McGill inboxes (Microsoft 365)
+  // run Safe Links, which auto-fetches the confirmation link seconds after
+  // delivery — confirming the account before the user ever opens the email
+  // (which often sits in Junk). A typed code can't be consumed by a scanner,
+  // so this is the reliable path; link-click and polling remain as fallbacks.
+  const [verifyCode, setVerifyCode] = useState('')
+  const [verifyingCode, setVerifyingCode] = useState(false)
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const pollRef = useRef(null)
 
@@ -149,6 +156,31 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  // Verify the emailed 6-digit code. On success Supabase returns a session
+  // and fires SIGNED_IN, so the app advances exactly like the link path.
+  const handleVerifyCode = async (e) => {
+    e?.preventDefault?.()
+    const code = verifyCode.trim()
+    if (!/^\d{6}$/.test(code) || verifyingCode) return
+    setVerifyingCode(true)
+    setErrors({})
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: pendingEmail || email,
+        token: code,
+        type: 'signup',
+      })
+      if (error) throw error
+      sessionStorage.removeItem('symbolos_verify')
+      // SIGNED_IN fires → AuthContext loads the profile → app advances.
+    } catch (err) {
+      setErrors({ form: t('auth.codeInvalid') })
+      console.warn('OTP verify failed:', err?.message)
+    } finally {
+      setVerifyingCode(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -286,9 +318,32 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
               <div className="auth-verify-icon">✉</div>
               <h2 className="auth-card-title">Verify your email to continue</h2>
               <p className="auth-card-subtitle">
-                We sent a verification link to <strong>{pendingEmail}</strong>.<br />
-                Click the link in that email to activate your account.
+                We sent a verification email to <strong>{pendingEmail}</strong>.<br />
+                {t('auth.codeSubtitle')}
               </p>
+
+              {/* 6-digit code entry — the reliable path (see verifyCode note) */}
+              <form className="auth-verify-code-row" onSubmit={handleVerifyCode}>
+                <input
+                  className="auth-input auth-verify-code-input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
+                  aria-label={t('auth.codeLabel')}
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={verifyCode.trim().length !== 6 || verifyingCode}
+                >
+                  {verifyingCode ? '…' : t('auth.codeVerifyBtn')}
+                </button>
+              </form>
+
               <p className="auth-verify-hint">This page will continue automatically once you verify.</p>
               <button
                 className="btn btn-primary btn-full"
