@@ -687,7 +687,7 @@ const ZH_TRANSLATIONS = {
     'auth.codeVerifyBtn': '验证',
     'auth.codeInvalid': '验证码无效或已过期。请查看最新邮件，或在下方重新发送。',
     'auth.mcgillTip': '提示：使用您的McGill邮箱可以获得更多功能',
-    'auth.emailPlaceholder': 'example@gmail.com、example@mail.mcgill.ca 等',
+    'auth.emailPlaceholder': 'example@mail.mcgill.ca',
     'auth.labelUsername': '用户名',
     'auth.labelEmail': '邮箱地址',
     'auth.labelPassword': '密码',

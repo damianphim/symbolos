@@ -704,7 +704,7 @@ const EN_TRANSLATIONS = {
     'auth.codeVerifyBtn': 'Verify code',
     'auth.codeInvalid': 'That code is invalid or expired. Check the newest email, or resend below.',
     'auth.mcgillTip': 'Tip: Use your McGill email to get more out of the site',
-    'auth.emailPlaceholder': 'you@gmail.com, you@mail.mcgill.ca, etc.',
+    'auth.emailPlaceholder': 'you@mail.mcgill.ca',
     'auth.labelUsername': 'Username',
     'auth.labelEmail': 'Email Address',
     'auth.labelPassword': 'Password',

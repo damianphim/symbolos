@@ -704,7 +704,7 @@ const FR_TRANSLATIONS = {
     'auth.codeVerifyBtn': 'Vérifier le code',
     'auth.codeInvalid': 'Ce code est invalide ou expiré. Consultez le courriel le plus récent ou renvoyez-en un.',
     'auth.mcgillTip': 'Conseil : Utilisez votre courriel McGill pour profiter davantage du site',
-    'auth.emailPlaceholder': 'vous@gmail.com, vous@mail.mcgill.ca, etc.',
+    'auth.emailPlaceholder': 'vous@mail.mcgill.ca',
     'auth.labelUsername': "Nom d'utilisateur",
     'auth.labelEmail': 'Adresse courriel',
     'auth.labelPassword': 'Mot de passe',
