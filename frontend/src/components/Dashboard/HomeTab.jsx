@@ -197,6 +197,7 @@ export default function HomeTab({
           <section className="home-card">
             <SectionHeader
               icon={<FaRegLightbulb />}
+              iconColor="#f59e0b"
               title={t('home.fromYourBrief')}
               action={
                 <button className="home-link" onClick={() => onTabChange('chat')}>
@@ -246,6 +247,7 @@ export default function HomeTab({
           <section className="home-card">
             <SectionHeader
               icon={<FaBook />}
+              iconColor="#2563eb"
               title={t('home.currentCourses')}
               action={
                 <button className="home-link" onClick={() => onTabChange('courses')}>
@@ -306,6 +308,7 @@ export default function HomeTab({
           <section className="home-card">
             <SectionHeader
               icon={<FaCalendarAlt />}
+              iconColor="#059669"
               title={t('home.upNext')}
               action={
                 <button className="home-link" onClick={() => onTabChange('calendar')}>
@@ -352,6 +355,7 @@ export default function HomeTab({
           <section className="home-card">
             <SectionHeader
               icon={<FaChartLine />}
+              iconColor="#7c3aed"
               title={t('home.degreeProgress')}
               action={
                 <button className="home-link" onClick={() => onTabChange('favorites')}>

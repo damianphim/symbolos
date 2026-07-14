@@ -201,7 +201,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
         {current.tip && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '8px 10px', borderRadius: 7, background: 'rgba(237,27,47,0.07)', border: '1px solid rgba(237,27,47,0.14)', marginBottom: 12 }}>
             <FaLightbulb size={11} style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }} />
-            <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.785rem', fontStyle: 'italic', lineHeight: 1.5 }}>{current.tip}</span>
+            <span style={{ color: 'var(--tour-text-muted)', fontSize: '0.785rem', fontStyle: 'italic', lineHeight: 1.5 }}>{current.tip}</span>
           </div>
         )}
 
@@ -210,7 +210,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
           {!isLast && (
             <button
               onClick={finish}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: '0.76rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit', lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: 'var(--tour-text-subtle)', fontSize: '0.76rem', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit', lineHeight: 1, textDecoration: 'underline', textUnderlineOffset: 2 }}
             >
               {t('tour.skip')}
             </button>
@@ -219,7 +219,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
             {!isFirst && (
               <button
                 onClick={() => advance('back')}
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: 500, padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ background: 'var(--tour-surface)', border: '1px solid var(--tour-border)', color: 'var(--tour-text-muted)', fontSize: '0.8rem', fontWeight: 500, padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 ← {t('tour.back')}
               </button>

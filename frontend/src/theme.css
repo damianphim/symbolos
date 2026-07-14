@@ -585,17 +585,26 @@ textarea:focus-visible {
   --tour-bg: #0f0d1a;
   --tour-text: #ffffff;
   --tour-text-muted: rgba(255, 255, 255, 0.6);
+  --tour-text-subtle: rgba(255, 255, 255, 0.5);
   --tour-track: rgba(255, 255, 255, 0.12);
+  --tour-surface: rgba(255, 255, 255, 0.05);
+  --tour-border: rgba(255, 255, 255, 0.14);
 }
 [data-theme='light'] {
   --tour-bg: #ffffff;
   --tour-text: #111827;
   --tour-text-muted: #6b7280;
+  --tour-text-subtle: #6b7280;
   --tour-track: rgba(0, 0, 0, 0.10);
+  --tour-surface: rgba(0, 0, 0, 0.04);
+  --tour-border: rgba(0, 0, 0, 0.12);
 }
 [data-theme='dark'] {
   --tour-bg: #0f0d1a;
   --tour-text: #ffffff;
   --tour-text-muted: rgba(255, 255, 255, 0.6);
+  --tour-text-subtle: rgba(255, 255, 255, 0.5);
   --tour-track: rgba(255, 255, 255, 0.12);
+  --tour-surface: rgba(255, 255, 255, 0.05);
+  --tour-border: rgba(255, 255, 255, 0.14);
 }

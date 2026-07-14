@@ -430,21 +430,27 @@ async def parse_transcript(
 
     from ..inngest_app import inngest_client
     try:
-        await inngest_client.send(
-            inngest.Event(
-                name="transcript/process",
-                data={
-                    "job_id":       job_id,
-                    "user_id":      user_id,
-                    "storage_path": storage_path,
-                    "dry_run":      is_dry_run,
-                },
-            )
+        # Bound the send: if Inngest is unreachable the connection attempt can
+        # otherwise hang ~12s before failing, leaving the user staring at a
+        # spinner. Cap it so we surface the error quickly instead.
+        await asyncio.wait_for(
+            inngest_client.send(
+                inngest.Event(
+                    name="transcript/process",
+                    data={
+                        "job_id":       job_id,
+                        "user_id":      user_id,
+                        "storage_path": storage_path,
+                        "dry_run":      is_dry_run,
+                    },
+                )
+            ),
+            timeout=6,
         )
     except Exception as exc:
-        # The event queue (Inngest) is unreachable — e.g. the local dev server
-        # isn't running. Fail the job and return a clean 503 rather than
-        # leaking an unhandled ConnectError traceback.
+        # The event queue (Inngest) is unreachable or slow — e.g. the local dev
+        # server isn't running (asyncio.TimeoutError) or a ConnectError. Fail
+        # the job and return a clean 503 rather than leaking a traceback.
         logger.error("Failed to queue transcript job %s: %s", job_id, type(exc).__name__)
         try:
             from ..utils.jobs import update_job

@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, R
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 import anthropic
+import asyncio
 import base64
 import logging
 import json
@@ -694,20 +695,27 @@ async def parse_syllabuses(
 
     from ..inngest_app import inngest_client
     try:
-        await inngest_client.send(inngest.Event(
-            name="syllabus/process",
-            data={
-                "job_id": job_id,
-                "user_id": user_id,
-                "storage_paths": storage_paths,
-                "filenames": filenames,
-                "validation_errors": validation_errors,
-                "dry_run": is_dry_run,
-            },
-        ))
+        # Bound the send so an unreachable Inngest fails fast (~6s) instead of
+        # hanging ~12s on the connection attempt and stranding the user on a
+        # spinner. Timeout is caught below and mapped to the same clean 503.
+        await asyncio.wait_for(
+            inngest_client.send(inngest.Event(
+                name="syllabus/process",
+                data={
+                    "job_id": job_id,
+                    "user_id": user_id,
+                    "storage_paths": storage_paths,
+                    "filenames": filenames,
+                    "validation_errors": validation_errors,
+                    "dry_run": is_dry_run,
+                },
+            )),
+            timeout=6,
+        )
     except Exception as exc:
-        # Event queue (Inngest) unreachable — e.g. local dev server not running.
-        # Fail the job and return a clean 503 instead of an unhandled traceback.
+        # Event queue (Inngest) unreachable or slow — e.g. local dev server not
+        # running (asyncio.TimeoutError) or a ConnectError. Fail the job and
+        # return a clean 503 instead of an unhandled traceback.
         logger.error("Failed to queue syllabus job %s: %s", job_id, type(exc).__name__)
         try:
             from ..utils.jobs import update_job
