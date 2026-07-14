@@ -1510,9 +1510,6 @@ const FR_TRANSLATIONS = {
     'cookie.body': 'Les témoins essentiels vous gardent connecté et mémorisent vos réglages. Avec votre accord, nous utilisons aussi des analyses respectueuses de la vie privée pour voir quelles fonctionnalités aident le plus les étudiants. Pas de publicité, jamais de vente de vos données.',
     'cookie.essentialOnly': 'Essentiels seulement',
     'cookie.acceptAll': 'Tout accepter',
-
-    // TEMPORAIRE — retirer une fois la livraison des courriels de vérification rétablie
-    'auth.tempAuthNotice': 'À noter : le filtre de courriel de McGill retient actuellement nos courriels de vérification, alors nous approuvons les nouveaux comptes à la main pendant que les TI de McGill examinent le problème. Nous avons été avisés de votre inscription — vous n\'avez rien à faire. Cette page vous laissera entrer automatiquement une fois votre compte approuvé (généralement en quelques heures); revenez donc bientôt. Si un code arrive tout de même dans votre boîte, vous pouvez le saisir ci-dessous.',
 };
 
 export default FR_TRANSLATIONS;

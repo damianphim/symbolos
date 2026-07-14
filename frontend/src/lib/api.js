@@ -52,10 +52,25 @@ api.interceptors.response.use(
     // Handle 401 Unauthorized - refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      
+
+      // If there was never a session to begin with, there's nothing to
+      // refresh and no logged-in state to protect — e.g. signUp()'s
+      // create-profile call fires before email confirmation, when Supabase
+      // withholds the session, so it 401s with no token to refresh. Signing
+      // out + hard-redirecting here would bounce a brand-new signup back to
+      // the landing page mid-verification. Just reject and let the caller's
+      // own error handling take over.
+      let currentSession = null
+      try {
+        currentSession = (await supabase.auth.getSession()).data.session
+      } catch { /* treat as no session */ }
+      if (!currentSession) {
+        return Promise.reject(error)
+      }
+
       try {
         const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
-        
+
         if (refreshError || !session) {
           // Refresh failed, sign out user
           await supabase.auth.signOut()

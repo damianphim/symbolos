@@ -784,23 +784,3 @@
   font-weight: 700;
   letter-spacing: 6px;
 }
-
-/* ── TEMPORARY auth-issue notice (remove with auth.tempAuthNotice) ── */
-.auth-temp-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(217, 119, 6, 0.35);
-  border-radius: 10px;
-  background: rgba(251, 191, 36, 0.12);
-  color: var(--text-primary, #1a1a1a);
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-.auth-temp-notice svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: #d97706;
-}

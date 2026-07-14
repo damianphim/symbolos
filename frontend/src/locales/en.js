@@ -1512,9 +1512,6 @@ const EN_TRANSLATIONS = {
     'cookie.body': 'Essential cookies keep you signed in and remember your settings. With your OK, we also use privacy-friendly analytics to see which features help students most. No ads, no selling your data, ever.',
     'cookie.essentialOnly': 'Essential only',
     'cookie.acceptAll': 'Accept all',
-
-    // TEMPORARY — remove once verification-email delivery is fixed
-    'auth.tempAuthNotice': 'Heads up: McGill\'s mail filter is currently holding our verification emails, so we\'re approving new accounts by hand while McGill IT looks into it. We\'ve been notified of your signup — you don\'t need to do anything. This page will let you in automatically once you\'re approved (usually within a few hours), so feel free to check back soon. If a code does reach your inbox, you can enter it below instead.',
 };
 
 export default EN_TRANSLATIONS;
