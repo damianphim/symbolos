@@ -1491,6 +1491,8 @@ const ZH_TRANSLATIONS = {
     'cookie.body': '必要Cookie用于保持登录状态和记住你的设置。经你同意后，我们还会使用注重隐私的分析工具，了解哪些功能对学生最有帮助。没有广告，绝不出售你的数据。',
     'cookie.essentialOnly': '仅必要Cookie',
     'cookie.acceptAll': '全部接受',
+
+    'transcript.privacyNotice': '在发送给我们的AI之前，你的学号和永久代码会被自动隐去——仅使用你的课程记录、成绩和平均绩点。',
 };
 
 export default ZH_TRANSLATIONS;

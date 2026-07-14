@@ -2,9 +2,10 @@ import { useState, useRef } from 'react'
 import {
   FaFileUpload, FaTimes, FaCheckCircle, FaSpinner,
   FaGraduationCap, FaBook, FaExclamationTriangle,
-  FaCloudUploadAlt, FaFilePdf, FaTrash, FaCalendarAlt
+  FaCloudUploadAlt, FaFilePdf, FaTrash, FaCalendarAlt, FaShieldAlt
 } from 'react-icons/fa'
 import { BASE_URL, getAuthHeaders } from '../../lib/apiConfig'
+import { useLanguage } from '../../contexts/PreferencesContext'
 import './TranscriptUpload.css'
 
 /** Polls /api/jobs/{id} until the Inngest job finishes (same as ProfileSetup). */
@@ -22,6 +23,7 @@ async function pollJob(jobId, maxWaitMs = 5 * 60 * 1000) {
 }
 
 export default function TranscriptUpload({ userId, onImportComplete, onClose, defaultTab = 'transcript' }) {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState(defaultTab)
 
   // ── Transcript state ───────────────────────────────────
@@ -179,6 +181,11 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                     <li>Click <strong>Save</strong>, then upload the downloaded file below.</li>
                   </ol>
                 </div>
+
+                <p className="tu-privacy-notice">
+                  <FaShieldAlt className="tu-privacy-notice-icon" />
+                  {t('transcript.privacyNotice')}
+                </p>
 
                 <div
                   className={`tu-dropzone ${dragOver ? 'tu-dropzone--over' : ''} ${file ? 'tu-dropzone--has-file' : ''}`}

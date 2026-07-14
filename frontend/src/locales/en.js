@@ -1512,6 +1512,8 @@ const EN_TRANSLATIONS = {
     'cookie.body': 'Essential cookies keep you signed in and remember your settings. With your OK, we also use privacy-friendly analytics to see which features help students most. No ads, no selling your data, ever.',
     'cookie.essentialOnly': 'Essential only',
     'cookie.acceptAll': 'Accept all',
+
+    'transcript.privacyNotice': 'Your student ID and permanent code are automatically redacted before anything is sent to our AI — only your course history, grades, and GPA are used.',
 };
 
 export default EN_TRANSLATIONS;

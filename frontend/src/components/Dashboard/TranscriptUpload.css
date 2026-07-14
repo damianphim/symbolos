@@ -452,6 +452,22 @@
   box-shadow: 0 1px 0 var(--border-color);
 }
 
+.tu-privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0 0 14px 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.tu-privacy-notice-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--success-primary, #059669);
+}
+
 .tu-course-code {
   font-weight: 700;
   color: var(--accent-primary);

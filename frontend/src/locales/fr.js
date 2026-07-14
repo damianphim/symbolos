@@ -1510,6 +1510,8 @@ const FR_TRANSLATIONS = {
     'cookie.body': 'Les témoins essentiels vous gardent connecté et mémorisent vos réglages. Avec votre accord, nous utilisons aussi des analyses respectueuses de la vie privée pour voir quelles fonctionnalités aident le plus les étudiants. Pas de publicité, jamais de vente de vos données.',
     'cookie.essentialOnly': 'Essentiels seulement',
     'cookie.acceptAll': 'Tout accepter',
+
+    'transcript.privacyNotice': 'Votre matricule et votre code permanent sont automatiquement retirés avant tout envoi à notre IA — seuls votre historique de cours, vos notes et votre MPC sont utilisés.',
 };
 
 export default FR_TRANSLATIONS;
