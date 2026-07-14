@@ -4,16 +4,8 @@ import {
   FaGraduationCap, FaBook, FaExclamationTriangle,
   FaCloudUploadAlt, FaFilePdf, FaTrash, FaCalendarAlt
 } from 'react-icons/fa'
-import { BASE_URL } from '../../lib/apiConfig'
-import { supabase } from '../../lib/supabase'
+import { BASE_URL, getAuthHeaders } from '../../lib/apiConfig'
 import './TranscriptUpload.css'
-
-/** Returns { Authorization: 'Bearer <token>' } for the current session. */
-async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) return {}
-  return { Authorization: `Bearer ${session.access_token}` }
-}
 
 /** Polls /api/jobs/{id} until the Inngest job finishes (same as ProfileSetup). */
 async function pollJob(jobId, maxWaitMs = 5 * 60 * 1000) {

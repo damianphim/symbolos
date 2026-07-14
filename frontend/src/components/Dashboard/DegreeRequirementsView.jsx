@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
-import { supabase } from '../../lib/supabase'
+import { getAuthHeaders } from '../../lib/apiConfig'
 import { matchCourse as matchCourseWildcard } from '../../utils/requirementMatch'
 import {
   FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight,
@@ -14,13 +14,6 @@ import './DegreeRequirementsView.css'
 // Fix double /api/api bug — strip trailing /api from env var
 const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_BASE = rawBase.replace(/\/api\/?$/, '')
-
-/** Returns Authorization header object with the current Supabase Bearer token. */
-async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) return {}
-  return { Authorization: `Bearer ${session.access_token}` }
-}
 
 const TYPE_LABELS = {
   major:         'Major',

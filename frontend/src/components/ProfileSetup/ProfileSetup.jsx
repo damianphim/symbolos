@@ -2,14 +2,7 @@ import { useState, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { usersAPI } from '../../lib/api'
-import { supabase } from '../../lib/supabase'
-
-/** Returns { Authorization: 'Bearer <token>' } for the current session. */
-async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) return {}
-  return { Authorization: `Bearer ${session.access_token}` }
-}
+import { getAuthHeaders } from '../../lib/apiConfig'
 import {
   FaGraduationCap, FaFileUpload, FaCheckCircle,
   FaExclamationTriangle, FaArrowRight, FaLightbulb, FaSpinner,
