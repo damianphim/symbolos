@@ -37,7 +37,7 @@ inngest_client = inngest.Inngest(
     trigger=inngest.TriggerEvent(event="transcript/process"),
     retries=2,
 )
-async def process_transcript(ctx: inngest.Context, step: inngest.Step) -> dict:
+async def process_transcript(ctx: inngest.Context) -> dict:
     data         = ctx.event.data
     job_id       = data["job_id"]
     user_id      = data["user_id"]
@@ -127,7 +127,7 @@ async def process_transcript(ctx: inngest.Context, step: inngest.Step) -> dict:
     trigger=inngest.TriggerEvent(event="syllabus/process"),
     retries=2,
 )
-async def process_syllabus(ctx: inngest.Context, step: inngest.Step) -> dict:
+async def process_syllabus(ctx: inngest.Context) -> dict:
     data          = ctx.event.data
     job_id        = data["job_id"]
     user_id       = data["user_id"]
