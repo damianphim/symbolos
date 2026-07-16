@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { getAuthHeaders } from '../../lib/apiConfig'
-import { matchCourse as matchCourseWildcard } from '../../utils/requirementMatch'
+import { matchCourse as matchCourseWildcard, explicitlyClaimedCourseKeys } from '../../utils/requirementMatch'
 import {
   FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight,
   FaCheckCircle, FaCircle, FaStar, FaSearch,
@@ -323,6 +323,15 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     return matchSearch && matchType
   }), [programs, search, typeFilter])
 
+  // Course codes explicitly named by some requirement row anywhere in this
+  // program — stops a wildcard/complementary block (e.g. "any COMP 300+
+  // course") from also claiming a course a more specific block (e.g. Group
+  // D) already counts by name.
+  const explicitClaims = useMemo(
+    () => explicitlyClaimedCourseKeys(programDetail?.blocks),
+    [programDetail]
+  )
+
   const progress = useMemo(() => {
     if (!programDetail) return null
     let required = 0, completed = 0, transferBlockedCredits = 0
@@ -332,7 +341,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           required += parseFloat(c.credits || 3)
           const transferCountsMajor = matchTransfer(c, advStanding, { requireMajorCredit: true })
           const isTransferAtAll = matchTransfer(c, advStanding)
-          if (transferCountsMajor || (!isTransferAtAll && matchCourse(c, allUserCourses)))
+          if (transferCountsMajor || (!isTransferAtAll && matchCourse(c, allUserCourses, explicitClaims)))
             completed += parseFloat(c.credits || 3)
           else if (isTransferAtAll && !transferCountsMajor)
             transferBlockedCredits += parseFloat(c.credits || 3)
@@ -340,7 +349,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       })
     })
     return { required, completed, pct: required > 0 ? Math.round((completed / required) * 100) : 0, transferBlockedCredits }
-  }, [programDetail, allUserCourses, advStanding])
+  }, [programDetail, allUserCourses, advStanding, explicitClaims])
 
   const toggleBlock   = id => setOpenBlocks(p => ({ ...p, [id]: !p[id] }))
   const toggleShowAll = id => setShowAllCourses(p => ({ ...p, [id]: !p[id] }))
@@ -660,8 +669,10 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 const visible         = showAll ? courses : courses?.slice(0, PREVIEW)
                 const required        = block.courses?.filter(c => c.is_required) || []
                 const allCatalog      = block.courses?.filter(c => c.catalog) || []
-                const completedReq    = required.filter(c => matchCourse(c, allUserCourses) || matchTransfer(c, advStanding))
-                const completedAny    = allCatalog.filter(c => matchCourse(c, allUserCourses) || matchTransfer(c, advStanding))
+                // excludeKeys (explicitClaims) stops a wildcard row here from
+                // counting a course another block already claims by name.
+                const completedReq    = required.filter(c => matchCourse(c, allUserCourses, explicitClaims) || matchTransfer(c, advStanding))
+                const completedAny    = allCatalog.filter(c => matchCourse(c, allUserCourses, explicitClaims) || matchTransfer(c, advStanding))
 
                 // Determine completion for both required-list and choose-credits blocks
                 let blockDone, hasProgress, pillText

@@ -53,14 +53,44 @@ export function wildcardBand(req) {
   return null
 }
 
+function keyOf(c) {
+  return `${c?.subject || ''} ${c?.catalog || ''}`.toUpperCase()
+}
+
+/**
+ * Every course code that appears as a real (non-wildcard) requirement row
+ * anywhere in a program's blocks. Pass this as `excludeKeys` to matchCourse /
+ * blockWildcardMatches to stop a wildcard/complementary block (e.g. "any
+ * COMP 300+ course") from double-counting a course that already satisfies a
+ * more specific requirement elsewhere in the SAME program (e.g. a Group D
+ * requirement naming that exact course) — one course can't count toward two
+ * different requirement categories at once.
+ */
+export function explicitlyClaimedCourseKeys(blocks = []) {
+  const claimed = new Set()
+  for (const block of blocks || []) {
+    for (const c of block?.courses || []) {
+      if (!c?.catalog || wildcardBand(c)) continue
+      claimed.add(keyOf(c))
+    }
+  }
+  return claimed
+}
+
 /**
  * Find the user course that satisfies requirement `req`, or null.
  * Handles both exact codes and wildcard-band placeholders.
+ *
+ * `excludeKeys` (optional): a Set of course keys to skip when resolving a
+ * *wildcard* match — see explicitlyClaimedCourseKeys(). Exact-code matches
+ * are never excluded, since a row explicitly naming a course is always
+ * allowed to claim it.
  */
-export function matchCourse(req, userCourses = []) {
+export function matchCourse(req, userCourses = [], excludeKeys = null) {
   const band = wildcardBand(req)
   if (band) {
     return userCourses.find(c => {
+      if (excludeKeys && excludeKeys.has(keyOf(c))) return false
       if ((c.subject || '').toUpperCase() !== band.subject) return false
       const cat = parseInt(c.catalog, 10)
       return !Number.isNaN(cat) && cat >= band.min && cat <= band.max
@@ -81,10 +111,14 @@ export function matchCourse(req, userCourses = []) {
  * exact matches; callers handle that bookkeeping (seen sets, overlap
  * allocation, per-block credit limits) themselves.
  *
+ * `excludeKeys` (optional): a Set of course keys to never return — pass
+ * explicitlyClaimedCourseKeys(programBlocks) so this block's wildcard slot
+ * can't double-count a course a different block already claims by name.
+ *
  * Used by all three progress computations (the program ring, the per-program
  * progress bar, and per-block credit counting) so they can't drift apart.
  */
-export function blockWildcardMatches(block, userCourses = []) {
+export function blockWildcardMatches(block, userCourses = [], excludeKeys = null) {
   const bands = (block?.courses || []).map(c => wildcardBand(c)).filter(Boolean)
   const minLevel = block?.min_level || 0
   const legacyApplies = (block?.courses || []).some(c => !c.catalog) || minLevel > 0
@@ -96,6 +130,7 @@ export function blockWildcardMatches(block, userCourses = []) {
 
   const out = []
   for (const uc of userCourses) {
+    if (excludeKeys && excludeKeys.has(keyOf(uc))) continue
     const ucSubj = (uc.subject || '').toUpperCase()
     const ucLvl = parseInt(uc.catalog, 10)
     const inBand = bands.some(b =>

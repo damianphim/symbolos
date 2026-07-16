@@ -16,7 +16,7 @@ import StudyAbroadView from './StudyAbroadView'
 import AdvisingResourcesView from './AdvisingResourcesView'
 import { readCache, writeCache } from '../../lib/userDataCache'
 import { usersAPI } from '../../lib/api'
-import { matchCourse, wildcardBand, blockWildcardMatches } from '../../utils/requirementMatch'
+import { matchCourse, wildcardBand, blockWildcardMatches, explicitlyClaimedCourseKeys } from '../../utils/requirementMatch'
 import SectionHeader from '../ui/SectionHeader'
 import './DegreePlanningView.css'
 
@@ -631,6 +631,12 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
 
   const progKey = prog.program_key
 
+  // Course codes explicitly named by some requirement row anywhere in this
+  // program — used to stop a wildcard/complementary block (e.g. "any COMP
+  // 300+ course") from also claiming a course a more specific block (e.g.
+  // Group D) already counts by name.
+  const explicitClaims = explicitlyClaimedCourseKeys(prog.blocks)
+
   // Progress: two-phase — exact listed courses then wildcard blocks (min_level / null catalog)
   const totalCredits = prog.total_credits || 36
   let earnedCredits = 0
@@ -720,8 +726,11 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
 
         // Wildcard credit counting — placeholder "Any 200-level X course",
         // null-catalog, or min_level — capped at the block's credit need.
+        // excludeKeys (explicitClaims) stops this from also counting a course
+        // that a different block already claims by name (e.g. Group D's
+        // COMP 302 can't also fill this block's "any COMP 300+" slot).
         if (creditsEarned < creditsNeeded) {
-          for (const uc of blockWildcardMatches(block, [...completedCourses, ...currentCourses])) {
+          for (const uc of blockWildcardMatches(block, [...completedCourses, ...currentCourses], explicitClaims)) {
             if (creditsEarned >= creditsNeeded) break
             const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
             if (exactKeys.has(ucKey)) continue
@@ -779,9 +788,11 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                   const isTransfer = matchTransfer(c, advStanding)
                   // matchCourse handles wildcard placeholders ("Any 200-level
                   // X course") as well as exact codes, so a 209 fills the 200
-                  // placeholder's radio.
-                  const done = isTransfer || !!matchCourse(c, completedCourses)
-                  const taking = !done && !!matchCourse(c, currentCourses)
+                  // placeholder's radio. excludeKeys (explicitClaims) stops a
+                  // wildcard row from showing a course as satisfying it when
+                  // that course is already claimed by name in another block.
+                  const done = isTransfer || !!matchCourse(c, completedCourses, explicitClaims)
+                  const taking = !done && !!matchCourse(c, currentCourses, explicitClaims)
                   const isOverlap = c.catalog && overlapKeys.has(key) && (done || taking)
                   const allocatedTo = isOverlap ? (courseAllocations[key] || null) : null
                   const allocatedElsewhere = isOverlap && allocatedTo && allocatedTo !== progKey
