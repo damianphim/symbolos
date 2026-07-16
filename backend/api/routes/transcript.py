@@ -123,10 +123,14 @@ def _dedupe_extracted(extracted: dict) -> None:
     completed_codes = set(best_completed.keys())
     extracted["current_courses"] = [c for k, c in seen_current.items() if k not in completed_codes]
 
-    # 4. Dedupe advanced_standing by (course_code, course_title).
-    # Generic placeholder codes like "ECON 1XX" legitimately appear multiple times
-    # for different AP exams (e.g. Macroeconomics + Microeconomics, each 3 cr).
-    # Only collapse rows that match on BOTH code AND title.
+    # 4. Dedupe advanced_standing by (course_code, course_title) — EXCEPT for
+    # generic placeholder codes (e.g. "ECON 1XX"), which McGill prints with no
+    # distinguishing title even when they represent separate AP-exam credit
+    # awards (e.g. Microeconomics + Macroeconomics, each its own 3cr line).
+    # Deduping those on (code, title) silently drops real credits, since both
+    # rows share an identical (often blank) title — always keep every
+    # occurrence of a placeholder code instead.
+    _PLACEHOLDER_CODE_RE = re.compile(r"\dX+$", re.IGNORECASE)
     student_info = extracted.get("student_info")
     if isinstance(student_info, dict):
         standing = student_info.get("advanced_standing") or []
@@ -139,6 +143,9 @@ def _dedupe_extracted(extracted: dict) -> None:
                 code = (item.get("course_code") or "").strip().upper()
                 title = (item.get("course_title") or "").strip().lower()
                 if not code:
+                    continue
+                if _PLACEHOLDER_CODE_RE.search(code):
+                    unique_std.append(item)
                     continue
                 key = (code, title)
                 if key in seen_std:
