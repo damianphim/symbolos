@@ -32,9 +32,23 @@ export function getConsent() {
   try { return localStorage.getItem(CONSENT_KEY) } catch { return null }
 }
 
+// Custom event fired whenever consent changes, so listeners (e.g. the Vercel
+// Analytics mount) can react in BOTH directions — grant AND withdrawal.
+export const CONSENT_EVENT = 'symbolos:consent'
+
 export function setConsent(value) {
   try { localStorage.setItem(CONSENT_KEY, value) } catch { /* ignore */ }
-  if (value === 'accepted') startAnalytics()
+  if (value === 'accepted') {
+    startAnalytics()
+    if (_posthog) { try { _posthog.opt_in_capturing() } catch { /* ignore */ } }
+  } else {
+    // Withdrawal (Law 25 / GDPR: as easy to revoke as to grant). Stop
+    // capturing and clear any data PostHog already holds this session.
+    if (_posthog) {
+      try { _posthog.opt_out_capturing(); _posthog.reset() } catch { /* ignore */ }
+    }
+  }
+  try { window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: value })) } catch { /* ignore */ }
 }
 
 /** Boot the strictly-necessary telemetry (Sentry) immediately, and the

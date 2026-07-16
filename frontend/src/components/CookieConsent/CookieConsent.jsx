@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import { FaCookieBite } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import { getConsent, setConsent } from '../../lib/telemetry'
+import { updateConsent } from '../../lib/consent'
 import './CookieConsent.css'
 
 function dntEnabled() {
@@ -44,8 +45,12 @@ export default function CookieConsent() {
 
   if (!visible) return null
 
-  const accept = () => { setConsent('accepted'); setVisible(false) }
-  const decline = () => { setConsent('declined'); setVisible(false) }
+  // updateConsent applies locally (analytics react at once) + records the
+  // choice server-side when authenticated. On the landing page there's no
+  // session yet, so it just no-ops the server call — the choice re-syncs on
+  // login (AuthContext) and can be changed later in Settings → Privacy.
+  const accept = () => { updateConsent('accepted'); setVisible(false) }
+  const decline = () => { updateConsent('declined'); setVisible(false) }
 
   return (
     <div className="cookie-consent" role="dialog" aria-live="polite" aria-label={t('cookie.ariaLabel')}>

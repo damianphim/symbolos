@@ -10,12 +10,14 @@ import {
 import { useLanguage, useTheme, useTimezone, TIMEZONES } from '../../contexts/PreferencesContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { usersAPI } from '../../lib/api'
+import { getConsent } from '../../lib/telemetry'
+import { updateConsent } from '../../lib/consent'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
 import './Settings.css'
 
-export default function Settings({ user, profile, onUpdateSettings }) {
+export default function Settings({ user, onUpdateSettings }) {
   const { language, setLanguage, t } = useLanguage()
-  const { deleteAccount, authFlags, updatePassword } = useAuth()
+  const { deleteAccount, updatePassword } = useAuth()
   const { theme, setTheme } = useTheme()
   const { timezone, setTimezone } = useTimezone()
 
@@ -29,6 +31,13 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     language: language || 'en',
     timezone,
   })
+
+  // Analytics-cookie consent (Law 25: withdrawable as easily as it was given).
+  const [analyticsOn, setAnalyticsOn] = useState(getConsent() === 'accepted')
+  const handleAnalyticsToggle = (on) => {
+    setAnalyticsOn(on)
+    updateConsent(on ? 'accepted' : 'declined')
+  }
 
   const [showExportModal, setShowExportModal] = useState(false)
   const [autoSaveFlash, setAutoSaveFlash] = useState(false)
@@ -72,7 +81,7 @@ export default function Settings({ user, profile, onUpdateSettings }) {
         const url = new URL(window.location.href)
         url.searchParams.delete('unsubscribe')
         window.history.replaceState({}, '', url.toString())
-      } catch {}
+      } catch { /* ignore */ }
       // Defer the alert so it doesn't race the initial render.
       setTimeout(() => {
         alert(t('settings.unsubscribed') || 'You have been unsubscribed from reminder emails. You can re-enable them anytime below.')
@@ -111,7 +120,6 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     }
   }
 
-  const isMcGillEmail = authFlags?.is_mcgill_email ?? false
 
   const flash = () => {
     setAutoSaveFlash(true)
@@ -132,13 +140,6 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     flash()
   }
 
-  const handleToggle = (key) => {
-    const val = !settings[key]
-    setSettings(p => ({ ...p, [key]: val }))
-    localStorage.setItem(key, JSON.stringify(val))
-    onUpdateSettings?.({ [key]: val })
-    flash()
-  }
 
   const handleSelect = (key, val) => {
     setSettings(p => ({ ...p, [key]: val }))
@@ -190,7 +191,7 @@ export default function Settings({ user, profile, onUpdateSettings }) {
     setDeleteError('')
     try {
       await deleteAccount()
-    } catch (err) {
+    } catch {
       setDeleteError(t('settings.deleteError'))
       setDeleting(false)
     }
@@ -363,6 +364,16 @@ export default function Settings({ user, profile, onUpdateSettings }) {
               </div>
               <label className="toggle-switch">
                 <input type="checkbox" checked={settings.shareProgress} onChange={() => handleSelect('shareProgress', !settings.shareProgress)} />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">{t('settings.analyticsCookies')}</label>
+                <p className="setting-description">{t('settings.analyticsCookiesDesc')}</p>
+              </div>
+              <label className="toggle-switch">
+                <input type="checkbox" checked={analyticsOn} onChange={() => handleAnalyticsToggle(!analyticsOn)} />
                 <span className="toggle-slider" />
               </label>
             </div>

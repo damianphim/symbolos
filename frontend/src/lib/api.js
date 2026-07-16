@@ -273,6 +273,13 @@ export const usersAPI = {
     return response.data
   },
 
+  // Record the user's cookie/analytics consent choice server-side with a
+  // timestamp (Law 25 accountability). Best-effort; callers ignore failures.
+  recordConsent: async (userId, value) => {
+    const response = await api.post(`/users/${userId}/consent`, { value })
+    return response.data
+  },
+
   // ── Degree-planning course allocations ───────────────────────────────────
   // Which program a student counts a given course toward. Server-persisted
   // so it follows them across devices.

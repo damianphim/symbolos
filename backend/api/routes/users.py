@@ -487,6 +487,39 @@ USER_DATA_TABLES = [
 ]
 
 
+class ConsentBody(BaseModel):
+    value: str  # 'accepted' | 'declined'
+
+
+@router.post("/{user_id}/consent", response_model=dict)
+async def record_cookie_consent(
+    user_id: str,
+    body: ConsentBody,
+    req: Request,
+    current_user_id: str = Depends(get_current_user_id),
+    user_sb=Depends(get_user_db),
+):
+    """Record the user's analytics-cookie consent choice with a timestamp
+    (Quebec Law 25 accountability — being able to demonstrate valid consent).
+
+    Best-effort persistence: if the cookie_consent columns aren't present yet
+    (migration 2026_07_16_cookie_consent.sql not applied), this logs and still
+    returns 200 so the client's local consent flow is never blocked.
+    """
+    require_self(current_user_id, user_id)
+    value = body.value if body.value in ("accepted", "declined") else None
+    if value is None:
+        raise HTTPException(status_code=400, detail="consent value must be 'accepted' or 'declined'")
+    try:
+        user_sb.table("users").update({
+            "cookie_consent": value,
+            "cookie_consent_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", user_id).execute()
+    except Exception as exc:  # noqa: BLE001 — column may not exist yet
+        logger.warning("cookie_consent persist skipped (%s) — migration applied?", type(exc).__name__)
+    return {"ok": True}
+
+
 @router.get("/{user_id}/export", response_model=dict)
 async def export_user_data(
     user_id: str,

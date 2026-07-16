@@ -1,25 +1,20 @@
 import { useEffect, useState } from 'react'
-import { getConsent } from '../lib/telemetry'
+import { getConsent, CONSENT_EVENT } from '../lib/telemetry'
 
 /**
- * Vercel Analytics is a non-essential cookie under Law 25, so we only
- * mount it once the user has accepted the cookie banner. We watch the
- * consent value and mount lazily.
+ * Vercel Analytics is a non-essential cookie under Law 25, so we only mount it
+ * while consent is granted — and UNMOUNT it the moment consent is withdrawn
+ * (Law 25 / GDPR: revoking must be as easy as granting). We react to the
+ * consent-change event in both directions.
  */
 export default function ConsentedAnalytics() {
   const [accepted, setAccepted] = useState(getConsent() === 'accepted')
+
   useEffect(() => {
-    if (accepted) return
-    // Poll briefly for the consent flag flipping (cheap; the banner
-    // writes localStorage synchronously on click). Stops once accepted.
-    const id = setInterval(() => {
-      if (getConsent() === 'accepted') {
-        setAccepted(true)
-        clearInterval(id)
-      }
-    }, 1000)
-    return () => clearInterval(id)
-  }, [accepted])
+    const onConsent = () => setAccepted(getConsent() === 'accepted')
+    window.addEventListener(CONSENT_EVENT, onConsent)
+    return () => window.removeEventListener(CONSENT_EVENT, onConsent)
+  }, [])
 
   const [Analytics, setAnalytics] = useState(null)
   useEffect(() => {
@@ -28,5 +23,6 @@ export default function ConsentedAnalytics() {
     }
   }, [accepted, Analytics])
 
-  return Analytics ? <Analytics /> : null
+  // Only render while consent is currently granted — withdrawal unmounts it.
+  return accepted && Analytics ? <Analytics /> : null
 }

@@ -146,6 +146,9 @@ export const AuthProvider = ({ children }) => {
           if (session?.access_token) {
             api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
           }
+          // Persist any cookie-consent choice made pre-login (on the landing
+          // page) now that we have an account to attach it to. Best-effort.
+          import('../lib/consent').then(({ syncConsentToServer }) => syncConsentToServer()).catch(() => {})
           if (justSignedUp.current) {
             justSignedUp.current = false
             return
