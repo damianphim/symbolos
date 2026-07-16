@@ -1278,6 +1278,7 @@ const EN_TRANSLATIONS = {
     'dp.removeFromProgram': 'Remove',
     'dp.statusTaking': 'Taking',
     'dp.creditsOf': '{earned} / {total} credits',
+    'dp.inProgress': 'in progress',
     'dp.myProgramRequirements': 'My Program Requirements',
     'dp.welcomeTitle': 'Degree Requirements',
     'dp.welcomeDesc': 'Select a program from the sidebar to see its full requirements, your progress, and recommended courses.',

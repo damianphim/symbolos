@@ -1257,6 +1257,7 @@ const ZH_TRANSLATIONS = {
     'dp.removeFromProgram': '移除',
     'dp.statusTaking': '正在修读',
     'dp.creditsOf': '{earned} / {total} 学分',
+    'dp.inProgress': '进行中',
     'dp.myProgramRequirements': '我的专业要求',
     'dp.welcomeTitle': '学位要求',
     'dp.welcomeDesc': '从侧边栏选择一个专业以查看其完整要求、您的进度和推荐课程。',

@@ -123,11 +123,6 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   const [collapsedGroups, setCollapsedGroups] = useState({})
   const toggleGroup = (key) => setCollapsedGroups(prev => ({ ...prev, [key]: !prev[key] }))
 
-  const allUserCourses = useMemo(
-    () => [...completedCourses, ...currentCourses],
-    [completedCourses, currentCourses]
-  )
-
   // Sync faculty filter when profile loads/changes (only if user hasn't manually changed it)
   useEffect(() => {
     if (profile?.faculty) {
@@ -341,7 +336,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           required += parseFloat(c.credits || 3)
           const transferCountsMajor = matchTransfer(c, advStanding, { requireMajorCredit: true })
           const isTransferAtAll = matchTransfer(c, advStanding)
-          if (transferCountsMajor || (!isTransferAtAll && matchCourse(c, allUserCourses, explicitClaims)))
+          // Only completed work (transfer or final grade) counts toward the
+          // overall %, not courses that are merely registered.
+          if (transferCountsMajor || (!isTransferAtAll && matchCourse(c, completedCourses, explicitClaims)))
             completed += parseFloat(c.credits || 3)
           else if (isTransferAtAll && !transferCountsMajor)
             transferBlockedCredits += parseFloat(c.credits || 3)
@@ -349,7 +346,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       })
     })
     return { required, completed, pct: required > 0 ? Math.round((completed / required) * 100) : 0, transferBlockedCredits }
-  }, [programDetail, allUserCourses, advStanding, explicitClaims])
+  }, [programDetail, completedCourses, advStanding, explicitClaims])
 
   const toggleBlock   = id => setOpenBlocks(p => ({ ...p, [id]: !p[id] }))
   const toggleShowAll = id => setShowAllCourses(p => ({ ...p, [id]: !p[id] }))
@@ -671,31 +668,37 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 const allCatalog      = block.courses?.filter(c => c.catalog) || []
                 // excludeKeys (explicitClaims) stops a wildcard row here from
                 // counting a course another block already claims by name.
-                const completedReq    = required.filter(c => matchCourse(c, allUserCourses, explicitClaims) || matchTransfer(c, advStanding))
-                const completedAny    = allCatalog.filter(c => matchCourse(c, allUserCourses, explicitClaims) || matchTransfer(c, advStanding))
+                // A requirement is only "done" (green) when met by COMPLETED
+                // work — transfer or a final grade. Registered ("Taking")
+                // courses count only toward the in-progress (blue) state.
+                const completedReq   = required.filter(c => matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding))
+                const inProgressReq  = required.filter(c => !(matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding)) && matchCourse(c, currentCourses, explicitClaims))
+                const completedAny   = allCatalog.filter(c => matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding))
+                const inProgressAny  = allCatalog.filter(c => !(matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding)) && matchCourse(c, currentCourses, explicitClaims))
 
                 // Determine completion for both required-list and choose-credits blocks
-                let blockDone, hasProgress, pillText
+                let blockDone, blockInProgress, pillText
                 if (required.length > 0) {
-                  blockDone   = completedReq.length === required.length
-                  hasProgress = completedReq.length > 0
-                  pillText    = `${required.length - completedReq.length} left`
+                  blockDone       = completedReq.length === required.length
+                  blockInProgress = !blockDone && (inProgressReq.length > 0 || completedReq.length > 0)
+                  pillText        = `${required.length - completedReq.length} left`
                 } else if (block.credits_needed) {
                   const earned = completedAny.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
-                  blockDone   = earned >= block.credits_needed
-                  hasProgress = earned > 0
+                  const inProg = inProgressAny.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
+                  blockDone       = earned >= block.credits_needed
+                  blockInProgress = !blockDone && (inProg > 0 || earned > 0)
                   const crLeft = Math.max(0, block.credits_needed - earned)
                   pillText    = `${Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1)}cr left`
                 } else {
-                  blockDone   = false
-                  hasProgress = completedAny.length > 0
-                  pillText    = `${completedAny.length} done`
+                  blockDone       = false
+                  blockInProgress = completedAny.length > 0 || inProgressAny.length > 0
+                  pillText        = `${completedAny.length} done`
                 }
 
-                const pillMod = blockDone ? 'drv-block-pill--done' : hasProgress ? 'drv-block-pill--partial' : 'drv-block-pill--none'
+                const pillMod = blockDone ? 'drv-block-pill--done' : blockInProgress ? 'drv-block-pill--progress' : 'drv-block-pill--none'
 
                 return (
-                  <div key={block.id} className={`drv-block ${blockDone ? 'drv-block--done' : ''}`}>
+                  <div key={block.id} className={`drv-block ${blockDone ? 'drv-block--done' : blockInProgress ? 'drv-block--progress' : ''}`}>
                     <button className="drv-block-header" onClick={() => toggleBlock(block.id)}>
                       <div className="drv-block-header-left">
                         <span className="drv-chevron">

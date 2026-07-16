@@ -637,9 +637,14 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
   // Group D) already counts by name.
   const explicitClaims = explicitlyClaimedCourseKeys(prog.blocks)
 
-  // Progress: two-phase — exact listed courses then wildcard blocks (min_level / null catalog)
+  // Progress: two-phase — exact listed courses then wildcard blocks (min_level
+  // / null catalog). Credit is only "earned" from COMPLETED work (transfer or
+  // a final grade); currently-registered courses are tracked as in-progress
+  // and shown separately, never counted as earned.
   const totalCredits = prog.total_credits || 36
   let earnedCredits = 0
+  let inProgressCredits = 0
+  const completedKeySet = new Set(completedCourses.map(uc => `${uc.subject} ${uc.catalog}`.toUpperCase()))
   const seenDbKeys   = new Set() // DB course keys already scanned
   const seenUserKeys = new Set() // user course keys already counted (avoid double-count)
 
@@ -652,118 +657,162 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
     if (matchTransfer(c, advStanding)) return
     // If overlapping course allocated to a different program, skip it
     if (overlapKeys.has(key) && courseAllocations[key] && courseAllocations[key] !== progKey) return
-    const inCompleted = completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-    const inCurrent   = currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-    if (inCompleted || inCurrent) {
-      // Use actual earned credits from user record (more accurate than seeded value)
-      const uc = [...completedCourses, ...currentCourses].find(u => `${u.subject} ${u.catalog}`.toUpperCase() === key)
-      earnedCredits += parseFloat(uc?.credits || c.credits || 3)
+    const ucCompleted = completedCourses.find(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
+    const ucCurrent   = currentCourses.find(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
+    if (ucCompleted) {
+      earnedCredits += parseFloat(ucCompleted.credits || c.credits || 3)
+      seenUserKeys.add(key)
+    } else if (ucCurrent) {
+      inProgressCredits += parseFloat(ucCurrent.credits || c.credits || 3)
       seenUserKeys.add(key)
     }
   }))
 
   // Phase 2: wildcard blocks — placeholder "Any 200-level X course",
-  // null-catalog, or min_level — capped at each block's credit need.
+  // null-catalog, or min_level — capped at each block's credit need. Completed
+  // matches award earned credit first; registered ones fill the remaining need
+  // as in-progress. explicitClaims stops a wildcard slot from also counting a
+  // course another block already claims by name.
   const allUserCourses = [...completedCourses, ...currentCourses]
   prog.blocks?.forEach(b => {
     const blockNeeded = b.credits_needed || Infinity
-    let blockWildcardEarned = 0
-    for (const uc of blockWildcardMatches(b, allUserCourses)) {
-      if (blockWildcardEarned >= blockNeeded) break
-      const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
-      if (seenDbKeys.has(ucKey) || seenUserKeys.has(ucKey)) continue
-      if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
-      earnedCredits += parseFloat(uc.credits || 3)
-      blockWildcardEarned += parseFloat(uc.credits || 3)
-      seenUserKeys.add(ucKey)
+    let blockGot = 0
+    const takeWildcard = (pool, isCompleted) => {
+      for (const uc of blockWildcardMatches(b, pool, explicitClaims)) {
+        if (blockGot >= blockNeeded) break
+        const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+        if (seenDbKeys.has(ucKey) || seenUserKeys.has(ucKey)) continue
+        if (overlapKeys.has(ucKey) && courseAllocations[ucKey] && courseAllocations[ucKey] !== progKey) continue
+        const cr = parseFloat(uc.credits || 3)
+        if (isCompleted) earnedCredits += cr; else inProgressCredits += cr
+        blockGot += cr
+        seenUserKeys.add(ucKey)
+      }
     }
+    takeWildcard(completedCourses, true)
+    takeWildcard(currentCourses, false)
   })
 
   // Phase 3: manually-added electives — courses the user explicitly assigned
   // to THIS program from the Electives tab that no block matched. They get
-  // their own "Other Courses (Added by you)" dropdown below and count toward
-  // the credit total.
+  // their own "Other Courses (Added by you)" dropdown below; completed ones
+  // count toward earned credit, registered ones toward in-progress.
   const manuallyAdded = []
   for (const uc of allUserCourses) {
     const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
     if (seenUserKeys.has(ucKey)) continue
     if (matchTransfer(uc, advStanding)) continue
     if (courseAllocations[ucKey] === progKey) {
-      earnedCredits += parseFloat(uc.credits || 3)
+      if (completedKeySet.has(ucKey)) earnedCredits += parseFloat(uc.credits || 3)
+      else inProgressCredits += parseFloat(uc.credits || 3)
       seenUserKeys.add(ucKey)
       manuallyAdded.push(uc)
     }
   }
 
   const pct = Math.min(100, Math.round((earnedCredits / totalCredits) * 100))
+  const inProgressPct = Math.min(100 - pct, Math.round((inProgressCredits / totalCredits) * 100))
 
   return (
     <div className="dp-prog-section">
-      {/* Progress bar */}
+      {/* Progress bar — solid = completed credit, lighter = in-progress */}
       <div className="dp-prog-bar-wrap">
         <div className="dp-prog-bar-track">
           <div className="dp-prog-bar-fill" style={{ width: `${pct}%` }} />
+          {inProgressPct > 0 && (
+            <div className="dp-prog-bar-fill dp-prog-bar-fill--progress" style={{ width: `${inProgressPct}%` }} />
+          )}
         </div>
-        <span className="dp-prog-bar-label">{t('dp.creditsOf').replace('{earned}', earnedCredits).replace('{total}', totalCredits)}</span>
+        <span className="dp-prog-bar-label">
+          {t('dp.creditsOf').replace('{earned}', earnedCredits).replace('{total}', totalCredits)}
+          {inProgressCredits > 0 && <span className="dp-prog-bar-inprogress"> · +{inProgressCredits} {t('dp.inProgress')}</span>}
+        </span>
       </div>
 
       {/* Blocks */}
       {prog.blocks?.map(block => {
-        // For block progress: count matched courses (any, not just is_required) + wildcard matches
+        // Block progress. A block is only DONE (green) when its required
+        // credits are met by COMPLETED work — transfer credit or a course with
+        // a final grade. Currently-registered ("Taking") courses do NOT award
+        // credit and never turn a block green; they only mark it in-progress
+        // (blue) until the grade is in.
         const blockCourses = block.courses?.filter(c => c.catalog) || []
-        const exactMatched = blockCourses.filter(c => {
-          const key = `${c.subject} ${c.catalog}`.toUpperCase()
-          // Transfer credits count as "done" for block completion (course is met)
-          if (matchTransfer(c, advStanding)) return true
-          return completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key) ||
-                 currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-        })
+        const completedSet = new Set(completedCourses.map(uc => `${uc.subject} ${uc.catalog}`.toUpperCase()))
+        const currentSet   = new Set(currentCourses.map(uc => `${uc.subject} ${uc.catalog}`.toUpperCase()))
         const exactKeys = new Set(blockCourses.map(c => `${c.subject} ${c.catalog}`.toUpperCase()))
         const creditsNeeded = block.credits_needed || 0
-        let creditsEarned = exactMatched
-          .filter(c => !wildcardBand(c))   // wildcard placeholders counted below, not here
-          .reduce((s, c) => s + parseFloat(c.credits || 3), 0)
 
-        // Wildcard credit counting — placeholder "Any 200-level X course",
-        // null-catalog, or min_level — capped at the block's credit need.
-        // excludeKeys (explicitClaims) stops this from also counting a course
-        // that a different block already claims by name (e.g. Group D's
-        // COMP 302 can't also fill this block's "any COMP 300+" slot).
-        if (creditsEarned < creditsNeeded) {
-          for (const uc of blockWildcardMatches(block, [...completedCourses, ...currentCourses], explicitClaims)) {
-            if (creditsEarned >= creditsNeeded) break
-            const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
-            if (exactKeys.has(ucKey)) continue
-            creditsEarned += parseFloat(uc.credits || 3)
+        // Exact listed courses: split completed (awarded) vs in-progress.
+        const counted = new Set()
+        let creditsCompleted = 0, creditsInProgress = 0
+        for (const c of blockCourses) {
+          if (wildcardBand(c)) continue
+          const key = `${c.subject} ${c.catalog}`.toUpperCase()
+          if (counted.has(key)) continue
+          if (matchTransfer(c, advStanding) || completedSet.has(key)) {
+            creditsCompleted += parseFloat(c.credits || 3); counted.add(key)
+          } else if (currentSet.has(key)) {
+            creditsInProgress += parseFloat(c.credits || 3); counted.add(key)
           }
         }
-        const blockDone     = creditsNeeded > 0 && creditsEarned >= creditsNeeded
-        const hasProgress   = creditsEarned > 0
+
+        // Wildcard credit — placeholder "Any 200-level X course", null-catalog,
+        // or min_level. excludeKeys (explicitClaims) stops it from counting a
+        // course another block already claims by name (Group D's COMP 302 can't
+        // also fill this block's "any COMP 300+"). Completed wildcard matches
+        // award credit first (capped at need); registered ones only mark
+        // in-progress for the remaining need.
+        if (creditsCompleted < creditsNeeded) {
+          for (const uc of blockWildcardMatches(block, completedCourses, explicitClaims)) {
+            if (creditsCompleted >= creditsNeeded) break
+            const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+            if (exactKeys.has(ucKey) || counted.has(ucKey)) continue
+            creditsCompleted += parseFloat(uc.credits || 3); counted.add(ucKey)
+          }
+        }
+        if (creditsCompleted + creditsInProgress < creditsNeeded) {
+          for (const uc of blockWildcardMatches(block, currentCourses, explicitClaims)) {
+            if (creditsCompleted + creditsInProgress >= creditsNeeded) break
+            const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
+            if (exactKeys.has(ucKey) || counted.has(ucKey)) continue
+            creditsInProgress += parseFloat(uc.credits || 3); counted.add(ucKey)
+          }
+        }
+        const creditsEarned = creditsCompleted   // only completed credit is "earned"
+
+        // Required-list completion is likewise completed-only.
+        const reqCourses = blockCourses.filter(c => c.is_required)
+        const reqCompleted = reqCourses.filter(c => {
+          const k = `${c.subject} ${c.catalog}`.toUpperCase()
+          return matchTransfer(c, advStanding) || completedSet.has(k)
+        })
+        const reqInProgress = reqCourses.filter(c => {
+          const k = `${c.subject} ${c.catalog}`.toUpperCase()
+          return !(matchTransfer(c, advStanding) || completedSet.has(k)) && currentSet.has(k)
+        })
+
+        const blockDone = reqCourses.length > 0
+          ? reqCompleted.length === reqCourses.length && creditsCompleted >= creditsNeeded
+          : creditsNeeded > 0 && creditsCompleted >= creditsNeeded
+        const blockInProgress = !blockDone && (creditsInProgress > 0 || reqInProgress.length > 0 || creditsCompleted > 0)
         // Default-collapse blocks that are already 100% complete — the pill
         // badge in the header still shows their status. Once the user
         // explicitly toggles a block, that choice wins over the default.
         const isOpen = openBlocks[block.id] ?? !blockDone
 
         // Pill label when not done
-        const reqCourses = blockCourses.filter(c => c.is_required)
         let pillText
         if (reqCourses.length > 0) {
-          const doneReq = reqCourses.filter(c => {
-            const k = `${c.subject} ${c.catalog}`.toUpperCase()
-            return matchTransfer(c, advStanding) ||
-              completedCourses.some(u => `${u.subject} ${u.catalog}`.toUpperCase() === k) ||
-              currentCourses.some(u => `${u.subject} ${u.catalog}`.toUpperCase() === k)
-          })
-          pillText = `${reqCourses.length - doneReq.length} left`
+          pillText = `${reqCourses.length - reqCompleted.length} left`
         } else {
           const crLeft = Math.max(0, creditsNeeded - creditsEarned)
           pillText = `${Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1)}cr left`
         }
 
-        const pillMod = blockDone ? 'dp-req-pill--done' : hasProgress ? 'dp-req-pill--partial' : 'dp-req-pill--none'
+        const pillMod = blockDone ? 'dp-req-pill--done' : blockInProgress ? 'dp-req-pill--progress' : 'dp-req-pill--none'
 
         return (
-          <div key={block.id} className={`dp-req-block ${blockDone ? 'dp-req-block--done' : ''}`}>
+          <div key={block.id} className={`dp-req-block ${blockDone ? 'dp-req-block--done' : blockInProgress ? 'dp-req-block--progress' : ''}`}>
             <button
               className="dp-req-block-header"
               onClick={() => setOpenBlocks(p => ({ ...p, [block.id]: !p[block.id] }))}
@@ -1253,11 +1302,15 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
     if (!prog) return { pct: 0, earned: 0, total: prog?.total_credits || 36 }
     const progKey = prog.program_key
     const total = prog.total_credits || 36
+    // Only completed work (transfer or final grade) counts as earned; the ring
+    // must not fill from courses that are merely registered.
+    const claims = explicitlyClaimedCourseKeys(prog.blocks)
+    const completedKeys = new Set(completedCourses.map(uc => `${uc.subject} ${uc.catalog}`.toUpperCase()))
     let earned = 0
     const seenDb   = new Set()
     const seenUser = new Set()
 
-    // Phase 1: exact matches (transfer excluded)
+    // Phase 1: exact matches (transfer excluded, in-progress excluded)
     prog.blocks?.forEach(b => b.courses?.forEach(c => {
       if (!c.catalog) return
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
@@ -1265,22 +1318,20 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
       seenDb.add(key)
       if (matchTransfer(c, advStanding)) return
       if (overlapKeys.has(key) && courseAllocations[key] && courseAllocations[key] !== progKey) return
-      const matched = completedCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key) ||
-                      currentCourses.some(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
-      if (matched) {
-        const uc = [...completedCourses, ...currentCourses].find(u => `${u.subject} ${u.catalog}`.toUpperCase() === key)
-        earned += parseFloat(uc?.credits || c.credits || 3)
+      const uc = completedCourses.find(u => `${u.subject} ${u.catalog}`.toUpperCase() === key)
+      if (uc) {
+        earned += parseFloat(uc.credits || c.credits || 3)
         seenUser.add(key)
       }
     }))
 
     // Phase 2: wildcard blocks (placeholder "Any 200-level X course",
-    // null-catalog, or min_level), capped at each block's credit need.
-    const allUC = [...completedCourses, ...currentCourses]
+    // null-catalog, or min_level), capped at each block's credit need. Only
+    // completed courses count; explicitClaims prevents cross-block double-count.
     prog.blocks?.forEach(b => {
       const needed = b.credits_needed || Infinity
       let got = 0
-      for (const uc of blockWildcardMatches(b, allUC)) {
+      for (const uc of blockWildcardMatches(b, completedCourses, claims)) {
         if (got >= needed) break
         const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
         if (seenDb.has(ucKey) || seenUser.has(ucKey)) continue
@@ -1293,9 +1344,9 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
 
     // Phase 3: courses the user MANUALLY assigned to this program from the
     // Electives tab (no block matched, but they chose to count it here).
-    for (const uc of allUC) {
+    for (const uc of completedCourses) {
       const ucKey = `${uc.subject} ${uc.catalog}`.toUpperCase()
-      if (seenUser.has(ucKey)) continue
+      if (seenUser.has(ucKey) || !completedKeys.has(ucKey)) continue
       if (matchTransfer(uc, advStanding)) continue
       if (courseAllocations[ucKey] === progKey) {
         earned += parseFloat(uc.credits || 3)

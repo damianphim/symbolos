@@ -1195,6 +1195,7 @@ const FR_TRANSLATIONS = {
     'dp.removeFromProgram': 'Retirer',
     'dp.statusTaking': 'En cours',
     'dp.creditsOf': '{earned} / {total} crédits',
+    'dp.inProgress': 'en cours',
     'dp.myProgramRequirements': 'Mes exigences de programme',
     'dp.welcomeTitle': 'Exigences du diplôme',
     'dp.welcomeDesc': 'Sélectionnez un programme dans la barre latérale pour voir ses exigences complètes, votre progression et les cours recommandés.',

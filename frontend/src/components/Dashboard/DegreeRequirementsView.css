@@ -535,6 +535,17 @@
   color: var(--warning-text, #92400e);
 }
 
+/* In-progress (registered, not yet graded) — light blue, so a requirement
+   never shows the green "done" pill on registration alone. */
+.drv-block-pill--progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+[data-theme="dark"] .drv-block-pill--progress {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
 .drv-block-pill--none {
   background: var(--bg-tertiary, #e5e7eb);
   color: var(--text-muted, #9ca3af);

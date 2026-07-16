@@ -486,6 +486,16 @@
   background: rgba(22, 163, 74, 0.08);
 }
 
+.dp-req-block--progress {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+[data-theme="dark"] .dp-req-block--progress {
+  border-color: #1e40af;
+  background: rgba(37, 99, 235, 0.08);
+}
+
 .dp-req-block-header {
   display: flex;
   align-items: center;
@@ -559,6 +569,17 @@
 .dp-req-pill--partial {
   background: var(--warning-light);
   color: var(--warning-text);
+}
+
+/* In-progress (registered, not yet graded) — light blue, distinct from the
+   green "done" state so a block never looks complete on registration alone. */
+.dp-req-pill--progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+[data-theme="dark"] .dp-req-pill--progress {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
 }
 
 .dp-req-pill--none {
@@ -806,13 +827,22 @@
   background: var(--border-primary);
   border-radius: 3px;
   overflow: hidden;
+  display: flex;
 }
 
 .dp-prog-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-active));
-  border-radius: 3px;
   transition: width 0.5s ease;
+}
+
+/* In-progress (registered) credit — a lighter blue segment after the solid
+   earned segment, so students see registered work without it counting as done. */
+.dp-prog-bar-fill--progress {
+  background: repeating-linear-gradient(45deg, #93c5fd 0, #93c5fd 4px, #bfdbfe 4px, #bfdbfe 8px);
+}
+[data-theme="dark"] .dp-prog-bar-fill--progress {
+  background: repeating-linear-gradient(45deg, #2563eb 0, #2563eb 4px, #1e40af 4px, #1e40af 8px);
 }
 
 .dp-prog-bar-label {
@@ -821,6 +851,12 @@
   white-space: nowrap;
   font-weight: 500;
 }
+
+.dp-prog-bar-inprogress {
+  color: #2563eb;
+  font-weight: 600;
+}
+[data-theme="dark"] .dp-prog-bar-inprogress { color: #93c5fd; }
 
 /* ── Block notes ───────────────────────────────────────────── */
 .dp-req-block-note {

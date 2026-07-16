@@ -465,16 +465,19 @@
 
 .cal-week-event:hover { filter: brightness(0.96); }
 
+/* Event backgrounds are always a light tint (set inline from typeConfig), so
+   text must stay dark in BOTH themes — theme-variable colours go light in dark
+   mode and vanish against the pale background. */
 .cal-week-event-time {
   font-size: 0.65rem;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: #4b5563;
 }
 
 .cal-week-event-title {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #111827;
   overflow-wrap: break-word;
 }
 
