@@ -42,13 +42,15 @@ html, body, #root {
 }
 
 /* Pulse of light — masked to the sigma body so it only lights up the
-   red/green shape as it travels through it. */
+   red/green shape as it travels through it. soft-light lifts the lightness
+   of whatever colour is underneath while keeping its hue, so the comet looks
+   like the red/green itself brightening — not a white ball moving over it. */
 .loading-pulse {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
-  mix-blend-mode: screen;
+  mix-blend-mode: soft-light;
   -webkit-mask-image: url(../../assets/loading-logo-mask.png);
           mask-image: url(../../assets/loading-logo-mask.png);
   -webkit-mask-size: 100% 100%;
