@@ -41,10 +41,10 @@ html, body, #root {
               0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
-/* Pulse of light — masked to the sigma body so it only lights up the
-   red/green shape as it travels through it. soft-light lifts the lightness
-   of whatever colour is underneath while keeping its hue, so the comet looks
-   like the red/green itself brightening — not a white ball moving over it. */
+/* Pulse — masked to the sigma body so it only touches the red/green shape.
+   soft-light lifts the lightness of whatever colour is underneath while
+   keeping its hue, so the sigma reads as its own red/green brightening —
+   not a white overlay. */
 .loading-pulse {
   position: absolute;
   inset: 0;
@@ -59,69 +59,24 @@ html, body, #root {
           mask-repeat: no-repeat;
 }
 
-/* A comet of light traces the sigma's zigzag: right -> left -> right ->
-   left -> right, ping-ponging back up so the motion is continuous. The head
-   (::before) is bright and tight; the tail (::after) is larger, dimmer and
-   lags a beat behind. Both are smaller than the sigma, so only a moving
-   segment is ever lit — the whole shape never lights at once. */
-.loading-pulse::before,
-.loading-pulse::after {
+/* A single, uniform light covering the whole sigma. It brightens and dims
+   as one, so every part of the red/green pulses at the same brightness at
+   the same time — it clearly reads as the sigma itself pulsing. */
+.loading-pulse::before {
   content: '';
   position: absolute;
-  border-radius: 50%;
-  animation: sigma-zigzag 2.4s ease-in-out infinite alternate;
+  inset: 0;
+  background: rgba(255, 251, 240, 1);
+  animation: sigma-breathe 1.8s ease-in-out infinite;
 }
 
-/* Head — bright, wide but short so it hugs a single stripe and does not
-   spill vertically into the white gaps between the lines. */
-.loading-pulse::before {
-  width: 20%;
-  height: 7%;
-  margin-left: -10%;
-  margin-top: -3.5%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 251, 240, 0.98),
-    rgba(255, 249, 236, 0.5) 45%,
-    transparent 72%
-  );
-  filter: blur(1.5px);
-  animation-delay: -0.24s;
-}
-
-/* Tail — dimmer, trailing a beat behind; kept short for the same reason */
-.loading-pulse::after {
-  width: 27%;
-  height: 9%;
-  margin-left: -13.5%;
-  margin-top: -4.5%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 248, 235, 0.5),
-    rgba(255, 247, 233, 0.22) 48%,
-    transparent 74%
-  );
-  filter: blur(3px);
-  animation-delay: -0.12s;
-}
-
-@keyframes sigma-zigzag {
-  0%   { left: 63%; top: 52%; }
-  25%  { left: 37%; top: 58%; }
-  50%  { left: 63%; top: 64%; }
-  75%  { left: 37%; top: 70%; }
-  100% { left: 63%; top: 75%; }
+@keyframes sigma-breathe {
+  0%, 100% { opacity: 0.12; }
+  50%      { opacity: 0.9; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loading-pulse::before,
-  .loading-pulse::after {
-    animation: pulse-fade 2s ease-in-out infinite;
-    left: 50%;
-    top: 64%;
-  }
-  @keyframes pulse-fade {
-    0%, 100% { opacity: 0.15; }
-    50%      { opacity: 0.85; }
+  .loading-pulse::before {
+    animation-duration: 3s;
   }
 }
