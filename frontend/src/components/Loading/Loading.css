@@ -42,13 +42,15 @@ html, body, #root {
 }
 
 /* Pulse of light — masked to the sigma body so it only lights up the
-   red/green shape as it travels through it. */
+   red/green shape as it travels through it. soft-light lifts the lightness
+   of whatever colour is underneath while keeping its hue, so the comet looks
+   like the red/green itself brightening — not a white ball moving over it. */
 .loading-pulse {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
-  mix-blend-mode: screen;
+  mix-blend-mode: soft-light;
   -webkit-mask-image: url(../../assets/loading-logo-mask.png);
           mask-image: url(../../assets/loading-logo-mask.png);
   -webkit-mask-size: 100% 100%;
@@ -70,35 +72,36 @@ html, body, #root {
   animation: sigma-zigzag 2.4s ease-in-out infinite alternate;
 }
 
-/* Head — bright, tight */
+/* Head — bright, wide but short so it hugs a single stripe and does not
+   spill vertically into the white gaps between the lines. */
 .loading-pulse::before {
-  width: 18%;
-  height: 13%;
-  margin-left: -9%;
-  margin-top: -6.5%;
+  width: 20%;
+  height: 7%;
+  margin-left: -10%;
+  margin-top: -3.5%;
   background: radial-gradient(
     ellipse at center,
     rgba(255, 251, 240, 0.98),
-    rgba(255, 249, 236, 0.5) 40%,
-    transparent 70%
+    rgba(255, 249, 236, 0.5) 45%,
+    transparent 72%
   );
-  filter: blur(2.5px);
+  filter: blur(1.5px);
   animation-delay: -0.24s;
 }
 
-/* Tail — larger, dimmer, trailing a beat behind the head */
+/* Tail — dimmer, trailing a beat behind; kept short for the same reason */
 .loading-pulse::after {
-  width: 26%;
-  height: 17%;
-  margin-left: -13%;
-  margin-top: -8.5%;
+  width: 27%;
+  height: 9%;
+  margin-left: -13.5%;
+  margin-top: -4.5%;
   background: radial-gradient(
     ellipse at center,
     rgba(255, 248, 235, 0.5),
-    rgba(255, 247, 233, 0.22) 45%,
-    transparent 72%
+    rgba(255, 247, 233, 0.22) 48%,
+    transparent 74%
   );
-  filter: blur(6px);
+  filter: blur(3px);
   animation-delay: -0.12s;
 }
 
