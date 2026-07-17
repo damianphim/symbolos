@@ -1,4 +1,5 @@
-/* Loading screen — simple cream background, centered logo, thin progress bar */
+/* Loading screen — simple cream background, centered logo with a pulse of
+   light travelling through the red/green sigma */
 html, body, #root {
   margin: 0 !important;
   padding: 0 !important;
@@ -23,9 +24,15 @@ html, body, #root {
   gap: 28px;
 }
 
-.loading-logo {
+.loading-logo-wrap {
+  position: relative;
   width: clamp(160px, 38vw, 220px);
   height: clamp(160px, 38vw, 220px);
+}
+
+.loading-logo {
+  width: 100%;
+  height: 100%;
   display: block;
   border-radius: 50%;
   object-fit: cover;
@@ -34,24 +41,54 @@ html, body, #root {
               0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
-/* Indeterminate progress bar */
-.loading-bar {
-  width: 160px;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.08);
+/* Pulse of light — masked to the sigma body so it only lights up the
+   red/green shape as it travels through it. */
+.loading-pulse {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   overflow: hidden;
-}
-.loading-bar span {
-  display: block;
-  height: 100%;
-  width: 40%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #b01b2e, transparent);
-  animation: loading-slide 1.1s ease-in-out infinite;
+  mix-blend-mode: screen;
+  -webkit-mask-image: url(../../assets/loading-logo-mask.png);
+          mask-image: url(../../assets/loading-logo-mask.png);
+  -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
 }
 
-@keyframes loading-slide {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(350%);  }
+.loading-pulse::before {
+  content: '';
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: -55%;
+  height: 55%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 30%,
+    rgba(255, 250, 238, 0.85) 50%,
+    rgba(255, 255, 255, 0.18) 70%,
+    transparent 100%
+  );
+  filter: blur(3px);
+  animation: pulse-travel 1.9s ease-in-out infinite;
+}
+
+@keyframes pulse-travel {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(280%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-pulse::before {
+    animation: pulse-fade 1.9s ease-in-out infinite;
+    top: 25%;
+    transform: none;
+  }
+  @keyframes pulse-fade {
+    0%, 100% { opacity: 0.15; }
+    50%      { opacity: 0.85; }
+  }
 }
