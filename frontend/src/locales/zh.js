@@ -1352,7 +1352,7 @@ const ZH_TRANSLATIONS = {
     'privacy.s9Title': '9. 政策变更',
     'privacy.s9Text': '我们可能会不时更新此隐私政策。我们将通过电子邮件通知注册用户重大变更。在变更后继续使用Symbolos即表示您接受更新后的政策。',
     'privacy.s10Title': '10. 联系方式',
-    'privacy.s10Text': '对本政策有疑问，或希望行使您的隐私权利？我们的隐私官（第25号法律规定的个人信息保护负责人）可通过以下方式联系：',
+    'privacy.s10Text': '对本政策有疑问，或希望行使您的隐私权利？我们的隐私官 Alexander Duda（第25号法律规定的个人信息保护负责人）可通过以下方式联系：',
     'legal.tosTitle': '服务条款',
     'legal.tosSubtitle': '最后更新：2026年3月',
     'tos.s1Title': '1. 接受条款',

@@ -1371,7 +1371,7 @@ const FR_TRANSLATIONS = {
     'privacy.s9Title': '9. Modifications de cette politique',
     'privacy.s9Text': 'Nous pouvons mettre à jour cette politique de confidentialité de temps à autre. Nous informerons les utilisateurs inscrits des modifications importantes par e-mail. L\'utilisation continue de Symbolos après les modifications constitue votre acceptation de la politique mise à jour.',
     'privacy.s10Title': '10. Contact',
-    'privacy.s10Text': 'Des questions sur cette politique, ou vous souhaitez exercer vos droits ? Notre responsable de la protection des renseignements personnels (au sens de la Loi 25) peut être joint à :',
+    'privacy.s10Text': 'Des questions sur cette politique, ou vous souhaitez exercer vos droits ? Notre responsable de la protection des renseignements personnels, Alexander Duda (au sens de la Loi 25), peut être joint à :',
     'legal.tosTitle': 'Conditions d\'utilisation',
     'legal.tosSubtitle': 'Dernière mise à jour : mars 2026',
     'tos.s1Title': '1. Acceptation des conditions',

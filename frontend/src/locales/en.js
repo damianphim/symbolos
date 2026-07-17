@@ -1373,7 +1373,7 @@ const EN_TRANSLATIONS = {
     'privacy.s9Title': '9. Changes to This Policy',
     'privacy.s9Text': 'We may update this Privacy Policy from time to time. We will notify registered users of material changes via email. Continued use of Symbolos after changes constitutes your acceptance of the updated policy.',
     'privacy.s10Title': '10. Contact',
-    'privacy.s10Text': 'Questions about this Privacy Policy, or want to exercise your privacy rights? Our Privacy Officer — the person responsible for the protection of personal information under Law 25 — can be reached at:',
+    'privacy.s10Text': 'Questions about this Privacy Policy, or want to exercise your privacy rights? Our Privacy Officer, Alexander Duda — the person responsible for the protection of personal information under Law 25 — can be reached at:',
     'legal.tosTitle': 'Terms of Service',
     'legal.tosSubtitle': 'Last updated: March 2026',
     'tos.s1Title': '1. Acceptance of Terms',
