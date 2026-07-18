@@ -137,11 +137,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--chat">{t('landing.briefEyebrow')}</span>
-            <h2 className="landing-feature__title">{t('landing.briefTitle')}</h2>
-            <p className="landing-feature__text">
-              {t('landing.briefText')}
-            </p>
             <ul className="landing-feature__bullets">
+              <li>{t('landing.briefText')}</li>
               <li>{t('landing.briefB1')}</li>
               <li>{t('landing.briefB2')}</li>
               <li>{t('landing.briefB3')}</li>
@@ -158,11 +155,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--degree">{t('landing.degreeEyebrow')}</span>
-            <h2 className="landing-feature__title">{t('landing.degreeTitle')}</h2>
-            <p className="landing-feature__text">
-              {t('landing.degreeText')}
-            </p>
             <ul className="landing-feature__bullets">
+              <li>{t('landing.degreeText')}</li>
               <li>{t('landing.degreeB1')}</li>
               <li>{t('landing.degreeB2')}</li>
               <li>{t('landing.degreeB3')}</li>
@@ -180,11 +174,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--calendar">{t('landing.calEyebrow')}</span>
-            <h2 className="landing-feature__title">{t('landing.calTitle')}</h2>
-            <p className="landing-feature__text">
-              {t('landing.calText')}
-            </p>
             <ul className="landing-feature__bullets">
+              <li>{t('landing.calText')}</li>
               <li>{t('landing.calB1')}</li>
               <li>{t('landing.calB2')}</li>
               <li>{t('landing.calB3')}</li>
@@ -201,11 +192,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--clubs">{t('landing.clubsEyebrow')}</span>
-            <h2 className="landing-feature__title">{t('landing.clubsTitle')}</h2>
-            <p className="landing-feature__text">
-              {t('landing.clubsText')}
-            </p>
             <ul className="landing-feature__bullets">
+              <li>{t('landing.clubsText')}</li>
               <li>{t('landing.clubsB1')}</li>
               <li>{t('landing.clubsB2')}</li>
               <li>{t('landing.clubsB3')}</li>
@@ -223,7 +211,6 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-forum">
           <Reveal>
             <span className="landing-eyebrow landing-eyebrow--forum">{t('landing.forumEyebrow')}</span>
-            <h2 className="landing-feature__title">{t('landing.forumTitle')}</h2>
           </Reveal>
           <div className="landing-forum__grid">
             <Reveal className="landing-forum__card" delay={80}>
@@ -276,7 +263,7 @@ export default function LandingPage({ onSignIn }) {
       <section
         className="landing-section landing-cta"
         id="cta"
-        style={{ backgroundImage: `linear-gradient(135deg, rgba(176,27,46,0.82) 0%, rgba(90,12,24,0.88) 100%), url(${mcgillSkyline})` }}
+        style={{ backgroundImage: `url(${mcgillSkyline})` }}
       >
         <div className="landing-section__inner landing-cta__inner">
           <Reveal as="h2" className="landing-cta__title">

@@ -270,30 +270,20 @@ body:has(.landing-root),
 .landing-feature--reverse .landing-feature__copy { order: 0; }
 .landing-feature--reverse .landing-feature__visual { order: 0; }
 
+/* The eyebrow is now the section's only heading (the old h2 title + summary
+   paragraph were removed as redundant), so it's sized like a real title
+   instead of a small label above one. */
 .landing-eyebrow {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  display: block;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--land-accent);
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 /* All eyebrows use the single brand red from the base .landing-eyebrow rule
    above — no more one-color-per-section rainbow. */
-.landing-feature__title {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0 0 18px;
-}
-.landing-feature__text {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--land-fg);
-  margin: 0 0 18px;
-}
 .landing-feature__bullets {
   list-style: none;
   padding: 0;
@@ -408,8 +398,9 @@ body:has(.landing-root),
    earlier dark gradient blended into the footer on phones,
    making the CTA look like one giant dark band with no edge. */
 .landing-cta {
-  /* Background image + red-tint overlay set inline (see LandingPage.jsx);
-     this is just the fallback if the image fails to load. */
+  /* Background image set inline (see LandingPage.jsx); the red tint lives in
+     ::before below so it can fade independently on button hover. */
+  position: relative;
   background-color: var(--land-accent-dk);
   background-size: cover;
   background-position: center;
@@ -418,8 +409,24 @@ body:has(.landing-root),
   /* Tiny darker stripe at the bottom edge so the boundary with the
      footer is unmistakable on small screens. */
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+/* Red-tint overlay over the photo. Hovering the sign-in button fades it out
+   so the photo shows through clearly. */
+.landing-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(176, 27, 46, 0.82) 0%, rgba(90, 12, 24, 0.88) 100%);
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.landing-cta:has(.landing-btn--primary:hover)::before {
+  opacity: 0;
 }
 .landing-cta__inner {
+  position: relative;
+  z-index: 1;
   text-align: center;
 }
 .landing-cta__title {
