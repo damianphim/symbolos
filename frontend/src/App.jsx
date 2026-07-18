@@ -7,7 +7,6 @@ import PrivacyPolicy from './components/Legal/PrivacyPolicy'
 import TermsOfService from './components/Legal/TOS'
 import AboutUs from './components/Legal/AboutUs'
 import Dashboard from './components/Dashboard/Dashboard'
-import ProfileSetup from './components/ProfileSetup/ProfileSetup'
 import Loading from './components/Loading/Loading'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary'
 import CookieConsent from './components/CookieConsent/CookieConsent'
@@ -18,7 +17,7 @@ import './App.css'
 import AdminSuggestions from './components/Admin/AdminSuggestions'
 
 function AppContent() {
-  const { user, profile, loading, error, needsOnboarding, refreshProfile } = useAuth()
+  const { user, profile, loading, error, refreshProfile } = useAuth()
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
 
@@ -150,8 +149,6 @@ function AppContent() {
   }
 
   if (user && window.location.pathname === '/admin') return <AdminSuggestions />
-
-  if (user && needsOnboarding) return <ProfileSetup />
 
   // Signed in but email not verified → show Login in verify mode
   if (user && profile && profile.email_verified === false) return <Login forceVerify email={profile.email} userId={user.id} />
