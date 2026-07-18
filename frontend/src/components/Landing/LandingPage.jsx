@@ -17,6 +17,7 @@
  * so the page never breaks if you haven't dropped them yet.
  */
 import { useEffect, useState } from 'react'
+import { HiChevronDown } from 'react-icons/hi'
 import logoMark from '../../assets/loading-logo.png'
 import mcgillSkyline from '../../assets/landing/mcgill-skyline.jpg'
 import PrivacyPolicy from '../Legal/PrivacyPolicy'
@@ -130,6 +131,14 @@ export default function LandingPage({ onSignIn }) {
             {t('landing.heroHint')}
           </Reveal>
         </div>
+        <button
+          type="button"
+          className="landing-hero__scroll-btn"
+          onClick={() => document.getElementById('brief')?.scrollIntoView({ behavior: 'smooth' })}
+          aria-label={t('landing.scrollDown')}
+        >
+          <HiChevronDown />
+        </button>
       </section>
 
       {/* ── 2. Brief ─────────────────────────────────────────────── */}

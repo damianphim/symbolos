@@ -1423,6 +1423,7 @@ const ZH_TRANSLATIONS = {
     'landing.heroSub': '你的AI顾问、学位进度、日历、社团和论坛，一站式搞定。',
     'landing.ctaSignIn': '使用McGill邮箱登录',
     'landing.heroHint': '免费、仅限McGill、无追踪，你的数据属于你自己。',
+    'landing.scrollDown': '向下滚动',
     'landing.briefEyebrow': '你的简报',
     'landing.briefText': '根据你的成绩单和课程表自动生成的每周AI简报。',
     'landing.briefB1': '卡片逐张加载，无需等待',

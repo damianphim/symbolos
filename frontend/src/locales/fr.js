@@ -1442,6 +1442,7 @@ const FR_TRANSLATIONS = {
     'landing.heroSub': 'Votre conseiller IA, votre progression de diplôme, un calendrier, des clubs et un forum, tout au même endroit.',
     'landing.ctaSignIn': 'Connectez-vous avec votre courriel McGill',
     'landing.heroHint': 'Gratuit, réservé à McGill, sans suivi, vos données vous appartiennent.',
+    'landing.scrollDown': 'Défiler vers le bas',
     'landing.briefEyebrow': 'VOTRE BRIEFING',
     'landing.briefText': 'Votre bilan hebdomadaire par IA, généré à partir de votre relevé et de votre horaire.',
     'landing.briefB1': 'Les cartes arrivent une à une, sans écran d\'attente',

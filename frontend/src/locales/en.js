@@ -1444,6 +1444,7 @@ const EN_TRANSLATIONS = {
     'landing.heroSub': 'Your AI advisor, degree progress, calendar, clubs, and forum, all in one place.',
     'landing.ctaSignIn': 'Sign in with your McGill email',
     'landing.heroHint': 'Free, McGill-only, no tracking, your data stays yours.',
+    'landing.scrollDown': 'Scroll down',
     'landing.briefEyebrow': 'YOUR BRIEF',
     'landing.briefText': 'Your weekly AI briefing, built from your transcript and class schedule.',
     'landing.briefB1': 'Cards stream in card-by-card, no waiting screen',

@@ -164,6 +164,7 @@ body:has(.landing-root),
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
+  .landing-hero__scroll-btn { animation: none; }
 }
 
 /* ── 1. Hero — fills the full viewport, flat solid background (no gradient) ── */
@@ -206,6 +207,36 @@ body:has(.landing-root),
   font-size: 0.875rem;
   color: var(--land-fg-mute);
   letter-spacing: 0.02em;
+}
+
+/* Scroll-down affordance, pinned to the bottom of the hero */
+.landing-hero__scroll-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--land-border);
+  background: transparent;
+  color: var(--land-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  animation: landingScrollBounce 2.2s ease-in-out infinite;
+}
+.landing-hero__scroll-btn:hover {
+  background: rgba(237, 27, 47, 0.08);
+  border-color: var(--land-accent);
+}
+@keyframes landingScrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
