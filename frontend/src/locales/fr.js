@@ -1474,7 +1474,6 @@ const FR_TRANSLATIONS = {
     'landing.clubsAlt2': 'Fiche de club avec boutons s\'abonner et joindre',
     'landing.forumEyebrow': 'FORUM',
     'landing.forumTitle': 'Trois espaces pour discuter avec d\'autres étudiants de McGill.',
-    'landing.forumLead': 'Un forum réservé à McGill, divisé en trois sections pour garder les conversations sur le sujet.',
     'landing.forumPill1': 'Cours',
     'landing.forumH1': 'Parlez de vos cours.',
     'landing.forumP1': 'Comparez les profs, échangez des conseils, demandez « ce cours est-il vraiment aussi difficile qu\'on le dit? ».',

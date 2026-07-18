@@ -1476,7 +1476,6 @@ const EN_TRANSLATIONS = {
     'landing.clubsAlt2': 'Club detail drawer with subscribe and join buttons',
     'landing.forumEyebrow': 'FORUM',
     'landing.forumTitle': 'Three places to talk to other McGill students.',
-    'landing.forumLead': 'A focused, McGill-only forum split into three sections so conversations stay on topic.',
     'landing.forumPill1': 'Courses',
     'landing.forumH1': 'Talk about your classes.',
     'landing.forumP1': 'Compare profs, swap notes on what to expect, ask "is this course actually as hard as people say?".',

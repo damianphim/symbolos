@@ -223,9 +223,6 @@ export default function LandingPage({ onSignIn }) {
           <Reveal>
             <span className="landing-eyebrow landing-eyebrow--forum">{t('landing.forumEyebrow')}</span>
             <h2 className="landing-feature__title">{t('landing.forumTitle')}</h2>
-            <p className="landing-feature__text landing-forum__lead">
-              {t('landing.forumLead')}
-            </p>
           </Reveal>
           <div className="landing-forum__grid">
             <Reveal className="landing-forum__card" delay={80}>

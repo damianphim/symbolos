@@ -1455,7 +1455,6 @@ const ZH_TRANSLATIONS = {
     'landing.clubsAlt2': '社团详情页，含订阅和加入按钮',
     'landing.forumEyebrow': '论坛',
     'landing.forumTitle': '与其他McGill学生交流的三个空间。',
-    'landing.forumLead': '仅限McGill的论坛，分为三个板块，让讨论不跑题。',
     'landing.forumPill1': '课程',
     'landing.forumH1': '聊聊你的课。',
     'landing.forumP1': '比较教授、交流经验，问问"这门课真有传说中那么难吗？"',
