@@ -285,8 +285,8 @@ body:has(.landing-root),
 /* All eyebrows use the single brand red from the base .landing-eyebrow rule
    above — no more one-color-per-section rainbow. */
 .landing-feature__text {
-  font-size: 1.15rem;
-  line-height: 1.6;
+  font-size: 1.3rem;
+  line-height: 1.55;
   color: var(--land-fg);
   margin: 0 0 18px;
 }
