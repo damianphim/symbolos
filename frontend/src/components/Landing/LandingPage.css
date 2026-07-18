@@ -270,20 +270,26 @@ body:has(.landing-root),
 .landing-feature--reverse .landing-feature__copy { order: 0; }
 .landing-feature--reverse .landing-feature__visual { order: 0; }
 
-/* The eyebrow is now the section's only heading (the old h2 title + summary
-   paragraph were removed as redundant), so it's sized like a real title
-   instead of a small label above one. */
+/* The old h2 title was removed as redundant with this label, but the eyebrow
+   stays a small label (not a full heading) now that the summary paragraph
+   below carries the section's main copy. */
 .landing-eyebrow {
-  display: block;
-  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--land-accent);
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 /* All eyebrows use the single brand red from the base .landing-eyebrow rule
    above — no more one-color-per-section rainbow. */
+.landing-feature__text {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--land-fg);
+  margin: 0 0 18px;
+}
 .landing-feature__bullets {
   list-style: none;
   padding: 0;

@@ -137,8 +137,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--chat">{t('landing.briefEyebrow')}</span>
+            <p className="landing-feature__text">{t('landing.briefText')}</p>
             <ul className="landing-feature__bullets">
-              <li>{t('landing.briefText')}</li>
               <li>{t('landing.briefB1')}</li>
               <li>{t('landing.briefB2')}</li>
               <li>{t('landing.briefB3')}</li>
@@ -155,8 +155,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--degree">{t('landing.degreeEyebrow')}</span>
+            <p className="landing-feature__text">{t('landing.degreeText')}</p>
             <ul className="landing-feature__bullets">
-              <li>{t('landing.degreeText')}</li>
               <li>{t('landing.degreeB1')}</li>
               <li>{t('landing.degreeB2')}</li>
               <li>{t('landing.degreeB3')}</li>
@@ -174,8 +174,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--calendar">{t('landing.calEyebrow')}</span>
+            <p className="landing-feature__text">{t('landing.calText')}</p>
             <ul className="landing-feature__bullets">
-              <li>{t('landing.calText')}</li>
               <li>{t('landing.calB1')}</li>
               <li>{t('landing.calB2')}</li>
               <li>{t('landing.calB3')}</li>
@@ -192,8 +192,8 @@ export default function LandingPage({ onSignIn }) {
         <div className="landing-section__inner landing-feature landing-feature--reverse">
           <Reveal className="landing-feature__copy">
             <span className="landing-eyebrow landing-eyebrow--clubs">{t('landing.clubsEyebrow')}</span>
+            <p className="landing-feature__text">{t('landing.clubsText')}</p>
             <ul className="landing-feature__bullets">
-              <li>{t('landing.clubsText')}</li>
               <li>{t('landing.clubsB1')}</li>
               <li>{t('landing.clubsB2')}</li>
               <li>{t('landing.clubsB3')}</li>
