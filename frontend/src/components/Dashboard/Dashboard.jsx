@@ -250,10 +250,6 @@ export default function Dashboard() {
     switch (sortType) {
       case 'rating-high':   return sorted.sort((a, b) => (b.rmp_rating || 0) - (a.rmp_rating || 0))
       case 'rating-low':    return sorted.sort((a, b) => (a.rmp_rating || 0) - (b.rmp_rating || 0))
-      case 'name-az':       return sorted.sort((a, b) => `${a.subject} ${a.catalog}`.localeCompare(`${b.subject} ${b.catalog}`))
-      case 'name-za':       return sorted.sort((a, b) => `${b.subject} ${b.catalog}`.localeCompare(`${a.subject} ${a.catalog}`))
-      case 'instructor-az': return sorted.sort((a, b) => (a.instructor || 'ZZZ').localeCompare(b.instructor || 'ZZZ'))
-      case 'instructor-za': return sorted.sort((a, b) => (b.instructor || '').localeCompare(a.instructor || ''))
       case 'number':        return sorted.sort((a, b) => (parseInt(a.catalog, 10) || 0) - (parseInt(b.catalog, 10) || 0))
       // Highest average grade with the semester's specific professor,
       // historically. Courses where we know that prof's history rank first

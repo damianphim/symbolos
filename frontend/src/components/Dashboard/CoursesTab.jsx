@@ -87,10 +87,6 @@ export default function CoursesTab({
             <option value="relevance">{t('courses.relevance')}</option>
             <option value="rating-high">{t('courses.sortRatingHigh')}</option>
             <option value="rating-low">{t('courses.sortRatingLow')}</option>
-            <option value="name-az">{t('courses.sortNameAZ')}</option>
-            <option value="name-za">{t('courses.sortNameZA')}</option>
-            <option value="instructor-az">{t('courses.sortInstructorAZ')}</option>
-            <option value="instructor-za">{t('courses.sortInstructorZA')}</option>
             <option value="number">{t('courses.sortNumber')}</option>
             <option value="grade-high">{t('courses.sortGradeHigh')}</option>
           </select>
