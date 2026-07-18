@@ -208,9 +208,6 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           if (uid) setPendingUserId(uid)
           setResendCooldown(60)
           sessionStorage.setItem('symbolos_verify', JSON.stringify({ email, userId: uid }))
-          // Mark this user for onboarding so ProfileSetup shows after they
-          // verify and sign in (survives the cross-tab/cross-device flow).
-          if (uid) localStorage.setItem('symbolos_pending_onboarding', uid)
           switchMode('verify')
         }
       }

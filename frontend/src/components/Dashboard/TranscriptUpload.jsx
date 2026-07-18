@@ -8,7 +8,7 @@ import { BASE_URL, getAuthHeaders } from '../../lib/apiConfig'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import './TranscriptUpload.css'
 
-/** Polls /api/jobs/{id} until the Inngest job finishes (same as ProfileSetup). */
+/** Polls /api/jobs/{id} until the Inngest job finishes. */
 async function pollJob(jobId, maxWaitMs = 5 * 60 * 1000) {
   const start = Date.now()
   for (;;) {
@@ -257,7 +257,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                       {parsed.student_info.advanced_standing.map((c, i) => (
                         <div key={i} className="tu-course-row tu-course-row--transfer">
                           <span className="tu-course-code">{c.course_code}</span>
-                          <span className="tu-course-name">{c.course_title || '—'}</span>
+                          <span className="tu-course-name">{c.course_title || '-'}</span>
                           <span className="tu-course-grade">{c.credits} cr</span>
                         </div>
                       ))}

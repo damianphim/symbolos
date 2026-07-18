@@ -16,10 +16,6 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile]                 = useState(null)
   const [loading, setLoading]                 = useState(true)
   const [error, setError]                     = useState(null)
-  // True only for brand-new signups — keeps App.jsx on ProfileSetup
-  // even though a minimal profile already exists in the DB.
-  // Cleared by completeOnboarding() when the user finishes or skips.
-  const [needsOnboarding, setNeedsOnboarding]       = useState(false)
   const [authFlags, setAuthFlags]                   = useState({ is_admin: false, is_mcgill_email: false })
 
   const mountedRef          = useRef(true)
@@ -55,7 +51,7 @@ export const AuthProvider = ({ children }) => {
         // confirmation is required, because no session/JWT exists yet at that
         // point in the flow (Supabase withholds the session until the address
         // is confirmed). Now that we're authenticated, recreate the row and
-        // retry once — same pattern as ProfileSetup.jsx's ensureUser().
+        // retry once.
         if (err.response?.status !== 404) throw err
         const { data: { session } } = await supabase.auth.getSession()
         if (!session?.user?.email) throw err
@@ -158,14 +154,6 @@ export const AuthProvider = ({ children }) => {
             return
           }
 
-          // If this is the first login after email verification, restore onboarding.
-          // The flag was stored in signUp() and survives the redirect from the email link.
-          const pendingId = localStorage.getItem('symbolos_pending_onboarding')
-          if (pendingId && pendingId === session.user.id) {
-            localStorage.removeItem('symbolos_pending_onboarding')
-            if (mountedRef.current) setNeedsOnboarding(true)
-          }
-
           // Non-blocking — fire in background so login feels instant
           loadProfile(session.user.id)
         }
@@ -174,7 +162,6 @@ export const AuthProvider = ({ children }) => {
           delete api.defaults.headers.common['Authorization']
           setProfile(null)
           setError(null)
-          setNeedsOnboarding(false)
           loadedForUserId.current = null
         }
       }
@@ -361,7 +348,6 @@ export const AuthProvider = ({ children }) => {
       if (signOutError) throw signOutError
       setUser(null)
       setProfile(null)
-      setNeedsOnboarding(false)
       loadedForUserId.current = null
       return { error: null }
     } catch (err) {
@@ -401,17 +387,6 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // ── completeOnboarding ───────────────────────────────────────────────────
-  // Called by ProfileSetup when the user finishes or skips.
-  // Fetches the latest profile from DB then clears needsOnboarding.
-  const completeOnboarding = useCallback(async () => {
-    if (!user?.id) return
-    loadedForUserId.current = null
-    loadingProfile.current = false
-    await loadProfile(user.id)
-    if (mountedRef.current) setNeedsOnboarding(false)
-  }, [user?.id, loadProfile])
-
   // Fetch auth flags (admin, mcgill email) from backend when user is set
   useEffect(() => {
     if (!user?.id) { setAuthFlags({ is_admin: false, is_mcgill_email: false }); return }
@@ -427,19 +402,9 @@ export const AuthProvider = ({ children }) => {
     loadedForUserId.current = null
     loadingProfile.current = false
     await loadProfile(user.id)
-    // After verification-driven refresh (email confirm via magic link), the
-    // SIGNED_IN event never re-fires on the original tab.  Check the onboarding
-    // flag here so ProfileSetup still shows for new accounts.
-    try {
-      const pendingId = localStorage.getItem('symbolos_pending_onboarding')
-      if (pendingId === user.id) {
-        localStorage.removeItem('symbolos_pending_onboarding')
-        if (mountedRef.current) setNeedsOnboarding(true)
-      }
-    } catch { /* ignore storage errors */ }
   }, [user?.id, loadProfile])
 
-  const value = { user, profile, loading, error, needsOnboarding, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, completeOnboarding, clearError, resetPasswordForEmail, resendVerificationEmail, updatePassword }
+  const value = { user, profile, loading, error, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, clearError, resetPasswordForEmail, resendVerificationEmail, updatePassword }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
