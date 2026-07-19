@@ -82,3 +82,38 @@ export const EVENT_TYPE_OPTIONS = [
   { key: 'club',     color: '#d97706', bg: '#fffbeb', darkBg: '#92400e22', labelEn: 'Club',      labelFr: 'Club',       labelZh: '社团' },
   { key: 'exam',     color: '#7c3aed', bg: '#f5f3ff', darkBg: '#4c1d9522', labelEn: 'Exam',      labelFr: 'Examen',     labelZh: '考试' },
 ]
+
+// ── User-created custom event types ─────────────────────────────
+// Stored client-side (per user id) rather than in the DB: these are purely
+// cosmetic categorization pills, not shared/synced data, so a small
+// localStorage blob avoids a schema migration for what is otherwise the
+// same free-text `type` column calendar events already use.
+const CUSTOM_TYPES_KEY_PREFIX = 'symbolos_custom_event_types_'
+
+export const CUSTOM_TYPE_COLOR_CHOICES = [
+  '#ed1b2f', '#1d4ed8', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#4f46e5',
+]
+
+export function withAlpha(hex, alphaHex) {
+  return `${hex}${alphaHex}`
+}
+
+export function getCustomEventTypes(userId) {
+  if (!userId) return []
+  try {
+    const raw = localStorage.getItem(CUSTOM_TYPES_KEY_PREFIX + userId)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function saveCustomEventTypes(userId, types) {
+  if (!userId) return
+  try {
+    localStorage.setItem(CUSTOM_TYPES_KEY_PREFIX + userId, JSON.stringify(types))
+  } catch {
+    // localStorage unavailable (private browsing, quota) — custom types just won't persist
+  }
+}
