@@ -23,7 +23,7 @@ export default function SavedCoursesView({
 
   const isCompleted = (subject, catalog) => completedCoursesMap.has(`${subject} ${catalog}`)
   const isCurrent   = (subject, catalog) => currentCoursesMap.has(`${subject} ${catalog}`)
-  const isFavorited = (subject, catalog) => favoritesMap.has(`${subject}${catalog}`)
+  const isFavorited = (subject, catalog) => favoritesMap.has(`${subject} ${catalog}`)
 
   return (
     <div className="saved-courses-view">
@@ -95,11 +95,11 @@ export default function SavedCoursesView({
                   </div>
                   <div className="course-card-actions">
                     <button
-                      className="favorite-btn favorited"
+                      className={`favorite-btn ${isFavorited(course.subject, course.catalog) ? 'favorited' : ''}`}
                       onClick={(e) => { e.stopPropagation(); onToggleFavorite?.({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
-                      title="Remove from favorites"
+                      title={isFavorited(course.subject, course.catalog) ? 'Remove from favorites' : 'Add to favorites'}
                     >
-                      <FaHeart className="favorite-icon" />
+                      <FaHeart className="favorite-icon" /> <span className="action-pill-label">{t('saved.pillSaved')}</span>
                     </button>
                     {onToggleCompleted && (
                       <button
@@ -107,7 +107,7 @@ export default function SavedCoursesView({
                         onClick={(e) => { e.stopPropagation(); onToggleCompleted({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
                         title={isCompleted(course.subject, course.catalog) ? 'Mark as incomplete' : 'Mark as completed'}
                       >
-                        <FaCheckCircle className="completed-icon" />
+                        <FaCheckCircle className="completed-icon" /> <span className="action-pill-label">{t('saved.completed')}</span>
                       </button>
                     )}
                     {onToggleCurrent && (
@@ -123,7 +123,7 @@ export default function SavedCoursesView({
                           : 'Add to current courses'
                       }
                     >
-                      <FaBook className="current-icon" />
+                      <FaBook className="current-icon" /> <span className="action-pill-label">{t('saved.pillCurrent')}</span>
                     </button>
                   )}
                   </div>
@@ -189,6 +189,7 @@ export default function SavedCoursesView({
                         {isFavorited(course.subject, course.catalog)
                           ? <FaHeart className="favorite-icon" />
                           : <FaRegHeart className="favorite-icon" />}
+                        {' '}<span className="action-pill-label">{t('saved.pillSaved')}</span>
                       </button>
                     )}
                     {onToggleCompleted && (
@@ -197,15 +198,15 @@ export default function SavedCoursesView({
                         onClick={(e) => { e.stopPropagation(); onToggleCompleted({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
                         title={isCompleted(course.subject, course.catalog) ? 'Mark as incomplete' : 'Mark as completed'}
                       >
-                        <FaCheckCircle className="completed-icon" />
+                        <FaCheckCircle className="completed-icon" /> <span className="action-pill-label">{t('saved.completed')}</span>
                       </button>
                     )}
                     <button
-                      className="current-btn current"
+                      className={`current-btn ${isCurrent(course.subject, course.catalog) ? 'current' : ''}`}
                       onClick={(e) => { e.stopPropagation(); onToggleCurrent?.({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
                       title="Remove from current courses"
                     >
-                      <FaBook className="current-icon" />
+                      <FaBook className="current-icon" /> <span className="action-pill-label">{t('saved.pillCurrent')}</span>
                     </button>
                   </div>
                 </div>
@@ -252,6 +253,7 @@ export default function SavedCoursesView({
                         {isFavorited(course.subject, course.catalog)
                           ? <FaHeart className="favorite-icon" />
                           : <FaRegHeart className="favorite-icon" />}
+                        {' '}<span className="action-pill-label">{t('saved.pillSaved')}</span>
                       </button>
                     )}
                     <button
@@ -259,7 +261,7 @@ export default function SavedCoursesView({
                       onClick={(e) => { e.stopPropagation(); onToggleCompleted?.({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
                       title="Remove from completed"
                     >
-                      <FaCheckCircle className="completed-icon" />
+                      <FaCheckCircle className="completed-icon" /> <span className="action-pill-label">{t('saved.completed')}</span>
                     </button>
                     {onToggleCurrent && (
                       <button
@@ -267,7 +269,7 @@ export default function SavedCoursesView({
                         onClick={(e) => { e.stopPropagation(); onToggleCurrent({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
                         title={isCurrent(course.subject, course.catalog) ? 'Remove from current courses' : 'Mark as current'}
                       >
-                        <FaBook className="current-icon" />
+                        <FaBook className="current-icon" /> <span className="action-pill-label">{t('saved.pillCurrent')}</span>
                       </button>
                     )}
                   </div>

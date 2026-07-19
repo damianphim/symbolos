@@ -933,6 +933,8 @@ const EN_TRANSLATIONS = {
     // ── Saved Courses ─────────────────────────────────────
     'saved.savedCourses': 'Saved Courses',
     'saved.completed': 'Completed',
+    'saved.pillSaved': 'Saved',
+    'saved.pillCurrent': 'Current',
     'saved.noSavedCourses': 'No Saved Courses Yet',
     'saved.noSavedCoursesDesc': 'Save courses from the Course Explorer to see them here',
     'saved.noCompletedCourses': 'No Completed Courses Yet',

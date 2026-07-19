@@ -173,19 +173,26 @@
   padding: 0;
 }
 
-/* Favorite Button - Original Style */
-.saved-courses-view .course-card .course-card-actions .favorite-btn {
-  background: var(--bg-primary);
-  border: 2px solid #E0E0E0;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
+/* Action pills — Saved / Completed / Current. Text + icon so the
+   meaning is clear at a glance instead of an icon-only circle. */
+.saved-courses-view .course-card .course-card-actions .favorite-btn,
+.saved-courses-view .course-card .course-card-actions .completed-btn,
+.saved-courses-view .course-card .course-card-actions .current-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  height: auto;
+  width: auto;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-secondary, #E0E0E0);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
   position: relative !important;
   top: auto !important;
   right: auto !important;
@@ -193,92 +200,74 @@
   left: auto !important;
 }
 
-.saved-courses-view .course-card .course-card-actions .favorite-btn:hover {
-  transform: scale(1.1);
-  border-color: var(--accent-primary);
-  box-shadow: 0 4px 12px rgba(237, 27, 47, 0.2);
+.saved-courses-view .course-card .course-card-actions .favorite-btn:disabled,
+.saved-courses-view .course-card .course-card-actions .completed-btn:disabled,
+.saved-courses-view .course-card .course-card-actions .current-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.saved-courses-view .course-card .course-card-actions .favorite-btn:active {
-  transform: scale(0.95);
+.saved-courses-view .course-card .course-card-actions .action-pill-label {
+  white-space: nowrap;
 }
 
-.saved-courses-view .course-card .course-card-actions .favorite-icon {
-  font-size: 1.25rem;
+.saved-courses-view .course-card .course-card-actions .favorite-icon,
+.saved-courses-view .course-card .course-card-actions .completed-icon,
+.saved-courses-view .course-card .course-card-actions .current-icon {
+  font-size: 1rem;
   color: var(--text-muted);
   transition: color 0.2s ease;
 }
 
-.saved-courses-view .course-card .course-card-actions .favorite-btn:hover .favorite-icon {
+/* Favorite (red) */
+.saved-courses-view .course-card .course-card-actions .favorite-btn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+.saved-courses-view .course-card .course-card-actions .favorite-btn:hover:not(:disabled) .favorite-icon {
+  color: var(--accent-primary);
+}
+.saved-courses-view .course-card .course-card-actions .favorite-btn.favorited {
+  background: var(--accent-lighter, rgba(237,27,47,0.1));
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+.saved-courses-view .course-card .course-card-actions .favorite-btn.favorited .favorite-icon {
   color: var(--accent-primary);
 }
 
-.saved-courses-view .course-card .course-card-actions .favorite-btn.favorited {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
-  border-color: var(--accent-primary);
-}
-
-.saved-courses-view .course-card .course-card-actions .favorite-btn.favorited .favorite-icon {
-  color: white;
-}
-
-.saved-courses-view .course-card .course-card-actions .favorite-btn.favorited:hover {
-  background: linear-gradient(135deg, #FF2B3F 0%, #C02B3E 100%);
-  transform: scale(1.1);
-}
-
-/* Completed Button - Original Style */
-.saved-courses-view .course-card .course-card-actions .completed-btn {
-  width: 44px;
-  height: 44px;
-  border: 2px solid #E0E0E0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: var(--bg-primary);
-  padding: 0;
-  position: relative !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-}
-
-.saved-courses-view .course-card .course-card-actions .completed-btn:hover {
-  transform: scale(1.1);
+/* Completed (green) */
+.saved-courses-view .course-card .course-card-actions .completed-btn:hover:not(:disabled) {
   border-color: #28a745;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  color: #28a745;
 }
-
-.saved-courses-view .course-card .course-card-actions .completed-btn:active {
-  transform: scale(0.95);
+.saved-courses-view .course-card .course-card-actions .completed-btn:hover:not(:disabled) .completed-icon {
+  color: #28a745;
 }
-
-.saved-courses-view .course-card .course-card-actions .completed-icon {
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  transition: color 0.2s ease;
+.saved-courses-view .course-card .course-card-actions .completed-btn.completed {
+  background: rgba(40,167,69,0.1);
+  border-color: #28a745;
+  color: #28a745;
 }
-
-.saved-courses-view .course-card .course-card-actions .completed-btn:hover .completed-icon {
+.saved-courses-view .course-card .course-card-actions .completed-btn.completed .completed-icon {
   color: #28a745;
 }
 
-.saved-courses-view .course-card .course-card-actions .completed-btn.completed {
-  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-  border-color: #28a745;
+/* Current (blue) */
+.saved-courses-view .course-card .course-card-actions .current-btn:hover:not(:disabled) {
+  border-color: var(--tab-courses-accent, #2563eb);
+  color: var(--tab-courses-accent, #2563eb);
 }
-
-.saved-courses-view .course-card .course-card-actions .completed-btn.completed .completed-icon {
-  color: white;
+.saved-courses-view .course-card .course-card-actions .current-btn:hover:not(:disabled) .current-icon {
+  color: var(--tab-courses-accent, #2563eb);
 }
-
-.saved-courses-view .course-card .course-card-actions .completed-btn.completed:hover {
-  background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
-  transform: scale(1.1);
+.saved-courses-view .course-card .course-card-actions .current-btn.current {
+  background: rgba(37,99,235,0.1);
+  border-color: var(--tab-courses-accent, #2563eb);
+  color: var(--tab-courses-accent, #2563eb);
+}
+.saved-courses-view .course-card .course-card-actions .current-btn.current .current-icon {
+  color: var(--tab-courses-accent, #2563eb);
 }
 
 /* Completed Course Card Specific Styles */
@@ -343,14 +332,10 @@
   }
 
   .saved-courses-view .course-card .course-card-actions .favorite-btn,
-  .saved-courses-view .course-card .course-card-actions .completed-btn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .saved-courses-view .course-card .course-card-actions .favorite-icon,
-  .saved-courses-view .course-card .course-card-actions .completed-icon {
-    font-size: 1.1rem;
+  .saved-courses-view .course-card .course-card-actions .completed-btn,
+  .saved-courses-view .course-card .course-card-actions .current-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 }
 

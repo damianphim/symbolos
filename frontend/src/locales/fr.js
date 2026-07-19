@@ -853,6 +853,8 @@ const FR_TRANSLATIONS = {
     // ── Saved Courses ─────────────────────────────────────
     'saved.savedCourses': 'Cours sauvegardés',
     'saved.completed': 'Complétés',
+    'saved.pillSaved': 'Sauvegardé',
+    'saved.pillCurrent': 'En cours',
     'saved.noSavedCourses': 'Aucun cours sauvegardé',
     'saved.noSavedCoursesDesc': 'Sauvegardez des cours depuis l\'explorateur pour les voir ici',
     'saved.noCompletedCourses': 'Aucun cours complété',

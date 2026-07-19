@@ -915,6 +915,8 @@ const ZH_TRANSLATIONS = {
     // ── Saved Courses ─────────────────────────────────────
     'saved.savedCourses': '收藏的课程',
     'saved.completed': '已完成',
+    'saved.pillSaved': '已收藏',
+    'saved.pillCurrent': '在修',
     'saved.noSavedCourses': '尚无收藏课程',
     'saved.noSavedCoursesDesc': '从课程浏览器收藏课程以在此查看',
     'saved.noCompletedCourses': '尚无已完成课程',
