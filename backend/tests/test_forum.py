@@ -1,16 +1,26 @@
 """
-Tests for the forum "review" category unification (2026-07): course_review
-and professor_review used to be two separate review types; a review post is
-now always a course review with an optional professor attached, plus two
-independent rating dimensions (overall `rating` and `difficulty_rating`).
+Tests for two forum changes shipped 2026-07:
 
-Legacy course_review/professor_review posts must keep validating and
-rendering the old way, and must still show up in the merged "review" feed.
+1. The "review" category unification: course_review and professor_review
+   used to be two separate review types; a review post is now always a
+   course review with an optional professor attached, plus two independent
+   rating dimensions (overall `rating` and `difficulty_rating`). Legacy
+   course_review/professor_review posts must keep validating and rendering
+   the old way, and must still show up in the merged "review" feed.
+
+2. The semester-aware ranking that replaces the old like_count*2 + 48h-decay
+   "hot" score: a post ranks by raw upvotes while its semester is still live,
+   then by upvotes-earned-since-the-semester-ended once it's over — unless
+   it's still gaining upvotes at a healthy clip, in which case it keeps its
+   full lifetime like_count.
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
+from api.routes.forum import _semester_aware_score, _get_active_term, _term_end_date
 from tests.conftest import auth
 
 
@@ -180,3 +190,79 @@ def test_reviews_summary_professor_merges_legacy_and_named(client, fake_supabase
     assert data["rating_count"] == 2
     assert data["avg_rating"] == 3.0
     assert data["avg_difficulty"] == 5.0
+
+
+# ── semester-aware ranking ─────────────────────────────────────────────────
+
+def _post(created_at: str, like_count: int = 0, post_id: str = "p1"):
+    return {"id": post_id, "created_at": created_at, "like_count": like_count}
+
+
+# ── _get_active_term / _term_end_date ──────────────────────────────────────
+
+def test_get_active_term_boundaries():
+    assert _get_active_term(datetime(2026, 1, 1)) == ("Winter", 2026)
+    assert _get_active_term(datetime(2026, 4, 30)) == ("Winter", 2026)
+    assert _get_active_term(datetime(2026, 5, 1)) == ("Summer", 2026)
+    assert _get_active_term(datetime(2026, 8, 24)) == ("Summer", 2026)
+    assert _get_active_term(datetime(2026, 8, 25)) == ("Fall", 2026)
+    assert _get_active_term(datetime(2026, 12, 31)) == ("Fall", 2026)
+
+
+def test_term_end_date():
+    assert _term_end_date("Winter", 2026) == datetime(2026, 4, 30, 23, 59, 59, tzinfo=timezone.utc)
+    assert _term_end_date("Fall", 2026) == datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+
+
+# ── _semester_aware_score ───────────────────────────────────────────────────
+
+def test_score_during_live_semester_is_raw_like_count():
+    # Created in Winter 2026, "now" is still within that same Winter term.
+    post = _post("2026-02-01T00:00:00Z", like_count=42)
+    now = datetime(2026, 3, 1, tzinfo=timezone.utc)
+    assert _semester_aware_score(post, [], now) == 42.0
+
+
+def test_score_after_semester_ends_uses_likes_since_end_only_when_stale():
+    # Created in Winter 2026 (ended Apr 30, 2026). It's now Fall 2026 — long
+    # after. Only 1 like landed after the semester ended, none recently.
+    post = _post("2026-02-01T00:00:00Z", like_count=50)
+    likes = [datetime(2026, 5, 5, tzinfo=timezone.utc)]  # 1 like shortly after semester end
+    now = datetime(2026, 10, 1, tzinfo=timezone.utc)     # months later, no recent activity
+    score = _semester_aware_score(post, likes, now)
+    assert score == 1.0  # NOT the full lifetime like_count of 50
+
+
+def test_score_after_semester_ends_keeps_full_count_if_still_gaining_pace():
+    # Same stale-looking post, but it's still getting roughly a like every
+    # other day over the last 14 days — should keep its full like_count.
+    post = _post("2026-02-01T00:00:00Z", like_count=50)
+    now = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    likes = [now - timedelta(days=d) for d in range(0, 14, 2)]  # 7 likes in the last 14 days
+    score = _semester_aware_score(post, likes, now)
+    likes_since_end = len(likes)  # all of these landed well after Apr 30
+    assert score == likes_since_end + 50
+
+
+def test_score_falls_back_to_like_count_on_unparseable_created_at():
+    post = {"id": "p1", "created_at": "not-a-date", "like_count": 7}
+    assert _semester_aware_score(post, [], datetime.now(timezone.utc)) == 7.0
+
+
+# ── list_posts wires the new scoring in without crashing ───────────────────
+
+def test_list_posts_hot_sort_runs_end_to_end(client, fake_supabase):
+    fake_supabase.set_table("forum_posts", [
+        {"id": "p1", "user_id": "u1", "author": "A", "avatar_color": "#ed1b2f",
+         "category": "general", "title": "Old post", "body": "b", "tags": [],
+         "program_info": None, "rating": None, "review_target_type": None,
+         "review_target_value": None, "like_count": 10, "created_at": "2024-01-15T00:00:00Z"},
+        {"id": "p2", "user_id": "u1", "author": "A", "avatar_color": "#ed1b2f",
+         "category": "general", "title": "New post", "body": "b", "tags": [],
+         "program_info": None, "rating": None, "review_target_type": None,
+         "review_target_value": None, "like_count": 1, "created_at": datetime.now(timezone.utc).isoformat()},
+    ])
+    resp = client.get("/api/forum/posts", params={"category": "general", "sort": "hot"}, headers=auth("user-1"))
+    assert resp.status_code == 200
+    ids = {p["id"] for p in resp.json()["posts"]}
+    assert ids == {"p1", "p2"}

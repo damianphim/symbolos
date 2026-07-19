@@ -172,44 +172,6 @@
   color: var(--text-secondary);
 }
 
-/* ── Sort ────────────────────────────────────────────────────── */
-.forum-sort {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border-primary);
-  border-radius: 10px;
-  padding: 4px;
-}
-
-.forum-sort-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.forum-sort-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.forum-sort-btn.active {
-  background: var(--bg-primary);
-  color: var(--accent-primary, #ed1b2f);
-  box-shadow: var(--shadow-sm);
-}
-
 /* ── Category Chips ──────────────────────────────────────────── */
 .forum-cats {
   display: flex;
@@ -864,10 +826,6 @@
   .forum-toolbar {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .forum-sort {
-    align-self: flex-start;
   }
 
   .forum-modal__cat-grid {

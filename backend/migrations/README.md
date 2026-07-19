@@ -22,6 +22,7 @@ Run these in the Supabase SQL Editor, in order.
 | `2026_06_23_audit_log.sql` | New `audit_log` table — append-only record of sensitive data access (transcript uploads, data exports, account deletions). Users can read their own rows; backend writes via service_role only. |
 | `2026_07_16_cookie_consent.sql` | Adds `cookie_consent` + `cookie_consent_at` to `users` — server-side record of the analytics-cookie consent choice (Law 25 accountability). Code degrades gracefully if not yet applied. |
 | `2026_07_19_forum_unified_reviews.sql` | Adds `difficulty_rating` + `professor_name` to `forum_posts` — merges course_review/professor_review into one review type (course + optional professor + two independent rating dimensions). Legacy rows unaffected. |
+| `2026_07_19_forum_post_likes_timestamp.sql` | Adds `created_at` to `forum_post_likes` — the semester-aware ranking algorithm needs to know when each like landed, not just that it exists. Existing rows backfill to `now()`. |
 
 All migrations are idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `DO $$ ... END $$` guards) so re-running them is a no-op.
 

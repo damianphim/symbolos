@@ -3,8 +3,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import forumAPI from '../../lib/forumAPI'
 import {
-  FaComments, FaThumbsUp, FaReply, FaSearch, FaFire,
-  FaClock, FaStar, FaRegStar, FaBrain, FaPlus, FaTimes, FaChevronDown,
+  FaComments, FaThumbsUp, FaReply, FaSearch,
+  FaStar, FaRegStar, FaBrain, FaPlus, FaTimes, FaChevronDown,
   FaChevronUp, FaBookOpen, FaUsers, FaChalkboardTeacher,
   FaBullhorn, FaCog, FaPaperPlane, FaSpinner,
   FaTag, FaTrash, FaFlag, FaLock,
@@ -27,14 +27,6 @@ const SECTIONS = [
   { key: 'general',      label: 'General',     icon: <FaBullhorn />,          color: '#ed1b2f' },
   { key: 'app_feedback', label: 'App Feedback', icon: <FaCog />,              color: '#ed1b2f' },
 ]
-
-function getSortOptions(t) {
-  return [
-    { key: 'hot', label: t('forum.sortHot'), icon: <FaFire /> },
-    { key: 'new', label: t('forum.sortNew'), icon: <FaClock /> },
-    { key: 'top', label: t('forum.sortTop'), icon: <FaStar /> },
-  ]
-}
 
 // Map an API post category → the section key it belongs to.
 // "review" is the unified course+optional-professor review type (2026-07);
@@ -547,14 +539,11 @@ export default function Forum() {
   const { t } = useLanguage()
   const isMcGill = authFlags?.is_mcgill_email ?? false
 
-  const SORT_OPTIONS = getSortOptions(t)
-
   const [posts, setPosts]             = useState([])
   const [loading, setLoading]         = useState(true)
   const [error, setError]             = useState(null)
   // Top-level section: reviews | clubs | general | app_feedback
   const [activeSection, setActiveSection] = useState('reviews')
-  const [sortMode, setSortMode]       = useState('hot')
   const [search, setSearch]           = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [showNewPost, setShowNewPost] = useState(false)
@@ -596,9 +585,10 @@ export default function Forum() {
   const fetchPosts = useCallback(async () => {
     setLoading(true); setError(null)
     try {
+      // No sort param: the backend's default ranking (semester-aware
+      // upvotes) is the only option now — there's no user-facing toggle.
       const data = await forumAPI.getPosts({
         category: apiCategory,
-        sort: sortMode,
         search: debouncedSearch || undefined,
         limit: 50,
       })
@@ -609,7 +599,7 @@ export default function Forum() {
     } finally {
       setLoading(false)
     }
-  }, [apiCategory, sortMode, debouncedSearch, t])
+  }, [apiCategory, debouncedSearch, t])
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
@@ -709,14 +699,6 @@ export default function Forum() {
           <input className="forum-search" placeholder={t('forum.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="forum-search-clear" onClick={() => setSearch('')}><FaTimes size={11} /></button>}
-        </div>
-        <div className="forum-sort">
-          {SORT_OPTIONS.map(s => (
-            <button key={s.key} className={`forum-sort-btn ${sortMode === s.key ? 'active' : ''}`}
-              onClick={() => setSortMode(s.key)}>
-              {s.icon} {s.label}
-            </button>
-          ))}
         </div>
       </div>
 

@@ -48,6 +48,20 @@ REVIEW_CATEGORIES = {"review", "course_review", "professor_review"}
 REVIEW_TARGET_TYPES = {"course", "professor"}
 VALID_SORTS = {"hot", "new", "top"}
 
+# ── Semester-aware ranking (replaces the old like_count*2 + 48h-decay "hot"
+# score) ─────────────────────────────────────────────────────────────────
+# McGill term windows, padded to hold year-over-year without an annual data
+# update — mirrors frontend/src/lib/termDates.js so both agree on where a
+# semester starts/ends:
+#   Fall:   Aug 25 – Dec 31      Winter: Jan 1 – Apr 30      Summer: May 1 – Aug 24
+_TERM_END_MONTH_DAY = {"Winter": (4, 30), "Summer": (8, 24), "Fall": (12, 31)}
+# A post whose semester has ended keeps its full lifetime like_count mixed
+# in with live posts as long as it's still gaining at least this many likes
+# per day, averaged over the last 14 days — i.e. still getting a like every
+# couple of days months later. Otherwise it ranks by upvotes-since-semester-end
+# only. Conservative starting point; recalibrate once there's real like volume.
+_VELOCITY_KEEP_THRESHOLD = 0.5
+
 
 # ── Pydantic models ────────────────────────────────────────────────────────────
 
@@ -167,6 +181,81 @@ def _get_liked_reply_ids(supabase, user_id: str, reply_ids: List[str]) -> set:
         return set()
 
 
+# ── Semester-aware ranking helpers ─────────────────────────────────────────────
+
+def _get_active_term(dt) -> tuple:
+    """(term, year) for a given datetime — mirrors termDates.js getActiveTerm()."""
+    m, d, y = dt.month, dt.day, dt.year
+    if m <= 4:
+        return ("Winter", y)
+    if m < 8 or (m == 8 and d < 25):
+        return ("Summer", y)
+    return ("Fall", y)
+
+
+def _term_end_date(term: str, year: int):
+    from datetime import datetime, timezone
+    month, day = _TERM_END_MONTH_DAY[term]
+    return datetime(year, month, day, 23, 59, 59, tzinfo=timezone.utc)
+
+
+def _get_post_like_timestamps(supabase, post_ids: List[str]) -> dict:
+    """{post_id: [like created_at datetimes]} for the given posts."""
+    if not post_ids:
+        return {}
+    from datetime import datetime
+    try:
+        rows = (
+            supabase.table("forum_post_likes")
+            .select("post_id, created_at")
+            .in_("post_id", post_ids)
+            .execute().data or []
+        )
+    except Exception:
+        return {}
+    out: dict = {}
+    for r in rows:
+        try:
+            ts = datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
+        except Exception:
+            continue
+        out.setdefault(r["post_id"], []).append(ts)
+    return out
+
+
+def _semester_aware_score(post: dict, like_timestamps: List, now) -> float:
+    """
+    Ranks posts made during the current semester by raw upvotes (like the
+    old "Top"). Once a post's semester has ended, it ranks by upvotes
+    earned SINCE the semester ended — UNLESS it's still gaining upvotes at
+    a healthy clip (>= _VELOCITY_KEEP_THRESHOLD/day over the trailing 14
+    days), in which case it keeps its full lifetime like_count so a review
+    that's still actively useful doesn't get buried just because the
+    semester it was written in is over.
+    """
+    from datetime import datetime, timedelta
+    like_count = post.get("like_count") or 0
+    try:
+        created = datetime.fromisoformat(post["created_at"].replace("Z", "+00:00"))
+    except Exception:
+        return float(like_count)
+
+    term, year = _get_active_term(created)
+    semester_end = _term_end_date(term, year)
+    if now <= semester_end:
+        return float(like_count)
+
+    likes_since_end = sum(1 for ts in like_timestamps if ts > semester_end)
+    recent_cutoff = now - timedelta(days=14)
+    recent_likes = sum(1 for ts in like_timestamps if ts > recent_cutoff)
+    recent_velocity = recent_likes / 14
+
+    score = float(likes_since_end)
+    if recent_velocity >= _VELOCITY_KEEP_THRESHOLD:
+        score += like_count
+    return score
+
+
 # ── Report rate-limit helper ───────────────────────────────────────────────────
 def _check_report_rate_limit(user_id: str) -> None:
     """
@@ -205,7 +294,7 @@ async def list_posts(
     List forum posts.
 
     - category: filter by category slug
-    - sort: hot | new | top
+    - sort: hot (default; semester-aware upvote ranking, see _semester_aware_score) | new | top
     - search: full-text filter on title + body
     - limit/offset: pagination
     """
@@ -248,19 +337,13 @@ async def list_posts(
         logger.error(f"forum list_posts error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch posts")
 
-    # Hot sort: score = like_count * 2 + recency_bonus (Python-side for simplicity)
+    # Default ranking: semester-aware upvotes, replacing the old
+    # like_count*2 + 48h-decay "hot" score. See _semester_aware_score.
     if sort == "hot":
-        import time
-        now = time.time()
-        def _hot_score(p):
-            try:
-                from datetime import datetime, timezone
-                ts = datetime.fromisoformat(p["created_at"].replace("Z", "+00:00"))
-                age_hours = (now - ts.timestamp()) / 3600
-                return p["like_count"] * 2 + max(0, 48 - age_hours)
-            except Exception:
-                return p["like_count"]
-        posts.sort(key=_hot_score, reverse=True)
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        like_timestamps = _get_post_like_timestamps(user_sb, [p["id"] for p in posts])
+        posts.sort(key=lambda p: _semester_aware_score(p, like_timestamps.get(p["id"], []), now), reverse=True)
 
     posts = posts[offset:offset + limit]
 
