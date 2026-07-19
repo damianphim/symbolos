@@ -665,14 +665,17 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, hasPendingRequest
   )
 }
 
-function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, language, isFeatured = false, isMcGill = false }) {
+function ClubCard({ club, joined, calSynced, hasPendingRequest, isSubscribed, onJoin, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, language, isFeatured = false, isMcGill = false, managedClubIds }) {
   const meta = getCat(club.category)
   const [justJoined, setJustJoined] = useState(false)
   const isLoading = clubLoading[club.id] ?? false
   // Owner or admin both get full manage privileges — invited managers are
   // surfaced via the _manage_role flag the /created endpoint now returns.
+  // Cards built from the plain `clubs` list (Explore/Trending/For You) never
+  // carry _manage_role, so fall back to the managedClubIds set (derived from
+  // /created, which includes admin-managed clubs too) for those.
   const isOwner   = userId && club.created_by === userId
-  const isManager = isOwner || club._manage_role === 'admin'
+  const isManager = isOwner || club._manage_role === 'admin' || !!managedClubIds?.has(club.id)
 
   // Logo quick-upload (owners only) — click the avatar to swap the picture
   const [logoOptimistic, setLogoOptimistic] = useState(null)
@@ -2267,6 +2270,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     clubLoading={clubLoading}
                     userId={user?.id}
                     language={language}
+                    managedClubIds={createdClubIds}
                     t={t}
                   />
                 ))}
@@ -2303,6 +2307,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     clubLoading={clubLoading}
                     userId={user?.id}
                     language={language}
+                    managedClubIds={createdClubIds}
                     t={t}
                   />
                 ))}
@@ -2374,6 +2379,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                     isMcGill={isMcGill}
                     clubLoading={clubLoading}
                     userId={user?.id}
+                    managedClubIds={createdClubIds}
                     t={t}
                   />
                 ))}
