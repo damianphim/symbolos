@@ -172,6 +172,23 @@
   color: var(--text-secondary);
 }
 
+/* ── Subject filter (Reviews only) ──────────────────────────── */
+.forum-subject-filter {
+  padding: 9px 32px 9px 12px;
+  border: 1.5px solid var(--border-primary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.forum-subject-filter:focus {
+  outline: none;
+  border-color: var(--accent-primary, #ed1b2f);
+}
+
 /* ── Category Chips ──────────────────────────────────────────── */
 .forum-cats {
   display: flex;

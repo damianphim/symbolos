@@ -82,6 +82,9 @@ class PostCreate(BaseModel):
     # Unified "review" category only: the course is review_target_value,
     # the professor (if the reviewer named one) is separate and optional.
     professor_name:      Optional[str] = Field(None, max_length=120)
+    # Derived, not client-supplied: subject prefix (e.g. "COMP") extracted
+    # from review_target_value for course reviews, powers the subject filter.
+    subject:             Optional[str] = Field(None, max_length=10)
 
     @field_validator("category")
     @classmethod
@@ -117,6 +120,9 @@ class PostCreate(BaseModel):
                 raise ValueError("review_target_value (course code) is required for review posts")
             self.review_target_type = "course"
             self.professor_name = (self.professor_name or "").strip()[:120] or None
+            import re
+            m = re.match(r"^([A-Za-z]+)", self.review_target_value)
+            self.subject = m.group(1).upper() if m else None
         elif self.category in REVIEW_CATEGORIES:
             # Legacy course_review/professor_review — kept read/write-compatible
             # for any client still on the old shape, but no longer created by
@@ -131,6 +137,12 @@ class PostCreate(BaseModel):
                 )
             self.difficulty_rating = None
             self.professor_name = None
+            if self.review_target_type == "course":
+                import re
+                m = re.match(r"^([A-Za-z]+)", self.review_target_value)
+                self.subject = m.group(1).upper() if m else None
+            else:
+                self.subject = None
         else:
             # Clear review fields on non-review posts for data cleanliness
             self.rating = None
@@ -138,6 +150,7 @@ class PostCreate(BaseModel):
             self.review_target_type = None
             self.review_target_value = None
             self.professor_name = None
+            self.subject = None
 
 
 class ReplyCreate(BaseModel):
@@ -283,6 +296,7 @@ def _check_report_rate_limit(user_id: str) -> None:
 async def list_posts(
     req:      Request,
     category: Optional[str] = Query(None),
+    subject:  Optional[str] = Query(None, max_length=10),
     sort:     str            = Query("hot"),
     search:   Optional[str] = Query(None),
     limit:    int            = Query(30, ge=1, le=100),
@@ -294,8 +308,11 @@ async def list_posts(
     List forum posts.
 
     - category: filter by category slug
+    - subject: filter reviews by subject prefix (e.g. "COMP")
     - sort: hot (default; semester-aware upvote ranking, see _semester_aware_score) | new | top
-    - search: full-text filter on title + body
+    - search: matches title, body, and — for reviews — the course/professor
+      name (review_target_value) and subject, so "COMP" or "Vybihal" finds
+      relevant reviews even if those words never appear in the post body.
     - limit/offset: pagination
     """
     if sort not in VALID_SORTS:
@@ -304,7 +321,7 @@ async def list_posts(
     def _run():
         q = user_sb.table("forum_posts").select(
             "id, user_id, author, avatar_color, category, title, body, tags, program_info, "
-            "rating, difficulty_rating, review_target_type, review_target_value, professor_name, "
+            "rating, difficulty_rating, review_target_type, review_target_value, professor_name, subject, "
             "like_count, created_at"
         )
 
@@ -317,9 +334,15 @@ async def list_posts(
         elif category and category != "all" and category in VALID_CATEGORIES:
             q = q.eq("category", category)
 
+        if subject:
+            q = q.eq("subject", subject.strip().upper())
+
         if search:
             safe = search.strip()[:100].replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
-            q = q.or_(f"title.ilike.%{safe}%,body.ilike.%{safe}%")
+            q = q.or_(
+                f"title.ilike.%{safe}%,body.ilike.%{safe}%,"
+                f"review_target_value.ilike.%{safe}%,subject.ilike.%{safe}%"
+            )
 
         if sort == "new":
             q = q.order("created_at", desc=True)
@@ -427,6 +450,7 @@ async def create_post(
             "review_target_type":  payload.review_target_type,
             "review_target_value": payload.review_target_value,
             "professor_name":      payload.professor_name,
+            "subject":             payload.subject,
         }
         res = user_sb.table("forum_posts").insert(data).execute()
         if not res.data:

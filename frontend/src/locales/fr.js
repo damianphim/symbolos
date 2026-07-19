@@ -957,6 +957,8 @@ const FR_TRANSLATIONS = {
     'forum.newPostBtn': 'Nouveau sujet',
     'forum.createPostBtn': 'Créer un sujet',
     'forum.searchPlaceholder': 'Rechercher des sujets, tags, thèmes…',
+    'forum.searchPlaceholderReviews': 'Rechercher par cours, professeur ou matière…',
+    'forum.allSubjects': 'Toutes les matières',
     'forum.catAll': 'Tous les sujets',
     'forum.catCourses': 'Cours',
     'forum.catStudy': 'Groupes d\'étude',

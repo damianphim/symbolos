@@ -1019,6 +1019,8 @@ const ZH_TRANSLATIONS = {
     'forum.newPostBtn': '新帖子',
     'forum.createPostBtn': '发布帖子',
     'forum.searchPlaceholder': '搜索帖子、标签、主题…',
+    'forum.searchPlaceholderReviews': '按课程、教授或科目搜索…',
+    'forum.allSubjects': '所有科目',
     'forum.catAll': '所有帖子',
     'forum.catCourses': '课程',
     'forum.catStudy': '学习小组',

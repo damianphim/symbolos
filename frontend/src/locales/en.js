@@ -1037,6 +1037,8 @@ const EN_TRANSLATIONS = {
     'forum.newPostBtn': 'New Post',
     'forum.createPostBtn': 'Create Post',
     'forum.searchPlaceholder': 'Search posts, tags, topics…',
+    'forum.searchPlaceholderReviews': 'Search by course, professor, or subject…',
+    'forum.allSubjects': 'All subjects',
     'forum.catAll': 'All Posts',
     'forum.catCourses': 'Courses',
     'forum.catStudy': 'Study Groups',

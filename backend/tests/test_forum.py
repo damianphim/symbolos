@@ -1,5 +1,5 @@
 """
-Tests for two forum changes shipped 2026-07:
+Tests for three forum changes shipped 2026-07:
 
 1. The "review" category unification: course_review and professor_review
    used to be two separate review types; a review post is now always a
@@ -13,6 +13,16 @@ Tests for two forum changes shipped 2026-07:
    then by upvotes-earned-since-the-semester-ended once it's over — unless
    it's still gaining upvotes at a healthy clip, in which case it keeps its
    full lifetime like_count.
+
+3. The subject filter + unified search: reviews can now be filtered by
+   subject prefix (e.g. "COMP"), and search matches the reviewed
+   course/professor name and subject in addition to title/body.
+
+Note: the shared `fake_supabase` fixture's `.or_()` is a documented no-op
+shim (see tests/conftest.py) — it can't verify PostgREST OR-clause filtering
+end-to-end, so the search tests here check the request succeeds and the
+`.eq()`-based subject filter (which the fake DOES implement) actually
+filters, rather than asserting on search-string matching behavior.
 """
 from __future__ import annotations
 
@@ -38,6 +48,22 @@ def _base_payload(**overrides):
         "title": "Great course",
         "body": "Really enjoyed it.",
         "tags": [],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _subject_payload(**overrides):
+    """Legacy course_review payload used by the subject-filter tests, which
+    predate the unified 'review' category and assert on subject derivation."""
+    payload = {
+        "author": "Some Student",
+        "avatar_color": "#ed1b2f",
+        "category": "course_review",
+        "title": "Great course",
+        "body": "Really enjoyed it.",
+        "tags": [],
+        "rating": 4,
     }
     payload.update(overrides)
     return payload
@@ -266,3 +292,88 @@ def test_list_posts_hot_sort_runs_end_to_end(client, fake_supabase):
     assert resp.status_code == 200
     ids = {p["id"] for p in resp.json()["posts"]}
     assert ids == {"p1", "p2"}
+# ── subject is derived and stored on create_post ───────────────────────────
+
+def test_course_review_derives_subject(client, fake_supabase):
+    resp = client.post(
+        "/api/forum/posts",
+        json=_subject_payload(review_target_value="COMP 202"),
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 201
+    assert resp.json()["post"]["subject"] == "COMP"
+
+
+def test_course_review_derives_subject_no_space(client, fake_supabase):
+    resp = client.post(
+        "/api/forum/posts",
+        json=_subject_payload(review_target_value="MATH133"),
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 201
+    assert resp.json()["post"]["subject"] == "MATH"
+
+
+def test_professor_review_has_no_subject(client, fake_supabase):
+    resp = client.post(
+        "/api/forum/posts",
+        json=_subject_payload(category="professor_review", review_target_value="Joseph Vybihal"),
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 201
+    assert resp.json()["post"]["subject"] is None
+
+
+def test_non_review_post_has_no_subject(client, fake_supabase):
+    resp = client.post(
+        "/api/forum/posts",
+        json=_subject_payload(category="general", rating=None, review_target_value=None),
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 201
+    assert resp.json()["post"]["subject"] is None
+
+
+# ── subject filter on list_posts ────────────────────────────────────────────
+
+def test_list_posts_subject_filter(client, fake_supabase):
+    fake_supabase.set_table("forum_posts", [
+        {"id": "p1", "user_id": "u1", "author": "A", "avatar_color": "#ed1b2f",
+         "category": "course_review", "title": "COMP review", "body": "b", "tags": [],
+         "program_info": None, "rating": 4, "review_target_type": "course",
+         "review_target_value": "COMP 202", "subject": "COMP",
+         "like_count": 0, "created_at": "2026-01-01T00:00:00Z"},
+        {"id": "p2", "user_id": "u1", "author": "A", "avatar_color": "#ed1b2f",
+         "category": "course_review", "title": "MATH review", "body": "b", "tags": [],
+         "program_info": None, "rating": 3, "review_target_type": "course",
+         "review_target_value": "MATH 133", "subject": "MATH",
+         "like_count": 0, "created_at": "2026-01-02T00:00:00Z"},
+    ])
+    resp = client.get(
+        "/api/forum/posts",
+        params={"category": "course_review", "subject": "comp", "sort": "new"},
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 200
+    posts = resp.json()["posts"]
+    assert len(posts) == 1
+    assert posts[0]["id"] == "p1"
+
+
+def test_list_posts_search_request_succeeds(client, fake_supabase):
+    # Can't assert on OR-clause filtering through the fake (see module
+    # docstring) — this just pins down that the request doesn't error with
+    # the widened search clause covering review_target_value + subject.
+    fake_supabase.set_table("forum_posts", [
+        {"id": "p1", "user_id": "u1", "author": "A", "avatar_color": "#ed1b2f",
+         "category": "course_review", "title": "A review", "body": "b", "tags": [],
+         "program_info": None, "rating": 4, "review_target_type": "course",
+         "review_target_value": "COMP 202", "subject": "COMP",
+         "like_count": 0, "created_at": "2026-01-01T00:00:00Z"},
+    ])
+    resp = client.get(
+        "/api/forum/posts",
+        params={"search": "Vybihal"},
+        headers=auth("user-1"),
+    )
+    assert resp.status_code == 200

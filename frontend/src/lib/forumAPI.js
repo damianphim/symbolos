@@ -18,9 +18,10 @@ async function authHeaders() {
 const forumAPI = {
   // ── Posts ────────────────────────────────────────────────────────
 
-  async getPosts({ category, sort = 'hot', search, limit = 30, offset = 0 } = {}) {
+  async getPosts({ category, subject, sort = 'hot', search, limit = 30, offset = 0 } = {}) {
     const params = new URLSearchParams()
     if (category && category !== 'all') params.set('category', category)
+    if (subject) params.set('subject', subject)
     if (sort)   params.set('sort', sort)
     if (search) params.set('search', search)
     params.set('limit', limit)

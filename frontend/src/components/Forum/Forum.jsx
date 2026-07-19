@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import forumAPI from '../../lib/forumAPI'
+import { coursesAPI } from '../../lib/api'
 import {
   FaComments, FaThumbsUp, FaReply, FaSearch,
   FaStar, FaRegStar, FaBrain, FaPlus, FaTimes, FaChevronDown,
@@ -546,9 +547,16 @@ export default function Forum() {
   const [activeSection, setActiveSection] = useState('reviews')
   const [search, setSearch]           = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [subjectFilter, setSubjectFilter] = useState('')
+  const [subjects, setSubjects]       = useState([])
   const [showNewPost, setShowNewPost] = useState(false)
   const [isPosting, setIsPosting]     = useState(false)
   const debounceRef = useRef(null)
+
+  // Subject filter only applies to reviews — fetch the canonical list once.
+  useEffect(() => {
+    coursesAPI.getSubjects().then(data => setSubjects(data.subjects || [])).catch(() => {})
+  }, [])
 
   const myName   = profile?.username || user?.email?.split('@')[0] || 'student'
   const myColor  = '#ed1b2f'
@@ -589,6 +597,7 @@ export default function Forum() {
       // upvotes) is the only option now — there's no user-facing toggle.
       const data = await forumAPI.getPosts({
         category: apiCategory,
+        subject: activeSection === 'reviews' ? (subjectFilter || undefined) : undefined,
         search: debouncedSearch || undefined,
         limit: 50,
       })
@@ -599,7 +608,7 @@ export default function Forum() {
     } finally {
       setLoading(false)
     }
-  }, [apiCategory, debouncedSearch, t])
+  }, [apiCategory, activeSection, subjectFilter, debouncedSearch, t])
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
@@ -696,10 +705,17 @@ export default function Forum() {
       <div className="forum-toolbar">
         <div className="forum-search-wrap">
           <FaSearch className="forum-search-ico" />
-          <input className="forum-search" placeholder={t('forum.searchPlaceholder')}
+          <input className="forum-search"
+            placeholder={activeSection === 'reviews' ? t('forum.searchPlaceholderReviews') : t('forum.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="forum-search-clear" onClick={() => setSearch('')}><FaTimes size={11} /></button>}
         </div>
+        {activeSection === 'reviews' && subjects.length > 0 && (
+          <select className="forum-subject-filter" value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}>
+            <option value="">{t('forum.allSubjects')}</option>
+            {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Content */}
