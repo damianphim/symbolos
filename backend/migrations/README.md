@@ -21,6 +21,7 @@ Run these in the Supabase SQL Editor, in order.
 | `2026_06_23_rls_forum_and_club_tables.sql` | **SEC FIX**: RLS on 11 previously unprotected tables — `club_managers`, `club_subscriptions`, `club_join_requests`, `club_manager_requests`, `club_events`, `club_announcements`, `club_submissions`, `forum_posts`, `forum_replies`, `forum_post_likes`, `forum_reply_likes` |
 | `2026_06_23_audit_log.sql` | New `audit_log` table — append-only record of sensitive data access (transcript uploads, data exports, account deletions). Users can read their own rows; backend writes via service_role only. |
 | `2026_07_16_cookie_consent.sql` | Adds `cookie_consent` + `cookie_consent_at` to `users` — server-side record of the analytics-cookie consent choice (Law 25 accountability). Code degrades gracefully if not yet applied. |
+| `2026_07_19_forum_unified_reviews.sql` | Adds `difficulty_rating` + `professor_name` to `forum_posts` — merges course_review/professor_review into one review type (course + optional professor + two independent rating dimensions). Legacy rows unaffected. |
 
 All migrations are idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `DO $$ ... END $$` guards) so re-running them is a no-op.
 

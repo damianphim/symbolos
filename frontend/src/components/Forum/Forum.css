@@ -941,38 +941,6 @@
 }
 .forum-section-btn.active svg { color: #fff; }
 
-/* ── Reviews sub-tab bar ───────────────────────────────────────── */
-.forum-subtab-bar {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  margin: 0 0 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  max-width: 320px;
-}
-.forum-subtab-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 7px 10px;
-  background: transparent;
-  color: var(--text-secondary);
-  border: none;
-  border-radius: 7px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.forum-subtab-btn:hover { color: var(--text-primary); }
-.forum-subtab-btn.active {
-  background: var(--cat-color, var(--accent-primary));
-  color: #fff;
-}
 
 /* ── Star rating widget ─────────────────────────────────────────── */
 .forum-stars {
@@ -1003,8 +971,8 @@
 .forum-review-strip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   padding: 8px 14px;
   margin: 0 0 6px;
   background: rgba(245, 158, 11, 0.08);
@@ -1021,9 +989,11 @@
 }
 .forum-review-strip__target svg { color: var(--tab-forum-accent); }
 
-/* ── 2-column grid for review sub-type ─────────────────────────── */
-.forum-modal__cat-grid--2 {
-  grid-template-columns: 1fr 1fr;
+.forum-review-strip__prof {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
 }
 
 .forum-modal__hint {

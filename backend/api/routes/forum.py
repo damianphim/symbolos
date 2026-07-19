@@ -35,14 +35,16 @@ logger = logging.getLogger(__name__)
 # New top-level sections after the 2026-04 forum redesign.
 # Legacy categories kept for backwards compatibility with existing posts.
 VALID_CATEGORIES = {
-    # Reviews
-    "course_review", "professor_review",
+    # Reviews — "review" is the unified course+optional-professor review type
+    # (2026-07). course_review/professor_review are kept read-only for
+    # existing posts created before the merge.
+    "review", "course_review", "professor_review",
     # Other sections
     "clubs", "general", "app_feedback",
     # Legacy
     "courses", "study", "advice", "planning",
 }
-REVIEW_CATEGORIES = {"course_review", "professor_review"}
+REVIEW_CATEGORIES = {"review", "course_review", "professor_review"}
 REVIEW_TARGET_TYPES = {"course", "professor"}
 VALID_SORTS = {"hot", "new", "top"}
 
@@ -60,8 +62,12 @@ class PostCreate(BaseModel):
 
     # Review-only fields. Required when category ∈ REVIEW_CATEGORIES.
     rating:              Optional[int] = Field(None, ge=1, le=5)
+    difficulty_rating:   Optional[int] = Field(None, ge=1, le=5)
     review_target_type:  Optional[str] = Field(None, max_length=20)
     review_target_value: Optional[str] = Field(None, max_length=120)
+    # Unified "review" category only: the course is review_target_value,
+    # the professor (if the reviewer named one) is separate and optional.
+    professor_name:      Optional[str] = Field(None, max_length=120)
 
     @field_validator("category")
     @classmethod
@@ -87,22 +93,37 @@ class PostCreate(BaseModel):
 
     def enforce_review_consistency(self) -> None:
         """Ensure review posts have required review fields, and non-reviews don't."""
-        is_review = self.category in REVIEW_CATEGORIES
-        if is_review:
+        if self.category == "review":
+            # Unified review type: always a course review, professor optional.
+            if self.rating is None:
+                raise ValueError("rating (1–5) is required for review posts")
+            if self.difficulty_rating is None:
+                raise ValueError("difficulty_rating (1–5) is required for review posts")
+            if not self.review_target_value:
+                raise ValueError("review_target_value (course code) is required for review posts")
+            self.review_target_type = "course"
+            self.professor_name = (self.professor_name or "").strip()[:120] or None
+        elif self.category in REVIEW_CATEGORIES:
+            # Legacy course_review/professor_review — kept read/write-compatible
+            # for any client still on the old shape, but no longer created by
+            # the current UI.
             if self.rating is None:
                 raise ValueError("rating (1–5) is required for review posts")
             if not self.review_target_value:
                 raise ValueError("review_target_value is required for review posts")
-            # Auto-infer target_type from category if not provided
             if not self.review_target_type:
                 self.review_target_type = (
                     "course" if self.category == "course_review" else "professor"
                 )
+            self.difficulty_rating = None
+            self.professor_name = None
         else:
             # Clear review fields on non-review posts for data cleanliness
             self.rating = None
+            self.difficulty_rating = None
             self.review_target_type = None
             self.review_target_value = None
+            self.professor_name = None
 
 
 class ReplyCreate(BaseModel):
@@ -194,10 +215,17 @@ async def list_posts(
     def _run():
         q = user_sb.table("forum_posts").select(
             "id, user_id, author, avatar_color, category, title, body, tags, program_info, "
-            "rating, review_target_type, review_target_value, like_count, created_at"
+            "rating, difficulty_rating, review_target_type, review_target_value, professor_name, "
+            "like_count, created_at"
         )
 
-        if category and category != "all" and category in VALID_CATEGORIES:
+        if category == "review":
+            # The unified reviews feed also shows legacy course_review/
+            # professor_review posts created before the 2026-07 merge —
+            # they're the same kind of content, just under the old category
+            # strings, and hiding them would make existing reviews vanish.
+            q = q.in_("category", list(REVIEW_CATEGORIES))
+        elif category and category != "all" and category in VALID_CATEGORIES:
             q = q.eq("category", category)
 
         if search:
@@ -298,6 +326,8 @@ async def create_post(
     payload.body  = escape(payload.body or "")
     if payload.author:
         payload.author = escape(payload.author)
+    if payload.professor_name:
+        payload.professor_name = escape(payload.professor_name)
 
     def _run():
         data = {
@@ -310,8 +340,10 @@ async def create_post(
             "tags":                payload.tags,
             "program_info":        payload.program_info,
             "rating":              payload.rating,
+            "difficulty_rating":   payload.difficulty_rating,
             "review_target_type":  payload.review_target_type,
             "review_target_value": payload.review_target_value,
+            "professor_name":      payload.professor_name,
         }
         res = user_sb.table("forum_posts").insert(data).execute()
         if not res.data:
@@ -759,21 +791,35 @@ async def reviews_summary(
     Returns avg_rating, rating_count, and a per-star histogram.
     """
     try:
-        # Case-insensitive match for professor names; exact match for course codes
+        # Case-insensitive match for professor names; exact match for course codes.
+        # A course lookup matches every review naming that course, whether it's a
+        # unified "review" post or a legacy course_review post (both set
+        # review_target_type="course"). A professor lookup has to check two
+        # shapes: legacy professor_review posts (the professor WAS the review
+        # target) and unified review posts (the professor is the separate,
+        # optional professor_name field on a course review).
         if target_type == "course":
             normalized = target_value.strip().upper()
-            q = user_sb.table("forum_posts") \
-                .select("rating") \
+            rows = user_sb.table("forum_posts") \
+                .select("rating, difficulty_rating") \
                 .eq("review_target_type", "course") \
-                .eq("review_target_value", normalized)
+                .eq("review_target_value", normalized) \
+                .execute().data or []
         else:
-            q = user_sb.table("forum_posts") \
-                .select("rating") \
+            normalized = target_value.strip()
+            legacy_rows = user_sb.table("forum_posts") \
+                .select("rating, difficulty_rating") \
                 .eq("review_target_type", "professor") \
-                .ilike("review_target_value", target_value.strip())
+                .ilike("review_target_value", normalized) \
+                .execute().data or []
+            named_rows = user_sb.table("forum_posts") \
+                .select("rating, difficulty_rating") \
+                .ilike("professor_name", normalized) \
+                .execute().data or []
+            rows = legacy_rows + named_rows
 
-        rows = q.execute().data or []
         ratings = [r["rating"] for r in rows if r.get("rating") is not None]
+        difficulties = [r["difficulty_rating"] for r in rows if r.get("difficulty_rating") is not None]
 
         histogram = {str(i): 0 for i in range(1, 6)}
         for r in ratings:
@@ -781,12 +827,14 @@ async def reviews_summary(
                 histogram[str(r)] += 1
 
         avg = round(sum(ratings) / len(ratings), 2) if ratings else None
+        avg_difficulty = round(sum(difficulties) / len(difficulties), 2) if difficulties else None
         return {
-            "target_type":  target_type,
-            "target_value": target_value,
-            "avg_rating":   avg,
-            "rating_count": len(ratings),
-            "histogram":    histogram,
+            "target_type":     target_type,
+            "target_value":    target_value,
+            "avg_rating":      avg,
+            "avg_difficulty":  avg_difficulty,
+            "rating_count":    len(ratings),
+            "histogram":       histogram,
         }
     except Exception as e:
         logger.exception(f"reviews_summary error: {e}")

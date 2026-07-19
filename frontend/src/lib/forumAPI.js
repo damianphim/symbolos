@@ -35,14 +35,14 @@ const forumAPI = {
 
   async createPost({
     author, avatar_color, category, title, body, tags, program_info,
-    rating, review_target_type, review_target_value,
+    rating, difficulty_rating, review_target_type, review_target_value, professor_name,
   }) {
     const res = await fetch(`${BASE_URL}/api/forum/posts`, {
       method: 'POST',
       headers: await authHeaders(),
       body: JSON.stringify({
         author, avatar_color, category, title, body, tags, program_info,
-        rating, review_target_type, review_target_value,
+        rating, difficulty_rating, review_target_type, review_target_value, professor_name,
       }),
     })
     if (!res.ok) {
