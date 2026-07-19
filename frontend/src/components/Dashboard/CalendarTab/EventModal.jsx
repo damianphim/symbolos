@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { FaTimes, FaBell, FaCheck, FaTrash, FaGraduationCap, FaClipboardList, FaStar, FaBullseye, FaLink } from 'react-icons/fa'
-import { L, EVENT_TYPE_OPTIONS } from './calendarConstants'
+import { FaTimes, FaBell, FaCheck, FaTrash, FaGraduationCap, FaClipboardList, FaStar, FaBullseye, FaLink, FaTag, FaPlus } from 'react-icons/fa'
+import { L, EVENT_TYPE_OPTIONS, CUSTOM_TYPE_COLOR_CHOICES, withAlpha } from './calendarConstants'
 
 // Re-export EVENT_TYPE_OPTIONS with icons attached (requires JSX context)
 const EVENT_TYPE_OPTIONS_WITH_ICONS = [
@@ -10,7 +10,7 @@ const EVENT_TYPE_OPTIONS_WITH_ICONS = [
   { ...EVENT_TYPE_OPTIONS[3], icon: <FaClipboardList /> },
 ]
 
-export default function EventModal({ event, onSave, onDelete, onClose, t, notifPrefs, user, language, managedClubs = [] }) {
+export default function EventModal({ event, onSave, onDelete, onClose, notifPrefs, language, managedClubs = [], customTypes = [], onAddCustomType }) {
   const today = new Date().toLocaleDateString('en-CA', {
     timeZone: localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone
   })
@@ -52,8 +52,17 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
     ),
   }))
 
+  const [showNewType, setShowNewType] = useState(false)
+  const [newTypeLabel, setNewTypeLabel] = useState('')
+  const [newTypeColor, setNewTypeColor] = useState(CUSTOM_TYPE_COLOR_CHOICES[0])
+
+  const allTypeOptions = [
+    ...EVENT_TYPE_OPTIONS_WITH_ICONS,
+    ...customTypes.map(ct => ({ ...ct, icon: <FaTag /> })),
+  ]
+
   const isEdit = !!event?.id && !event?.titleKey
-  const selectedType = EVENT_TYPE_OPTIONS_WITH_ICONS.find(t => t.key === form.type) || EVENT_TYPE_OPTIONS_WITH_ICONS[0]
+  const selectedType = allTypeOptions.find(t => t.key === form.type) || allTypeOptions[0]
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -63,6 +72,17 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
 
   const f = (key) => (val) => setForm(p => ({ ...p, [key]: val }))
   const toggle = (key) => setForm(p => ({ ...p, [key]: !p[key] }))
+
+  const handleCreateType = () => {
+    const label = newTypeLabel.trim()
+    if (!label) return
+    const newType = { key: `custom-${Date.now()}`, label, color: newTypeColor, bg: withAlpha(newTypeColor, '1a') }
+    onAddCustomType?.(newType)
+    f('type')(newType.key)
+    setNewTypeLabel('')
+    setNewTypeColor(CUSTOM_TYPE_COLOR_CHOICES[0])
+    setShowNewType(false)
+  }
 
   return (
     <div className="cal-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -80,17 +100,50 @@ export default function EventModal({ event, onSave, onDelete, onClose, t, notifP
         <form id="event-modal-form" className="cal-modal-body-v2" onSubmit={handleSubmit}>
 
           <div className="cal-v2-type-row">
-            {EVENT_TYPE_OPTIONS_WITH_ICONS.filter(opt => opt.key !== 'club' || managedClubs.length > 0).map(opt => (
+            {allTypeOptions.filter(opt => opt.key !== 'club' || managedClubs.length > 0).map(opt => (
               <button key={opt.key} type="button"
                 className={`cal-v2-type-card ${form.type === opt.key ? 'selected' : ''}`}
                 style={form.type === opt.key ? { borderColor: opt.color, background: opt.bg, color: opt.color } : {}}
                 onClick={() => f('type')(opt.key)}>
                 <span className="cal-v2-type-icon" style={form.type === opt.key ? { color: opt.color } : {}}>{opt.icon}</span>
-                <span className="cal-v2-type-label">{L(language, opt.labelEn, opt.labelFr, opt.labelZh)}</span>
+                <span className="cal-v2-type-label">{opt.label || L(language, opt.labelEn, opt.labelFr, opt.labelZh)}</span>
                 {form.type === opt.key && <span className="cal-v2-type-check" style={{ color: opt.color }}><FaCheck size={8} /></span>}
               </button>
             ))}
+            <button type="button" className="cal-v2-type-card cal-v2-type-card--new" onClick={() => setShowNewType(p => !p)}>
+              <span className="cal-v2-type-icon"><FaPlus size={10} /></span>
+              <span className="cal-v2-type-label">{L(language, 'New', 'Nouveau', '新建')}</span>
+            </button>
           </div>
+
+          {showNewType && (
+            <div className="cal-v2-new-type">
+              <input
+                className="cal-v2-input"
+                type="text"
+                value={newTypeLabel}
+                onChange={e => setNewTypeLabel(e.target.value)}
+                placeholder={L(language, 'Type name…', 'Nom du type…', '类型名称…')}
+                maxLength={24}
+                autoFocus
+              />
+              <div className="cal-v2-new-type-colors">
+                {CUSTOM_TYPE_COLOR_CHOICES.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`cal-v2-new-type-swatch ${newTypeColor === c ? 'selected' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => setNewTypeColor(c)}
+                    aria-label={c}
+                  />
+                ))}
+              </div>
+              <button type="button" className="cal-v2-new-type-add" disabled={!newTypeLabel.trim()} onClick={handleCreateType}>
+                {L(language, 'Add type', 'Ajouter', '添加类型')}
+              </button>
+            </div>
+          )}
 
           <div className="cal-v2-field">
             <label className="cal-v2-label">{L(language, 'Title', 'Titre', '标题')} <span className="cal-v2-required">*</span></label>

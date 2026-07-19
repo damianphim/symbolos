@@ -755,6 +755,8 @@ const EN_TRANSLATIONS = {
     'calendar.exportBtn': 'Export',
     'calendar.exportICS': 'Download .ics file',
     'calendar.exportGoogleHelp': 'Import into Google Calendar',
+    'calendar.exportAppleHelp': 'Add to Apple Calendar',
+    'calendar.exportOutlookHelp': 'Add to Outlook',
     'calendar.addToGoogle': 'Add to Google Calendar',
     'calendar.classEvents': 'Classes',
     'calendar.academicDates': 'McGill Academic',

@@ -754,6 +754,8 @@ const FR_TRANSLATIONS = {
     'calendar.exportBtn': 'Exporter',
     'calendar.exportICS': 'Télécharger le fichier .ics',
     'calendar.exportGoogleHelp': 'Importer dans Google Agenda',
+    'calendar.exportAppleHelp': 'Ajouter à Calendrier Apple',
+    'calendar.exportOutlookHelp': 'Ajouter à Outlook',
     'calendar.addToGoogle': 'Ajouter à Google Agenda',
     'calendar.classEvents': 'Cours',
     'calendar.academicDates': 'Académique McGill',

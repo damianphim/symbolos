@@ -1517,6 +1517,19 @@
 
 .cal-export-item--google:hover { background: #e8f0fe; }
 
+.cal-export-item--apple {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cal-export-item--outlook {
+  color: #0078d4;
+  font-weight: 600;
+}
+
+.cal-export-item--outlook:hover { background: #e5f1fb; }
+[data-theme='dark'] .cal-export-item--outlook:hover { background: rgba(0,120,212,0.15); }
+
 /* ── Add to Google Calendar link in event popup ──────── */
 .cal-event-popup-gcal {
   padding: 0 14px 6px;
@@ -1658,14 +1671,35 @@
   gap: 6px;
   padding: 0.55rem 1rem;
   border-radius: 8px;
-  background: #1a73e8;
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.12s;
+  transition: filter 0.12s;
 }
-.cal-gcal-modal__open-btn:hover { background: #1557b0; }
+.cal-gcal-modal__open-btn:hover { filter: brightness(0.88); }
+
+.cal-guide-tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 12px 18px 0;
+}
+
+.cal-guide-tab {
+  padding: 0.4rem 0.85rem;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.cal-guide-tab:hover { background: var(--bg-tertiary); }
+.cal-guide-tab.active { background: var(--bg-primary); }
 
 .cal-gcal-modal__done-btn {
   padding: 0.55rem 1rem;
@@ -2109,14 +2143,6 @@
   margin: 0;
 }
 
-.cal-modal-body-v2 {
-  overflow-y: visible;
-  padding: 1.1rem 1.25rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 /* Type selector cards */
 .cal-v2-type-row {
   display: grid;
@@ -2167,6 +2193,70 @@
   position: absolute;
   top: 4px;
   right: 5px;
+}
+
+.cal-v2-type-card--new {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.cal-v2-type-card--new:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.cal-v2-new-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.65rem;
+  border: 1.5px solid var(--border-primary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  margin-top: -0.15rem;
+}
+
+.cal-v2-new-type .cal-v2-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-v2-new-type-colors {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.cal-v2-new-type-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cal-v2-new-type-swatch.selected {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-secondary);
+}
+
+.cal-v2-new-type-add {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cal-v2-new-type-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Fields */
