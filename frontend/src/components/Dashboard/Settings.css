@@ -413,6 +413,9 @@
 
 .notif-type-chip.active {
   font-weight: 700;
+  border-color: var(--accent-primary);
+  background: var(--accent-lighter);
+  color: var(--accent-primary);
 }
 
 /* ── Save button ───────────────────────────────────────────── */

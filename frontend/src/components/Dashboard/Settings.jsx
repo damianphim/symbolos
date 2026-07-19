@@ -203,11 +203,11 @@ export default function Settings({ user, onUpdateSettings }) {
   ]
 
   const EVENT_TYPE_CFG = {
-    exam:       { icon: <FaClipboardList />, color: '#7c3aed', bg: '#f5f3ff', label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
-    academic:   { icon: <FaGraduationCap />, color: '#1d4ed8', bg: '#eff6ff', label: t('calendar.academicDates') },
-    club:       { icon: <FaUsers />,         color: '#d97706', bg: '#fef3c7', label: t('calendar.clubEvents') },
-    personal:   { icon: <FaUser />,          color: '#059669', bg: '#ecfdf5', label: t('calendar.personalEvents') },
-    newsletter: { icon: <FaNewspaper />,     color: '#0891b2', bg: '#ecfeff', label: language === 'fr' ? 'Infolettres' : language === 'zh' ? '通讯' : 'Newsletters' },
+    exam:       { icon: <FaClipboardList />, label: language === 'fr' ? 'Examens finaux' : 'Final Exams' },
+    academic:   { icon: <FaGraduationCap />, label: t('calendar.academicDates') },
+    club:       { icon: <FaUsers />,         label: t('calendar.clubEvents') },
+    personal:   { icon: <FaUser />,          label: t('calendar.personalEvents') },
+    newsletter: { icon: <FaNewspaper />,     label: language === 'fr' ? 'Infolettres' : language === 'zh' ? '通讯' : 'Newsletters' },
   }
 
   return (
@@ -319,8 +319,7 @@ export default function Settings({ user, onUpdateSettings }) {
               <div className="notif-type-grid">
                 {Object.entries(EVENT_TYPE_CFG).map(([key, cfg]) => (
                   <label key={key}
-                    className={`notif-type-chip ${notifPrefs.eventTypes[key] ? 'active' : ''}`}
-                    style={notifPrefs.eventTypes[key] ? { borderColor: cfg.color, background: cfg.bg, color: cfg.color } : {}}>
+                    className={`notif-type-chip ${notifPrefs.eventTypes[key] ? 'active' : ''}`}>
                     <input type="checkbox" checked={notifPrefs.eventTypes[key]} onChange={() => toggleEventType(key)} />
                     {cfg.icon} {cfg.label}
                     {notifPrefs.eventTypes[key] && <FaCheck size={9} />}
