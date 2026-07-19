@@ -15,14 +15,12 @@ import { readCache, writeCache } from '../../lib/userDataCache'
 import Breadcrumb from '../ui/Breadcrumb'
 import './ClubsTab.css'
 
-// Colors come from theme.css --club-cat-* tokens (light + dark variants),
-// so category chips/badges render correctly in both themes. `var(...)`
-// strings are safe in inline styles — do NOT concatenate alpha suffixes
-// onto them (use the -bg token for tints instead).
-const catVars = (slug) => ({
-  color:  `var(--club-cat-${slug})`,
-  bg:     `var(--club-cat-${slug}-bg)`,
-  border: `var(--club-cat-${slug}-border)`,
+// Every category uses the same McGill red — no more one-color-per-category
+// rainbow. The category is still distinguished by its icon + label.
+const catVars = () => ({
+  color:  'var(--accent-primary)',
+  bg:     'var(--accent-light)',
+  border: 'var(--accent-primary)',
 })
 
 const CATEGORY_META = {
@@ -1787,14 +1785,12 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   const isMcGill  = authFlags?.is_mcgill_email ?? false
   const [activeView, setActiveView] = useState('explore')
   const [clubs, setClubs] = useState([])
-  const [categories, setCategories] = useState([])
   // SWR-style hydrate from cache for instant first paint
   const [myClubs, setMyClubs]         = useState(() => readCache('my_clubs', user?.id, []))
   const [createdClubs, setCreatedClubs] = useState(() => readCache('created_clubs', user?.id, []))
   const [pendingCounts, setPendingCounts] = useState({})
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
   const [sortMode, setSortMode] = useState('default')
   const [loading, setLoading] = useState(false)
   const [myClubsLoading, setMyClubsLoading] = useState(false)
@@ -1840,7 +1836,6 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     try {
       const data = await clubsAPI.getClubs({
         search: debouncedSearch,
-        category: selectedCategory,
         limit: PAGE_SIZE,
         offset: (pageNum - 1) * PAGE_SIZE,
       })
@@ -1855,7 +1850,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     } finally {
       if (isMounted.current) { setLoading(false); setLoadingMore(false) }
     }
-  }, [debouncedSearch, selectedCategory])
+  }, [debouncedSearch])
 
   const fetchMyClubs = useCallback(async () => {
     if (!user?.id) return
@@ -1902,13 +1897,6 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     } catch { /* silent */ }
   }, [user?.id, isAdmin])
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await clubsAPI.getCategories()
-      if (isMounted.current) setCategories(Array.isArray(data) ? data : data.categories ?? [])
-    } catch { /* silent */ }
-  }, [])
-
   const fetchPendingRequests = useCallback(async () => {
     if (!user?.id) return
     try {
@@ -1945,7 +1933,6 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
   useEffect(() => { setPage(1); fetchClubs(1) }, [fetchClubs])
   useEffect(() => { fetchMyClubs() }, [fetchMyClubs])
   useEffect(() => { fetchCreatedClubs() }, [fetchCreatedClubs])
-  useEffect(() => { fetchCategories() }, [fetchCategories])
   useEffect(() => { fetchPendingRequests() }, [fetchPendingRequests])
   useEffect(() => { fetchManagerInvites() }, [fetchManagerInvites])
 
@@ -2079,7 +2066,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
   const displayClubs = useMemo(() => {
     let list = [...clubs]
-    if (sortMode === 'members') list.sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0))
+    if (sortMode === 'members') list.sort((a, b) => (b.subscriber_count ?? 0) - (a.subscriber_count ?? 0))
     if (sortMode === 'name') list.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
     return list
   }, [clubs, sortMode])
@@ -2209,39 +2196,10 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
             </div>
           </div>
 
-          {/* #1 — Category pills replace the dropdown. Horizontal-scroll on mobile. */}
-          {categories.length > 0 && (
-            <div className="clubs-cat-bar">
-              <button
-                className={`clubs-cat-pill ${!selectedCategory ? 'active' : ''}`}
-                onClick={() => setSelectedCategory('')}
-              >
-                {t('clubs.filterAll')}
-              </button>
-              {categories.map(cat => {
-                const label = t(CATEGORY_I18N_KEY[cat] || cat) || cat
-                const cmeta = getCat(cat)
-                return (
-                  <button
-                    key={cat}
-                    className={`clubs-cat-pill ${selectedCategory === cat ? 'active' : ''}`}
-                    style={selectedCategory === cat
-                      ? { background: cmeta.color, color: '#fff', borderColor: cmeta.color }
-                      : { borderColor: cmeta.border, color: cmeta.color }}
-                    onClick={() => setSelectedCategory(cat === selectedCategory ? '' : cat)}
-                  >
-                    <span className="clubs-cat-pill__icon">{cmeta.icon}</span>
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
           {error && <div className="clubs-error">{error}<button onClick={() => setError(null)}><FaTimes size={11} /></button></div>}
 
-          {/* #2/#3 — Curated rows visible only when not actively searching/filtering */}
-          {!loading && !debouncedSearch && !selectedCategory && trendingClubs.length > 0 && (
+          {/* #2/#3 — Curated rows visible only when not actively searching */}
+          {!loading && !debouncedSearch && trendingClubs.length > 0 && (
             <div className="clubs-curated-row">
               <div className="clubs-curated-row__header">
                 <h3 className="clubs-curated-row__title"><FaFire size={13} style={{ color: '#f59e0b' }} /> {t('clubs.trendingTitle') || 'Trending this week'}</h3>
@@ -2278,7 +2236,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
             </div>
           )}
 
-          {!loading && !debouncedSearch && !selectedCategory && forYouClubs.length > 0 && (
+          {!loading && !debouncedSearch && forYouClubs.length > 0 && (
             <div className="clubs-curated-row">
               <div className="clubs-curated-row__header">
                 <h3 className="clubs-curated-row__title"><FaGem size={12} style={{ color: 'var(--accent-primary)' }} /> {t('clubs.forYouTitle') || 'For you'}</h3>
@@ -2323,21 +2281,17 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
             // #14 Better empty state with actionable suggestions
             <div className="clubs-empty">
               <div className="clubs-empty__visual"><FaUsers size={52} /></div>
-              <h3>{debouncedSearch || selectedCategory ? (t('clubs.noClubsFound') || 'No clubs match those filters') : t('clubs.noClubsYet')}</h3>
+              <h3>{debouncedSearch ? (t('clubs.noClubsFound') || 'No clubs match those filters') : t('clubs.noClubsYet')}</h3>
               <p>
-                {debouncedSearch && selectedCategory
-                  ? (t('clubs.tryClearFilters') || 'Try a different search term or clear the category filter.')
-                  : debouncedSearch
-                    ? (t('clubs.tryClearSearch') || 'Try a different search term or browse by category above.')
-                    : selectedCategory
-                      ? (t('clubs.tryClearCategory') || 'No clubs in this category yet — clear the filter to see all clubs.')
-                      : t('clubs.noClubsYetDesc')}
+                {debouncedSearch
+                  ? (t('clubs.tryClearSearch') || 'Try a different search term.')
+                  : t('clubs.noClubsYetDesc')}
               </p>
               <div className="clubs-empty__actions">
-                {(debouncedSearch || selectedCategory) && (
+                {debouncedSearch && (
                   <button
                     className="club-action-btn club-action-btn--subscribe"
-                    onClick={() => { setSearch(''); setSelectedCategory('') }}
+                    onClick={() => setSearch('')}
                   >
                     <FaTimes size={11} /> {t('clubs.clearFilters') || 'Clear filters'}
                   </button>
@@ -2351,7 +2305,6 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
             <>
               <p className="clubs-results-label">
                 <strong>{displayClubs.length}</strong> {displayClubs.length !== 1 ? t('clubs.results').replace('{count}','').trim() : t('clubs.result').replace('{count}','').trim()}
-                {selectedCategory && <> {t('clubs.inCategory')} <em>{t(CATEGORY_I18N_KEY[selectedCategory] || selectedCategory) || selectedCategory}</em></>}
                 {debouncedSearch && <> {t('clubs.matching')} "<em>{debouncedSearch}</em>"</>}
                 {hasMore && <> {t('clubs.showingFirst').replace('{count}', displayClubs.length)}</>}
               </p>

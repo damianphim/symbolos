@@ -54,7 +54,7 @@ def test_list_clubs_sets_public_cache_headers(client, fake_supabase):
     fake_supabase.set_table("clubs", [])
     resp = client.get("/api/clubs", headers=auth("user-1"))
     assert "public" in resp.headers["Cache-Control"]
-    assert "s-maxage=300" in resp.headers["Cache-Control"]
+    assert "s-maxage=60" in resp.headers["Cache-Control"]
 
 
 def test_list_clubs_search_is_literal_not_wildcard(client, fake_supabase):

@@ -5,7 +5,7 @@
  * design — see the "dead join flow" tests below.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ClubsTab, { buildClubCalendarEvents } from './ClubsTab'
 
@@ -154,7 +154,7 @@ describe('buildClubCalendarEvents', () => {
   })
 })
 
-// ── Explore view: listing, search, category filter ───────────────────────────
+// ── Explore view: listing, search ─────────────────────────────────────────────
 
 describe('ClubsTab explore view', () => {
   it('renders clubs returned by getClubs', async () => {
@@ -182,17 +182,6 @@ describe('ClubsTab explore view', () => {
 
     await waitFor(() =>
       expect(clubsAPI.getClubs).toHaveBeenCalledWith(expect.objectContaining({ search: 'Hack' }))
-    )
-  })
-
-  it('clicking a category pill refetches with that category', async () => {
-    clubsAPI.getCategories.mockResolvedValue({ categories: ['Academic'] })
-    clubsAPI.getClubs.mockResolvedValue({ clubs: [], count: 0 })
-    renderTab()
-    const pill = await screen.findByText('clubs.catAcademic')
-    await userEvent.click(pill)
-    await waitFor(() =>
-      expect(clubsAPI.getClubs).toHaveBeenCalledWith(expect.objectContaining({ category: 'Academic' }))
     )
   })
 })

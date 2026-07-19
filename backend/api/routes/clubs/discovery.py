@@ -37,8 +37,11 @@ async def list_clubs(
 
     PERF: because the response is now *identical for every authenticated
     user* (no per-user manager carve-out), we can safely public-cache it
-    at the Vercel edge. 5-min TTL + 1-hour stale-while-revalidate cuts
-    Supabase reads on this endpoint by ~99% under launch traffic.
+    at the Vercel edge. 1-min TTL + 2-min stale-while-revalidate still
+    cuts most Supabase reads on this endpoint under launch traffic, while
+    keeping newly-approved clubs visible within a few minutes instead of
+    up to an hour (a longer window here previously made an admin-approved
+    club appear "missing" for anyone who'd already warmed the cache).
 
     Supabase RLS still mirrors this in case the anon key in the bundle
     is used to query the table directly — see
@@ -104,12 +107,13 @@ async def list_clubs(
             c["subscriber_count"] = sub_counts.get(c.get("id"), 0)
 
         # `public` = shared cache (Vercel edge) may store this response.
-        # `s-maxage=300` = edge keeps it 5 min; `max-age=60` = browsers
-        # reuse for 1 min so a quick back-button doesn't refetch.
-        # `stale-while-revalidate` = serve stale for an hour while a
-        # background refresh runs — invisible to the user, smooths spikes.
+        # `s-maxage=60` = edge keeps it 1 min; `max-age=30` = browsers
+        # reuse briefly so a quick back-button doesn't refetch.
+        # `stale-while-revalidate=120` = serve stale for up to 2 more
+        # minutes while a background refresh runs — smooths spikes without
+        # leaving a newly-approved club "missing" for very long.
         response.headers["Cache-Control"] = (
-            "public, max-age=60, s-maxage=300, stale-while-revalidate=3600"
+            "public, max-age=30, s-maxage=60, stale-while-revalidate=120"
         )
         return {"clubs": visible, "count": len(visible)}
     except Exception as e:
