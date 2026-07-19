@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { HiLightBulb } from 'react-icons/hi'
+import { HiLightBulb, HiLockClosed } from 'react-icons/hi'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { supabase } from '../../lib/supabase'
@@ -41,6 +41,10 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   // so this is the reliable path; link-click and polling remain as fallbacks.
   const [verifyCode, setVerifyCode] = useState('')
   const [verifyingCode, setVerifyingCode] = useState(false)
+  // 6-digit recovery code entry on the reset screen (same Safe Links problem:
+  // the scanner consumes single-use recovery links before the user can).
+  const [resetCode, setResetCode] = useState('')
+  const [resetVerifying, setResetVerifying] = useState(false)
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const pollRef = useRef(null)
 
@@ -52,6 +56,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const isLogin  = mode === 'login'
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
+  const isReset  = mode === 'reset'
   const isVerify = mode === 'verify'
 
   useEffect(() => {
@@ -183,6 +188,39 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
     }
   }
 
+  // Verify the emailed 6-digit recovery code. On success Supabase returns a
+  // session and fires SIGNED_IN. The two flags below are the same ones the
+  // link (PASSWORD_RECOVERY) path sets: Dashboard reads them on mount and
+  // opens Settings' forced password-change modal, so both reset paths land
+  // in the identical "choose a new password" UI.
+  const handleVerifyResetCode = async (e) => {
+    e?.preventDefault?.()
+    const code = resetCode.trim()
+    if (!/^\d{6}$/.test(code) || resetVerifying) return
+    setResetVerifying(true)
+    setErrors({})
+    // Must be set BEFORE verifyOtp — SIGNED_IN fires during the call and
+    // Dashboard reads the flag in its initial-state closure on mount.
+    localStorage.setItem('symbolos_open_pw_change', '1')
+    sessionStorage.setItem('symbolos_recovery_flow', '1')
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: pendingEmail || email,
+        token: code,
+        type: 'recovery',
+      })
+      if (error) throw error
+      // SIGNED_IN fires → AuthContext loads the profile → app advances.
+    } catch (err) {
+      localStorage.removeItem('symbolos_open_pw_change')
+      sessionStorage.removeItem('symbolos_recovery_flow')
+      setErrors({ form: t('auth.codeInvalid') })
+      console.warn('Recovery OTP verify failed:', err?.message)
+    } finally {
+      setResetVerifying(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setMessage('')
@@ -193,7 +231,14 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
       if (isForgot) {
         const { error } = await resetPasswordForEmail(email)
         if (error) setErrors({ form: error.message })
-        else setMessage(t('auth.resetSent'))
+        else {
+          // Advance to the code-entry screen. Queue the confirmation so it
+          // survives the mode-change effect's setMessage('').
+          setPendingEmail(email)
+          setResendCooldown(60)
+          pendingMsgRef.current = t('auth.resetSent')
+          switchMode('reset')
+        }
         return
       }
       if (isLogin) {
@@ -364,8 +409,61 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             </div>
           )}
 
+          {/* Password-reset code entry screen */}
+          {isReset && (
+            <div className="auth-verify-screen">
+              <div className="auth-verify-icon"><HiLockClosed /></div>
+              <h2 className="auth-card-title">{t('auth.resetCodeTitle')}</h2>
+              <p className="auth-card-subtitle">
+                {t('auth.resetCodeSent')} <strong>{pendingEmail}</strong><br />
+                {t('auth.codeSubtitle')}
+              </p>
+
+              <form className="auth-verify-code-row" onSubmit={handleVerifyResetCode}>
+                <input
+                  className="auth-input auth-verify-code-input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
+                  aria-label={t('auth.codeLabel')}
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={resetCode.trim().length !== 6 || resetVerifying}
+                >
+                  {resetVerifying ? '…' : t('auth.codeVerifyBtn')}
+                </button>
+              </form>
+
+              <button
+                className="btn btn-primary btn-full"
+                style={{ marginTop: '20px' }}
+                disabled={resendCooldown > 0 || resendLoading}
+                onClick={async () => {
+                  setResendLoading(true)
+                  const { error } = await resetPasswordForEmail(pendingEmail)
+                  setResendLoading(false)
+                  if (error) setErrors({ form: error.message })
+                  else { setMessage(t('auth.resetSent')); setResendCooldown(60) }
+                }}
+              >
+                {resendLoading ? t('auth.loadingForgot') : resendCooldown > 0 ? `${t('auth.resetResendBtn')} (${resendCooldown}s)` : t('auth.resetResendBtn')}
+              </button>
+              {message && <p className="auth-verify-success">{message}</p>}
+              {errors.form && <p className="auth-error-msg" style={{ marginTop: '8px' }}>{errors.form}</p>}
+              <button className="auth-back-btn" style={{ marginTop: '16px' }} onClick={() => switchMode('login')}>
+                {t('auth.backToLogin')}
+              </button>
+            </div>
+          )}
+
           {/* Tabs — only for login/signup */}
-          {!isForgot && !isVerify && (
+          {!isForgot && !isVerify && !isReset && (
             <div className="auth-tabs" role="tablist">
               <button
                 role="tab"
@@ -389,7 +487,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             </div>
           )}
 
-          {!isVerify && (
+          {!isVerify && !isReset && (
             <>
               <div className="auth-card-header">
                 <h2 className="auth-card-title">
