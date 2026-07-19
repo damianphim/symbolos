@@ -1103,7 +1103,7 @@ function ClubManageDashboard({ club, onClose, onSave, t }) {
       // their own Clubs tab. They become an admin only on accept.
       await clubsAPI.createManagerRequest(club.id, newManagerEmail.trim())
       setNewManagerEmail('')
-      setManagerSuccess(t('clubs.manage.managerInviteSent') || 'Invite sent — they will see it in their Clubs tab.')
+      setManagerSuccess(t('clubs.manage.managerInviteSent') || 'Invite sent, they will see it in their Clubs tab.')
       setTimeout(() => setManagerSuccess(''), 4000)
     } catch (e) {
       setManagerError(e.message)
@@ -1232,10 +1232,10 @@ function ClubManageDashboard({ club, onClose, onSave, t }) {
                 </div>
               </div>
               <div className="club-manage__quick-info">
-                <p><strong>{t('clubs.fieldCategory')}:</strong> {club.category || '—'}</p>
-                <p><strong>{t('clubs.fieldEmail')}:</strong> {club.contact_email || '—'}</p>
-                <p><strong>{t('clubs.fieldUrl')}:</strong> {club.website_url ? <a href={club.website_url} target="_blank" rel="noopener noreferrer">{club.website_url}</a> : '—'}</p>
-                <p><strong>{t('clubs.fieldSchedule')}:</strong> {club.meeting_schedule || '—'}</p>
+                <p><strong>{t('clubs.fieldCategory')}:</strong> {club.category || '-'}</p>
+                <p><strong>{t('clubs.fieldEmail')}:</strong> {club.contact_email || '-'}</p>
+                <p><strong>{t('clubs.fieldUrl')}:</strong> {club.website_url ? <a href={club.website_url} target="_blank" rel="noopener noreferrer">{club.website_url}</a> : '-'}</p>
+                <p><strong>{t('clubs.fieldSchedule')}:</strong> {club.meeting_schedule || '-'}</p>
                 <p><strong>{t('clubs.fieldVisibility')}:</strong> {club.is_private ? t('clubs.private') : t('clubs.visibilityPublic')}</p>
               </div>
             </div>
@@ -2159,7 +2159,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
         </button>
       </div>
 
-      <div className="clubs-tabs">
+      <div className="clubs-tabs" data-tour="clubs-tabs">
         <button className={`clubs-tab-btn ${activeView === 'explore' ? 'active' : ''}`} onClick={() => setActiveView('explore')}>
           <FaSearch size={15} /> {t('clubs.tabExplore')}
         </button>

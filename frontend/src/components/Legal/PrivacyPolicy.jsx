@@ -21,9 +21,9 @@ export default function PrivacyPolicy({ onClose }) {
 
   const renderBoldList = (key) =>
     t(key).split('|').map((item, i) => {
-      const dashIdx = item.indexOf(' — ')
-      if (dashIdx !== -1) {
-        return <li key={i}><strong>{item.slice(0, dashIdx)}</strong> — {item.slice(dashIdx + 3)}</li>
+      const sepIdx = item.search(/[:：]/)
+      if (sepIdx !== -1) {
+        return <li key={i}><strong>{item.slice(0, sepIdx).trim()}</strong>: {item.slice(sepIdx + 1).trim()}</li>
       }
       return <li key={i}>{item}</li>
     })

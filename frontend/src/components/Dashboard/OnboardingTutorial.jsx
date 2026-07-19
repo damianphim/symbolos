@@ -2,8 +2,10 @@ import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } fr
 import { FaRocket, FaLightbulb } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
 
-// Short 4-step tour: the Home setup checklist carries the real onboarding,
-// so the tour just orients the user around the three core surfaces.
+// Full tour: walks every tab in the sidebar, plus one deeper stop per tab
+// highlighting its main sub-navigation. The 8 top-level stops reuse the
+// data-tour="<key>" anchors already on every Sidebar nav button; the deeper
+// stops target a data-tour attribute added to that tab's own markup.
 const buildSteps = (t) => [
   {
     id: 'welcome',
@@ -22,6 +24,14 @@ const buildSteps = (t) => [
     tip: t('tour.homeTip'),
   },
   {
+    id: 'home-setup',
+    target: '[data-tour="home-setup"]',
+    tab: 'home',
+    title: t('tour.homeSetupTitle'),
+    description: t('tour.homeSetupDesc'),
+    tip: null,
+  },
+  {
     id: 'chat',
     target: '[data-tour="chat"]',
     tab: 'chat',
@@ -30,12 +40,108 @@ const buildSteps = (t) => [
     tip: t('tour.briefTip'),
   },
   {
+    id: 'chat-categories',
+    target: '[data-tour="chat-categories"]',
+    tab: 'chat',
+    title: t('tour.chatCategoriesTitle'),
+    description: t('tour.chatCategoriesDesc'),
+    tip: null,
+  },
+  {
+    id: 'chat-freeform',
+    target: '[data-tour="chat-freeform"]',
+    tab: 'chat',
+    title: t('tour.chatFreeformTitle'),
+    description: t('tour.chatFreeformDesc'),
+    tip: null,
+  },
+  {
+    id: 'courses',
+    target: '[data-tour="courses"]',
+    tab: 'courses',
+    title: t('tour.coursesTitle'),
+    description: t('tour.coursesDesc'),
+    tip: null,
+  },
+  {
+    id: 'courses-mycourses',
+    target: '[data-tour="courses-mycourses"]',
+    tab: 'courses',
+    title: t('tour.coursesMyCoursesTitle'),
+    description: t('tour.coursesMyCoursesDesc'),
+    tip: null,
+  },
+  {
     id: 'favorites',
     target: '[data-tour="favorites"]',
     tab: 'favorites',
     title: t('tour.degreeTitle'),
     description: t('tour.degreeDesc'),
     tip: t('tour.degreeTip'),
+  },
+  {
+    id: 'degree-subtabs',
+    target: '[data-tour="degree-subtabs"]',
+    tab: 'favorites',
+    title: t('tour.degreeSubtabsTitle'),
+    description: t('tour.degreeSubtabsDesc'),
+    tip: null,
+  },
+  {
+    id: 'calendar',
+    target: '[data-tour="calendar"]',
+    tab: 'calendar',
+    title: t('tour.calendarTitle'),
+    description: t('tour.calendarDesc'),
+    tip: null,
+  },
+  {
+    id: 'calendar-add',
+    target: '[data-tour="calendar-add"]',
+    tab: 'calendar',
+    title: t('tour.calendarAddTitle'),
+    description: t('tour.calendarAddDesc'),
+    tip: null,
+  },
+  {
+    id: 'clubs',
+    target: '[data-tour="clubs"]',
+    tab: 'clubs',
+    title: t('tour.clubsTitle'),
+    description: t('tour.clubsDesc'),
+    tip: null,
+  },
+  {
+    id: 'clubs-tabs',
+    target: '[data-tour="clubs-tabs"]',
+    tab: 'clubs',
+    title: t('tour.clubsTabsTitle'),
+    description: t('tour.clubsTabsDesc'),
+    tip: null,
+  },
+  {
+    id: 'forum',
+    target: '[data-tour="forum"]',
+    tab: 'forum',
+    title: t('tour.forumTitle'),
+    description: t('tour.forumDesc'),
+    tip: null,
+  },
+  {
+    id: 'forum-sections',
+    target: '[data-tour="forum-sections"]',
+    tab: 'forum',
+    title: t('tour.forumSectionsTitle'),
+    description: t('tour.forumSectionsDesc'),
+    tip: null,
+  },
+  {
+    id: 'profile',
+    target: '[data-tour="profile"]',
+    tab: 'profile',
+    title: t('tour.profileTitle'),
+    description: t('tour.profileDesc'),
+    tip: null,
   },
 ]
 
@@ -64,10 +170,15 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
     setRect({ top: r.top, left: r.left, width: r.width, height: r.height, right: r.right, bottom: r.bottom })
   }, [current.target])
 
+  // Several stops target elements inside lazily-loaded tabs (ClubsTab,
+  // CalendarTab, Forum, ...) — a single 120ms re-check isn't always enough
+  // to catch the chunk fetch + mount on a slow connection, so poll a few
+  // times with backoff instead of just once.
   useLayoutEffect(() => {
     measure()
-    const t = setTimeout(measure, 120)
-    return () => clearTimeout(t)
+    const delays = [50, 150, 300, 600, 1000]
+    const timers = delays.map(d => setTimeout(measure, d))
+    return () => timers.forEach(clearTimeout)
   }, [measure, step])
 
   useEffect(() => {

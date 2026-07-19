@@ -97,7 +97,7 @@ export default function ProfSuggestionPopover({ courseCode, currentInstructor, o
         <>
           <p className="prof-popover-desc">
             Think the professor listed for <strong>{courseCode}</strong> is wrong?
-            Let us know who actually teaches it — we'll verify and update.
+            Let us know who actually teaches it, we'll verify and update.
           </p>
 
           {currentInstructor && (

@@ -24,22 +24,6 @@ import SectionHeader from '../ui/SectionHeader'
 import Badge from '../ui/Badge'
 import './HomeTab.css'
 
-// Per-course accent palette built on the existing per-tab accents so course
-// chips stay theme-aware (Canvas-style course color coding).
-const COURSE_ACCENTS = [
-  'var(--tab-courses-accent)',
-  'var(--tab-calendar-accent)',
-  'var(--tab-clubs-accent)',
-  'var(--tab-forum-accent)',
-  'var(--accent-primary)',
-]
-
-function courseAccent(code = '') {
-  let h = 0
-  for (let i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) >>> 0
-  return COURSE_ACCENTS[h % COURSE_ACCENTS.length]
-}
-
 // Invariant: no raw emojis in the UI — react-icons only.
 const EVENT_ICONS = {
   exam: <FaPenAlt />, midterm: <FaPenAlt />, assignment: <FaFileAlt />,
@@ -71,7 +55,7 @@ function currentTermKey() {
 
 export default function HomeTab({
   user, profile,
-  advisorCards = [], cardsLoading = false,
+  advisorCards = [], cardsLoading = false, cardsGenerating = false,
   currentCourses = [], completedCourses = [],
   events = [], eventsLoading = false, hasCourseEvents = false,
   onTabChange, onViewCurrentCourses, onOpenBriefCard, onImportTranscript, onImportSyllabus,
@@ -98,6 +82,10 @@ export default function HomeTab({
   const dismissSetup = () => {
     setSetupDismissed(true)
     try { localStorage.setItem(dismissKey, '1') } catch { /* ignore */ }
+  }
+  const resumeSetup = () => {
+    setSetupDismissed(false)
+    try { localStorage.removeItem(dismissKey) } catch { /* ignore */ }
   }
 
   const steps = useMemo(() => [
@@ -155,7 +143,13 @@ export default function HomeTab({
           <p className="home-term">{t(currentTermKey()).replace('{year}', new Date().getFullYear())}</p>
         </div>
         {!setupComplete && (
-          <Badge variant="accent">{t('home.setupProgress').replace('{done}', doneCount).replace('{total}', steps.length)}</Badge>
+          <button
+            className="home-header__setup-badge"
+            onClick={resumeSetup}
+            title={setupDismissed ? t('setup.resume') : undefined}
+          >
+            <Badge variant="accent">{t('home.setupProgress').replace('{done}', doneCount).replace('{total}', steps.length)}</Badge>
+          </button>
         )}
       </header>
 
@@ -163,7 +157,7 @@ export default function HomeTab({
         {/* ── Main column ── */}
         <div className="home-main">
           {showSetup && (
-            <section className="home-card home-setup">
+            <section className="home-card home-setup" data-tour="home-setup">
               <SectionHeader
                 title={t('setup.title')}
                 action={
@@ -193,122 +187,11 @@ export default function HomeTab({
             </section>
           )}
 
-          {/* From your Brief */}
-          <section className="home-card">
-            <SectionHeader
-              icon={<FaRegLightbulb />}
-              iconColor="#f59e0b"
-              title={t('home.fromYourBrief')}
-              action={
-                <button className="home-link" onClick={() => onTabChange('chat')}>
-                  {t('home.viewAll')} <FaArrowRight />
-                </button>
-              }
-            />
-            {cardsLoading && topCards.length === 0 ? (
-              <div className="home-brief__list">
-                {[0, 1].map(i => (
-                  <div key={i} className="home-brief__item">
-                    <Skeleton circle height="2rem" />
-                    <div className="home-brief__item-text">
-                      <Skeleton width="55%" />
-                      <Skeleton width="90%" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : topCards.length > 0 ? (
-              <div className="home-brief__list">
-                {topCards.map(card => (
-                  <button key={card.id} className="home-brief__item" onClick={() => openBriefCard(card.id)}>
-                    <span className="home-brief__icon">{CARD_TYPE_ICONS[card.card_type] || <FaRegLightbulb />}</span>
-                    <div className="home-brief__item-text">
-                      <span className="home-brief__title">{card.title}</span>
-                      <span className="home-brief__body">{card.body}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<FaRegLightbulb />}
-                title={t('home.briefEmptyTitle')}
-                subtitle={t('home.briefEmptySub')}
-                action={
-                  <button className="btn btn-secondary" onClick={() => onTabChange('chat')}>
-                    {t('home.briefEmptyCta')}
-                  </button>
-                }
-              />
-            )}
-          </section>
-
-          {/* Current courses */}
-          <section className="home-card">
-            <SectionHeader
-              icon={<FaBook />}
-              iconColor="#2563eb"
-              title={t('home.currentCourses')}
-              action={
-                <button className="home-link" onClick={() => onTabChange('courses')}>
-                  {t('home.exploreCourses')} <FaArrowRight />
-                </button>
-              }
-            />
-            {activeCourses.length > 0 ? (
-              <div className="home-courses">
-                {activeCourses.map(course => (
-                  <button
-                    key={course.course_code}
-                    className="home-course-chip"
-                    style={{ '--course-accent': courseAccent(course.course_code) }}
-                    onClick={goToCurrentCourses}
-                  >
-                    <span className="home-course-chip__code">{course.course_code}</span>
-                    {course.course_title && (
-                      <span className="home-course-chip__title">{course.course_title}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            ) : upcomingCount > 0 ? (
-              <EmptyState
-                icon={<FaBook />}
-                title={t('home.coursesNoneThisTerm')}
-                subtitle={t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))}
-                action={
-                  <button className="btn btn-secondary" onClick={goToCurrentCourses}>
-                    {t('home.coursesUpcomingCta')} <FaArrowRight />
-                  </button>
-                }
-              />
-            ) : (
-              <EmptyState
-                icon={<FaBook />}
-                title={t('home.coursesEmptyTitle')}
-                subtitle={t('home.coursesEmptySub')}
-                action={
-                  <button className="btn btn-secondary" onClick={onImportTranscript}>
-                    <FaFileUpload /> {t('home.coursesEmptyCta')}
-                  </button>
-                }
-              />
-            )}
-            {activeCourses.length > 0 && upcomingCount > 0 && (
-              <button className="home-link" style={{ marginTop: 10 }} onClick={goToCurrentCourses}>
-                {t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))} <FaArrowRight />
-              </button>
-            )}
-          </section>
-        </div>
-
-        {/* ── Right column (Canvas "To Do") ── */}
-        <div className="home-side">
           {/* Up Next */}
           <section className="home-card">
             <SectionHeader
               icon={<FaCalendarAlt />}
-              iconColor="#059669"
+              iconColor="#ed1b2f"
               title={t('home.upNext')}
               action={
                 <button className="home-link" onClick={() => onTabChange('calendar')}>
@@ -351,11 +234,121 @@ export default function HomeTab({
             )}
           </section>
 
+          {/* From your Brief */}
+          <section className="home-card">
+            <SectionHeader
+              icon={<FaRegLightbulb />}
+              iconColor="#ed1b2f"
+              title={t('home.fromYourBrief')}
+              action={
+                <button className="home-link" onClick={() => onTabChange('chat')}>
+                  {t('home.viewAll')} <FaArrowRight />
+                </button>
+              }
+            />
+            {(cardsLoading && topCards.length === 0) || cardsGenerating ? (
+              <div className="home-brief__list">
+                {[0, 1].map(i => (
+                  <div key={i} className="home-brief__item">
+                    <Skeleton circle height="2rem" />
+                    <div className="home-brief__item-text">
+                      <Skeleton width="55%" />
+                      <Skeleton width="90%" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : topCards.length > 0 ? (
+              <div className="home-brief__list">
+                {topCards.map(card => (
+                  <button key={card.id} className="home-brief__item" onClick={() => openBriefCard(card.id)}>
+                    <span className="home-brief__icon">{CARD_TYPE_ICONS[card.card_type] || <FaRegLightbulb />}</span>
+                    <div className="home-brief__item-text">
+                      <span className="home-brief__title">{card.title}</span>
+                      <span className="home-brief__body">{card.body}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={<FaRegLightbulb />}
+                title={t('home.briefEmptyTitle')}
+                subtitle={t('home.briefEmptySub')}
+                action={
+                  <button className="btn btn-secondary" onClick={() => onTabChange('chat')}>
+                    {t('home.briefEmptyCta')}
+                  </button>
+                }
+              />
+            )}
+          </section>
+
+          {/* Current courses */}
+          <section className="home-card">
+            <SectionHeader
+              icon={<FaBook />}
+              iconColor="#ed1b2f"
+              title={t('home.currentCourses')}
+              action={
+                <button className="home-link" onClick={() => onTabChange('courses')}>
+                  {t('home.exploreCourses')} <FaArrowRight />
+                </button>
+              }
+            />
+            {activeCourses.length > 0 ? (
+              <div className="home-courses">
+                {activeCourses.map(course => (
+                  <button
+                    key={course.course_code}
+                    className="home-course-chip"
+                    onClick={goToCurrentCourses}
+                  >
+                    <span className="home-course-chip__code">{course.course_code}</span>
+                    {course.course_title && (
+                      <span className="home-course-chip__title">{course.course_title}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : upcomingCount > 0 ? (
+              <EmptyState
+                icon={<FaBook />}
+                title={t('home.coursesNoneThisTerm')}
+                subtitle={t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))}
+                action={
+                  <button className="btn btn-secondary" onClick={goToCurrentCourses}>
+                    {t('home.coursesUpcomingCta')} <FaArrowRight />
+                  </button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={<FaBook />}
+                title={t('home.coursesEmptyTitle')}
+                subtitle={t('home.coursesEmptySub')}
+                action={
+                  <button className="btn btn-secondary" onClick={onImportTranscript}>
+                    <FaFileUpload /> {t('home.coursesEmptyCta')}
+                  </button>
+                }
+              />
+            )}
+            {activeCourses.length > 0 && upcomingCount > 0 && (
+              <button className="home-link" style={{ marginTop: 10 }} onClick={goToCurrentCourses}>
+                {t('home.coursesUpcomingSub').replace('{count}', String(upcomingCount))} <FaArrowRight />
+              </button>
+            )}
+          </section>
+        </div>
+
+        {/* ── Right column (Canvas "To Do") ── */}
+        <div className="home-side">
           {/* Degree progress */}
           <section className="home-card">
             <SectionHeader
               icon={<FaChartLine />}
-              iconColor="#7c3aed"
+              iconColor="#ed1b2f"
               title={t('home.degreeProgress')}
               action={
                 <button className="home-link" onClick={() => onTabChange('favorites')}>

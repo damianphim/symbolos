@@ -167,9 +167,21 @@ body:has(.landing-root),
   .landing-hero__scroll-btn { animation: none; }
 }
 
+/* The hero is the first thing every visitor sees — it should appear
+   near-instantly, not wait out the same scroll-triggered fade used by
+   sections further down the page. */
+.landing-hero .reveal {
+  transition-duration: 0.25s;
+  transition-delay: 0ms;
+}
+
 /* ── 1. Hero — fills the full viewport, flat solid background (no gradient) ── */
 .landing-hero {
   min-height: 100vh;
+  /* Small-viewport unit: excludes the space mobile browser URL/toolbars
+     reclaim, so the hero doesn't over-reserve height and push its own
+     content (headline, CTA) below the fold on short phones. */
+  min-height: 100svh;
   display: flex;
   align-items: center;
   text-align: center;

@@ -274,7 +274,7 @@ export default function EnhancedProfileForm({ profile, user, onSave, onCancel })
               </select>
               {formData.faculty === 'Faculty of Arts' && (
                 <span className="pef-note">
-                  <strong>Faculty of Arts degree structure:</strong> A B.A. requires at least one major and one minor. You don't need to decide on your exact combination right away — you have until you apply to graduate.
+                  <strong>Faculty of Arts degree structure:</strong> A B.A. requires at least one major and one minor. You don't need to decide on your exact combination right away, you have until you apply to graduate.
                 </span>
               )}
             </EditRow>
@@ -313,7 +313,7 @@ export default function EnhancedProfileForm({ profile, user, onSave, onCancel })
                     }}
                   >
                     {BASC_STREAMS.map(s => (
-                      <option key={s.value} value={s.value}>{s.label} — {s.description}</option>
+                      <option key={s.value} value={s.value}>{s.label}, {s.description}</option>
                     ))}
                   </select>
                 </EditRow>

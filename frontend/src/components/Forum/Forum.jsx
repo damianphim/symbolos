@@ -675,7 +675,7 @@ export default function Forum() {
       </div>
 
       {/* Section tabs */}
-      <div className="forum-section-bar">
+      <div className="forum-section-bar" data-tour="forum-sections">
         {SECTIONS.map(s => (
           <button key={s.key}
             className={`forum-section-btn ${activeSection === s.key ? 'active' : ''}`}
@@ -737,7 +737,7 @@ export default function Forum() {
                 : activeSection === 'clubs'
                   ? 'No club discussions yet.'
                   : activeSection === 'app_feedback'
-                    ? 'No app feedback yet — share what could be better.'
+                    ? 'No app feedback yet, share what could be better.'
                     : t('forum.noPostsYet')}
           </p>
           {isMcGill ? (

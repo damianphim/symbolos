@@ -34,6 +34,14 @@
   color: var(--text-tertiary);
 }
 
+.home-header__setup-badge {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 /* ── Grid ───────────────────────────────────────────────────── */
 .home-grid {
   display: grid;
@@ -57,6 +65,11 @@
   border-radius: 12px;
   padding: 1.1rem 1.25rem;
   box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease;
+}
+
+.home-card:hover {
+  border-color: var(--accent-primary);
 }
 
 .home-link {
@@ -182,6 +195,7 @@
   cursor: pointer;
   text-align: left;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .home-brief__item:hover {
@@ -233,7 +247,6 @@
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--border-primary);
-  border-left: 4px solid var(--course-accent, var(--accent-primary));
   background: var(--bg-secondary);
   cursor: pointer;
   text-align: left;
@@ -242,8 +255,7 @@
 
 .home-course-chip:hover {
   background: var(--card-hover-bg);
-  border-color: var(--card-hover-border);
-  border-left-color: var(--course-accent, var(--accent-primary));
+  border-color: var(--accent-primary);
 }
 
 .home-course-chip__code {

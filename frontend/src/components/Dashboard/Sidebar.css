@@ -733,13 +733,51 @@
   .sidebar-collapse-btn { width: 32px; height: 32px; }
   .user-info { padding: 10px 12px; }
 
-  /* Mini rail: keep vertically centered, but use safe-area on the left
-     edge for landscape-notched phones. */
+  /* Mini rail becomes a bottom tab bar on mobile — thumb-reachable and the
+     pattern students already know from every other app on their phone,
+     instead of a floating dock down the left edge. */
   .mini-rail {
-    left: max(8px, env(safe-area-inset-left, 0));
+    box-sizing: border-box;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    padding: 6px max(8px, env(safe-area-inset-right, 0)) calc(6px + env(safe-area-inset-bottom, 0)) max(8px, env(safe-area-inset-left, 0));
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary, #e5e7eb);
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
+    animation: mini-rail-enter-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
   }
-  .mini-pill { width: 38px; height: 38px; font-size: 1rem; }
-  .mini-expand-btn { width: 38px; height: 38px; }
+  .mini-rail--exiting { animation: mini-rail-exit-bottom 0.16s ease both; }
+
+  .mini-capsule {
+    flex-direction: row;
+    gap: 0;
+    /* Take the space left over after the fixed-size expand button, and
+       scroll internally rather than shrinking its own icons. */
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mini-capsule::-webkit-scrollbar { display: none; }
+  .mini-capsule-divider { width: 1px; height: 20px; margin: 0 3px; flex-shrink: 0; }
+
+  /* 44px meets the standard mobile touch-target minimum (was 38px). */
+  .mini-pill { width: 44px; height: 44px; font-size: 1.05rem; flex-shrink: 0; }
+  .mini-expand-btn { width: 44px; height: 44px; margin-left: 4px; flex-shrink: 0; }
+
+  @keyframes mini-rail-enter-bottom {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes mini-rail-exit-bottom {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(12px); }
+  }
 
   /* Sidebar footer respects iOS safe area */
   .sidebar-footer {

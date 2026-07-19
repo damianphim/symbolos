@@ -73,7 +73,7 @@ export default function PersonalInfoCard({ profile, user, onUpdateProfile }) {
 
       {saveError && !isEditing && (
         <div className="pic-error">
-          {saveError} —{' '}
+          {saveError},{' '}
           <button className="pic-error-retry" onClick={() => setIsEditing(true)}>
             {t('profile.editProfile')}
           </button>

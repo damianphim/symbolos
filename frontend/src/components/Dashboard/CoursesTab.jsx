@@ -147,7 +147,7 @@ export default function CoursesTab({
                 ? t('courses.foundResults').replace('{count}', searchResults.length)
                 : t('courses.foundResultsPlural').replace('{count}', searchResults.length)}
               {totalPages > 1 && (
-                <span className="results-page-info"> — page {currentPage} of {totalPages}</span>
+                <span className="results-page-info">, page {currentPage} of {totalPages}</span>
               )}
             </h3>
           </div>

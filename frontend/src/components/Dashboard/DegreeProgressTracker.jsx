@@ -86,6 +86,11 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
     return (
       <div className="degree-progress-tracker degree-progress-tracker--compact">
         {progressSection}
+        {stats.remainingCredits > 0 && (
+          <p className="degree-progress-tracker__remaining-hint">
+            {Math.round(stats.remainingCredits)} {t('courses.credits').toLowerCase()} {t('degree.remaining').toLowerCase()}
+          </p>
+        )}
       </div>
     )
   }
