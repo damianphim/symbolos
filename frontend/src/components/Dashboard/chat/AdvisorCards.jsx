@@ -748,7 +748,7 @@ export default function AdvisorCards({
 
       {/* ── Category bar ── */}
       {!showSkeletons && (
-        <nav className="category-bar">
+        <nav className="category-bar" data-tour="chat-categories">
           {/* All tab */}
           <button
             className={`category-tab ${activeCategory === 'all' ? 'active' : ''}`}
@@ -832,7 +832,7 @@ export default function AdvisorCards({
       </div>
 
       {/* ── Freeform input ── */}
-      <form className="advisor-cards-freeform" onSubmit={onFreeformSubmit}>
+      <form className="advisor-cards-freeform" onSubmit={onFreeformSubmit} data-tour="chat-freeform">
         <input
           type="text"
           className="freeform-input"

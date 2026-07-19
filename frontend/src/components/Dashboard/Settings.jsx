@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FaCog, FaPalette, FaBell, FaLock, FaBolt, FaGlobe,
-  FaSun, FaMoon, FaSyncAlt, FaDownload,
+  FaSun, FaMoon, FaSyncAlt, FaDownload, FaCompass,
   FaEnvelope, FaGraduationCap, FaUsers, FaUser, FaCheck,
   FaTrash, FaExclamationTriangle, FaClipboardList,
   FaNewspaper,
@@ -125,6 +125,10 @@ export default function Settings({ user, onUpdateSettings }) {
     setAutoSaveFlash(true)
     setTimeout(() => setAutoSaveFlash(false), 1800)
   }
+
+  // Dashboard listens for this and re-shows the onboarding walkthrough —
+  // same window-event pattern as open-transcript-upload / open-degree-planning.
+  const handleReplayTour = () => window.dispatchEvent(new CustomEvent('restart-tour'))
 
   const handleThemeChange = (v) => {
     setSettings(p => ({ ...p, theme: v }))
@@ -416,6 +420,15 @@ export default function Settings({ user, onUpdateSettings }) {
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
+            </div>
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">{t('settings.replayTour')}</label>
+                <p className="setting-description">{t('settings.replayTourDesc')}</p>
+              </div>
+              <button className="export-btn" onClick={handleReplayTour}>
+                <FaCompass className="export-btn-icon" /> {t('settings.replayTour')}
+              </button>
             </div>
           </div>
         </div>

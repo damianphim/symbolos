@@ -325,7 +325,7 @@ export default function RightSidebar({
               <div key={i} className={`rsb-pinned-msg rsb-pinned-msg--${msg.role}`}>
                 <p className="rsb-pinned-msg__text">{renderText(msg.content)}</p>
                 <div className="rsb-pinned-msg__meta">
-                  <span className="rsb-pinned-msg__tab">{msg.tab || '—'}</span>
+                  <span className="rsb-pinned-msg__tab">{msg.tab || '-'}</span>
                   <button
                     className="rsb-pin-btn rsb-pin-btn--active"
                     onClick={() => togglePin(msg)}

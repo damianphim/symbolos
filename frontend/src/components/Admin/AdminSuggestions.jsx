@@ -143,7 +143,7 @@ export default function AdminSuggestions() {
     <div className="stat-card">
       <div className="stat-icon">{icon}</div>
       <div className="stat-body">
-        <div className="stat-value">{value ?? '—'}</div>
+        <div className="stat-value">{value ?? '-'}</div>
         <div className="stat-label">{label}</div>
         {sub && <div className="stat-sub">{sub}</div>}
       </div>
@@ -214,7 +214,7 @@ export default function AdminSuggestions() {
                     <div className="suggestion-course">{s.course_code}</div>
                     <div className="suggestion-names">
                       <span className="name-label">Current:</span>
-                      <span className="name-value current">{s.current_name || '—'}</span>
+                      <span className="name-value current">{s.current_name || '-'}</span>
                       <span className="name-arrow">→</span>
                       <span className="name-label">Suggested:</span>
                       <span className="name-value suggested">{s.suggested_name}</span>

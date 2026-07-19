@@ -31,7 +31,7 @@ const STATUS_URL    = 'https://status.symbolos.ca'
 const VARIANTS = {
   generic: {
     title: ['error.screen.title.generic',      'Something went wrong'],
-    body:  ['error.screen.body.generic',       'A glitch on our side stopped this page from loading. Your data is safe — nothing was changed.'],
+    body:  ['error.screen.body.generic',       'A glitch on our side stopped this page from loading. Your data is safe. Nothing was changed.'],
   },
   verifyFailed: {
     title: ['error.screen.title.verifyFailed', "Verification didn't work"],
@@ -106,7 +106,7 @@ export default function ErrorScreen({
     : body
 
   const mailto = useMemo(() => {
-    const subject = encodeURIComponent(`Symbolos error — ${variant}`)
+    const subject = encodeURIComponent(`Symbolos error: ${variant}`)
     const ref = eventId ? `\n\nReference: ${eventId}` : ''
     const where = typeof window !== 'undefined' ? window.location.href : ''
     const body  = encodeURIComponent(
@@ -173,7 +173,7 @@ export default function ErrorScreen({
               {' '}
               {t(
                 'error.screen.eventIdHint',
-                'Include this reference if you contact us — it helps us find the issue in our logs.'
+                'Include this reference if you contact us, it helps us find the issue in our logs.'
               )}
             </p>
           </div>

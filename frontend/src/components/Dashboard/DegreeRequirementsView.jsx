@@ -589,7 +589,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           <div className="drv-foundation-waived-banner">
             <FaCheckCircle className="drv-foundation-icon" />
             <span className="drv-foundation-text">
-              <strong>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
+              <strong>{t('dp.foundationWaived')}</strong>, {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
               {transferCredits < 30 ? ` ${t('dp.foundationWaivedNote')}` : ''}.
             </span>
             <button className="drv-foundation-close" onClick={() => setFoundationDismissed(true)} aria-label="Dismiss">
@@ -649,7 +649,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
             {progress && progress.transferBlockedCredits > 0 && (
               <div className="drv-progress-wrap">
                 <span className="drv-transfer-note">
-                  {progress.transferBlockedCredits}cr from transfer credits don't count toward this major requirement, which means that you will have to make up the credits for this program elsewhere — visit <strong>Degree Planning → Electives</strong> to change that.
+                  {progress.transferBlockedCredits}cr from transfer credits don't count toward this major requirement, which means that you will have to make up the credits for this program elsewhere, visit <strong>Degree Planning → Electives</strong> to change that.
                 </span>
               </div>
             )}

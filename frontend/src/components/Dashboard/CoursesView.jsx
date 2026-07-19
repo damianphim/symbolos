@@ -51,7 +51,7 @@ export default function CoursesView({
   return (
     <div className="courses-view">
       {/* ── Sub-tab bar ── */}
-      <div className="dp-subtab-bar">
+      <div className="dp-subtab-bar" data-tour="courses-mycourses">
         <button
           className={`dp-subtab-btn ${subTab === 'my_courses' ? 'dp-subtab-btn--active' : ''}`}
           onClick={() => setSubTab('my_courses')}

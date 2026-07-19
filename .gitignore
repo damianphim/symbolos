@@ -106,3 +106,10 @@ htmlcov/
 *.temp
 *.cache
 .env*.local
+
+# ── Security test pack — never commit real probe config ──────────────────
+symboulos-security/.env
+symboulos-security/.venv/
+
+# Honeytoken playbook — deception asset, never commit
+symboulos-security/honeytokens.md

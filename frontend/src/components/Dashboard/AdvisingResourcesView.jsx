@@ -128,7 +128,7 @@ const RESOURCES = [
     id: 'study_permits_caq',
     category: 'international',
     title: 'Study Permits & CAQ',
-    description: 'International students in Quebec need both a Quebec Certificate of Acceptance (CAQ) and a federal study permit. Maintaining valid immigration status is critical — expired documents can jeopardize your studies.',
+    description: 'International students in Quebec need both a Quebec Certificate of Acceptance (CAQ) and a federal study permit. Maintaining valid immigration status is critical, expired documents can jeopardize your studies.',
     keyPoints: [
       'Apply for your CAQ first, then your study permit',
       'Begin renewal at least 3 months before expiry',
@@ -170,7 +170,7 @@ const RESOURCES = [
       'Students from countries with RAMQ agreements may opt out of ASHI',
       'Quebec residents are covered by RAMQ',
       'ASHI fees are charged to your student account each semester',
-      'Opt-out deadlines are strict — check each semester',
+      'Opt-out deadlines are strict, check each semester',
     ],
     links: [
       { label: 'Health Insurance Info', url: 'https://www.mcgill.ca/internationalstudents/health' },
@@ -200,7 +200,7 @@ const RESOURCES = [
     id: 'immigration_advising',
     category: 'international',
     title: 'Immigration Advising',
-    description: 'McGill International Student Services (ISS) provides free, confidential immigration advising. For complex cases, always consult ISS or a licensed immigration consultant — never use unlicensed agents.',
+    description: 'McGill International Student Services (ISS) provides free, confidential immigration advising. For complex cases, always consult ISS or a licensed immigration consultant, never use unlicensed agents.',
     keyPoints: [
       'ISS advisors can help with study permits, CAQ, work permits, and PGWP',
       'Appointments available online and in-person',
@@ -224,7 +224,7 @@ const RESOURCES = [
     keyPoints: [
       'Add/drop period: first two weeks of the semester (no fee penalty)',
       'After the add/drop deadline, dropping results in a "W" on your transcript',
-      'Withdrawal deadlines vary — check the academic calendar',
+      'Withdrawal deadlines vary, check the academic calendar',
       'Course changes are done through Minerva',
       'Late course changes may require faculty advisor approval',
     ],
@@ -260,7 +260,7 @@ const RESOURCES = [
     keyPoints: [
       'Registration times are assigned based on credits completed (more credits = earlier time)',
       'Use the Course Search tool to find available sections',
-      'Waitlists are available for some courses — check regularly for openings',
+      'Waitlists are available for some courses, check regularly for openings',
       'Quick Add/Drop using CRN codes is the fastest registration method',
       'Check for holds on your account that may block registration',
     ],
@@ -300,7 +300,7 @@ const RESOURCES = [
       'Work-study programs offer on-campus employment opportunities',
       'Emergency funding is available for unexpected financial hardship',
       'Quebec residents may also apply for Aide financiere aux etudes (AFE)',
-      'Application deadlines vary — apply early for maximum consideration',
+      'Application deadlines vary, apply early for maximum consideration',
     ],
     links: [
       { label: 'Scholarships & Student Aid', url: 'https://www.mcgill.ca/studentaid' },
@@ -389,7 +389,7 @@ const RESOURCES = [
     title: 'Office for Students with Disabilities (OSD)',
     description: 'The OSD provides academic accommodations for students with documented disabilities. Services include exam accommodations, note-taking support, and accessibility resources.',
     keyPoints: [
-      'Register with OSD early — accommodations are not retroactive',
+      'Register with OSD early, accommodations are not retroactive',
       'Exam accommodations: extra time, separate room, assistive technology',
       'Note-taking services and alternative format materials available',
       'OSD works with professors to implement accommodations',
@@ -551,7 +551,7 @@ function ResourceCard({ resource, saved, onToggleSave, t }) {
   )
 }
 
-export default function AdvisingResourcesView({ profile = {} }) {
+export default function AdvisingResourcesView() {
   const { t } = useLanguage()
   const [view,           setView]           = useState('browse')
   const [categoryFilter, setCategoryFilter] = useState('all')

@@ -766,7 +766,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
               </div>
             )}
           </div>
-          <button className="cal-add-btn" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
+          <button className="cal-add-btn" data-tour="calendar-add" onClick={() => { setPreselectedDate(null); setEditEvent(null); setShowModal(true) }}>
             <FaPlus /> {t('calendar.addEventBtn')}
           </button>
         </div>

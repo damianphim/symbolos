@@ -83,6 +83,10 @@ export default function HomeTab({
     setSetupDismissed(true)
     try { localStorage.setItem(dismissKey, '1') } catch { /* ignore */ }
   }
+  const resumeSetup = () => {
+    setSetupDismissed(false)
+    try { localStorage.removeItem(dismissKey) } catch { /* ignore */ }
+  }
 
   const steps = useMemo(() => [
     {
@@ -139,7 +143,13 @@ export default function HomeTab({
           <p className="home-term">{t(currentTermKey()).replace('{year}', new Date().getFullYear())}</p>
         </div>
         {!setupComplete && (
-          <Badge variant="accent">{t('home.setupProgress').replace('{done}', doneCount).replace('{total}', steps.length)}</Badge>
+          <button
+            className="home-header__setup-badge"
+            onClick={resumeSetup}
+            title={setupDismissed ? t('setup.resume') : undefined}
+          >
+            <Badge variant="accent">{t('home.setupProgress').replace('{done}', doneCount).replace('{total}', steps.length)}</Badge>
+          </button>
         )}
       </header>
 
@@ -147,7 +157,7 @@ export default function HomeTab({
         {/* ── Main column ── */}
         <div className="home-main">
           {showSetup && (
-            <section className="home-card home-setup">
+            <section className="home-card home-setup" data-tour="home-setup">
               <SectionHeader
                 title={t('setup.title')}
                 action={
@@ -176,6 +186,53 @@ export default function HomeTab({
               </ul>
             </section>
           )}
+
+          {/* Up Next */}
+          <section className="home-card">
+            <SectionHeader
+              icon={<FaCalendarAlt />}
+              iconColor="#ed1b2f"
+              title={t('home.upNext')}
+              action={
+                <button className="home-link" onClick={() => onTabChange('calendar')}>
+                  {t('home.openCalendar')} <FaArrowRight />
+                </button>
+              }
+            />
+            {eventsLoading && events.length === 0 ? (
+              <div className="home-upnext__list">
+                {[0, 1, 2].map(i => <Skeleton key={i} height="2.25rem" />)}
+              </div>
+            ) : events.length > 0 ? (
+              <ul className="home-upnext__list">
+                {events.map(ev => (
+                  <li key={ev.id} className="home-upnext__item">
+                    <span className="home-upnext__emoji">{EVENT_ICONS[ev.type] || <FaCalendarAlt />}</span>
+                    <div className="home-upnext__text">
+                      <span className="home-upnext__title">{ev.title}</span>
+                      <span className="home-upnext__meta">
+                        {formatDate(ev.date)}{ev.time ? ` · ${ev.time}` : ''}
+                      </span>
+                    </div>
+                    <Badge variant={daysUntil(ev.date) <= 7 ? 'warning' : 'default'}>
+                      {countdown(ev.date)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                icon={<FaCalendarAlt />}
+                title={t('home.upNextEmptyTitle')}
+                subtitle={t('home.upNextEmptySub')}
+                action={
+                  <button className="btn btn-secondary" onClick={onImportSyllabus}>
+                    <FaFilePdf /> {t('home.upNextEmptyCta')}
+                  </button>
+                }
+              />
+            )}
+          </section>
 
           {/* From your Brief */}
           <section className="home-card">
@@ -287,53 +344,6 @@ export default function HomeTab({
 
         {/* ── Right column (Canvas "To Do") ── */}
         <div className="home-side">
-          {/* Up Next */}
-          <section className="home-card">
-            <SectionHeader
-              icon={<FaCalendarAlt />}
-              iconColor="#ed1b2f"
-              title={t('home.upNext')}
-              action={
-                <button className="home-link" onClick={() => onTabChange('calendar')}>
-                  {t('home.openCalendar')} <FaArrowRight />
-                </button>
-              }
-            />
-            {eventsLoading && events.length === 0 ? (
-              <div className="home-upnext__list">
-                {[0, 1, 2].map(i => <Skeleton key={i} height="2.25rem" />)}
-              </div>
-            ) : events.length > 0 ? (
-              <ul className="home-upnext__list">
-                {events.map(ev => (
-                  <li key={ev.id} className="home-upnext__item">
-                    <span className="home-upnext__emoji">{EVENT_ICONS[ev.type] || <FaCalendarAlt />}</span>
-                    <div className="home-upnext__text">
-                      <span className="home-upnext__title">{ev.title}</span>
-                      <span className="home-upnext__meta">
-                        {formatDate(ev.date)}{ev.time ? ` · ${ev.time}` : ''}
-                      </span>
-                    </div>
-                    <Badge variant={daysUntil(ev.date) <= 7 ? 'warning' : 'default'}>
-                      {countdown(ev.date)}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState
-                icon={<FaCalendarAlt />}
-                title={t('home.upNextEmptyTitle')}
-                subtitle={t('home.upNextEmptySub')}
-                action={
-                  <button className="btn btn-secondary" onClick={onImportSyllabus}>
-                    <FaFilePdf /> {t('home.upNextEmptyCta')}
-                  </button>
-                }
-              />
-            )}
-          </section>
-
           {/* Degree progress */}
           <section className="home-card">
             <SectionHeader

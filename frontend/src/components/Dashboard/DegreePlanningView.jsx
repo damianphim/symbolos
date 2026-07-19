@@ -370,7 +370,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
                     {SOURCE_LABELS[c._source] || 'Done'}
                   </span>
                 </div>
-                <p className="dp-elective-title">{c.course_title || c.title || '—'}</p>
+                <p className="dp-elective-title">{c.course_title || c.title || '-'}</p>
                 <div className="dp-elective-assign">
                   <select
                     className="dp-elective-assign-select"
@@ -871,7 +871,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                         </div>
                         {isOverlap && assignCourse && (
                           <div className="dp-req-overlap-assign">
-                            <span className="dp-req-overlap-label"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Overlaps with another program —</span>
+                            <span className="dp-req-overlap-label"><FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle' }} />Overlaps with another program:</span>
                             <select
                               className="dp-req-overlap-select"
                               value={allocatedTo || ''}
@@ -1612,7 +1612,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
             <div className="drv-foundation-waived-banner">
               <span>✓</span>
               <span>
-                <strong style={{ color: 'var(--text-primary)' }}>{t('dp.foundationWaived')}</strong> — {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
+                <strong style={{ color: 'var(--text-primary)' }}>{t('dp.foundationWaived')}</strong>, {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
                 {transferCredits < 30 ? t('dp.foundationWaivedNote') : ''}.
               </span>
               <button className="dp-banner-close" onClick={dismissFoundation} aria-label="Dismiss" title="Dismiss">
@@ -1692,7 +1692,7 @@ export default function DegreePlanningView({
     <div className="dp-view">
 
       {/* ── Sub-tabs ──────────────────────────────────────── */}
-      <div className="dp-subtab-bar">
+      <div className="dp-subtab-bar" data-tour="degree-subtabs">
         <button
           className={`dp-subtab-btn ${subTab === 'my_courses' ? 'dp-subtab-btn--active' : ''}`}
           onClick={() => setSubTab('my_courses')}

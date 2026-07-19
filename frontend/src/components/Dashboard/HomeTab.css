@@ -34,6 +34,14 @@
   color: var(--text-tertiary);
 }
 
+.home-header__setup-badge {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 /* ── Grid ───────────────────────────────────────────────────── */
 .home-grid {
   display: grid;
