@@ -10,8 +10,10 @@ CREATE INDEX IF NOT EXISTS idx_forum_posts_subject
 
 -- Backfill existing course reviews (professor_review's review_target_value
 -- is a person's name, not a course code — leave those NULL).
+-- Take only the LEADING letters so this matches the Python derivation in
+-- forum.py (re.match(r"^([A-Za-z]+)")): "COMP 202D1" → "COMP", not "COMPD".
 UPDATE forum_posts
-SET subject = upper(regexp_replace(review_target_value, '[^A-Za-z]', '', 'g'))
+SET subject = upper(substring(review_target_value from '^[A-Za-z]+'))
 WHERE review_target_type = 'course'
   AND review_target_value IS NOT NULL
   AND subject IS NULL;
