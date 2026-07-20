@@ -16,6 +16,15 @@ import './theme.css'
 import './App.css'
 import AdminSuggestions from './components/Admin/AdminSuggestions'
 
+// Error types AuthContext sets when the profile fetch fails. Kept next to the
+// render logic that consumes them so the two don't drift apart.
+const PROFILE_ERROR_TYPES = ['PROFILE_LOAD_FAILED', 'PROFILE_LOAD_TIMEOUT', 'PROFILE_NOT_FOUND']
+
+// How long to sit on the loading spinner before assuming the profile fetch is
+// never going to resolve. Comfortably longer than loadProfile's own 15s
+// timeout, so a slow-but-working request is never cut short.
+const PROFILE_STUCK_MS = 20000
+
 function AppContent() {
   const { user, profile, loading, error, refreshProfile } = useAuth()
   const [verifying, setVerifying] = useState(false)
@@ -59,6 +68,20 @@ function AppContent() {
     const t = setTimeout(() => setMinLoadDone(true), 250)
     return () => clearTimeout(t)
   }, [])
+
+  // Watchdog for an authenticated session whose profile never arrives and
+  // never errors. Only armed while actually in that state, and cleared as
+  // soon as the profile lands, so a normal slow load just resolves.
+  const [profileStuck, setProfileStuck] = useState(false)
+  const waitingForProfile = !!user && !profile && !error
+  useEffect(() => {
+    if (!waitingForProfile) {
+      setProfileStuck(false)
+      return
+    }
+    const t = setTimeout(() => setProfileStuck(true), PROFILE_STUCK_MS)
+    return () => clearTimeout(t)
+  }, [waitingForProfile])
 
   // Handle ?verify_token=xxx&user_id=xxx — sent by the verification email link
   const handleVerifyToken = useCallback(async () => {
@@ -155,7 +178,36 @@ function AppContent() {
 
   if (user && profile) return <Dashboard />
 
-  if (user && !profile && !error) return <Loading />
+  // A signed-in user whose profile failed to load must not fall through to
+  // the landing page. AuthContext sets these error types, but only
+  // AUTH_INIT_FAILED was handled above — so a failed profile fetch (backend
+  // down, cold-start timeout, flaky campus wifi) dropped an authenticated
+  // user onto the marketing page with a "Sign in" button, which is a dead
+  // end: they are already signed in, so signing in again changes nothing.
+  if (user && !profile && PROFILE_ERROR_TYPES.includes(error?.type)) {
+    return (
+      <ErrorScreen
+        // PROFILE_NOT_FOUND is a data problem, not connectivity — don't tell
+        // the user to check their connection. The network variant also
+        // re-titles itself automatically when the browser reports offline.
+        variant={error.type === 'PROFILE_NOT_FOUND' ? 'generic' : 'network'}
+        showReload={true}
+        showHome={false}
+        showSignIn={true}
+      />
+    )
+  }
+
+  // Still loading the profile. `profileStuck` is a watchdog: loadProfile has
+  // its own 15s timeout, but it can also never be reached at all (the
+  // justSignedUp / justUpdatedProfile guards in AuthContext's SIGNED_IN
+  // handler return before calling it), which left this branch spinning
+  // forever with no error and no way out.
+  if (user && !profile && !error) {
+    return profileStuck
+      ? <ErrorScreen variant="network" showReload={true} showHome={false} showSignIn={true} />
+      : <Loading />
+  }
 
   // SEC FIX (audit #11): /privacy and /terms get rewritten to /?show=...
   // and we render the corresponding legal modal over the landing page so
