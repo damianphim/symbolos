@@ -369,4 +369,18 @@
   }
 
   .sa-footer { flex-wrap: wrap; padding: 0.8rem; }
+
+  /* ── Overflow guards ──────────────────────────────────────
+     Every flex item below defaulted to min-width: auto, so its content
+     (a host-university name, a partner list item, a program URL) set an
+     unshrinkable floor instead of the ~358px the mobile shell gives us. */
+  .sa-header > div { min-width: 0; }
+  .sa-title, .sa-sub, .sa-card-title, .sa-desc,
+  .sa-list-items, .sa-dl-row, .sa-note, .sa-meta { overflow-wrap: anywhere; }
+  .sa-card-meta, .sa-note { min-width: 0; }
+
+  /* Link chips are inline-flex, so their label could not wrap and a long
+     partner/programme name pushed the row past the card edge. */
+  .sa-link { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+  .sa-footer > *, .sa-footer-link { min-width: 0; overflow-wrap: anywhere; }
 }

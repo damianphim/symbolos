@@ -342,4 +342,16 @@
   }
 
   .ar-footer { flex-wrap: wrap; padding: 0.8rem; }
+
+  /* ── Overflow guards ──────────────────────────────────────
+     Same shape as StudyAbroadView: flex items defaulting to
+     min-width: auto let an advisor/office name or a resource URL set an
+     unshrinkable floor wider than the ~358px available. */
+  .ar-header > div { min-width: 0; }
+  .ar-title, .ar-sub, .ar-card-title, .ar-desc,
+  .ar-list-items { overflow-wrap: anywhere; }
+
+  /* Link chips are inline-flex — their label could not wrap. */
+  .ar-link { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+  .ar-footer > *, .ar-footer-link { min-width: 0; overflow-wrap: anywhere; }
 }

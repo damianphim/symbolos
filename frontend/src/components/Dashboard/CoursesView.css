@@ -42,6 +42,31 @@
 
   /* 10px padding + 12.5px label lands at ~35px tall. */
   .courses-view .dp-subtab-btn { min-height: 44px; }
+
+  /* ── VSB banner ──────────────────────────────────────────
+     The same banner renders in both sub-tabs, and both SavedCoursesView.css
+     and CoursesTab.css declare `.vsb-banner__*` with `nowrap` + ellipsis. At
+     360px the text column is ~242px wide after the icon, arrow and padding,
+     so the description ("Plan your timetable on McGill's official schedule
+     builder", ~300px at 11.5px) was cut to about half — and it is the only
+     thing that explains where the link goes. Let both lines wrap instead.
+
+     This lives here rather than in either component stylesheet because those
+     two declare the same 0,1,0 selectors and both place them *after* their own
+     mobile blocks, so an override there would lose on source order. This file
+     is the last of the three to load and the selector is 0,2,0, so it wins
+     either way. */
+  .courses-view .vsb-banner__title,
+  .courses-view .vsb-banner__desc {
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.3;
+  }
+
+  /* The banner is now two-to-three lines tall, so top-align the icon with the
+     first line rather than floating it against the middle of the block. */
+  .courses-view .vsb-banner__left { align-items: flex-start; }
+  .courses-view .vsb-banner__icon { margin-top: 1px; }
 }
 
 @media (max-width: 360px) {

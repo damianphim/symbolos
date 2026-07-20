@@ -888,6 +888,32 @@
   .drv-block-header { padding: 12px 12px; }
   .drv-block-title  { white-space: normal; }
   .drv-course-row   { padding: 12px 10px; }
+
+  /* ── Overflow guards ──────────────────────────────────────
+     Program names, block titles and course titles are seed data and can
+     contain a single long token. Every element below is a flex item (or
+     the child of one) that defaulted to min-width: auto, so its content
+     — not the ~358px viewport — was setting the width. */
+  .drv-block-header-left > div { min-width: 0; }
+  .drv-detail-title,
+  .drv-detail-desc,
+  .drv-block-title,
+  .drv-block-notes,
+  .drv-course-title,
+  .drv-course-notes,
+  .drv-rec-reason,
+  .drv-program-name { overflow-wrap: anywhere; }
+
+  /* The faculty picker's widest <option> ("Faculty of Dental Medicine and
+     Oral Health Sciences") is ~380px at the 16px mobile font size. It is
+     in block flow here so width: 100% holds, but pin it explicitly so a
+     future flex/grid parent cannot resurrect the min-content floor. */
+  .drv-faculty-select { min-width: 0; max-width: 100%; }
+
+  /* .drv-detail-meta is a wrapping row on mobile; its children carry no
+     shrink allowance of their own. */
+  .drv-detail-meta > *,
+  .drv-ecal-link { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 }
 /* ─── Foundation Year Waived Banner ───────────────────────── */
 .drv-foundation-waived-banner {

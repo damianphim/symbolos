@@ -1470,3 +1470,100 @@
 }
 .dp-banner-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }
 [data-theme="dark"] .dp-banner-close:hover { background: rgba(255,255,255,0.12); }
+
+/* ── Responsive, part 2 ───────────────────────────────────────
+   These rules must live at the *end* of the file: several of the
+   declarations below override base rules that are themselves declared
+   after the first @media block (`.dp-import-btns`, `.dp-import-btn--*`).
+   Media queries add no specificity, so at equal specificity source order
+   decides — putting them earlier would silently lose.
+
+   Everything here is a mobile-only overflow fix. Measurements assume the
+   worst realistic case: a 390px viewport, minus .mobile-content's 2rem of
+   side padding (358px), minus .dp-section-card's 14px mobile padding on
+   each side — i.e. ~330px of usable width, and only ~300px on a 360px
+   phone. */
+@media (max-width: 768px) {
+
+  /* ── Degree Progress card header ──────────────────────────
+     THE main overflow. SectionHeader is `title | action` with
+     justify-content: space-between; .ui-section-header__action is
+     flex-shrink: 0, .dp-import-btns is flex-shrink: 0, and both import
+     buttons are white-space: nowrap. Nothing in that chain can give, so
+     the row's width is fixed at (title min-content + gap + buttons):
+
+       EN  ~93 + 12 + 207 = 312px   → overflows a 360px phone
+       FR  ~85 + 12 + 288 = 385px   → overflows every phone by ~55px
+           ("Relevé de notes" + "Plans de cours" are far wider than
+            "Transcript" + "Syllabi")
+
+     .dp-section-card has no overflow guard, so the excess ran out past
+     .dp-view and got cut off by .mobile-content's overflow-x: clip —
+     exactly the reported "too wide / content cut off".
+
+     Fix the constraint rather than the symptom: let the header wrap, so
+     the button group drops to its own full-width line when the two
+     cannot share one. Scoped to .dp-view so no other SectionHeader
+     changes. */
+  .dp-view .ui-section-header { flex-wrap: wrap; }
+  .dp-view .ui-section-header__title { min-width: 0; }
+  .dp-import-btns { flex-wrap: wrap; flex-shrink: 1; min-width: 0; }
+
+  /* ── Native <select> intrinsic width ──────────────────────
+     A <select>'s min-content width is the width of its widest <option>,
+     and mobile bumps these to 16px (iOS zoom guard). The options are
+     program names — "Count toward Gender, Sexuality, Feminist and Social
+     Justice Studies only" is ~450px at 16px.
+
+     .dp-req-overlap-select is a flex item, so its automatic minimum size
+     (min-width: auto) pinned it to that intrinsic width and width: 100%
+     could not pull it back down. min-width: 0 lets it shrink; the select
+     clips its own label natively, so nothing is lost. */
+  .dp-req-overlap-select,
+  .dp-elective-assign-select { min-width: 0; max-width: 100%; }
+
+  /* Same root cause one level up: .dp-elective-card is a grid item in
+     .dp-electives-grid, and a `1fr` track is minmax(auto, 1fr) — the auto
+     minimum is the item's min-content size, which includes the assign
+     select's widest option. The track therefore grew past the container.
+     min-width: 0 makes the track viewport-derived again. */
+  .dp-elective-card { min-width: 0; }
+
+  /* ── Program credit bar ───────────────────────────────────
+     .dp-prog-bar-label is white-space: nowrap with no shrink, next to a
+     flex: 1 (basis 0) track. The track collapses to nothing before the
+     label gives an inch, so a long label ("12 crédits sur 96 · +9 en
+     cours") sets the row width. Stack them instead — the bar gets the
+     full width and the label sits under it. */
+  .dp-prog-bar-wrap { flex-direction: column; align-items: stretch; gap: 6px; }
+  /* The track's desktop `flex: 1` means `flex: 1 1 0%`, and once the wrap
+     is a column that 0% basis applies to its *height* — overriding
+     height: 6px and collapsing the bar to nothing (the container has no
+     free space to grow into). Hand the main-axis size back to height. */
+  .dp-prog-bar-track { flex: none; width: 100%; }
+  .dp-prog-bar-label { white-space: normal; }
+
+  /* ── Long unbroken strings ────────────────────────────────
+     Program/course titles come from seed data and the model; a single
+     long token (a hyphen-free program name, a code, a URL) would
+     otherwise set an unshrinkable min-content floor. */
+  .dp-req-card-sub,
+  .dp-req-prog-name,
+  .dp-req-prog-detail,
+  .dp-req-rec-title,
+  .dp-req-block-note,
+  .dp-electives-title,
+  .dp-electives-sub,
+  .dp-elective-title,
+  .dp-elective-why { overflow-wrap: anywhere; }
+
+  /* .dp-req-course-main is min-width: 0, but the rows inside it are
+     nested flex containers that were not. */
+  .dp-req-course-row,
+  .dp-req-overlap-assign { min-width: 0; }
+
+  /* .dp-electives-title-row / its text column had no min-width: 0, so the
+     header row was sized by the heading's content rather than the card. */
+  .dp-electives-title-row { min-width: 0; }
+  .dp-electives-title-row > div { min-width: 0; }
+}

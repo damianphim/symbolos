@@ -363,4 +363,18 @@
   .milestones        { grid-template-columns: 1fr; }
   .progress-percentage { font-size: 20px; }
   .credit-value        { font-size: 16px; }
+
+  /* Single-column grid items still default to min-width: auto, so a long
+     uppercase+letter-spaced label ("ADVANCED STANDING") or a wide credit
+     value would size the track rather than the viewport. */
+  .credit-item, .milestone { min-width: 0; }
+  .credit-details, .milestone-text { min-width: 0; }
+  .credit-label, .credit-value, .milestone-label { overflow-wrap: anywhere; }
+
+  /* .info-note's icon and close button are both flex-shrink: 0, so the
+     message span is the only item that can give — but min-width: auto
+     stopped it. (Deliberately not flex-wrap: wrap here: wrapping is
+     decided on max-content size, which would push the close button onto
+     its own line even when the text fits.) */
+  .info-note > span { min-width: 0; overflow-wrap: anywhere; }
 }

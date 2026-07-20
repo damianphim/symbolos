@@ -112,19 +112,17 @@ export default function MobileLayout() {
     : theme === 'dark' ? t('settings.dark')
     : t('settings.auto')
 
-  const currentLabel =
-    [...primary, ...more].find(x => x.key === activeTab)?.label || 'Symbolos'
-
   return (
     <div className="mobile-shell">
       {legalModal === 'privacy' && <PrivacyPolicy onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
       {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
 
-      <header className="mobile-topbar">
-        <span className="mobile-topbar-title">{currentLabel}</span>
-      </header>
-
+      {/* No top bar. A persistent header that only repeats the active tab's
+          name is web chrome, not app chrome — the tab bar already says where
+          you are, and the header cost ~52px of vertical space on every
+          screen. Screens that need a title render their own, in content,
+          where it can scroll away. */}
       <main className="mobile-content">
         <DashboardTabContent
           onTabChange={go}

@@ -353,10 +353,26 @@
 
   /* Three labelled pills ("Saved" / "Completed" / "Current") need ~316px in
      a 328px-wide card at 360px — one long FR/ZH label tips it over. Wrapping
-     is the safe failure mode; the row is no longer allowed to overflow. */
+     is the safe failure mode; the row is no longer allowed to overflow.
+
+     `justify-content` and `border-top` are re-stated here because they leak in
+     from CoursesTab.css. That file styles an UNSCOPED `.course-card-actions`
+     for its own search cards, and it is loaded on this screen too: CoursesView
+     keeps the search panel mounted in a hidden sibling, so both stylesheets are
+     live at once. The scoped rule above (0,3,0) wins on every property it
+     names, but it never names these two, so the 0,1,0 rule supplies them:
+       justify-content: flex-end → the pill row hugs the right edge while the
+         code, title and meta directly above it are flush left. Once the row
+         wraps at 360px the third pill lands alone against the right margin,
+         which is what reads as "half the card is aligned somewhere else".
+       border-top: 1px → a second horizontal rule sitting 12px below the
+         .course-card-content border-bottom, so each card shows two dividers.
+     Restoring both makes the card a single left-aligned column. */
   .saved-courses-view .course-card .course-card-actions {
     gap: 8px;
     flex-wrap: wrap;
+    justify-content: flex-start;
+    border-top: none;
   }
 
   .saved-courses-view .course-card .course-card-actions .favorite-btn,
@@ -365,6 +381,57 @@
     padding: 6px 10px;
     font-size: 0.75rem;
     min-height: 44px;
+  }
+
+  .saved-courses-view .course-card {
+    /* Card body is content text — codes, titles, term/credit metadata — so it
+       is flush left. The only centred text on this screen is .empty-state,
+       which is a genuine empty state and stays centred. */
+    text-align: left;
+    /* CoursesTab.css's unscoped `.course-card { gap: 0.75rem }` also lands on
+       these cards and stacks on top of .course-card-content's 12px
+       margin-bottom, so the pills sat 24px below the divider. */
+    gap: 0;
+    /* Grid items default to min-width:auto, so a single long unbroken title
+       would size the column from its content and push the page sideways. */
+    min-width: 0;
+  }
+
+  .saved-courses-view .course-title {
+    overflow-wrap: anywhere;
+  }
+
+  /* space-between with no gap let the code chip butt straight into the status
+     badge once a translated badge ran long ("À venir", "Trimestre en cours"). */
+  .saved-courses-view .course-header {
+    gap: 8px;
+  }
+
+  /* The badge is a label, not a paragraph — it should shrink the title's share
+     of the row rather than break itself across two lines. */
+  .saved-courses-view .course-grade-badge {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .saved-courses-view .course-code {
+    flex-shrink: 0;
+  }
+
+  /* Term and credits ran as a single nowrap flex line. */
+  .saved-courses-view .course-meta {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Each of the three tabs gets ~109px at 360px. Icon (16) + gaps (8) + count
+     badge (20) + padding (16) leaves the label about 49px, and "Completed" /
+     "Terminés" need ~65px — so every label ellipsized to "Complet…". The word
+     is the only thing that names the tab, so the icon is what gives way.
+     Matches how the .dp-subtab-* bar sheds its icons at the same size. */
+  .saved-tabs .tab-icon {
+    display: none;
   }
 }
 

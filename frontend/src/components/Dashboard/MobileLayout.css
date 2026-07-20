@@ -9,48 +9,49 @@
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  /* Pin the shell to the viewport width. Without this the shell is only as
+     wide as its widest child, so one overflowing descendant stretches the
+     whole app and the page scrolls sideways. */
+  width: 100%;
+  max-width: 100vw;
   background: var(--bg-secondary);
   color: var(--text-primary);
   overflow: hidden;
 }
 
-/* ── Top bar ── */
-.mobile-topbar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 16px;
-  padding-top: env(safe-area-inset-top, 0px);
-  height: calc(52px + env(safe-area-inset-top, 0px));
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-primary, #e5e7eb);
-  position: relative;
-  z-index: 20;
-}
-
-.mobile-topbar-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ── Scrolling page area ── */
 .mobile-content {
   flex: 1 1 auto;
+  /* Owns vertical scrolling for the whole app. Screens must not nest their
+     own scrollers inside it — two scroll areas means a swipe moves the inner
+     one while the page looks frozen. */
   overflow-y: auto;
-  overflow-x: hidden;
+  /* `clip` rather than `hidden`: hidden on one axis forces the other to
+     `auto`, which would make this a scrollport twice over and break the
+     sticky headers screens rely on. `clip` contains the overflow without
+     establishing a second scroll container. */
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: 1rem;
   padding-left:  max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
+  padding-top: max(1rem, env(safe-area-inset-top));
   /* Clear the fixed tab bar so the last element is never trapped under it. */
   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 1rem);
+  /* box-sizing so the padding above is inside the 100% width, not added to
+     it — otherwise every screen is 2rem wider than the viewport. */
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Layout-stability guard. Screens fetch async and were resolving their width
+   from content as each request landed, so a tab visibly stepped wider two or
+   three times before settling. Pinning direct children to the content box
+   makes width viewport-derived and independent of what has loaded. */
+.mobile-content > * {
+  max-width: 100%;
   min-width: 0;
 }
 
