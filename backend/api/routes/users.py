@@ -93,8 +93,16 @@ class UserCreate(BaseModel):
     @field_validator('username', mode='before')
     @classmethod
     def validate_username(cls, v):
-        if v and not str(v).replace('_', '').isalnum():
+        if not v:
+            return v
+        # '' .isalnum() is False, so an all-underscore username (e.g. "___")
+        # was being rejected with a message implying underscores are fine —
+        # they are, but at least one letter or number is required too.
+        stripped = str(v).replace('_', '')
+        if stripped and not stripped.isalnum():
             raise ValueError('Username must contain only letters, numbers, and underscores')
+        if not stripped:
+            raise ValueError('Username must contain at least one letter or number')
         return v
 
     # SEC-021: Validate individual item length in other_majors / other_minors
@@ -173,8 +181,14 @@ class UserUpdate(BaseModel):
     def validate_username(cls, v):
         if v is None:
             return v
-        if not str(v).replace('_', '').isalnum():
+        # '' .isalnum() is False, so an all-underscore username (e.g. "___")
+        # was being rejected with a message implying underscores are fine —
+        # they are, but at least one letter or number is required too.
+        stripped = str(v).replace('_', '')
+        if stripped and not stripped.isalnum():
             raise ValueError('Username must contain only letters, numbers, and underscores')
+        if not stripped:
+            raise ValueError('Username must contain at least one letter or number')
         return v
 
     # SEC-021: Validate individual item length in other_majors / other_minors
