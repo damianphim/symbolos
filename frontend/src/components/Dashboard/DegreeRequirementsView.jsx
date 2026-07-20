@@ -16,19 +16,20 @@ import './DegreeRequirementsView.css'
 const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_BASE = rawBase.replace(/\/api\/?$/, '')
 
-const TYPE_LABELS = {
-  major:         'Major',
-  minor:         'Minor',
-  honours:       'Honours',
-  joint_honours: 'Joint Honours',
-  beng:          'B.Eng.',
-  bge:           'B.G.E.',
-  bscarch:       'B.Sc.(Arch.)',
-  concentration:      'Concentration',
-  core:               'Core',
-  required:           'Core',
-  diploma:            'Diploma',
-  supplementary_minor: 'Supplementary Minor',
+// Program-type labels are i18n keys, resolved through t() at render time.
+const TYPE_LABEL_KEYS = {
+  major:         'dp.typeMajor',
+  minor:         'dp.typeMinor',
+  honours:       'dp.typeHonours',
+  joint_honours: 'dp.typeJointHonours',
+  beng:          'dp.typeBeng',
+  bge:           'dp.typeBge',
+  bscarch:       'dp.typeBscarch',
+  concentration:      'dp.typeConcentration',
+  core:               'dp.typeCore',
+  required:           'dp.typeCore',
+  diploma:            'dp.typeDiploma',
+  supplementary_minor: 'dp.typeSupplementaryMinor',
 }
 const TYPE_COLORS = {
   major:         '#dc2626',
@@ -192,7 +193,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           if (!sameAsCached) setPrograms(all)
           _drCacheWrite(cacheKey, all)
         })
-        .catch(() => { if (!cached) setError('Could not load programs. Try loading requirements first.') })
+        .catch(() => { if (!cached) setError(t('dp.loadProgramsError')) })
     } else {
       const fParam = facultyFilter ? `?faculty=${encodeURIComponent(facultyFilter)}` : ''
       getAuthHeaders().then(headers =>
@@ -209,7 +210,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
             if (!sameAsCached) setPrograms(data)
             _drCacheWrite(cacheKey, data)
           })
-          .catch(() => { if (!cached) setError('Could not load programs. Try loading requirements first.') })
+          .catch(() => { if (!cached) setError(t('dp.loadProgramsError')) })
       )
     }
   }, [seedDone, facultyFilter])
@@ -311,9 +312,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       const res = await fetch(seedUrl, { method: 'POST', headers })
       const data = await res.json()
       if (data.success) setSeedDone(v => !v)
-      else setError('Load failed: ' + JSON.stringify(data.detail || data))
+      else setError(t('dp.loadFailed').replace('{detail}', JSON.stringify(data.detail || data)))
     } catch {
-      setError('Load request failed. Is the backend running?')
+      setError(t('dp.loadRequestFailed'))
     } finally {
       setSeeding(false)
     }
@@ -365,17 +366,17 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
       <aside className={`drv-sidebar ${sidebarOpen ? 'drv-sidebar--open' : 'drv-sidebar--collapsed'}`}>
         <div className="drv-sidebar-header">
           <FaGraduationCap className="drv-sidebar-icon" />
-          <span>Programs</span>
+          <span>{t('dp.programsHeader')}</span>
           {/* Desktop: collapse the panel to free up width. Mobile: X close. */}
           <button
             className="drv-sidebar-collapse"
             onClick={() => setSidebarOpen(false)}
-            title="Collapse programs panel"
-            aria-label="Collapse programs panel"
+            title={t('dp.collapsePanel')}
+            aria-label={t('dp.collapsePanel')}
           >
             <FaChevronRight style={{ transform: 'rotate(180deg)' }} />
           </button>
-          <button className="drv-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close"><FaTimes /></button>
+          <button className="drv-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label={t('dp.closePanel')}><FaTimes /></button>
         </div>
 
         <div className="drv-faculty-select-wrap">
@@ -384,21 +385,21 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
             value={facultyFilter}
             onChange={e => { setFacultyFilter(e.target.value); setSelectedKey(null); setProgramDetail(null); setDetailError(null); setTypeFilter('all') }}
           >
-            <option value="">All Faculties</option>
-            <option value="Faculty of Agricultural and Environmental Sciences">Agricultural &amp; Environmental Sciences</option>
-            <option value="Faculty of Arts">Faculty of Arts</option>
-            <option value="Faculty of Arts &amp; Science">Bachelor of Arts &amp; Science</option>
-            <option value="Faculty of Dental Medicine and Oral Health Sciences">Dental Medicine &amp; Oral Health Sciences</option>
-            <option value="Faculty of Education">Faculty of Education</option>
-            <option value="Faculty of Engineering">Faculty of Engineering</option>
-            <option value="School of Environment">Environment</option>
-            <option value="Faculty of Law">Faculty of Law</option>
-            <option value="Desautels Faculty of Management">Management (Desautels)</option>
-            <option value="Faculty of Medicine and Health Sciences">Medicine &amp; Health Sciences</option>
-            <option value="Schulich School of Music">Schulich School of Music</option>
-            <option value="Ingram School of Nursing">Nursing</option>
-            <option value="School of Physical and Occupational Therapy">Physical &amp; Occupational Therapy</option>
-            <option value="Faculty of Science">Faculty of Science</option>
+            <option value="">{t('dp.facAll')}</option>
+            <option value="Faculty of Agricultural and Environmental Sciences">{t('dp.facAes')}</option>
+            <option value="Faculty of Arts">{t('dp.facArts')}</option>
+            <option value="Faculty of Arts &amp; Science">{t('dp.facBasc')}</option>
+            <option value="Faculty of Dental Medicine and Oral Health Sciences">{t('dp.facDentistry')}</option>
+            <option value="Faculty of Education">{t('dp.facEducation')}</option>
+            <option value="Faculty of Engineering">{t('dp.facEngineering')}</option>
+            <option value="School of Environment">{t('dp.facEnvironment')}</option>
+            <option value="Faculty of Law">{t('dp.facLaw')}</option>
+            <option value="Desautels Faculty of Management">{t('dp.facManagement')}</option>
+            <option value="Faculty of Medicine and Health Sciences">{t('dp.facMedicine')}</option>
+            <option value="Schulich School of Music">{t('dp.facMusic')}</option>
+            <option value="Ingram School of Nursing">{t('dp.facNursing')}</option>
+            <option value="School of Physical and Occupational Therapy">{t('dp.facSpot')}</option>
+            <option value="Faculty of Science">{t('dp.facScience')}</option>
           </select>
         </div>
 
@@ -407,7 +408,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search programs…"
+            placeholder={t('dp.searchPrograms')}
             className="drv-search-input"
           />
         </div>
@@ -435,29 +436,29 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                   : facultyFilter === 'School of Physical and Occupational Therapy'
                   ? ['all', 'major']
                   : ['all', 'major', 'minor', 'honours']
-          ).map(t => {
-            const isActive = typeFilter === t
-            const color = TYPE_COLORS[t]
-            const bg    = TYPE_BG[t]
+          ).map(type => {
+            const isActive = typeFilter === type
+            const color = TYPE_COLORS[type]
+            const bg    = TYPE_BG[type]
             return (
               <button
-                key={t}
+                key={type}
                 className={`drv-type-chip ${isActive ? 'drv-type-chip--active' : ''}`}
-                onClick={() => setTypeFilter(t)}
-                style={t !== 'all' ? {
+                onClick={() => setTypeFilter(type)}
+                style={type !== 'all' ? {
                   borderColor: isActive ? color : `${color}55`,
                   background:  isActive ? color : (typeFilter === 'all' ? bg : 'transparent'),
                   color:       isActive ? '#fff' : color,
                 } : {}}
               >
-                {t !== 'all' && (
+                {type !== 'all' && (
                   <span style={{
                     display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
                     background: isActive ? '#ffffff99' : color,
                     marginRight: 5, verticalAlign: 'middle',
                   }} />
                 )}
-                {t === 'all' ? 'All' : (TYPE_LABELS[t] || t)}
+                {type === 'all' ? t('dp.typeAll') : (TYPE_LABEL_KEYS[type] ? t(TYPE_LABEL_KEYS[type]) : type)}
               </button>
             )
           })}
@@ -465,20 +466,20 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
 
         {programs.length === 0 && (
           <button className="drv-seed-btn" onClick={handleSeed} disabled={seeding}>
-            {seeding ? 'Loading…' : `Load ${facultyFilter ? facultyFilter.replace('Faculty of ', '') : 'All'} Requirements`}
+            {seeding ? t('dp.loading') : t('dp.loadFacultyReqs').replace('{faculty}', facultyFilter ? facultyFilter.replace('Faculty of ', '') : t('dp.typeAll'))}
           </button>
         )}
 
         <div className="drv-program-list">
           {filteredPrograms.length === 0 && programs.length > 0 && (
-            <div className="drv-empty-search">No programs match.</div>
+            <div className="drv-empty-search">{t('dp.noProgramsMatch')}</div>
           )}
           {facultyFilter === 'Faculty of Arts & Science' ? (
             (() => {
               const groups = [
-                { label: 'Interfaculty Programs', faculty: 'Faculty of Arts & Science' },
-                { label: 'Arts Concentrations',   faculty: 'Faculty of Arts' },
-                { label: 'Science Concentrations', faculty: 'Faculty of Science' },
+                { label: t('dp.groupInterfaculty'), faculty: 'Faculty of Arts & Science' },
+                { label: t('dp.groupArtsConc'),     faculty: 'Faculty of Arts' },
+                { label: t('dp.groupSciConc'),      faculty: 'Faculty of Science' },
               ]
               return groups.map(({ label, faculty }) => {
                 const groupProgs = filteredPrograms.filter(p => p.faculty === faculty)
@@ -540,7 +541,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
         >
           {isMobile
             ? <><FaChevronLeft /> {t('dp.degreeRequirements')}</>
-            : <><FaGraduationCap /> Browse Programs</>
+            : <><FaGraduationCap /> {t('dp.browsePrograms')}</>
           }
         </button>
 
@@ -549,7 +550,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
             {error}
             {programs.length === 0 && (
               <button className="drv-seed-btn drv-seed-btn--inline" onClick={handleSeed} disabled={seeding}>
-                {seeding ? 'Loading…' : `Load ${facultyFilter ? facultyFilter.replace('Faculty of ', '') : 'All'} Requirements`}
+                {seeding ? t('dp.loading') : t('dp.loadFacultyReqs').replace('{faculty}', facultyFilter ? facultyFilter.replace('Faculty of ', '') : t('dp.typeAll'))}
               </button>
             )}
           </div>
@@ -609,7 +610,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               <strong>{t('dp.foundationWaived')}</strong>, {t('dp.foundationWaivedDesc').replace('{count}', transferCredits)}
               {transferCredits < 30 ? ` ${t('dp.foundationWaivedNote')}` : ''}.
             </span>
-            <button className="drv-foundation-close" onClick={() => setFoundationDismissed(true)} aria-label="Dismiss">
+            <button className="drv-foundation-close" onClick={() => setFoundationDismissed(true)} aria-label={t('dp.dismiss')}>
               <FaTimes />
             </button>
           </div>
@@ -633,7 +634,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                     border: `1px solid ${TYPE_COLORS[programDetail.program_type]}33`
                   }}
                 >
-                  {TYPE_LABELS[programDetail.program_type]}
+                  {t(TYPE_LABEL_KEYS[programDetail.program_type] || '')}
                 </span>
                 <h1 className="drv-detail-title">{programDetail.name}</h1>
               </div>
@@ -666,7 +667,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
             {progress && progress.transferBlockedCredits > 0 && (
               <div className="drv-progress-wrap">
                 <span className="drv-transfer-note">
-                  {progress.transferBlockedCredits}cr from transfer credits don't count toward this major requirement, which means that you will have to make up the credits for this program elsewhere, visit <strong>Degree Planning → Electives</strong> to change that.
+                  {t('dp.transferNotePrefix').replace('{credits}', progress.transferBlockedCredits)}{' '}
+                  <strong>{t('dp.transferNoteLink')}</strong>{' '}
+                  {t('dp.transferNoteSuffix')}
                 </span>
               </div>
             )}
@@ -698,18 +701,18 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 if (required.length > 0) {
                   blockDone       = completedReq.length === required.length
                   blockInProgress = !blockDone && (inProgressReq.length > 0 || completedReq.length > 0)
-                  pillText        = `${required.length - completedReq.length} left`
+                  pillText        = t('dp.pillLeft').replace('{count}', required.length - completedReq.length)
                 } else if (block.credits_needed) {
                   const earned = completedAny.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
                   const inProg = inProgressAny.reduce((s, c) => s + parseFloat(c.credits || 3), 0)
                   blockDone       = earned >= block.credits_needed
                   blockInProgress = !blockDone && (inProg > 0 || earned > 0)
                   const crLeft = Math.max(0, block.credits_needed - earned)
-                  pillText    = `${Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1)}cr left`
+                  pillText    = t('dp.pillCrLeft').replace('{credits}', Number.isInteger(crLeft) ? crLeft : crLeft.toFixed(1))
                 } else {
                   blockDone       = false
                   blockInProgress = completedAny.length > 0 || inProgressAny.length > 0
-                  pillText        = `${completedAny.length} done`
+                  pillText        = t('dp.pillDone').replace('{count}', completedAny.length)
                 }
 
                 const pillMod = blockDone ? 'drv-block-pill--done' : blockInProgress ? 'drv-block-pill--progress' : 'drv-block-pill--none'
@@ -724,7 +727,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                         <div>
                           <span className="drv-block-title">{block.title}</span>
                           {block.credits_needed && (
-                            <span className="drv-block-credits"> · {block.credits_needed}cr needed</span>
+                            <span className="drv-block-credits">{' · '}{t('dp.blockCrNeeded').replace('{credits}', block.credits_needed)}</span>
                           )}
                         </div>
                       </div>
@@ -740,9 +743,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                         {(block.notes || block.min_level || block.max_credits_200 || block.min_credits_400) && (
                           <div className="drv-block-info">
                             {block.notes && <span>{block.notes}</span>}
-                            {block.min_level && <span>Min level: {block.min_level}+</span>}
-                            {block.max_credits_200 && <span>Max {block.max_credits_200}cr at 200-level</span>}
-                            {block.min_credits_400 && <span>Min {block.min_credits_400}cr at 400/500-level</span>}
+                            {block.min_level && <span>{t('dp.blockMinLevel').replace('{level}', block.min_level)}</span>}
+                            {block.max_credits_200 && <span>{t('dp.blockMax200').replace('{credits}', block.max_credits_200)}</span>}
+                            {block.min_credits_400 && <span>{t('dp.blockMin400').replace('{credits}', block.min_credits_400)}</span>}
                           </div>
                         )}
 
@@ -786,8 +789,8 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                                     </span>
                                     <span className="drv-course-title">{course.title}</span>
                                     <div className="drv-course-badges">
-                                      {course.is_required && <span className="drv-badge drv-badge--required">Required</span>}
-                                      {course.recommended && <span className="drv-badge drv-badge--rec"><FaStar /> Rec</span>}
+                                      {course.is_required && <span className="drv-badge drv-badge--required">{t('dp.badgeRequired')}</span>}
+                                      {course.recommended && <span className="drv-badge drv-badge--rec"><FaStar /> {t('dp.badgeRec')}</span>}
                                     </div>
                                   </div>
                                   {course.recommended && course.recommendation_reason && (
@@ -800,9 +803,9 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
 
                                 <div className="drv-course-right">
                                   <span className="drv-course-credits">{course.credits}cr</span>
-                                  {isCompleted && isTransfer   && <span className="drv-tag drv-tag--transfer">↩ Transfer</span>}
-                                  {isCompleted && !isTransfer  && <span className="drv-tag drv-tag--done">✓ Done</span>}
-                                  {isCurrent && !isCompleted   && <span className="drv-tag drv-tag--cur">Taking</span>}
+                                  {isCompleted && isTransfer   && <span className="drv-tag drv-tag--transfer">↩ {t('dp.statusTransfer')}</span>}
+                                  {isCompleted && !isTransfer  && <span className="drv-tag drv-tag--done">✓ {t('dp.statusDone')}</span>}
+                                  {isCurrent && !isCompleted   && <span className="drv-tag drv-tag--cur">{t('dp.statusTaking')}</span>}
                                 </div>
                               </div>
                             )
@@ -812,14 +815,14 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                         {courses && courses.length > PREVIEW && (
                           <button className="drv-show-more" onClick={() => toggleShowAll(block.id)}>
                             {showAll
-                              ? <><FaChevronUp /> Show less</>
-                              : <><FaChevronDown /> Show {courses.length - PREVIEW} more</>
+                              ? <><FaChevronUp /> {t('dp.showLess')}</>
+                              : <><FaChevronDown /> {t('dp.showMore').replace('{count}', courses.length - PREVIEW)}</>
                             }
                           </button>
                         )}
 
                         {showRecommended && (!courses || courses.length === 0) && (
-                          <p className="drv-no-rec">No recommended courses in this block.</p>
+                          <p className="drv-no-rec">{t('dp.noRecommendedInBlock')}</p>
                         )}
                       </div>
                     )}

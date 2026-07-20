@@ -1329,7 +1329,7 @@ function ClubManageDashboard({ club, onClose, onSave, onDelete, isAdmin, t }) {
                 <input value={editForm.website_url} onChange={e => setEditForm(f => ({ ...f, website_url: e.target.value }))} placeholder="https://..." />
               </div>
               <div className="clubs-join-required-note">
-                <strong>⚠ Required:</strong> Fill in at least one of the two fields below. When a student clicks "Join Club", they'll be sent to the Application URL first, or shown the How to Join instructions if no URL is set.
+                <FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle', flexShrink: 0 }} /><strong>{t('clubs.joinRequiredLabel')}</strong> {t('clubs.joinRequiredNote')}
               </div>
               <div className="clubs-field">
                 <label>{t('clubs.fieldApplicationUrl')}</label>
@@ -1726,7 +1726,7 @@ function SubmitClubModal({ onClose, onSubmit, t }) {
               <input type="url" value={form.website_url} onChange={e => set('website_url')(e.target.value)} placeholder="https://..." />
             </div>
             <div className="clubs-join-required-note">
-              <strong>⚠ Required:</strong> Fill in at least one of the two fields below. When a student clicks "Join Club", they'll be sent to the Application URL first, or shown the How to Join instructions if no URL is set.
+              <FaExclamationTriangle style={{ marginRight: '4px', verticalAlign: 'middle', flexShrink: 0 }} /><strong>{t('clubs.joinRequiredLabel')}</strong> {t('clubs.joinRequiredNote')}
             </div>
             {errors.joinMethod && (
               <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#b91c1c', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>

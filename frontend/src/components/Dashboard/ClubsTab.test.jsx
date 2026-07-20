@@ -269,7 +269,9 @@ describe('SubmitClubModal', () => {
     await userEvent.click(screen.getByText('clubs.submitClub'))
 
     expect(clubsAPI.submitClub).not.toHaveBeenCalled()
-    expect(screen.getByText(/at least one/i)).toBeInTheDocument()
+    // The join-method requirement note is i18n'd; with the mocked t() that
+    // returns the key, assert on the key rather than the English copy.
+    expect(screen.getByText(/clubs\.joinRequiredNote/i)).toBeInTheDocument()
   })
 
   it('submits with name, description, and a join method', async () => {

@@ -186,7 +186,8 @@ function NewPostModal({ onClose, onSubmit, isSubmitting, initialSection }) {
       <div className="forum-modal" onClick={e => e.stopPropagation()}>
         <div className="forum-modal__header">
           <h2 className="forum-modal__title">New post</h2>
-          <button className="forum-modal__close" onClick={onClose}><FaTimes /></button>
+          {/* Icon-only: needs an explicit name for screen readers. */}
+          <button className="forum-modal__close" onClick={onClose} aria-label={t('forum.closeModal')}><FaTimes /></button>
         </div>
         <form className="forum-modal__body" onSubmit={handleSubmit}>
 
@@ -431,12 +432,12 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
         </div>
         {isOwn ? (
           <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
-            onClick={() => onDelete(post.id)} title={t('forum.deletePost')}>
+            onClick={() => onDelete(post.id)} title={t('forum.deletePost')} aria-label={t('forum.deletePost')}>
             <FaTrash />
           </button>
         ) : (
           <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
-            onClick={handleReportPost} title={t('forum.reportPost')}>
+            onClick={handleReportPost} title={t('forum.reportPost')} aria-label={t('forum.reportPost')}>
             <FaFlag />
           </button>
         )}
@@ -509,12 +510,12 @@ function PostCard({ post, currentUserId, myName, myColor, myProgramInfo, onLike,
                   </button>
                   {reply.user_id === currentUserId ? (
                     <button className="forum-action-btn forum-action-btn--sm forum-action-btn--danger"
-                      onClick={() => handleDeleteReply(reply.id)} title={t('forum.deleteReply')}>
+                      onClick={() => handleDeleteReply(reply.id)} title={t('forum.deleteReply')} aria-label={t('forum.deleteReply')}>
                       <FaTrash />
                     </button>
                   ) : (
                     <button className="forum-action-btn forum-action-btn--sm forum-action-btn--report"
-                      onClick={() => handleReportReply(reply.id)} title={t('forum.reportReply')}>
+                      onClick={() => handleReportReply(reply.id)} title={t('forum.reportReply')} aria-label={t('forum.reportReply')}>
                       <FaFlag />
                     </button>
                   )}
@@ -680,6 +681,12 @@ export default function Forum() {
           <button key={s.key}
             className={`forum-section-btn ${activeSection === s.key ? 'active' : ''}`}
             style={{ '--cat-color': s.color }}
+            // The <span> label is hidden by CSS at <=600px for inactive tabs,
+            // which would otherwise leave an icon-only button with no
+            // accessible name. aria-label carries the same string at every
+            // viewport and adds no visual output.
+            aria-label={s.label}
+            aria-pressed={activeSection === s.key}
             onClick={() => setActiveSection(s.key)}>
             {s.icon} <span>{s.label}</span>
           </button>
@@ -708,7 +715,8 @@ export default function Forum() {
           <input className="forum-search"
             placeholder={activeSection === 'reviews' ? t('forum.searchPlaceholderReviews') : t('forum.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button className="forum-search-clear" onClick={() => setSearch('')}><FaTimes size={11} /></button>}
+          {/* Icon-only: needs an explicit name for screen readers. */}
+          {search && <button className="forum-search-clear" onClick={() => setSearch('')} aria-label={t('forum.clearSearch')}><FaTimes size={11} /></button>}
         </div>
         {activeSection === 'reviews' && subjects.length > 0 && (
           <select className="forum-subject-filter" value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}>
