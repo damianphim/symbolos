@@ -27,6 +27,7 @@ import json
 import re
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
+from postgrest.exceptions import APIError
 
 from api.utils.supabase_client import get_supabase, get_user_by_id
 from api.config import settings
@@ -254,6 +255,33 @@ def _sanitise_category(card: dict) -> str:
     return cat if cat in CARD_CATEGORIES else "planning"
 
 
+def _parse_cards_lenient(raw: str) -> list:
+    """
+    Best-effort recovery when json.loads() fails on the whole array — e.g.
+    Claude drops a comma between two card objects ("Expecting ',' delimiter").
+    Extracts each top-level {...} object by brace-matching and parses them
+    independently, so one malformed card doesn't sink every card in the
+    response. Returns whatever cards parsed successfully (possibly empty).
+    """
+    cards: list = []
+    depth = 0
+    start = None
+    for i, ch in enumerate(raw):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    cards.append(json.loads(raw[start:i + 1]))
+                except json.JSONDecodeError:
+                    pass
+                start = None
+    return cards
+
+
 def save_cards(user_id: str, cards: list) -> None:
     supabase = get_supabase()
     supabase.table("advisor_cards").delete().eq("user_id", user_id).eq("source", "ai").execute()
@@ -269,8 +297,22 @@ def save_cards(user_id: str, cards: list) -> None:
             "category": _sanitise_category(card), "priority": card.get("priority", i + 1),
             "sort_order": i, "generated_at": now,
         })
-    if rows:
+    if not rows:
+        return
+    try:
         supabase.table("advisor_cards").insert(rows).execute()
+    except APIError as exc:
+        # 23503 = foreign_key_violation. Streamed card generation can run for
+        # tens of seconds; if the account gets deleted mid-stream, user_id no
+        # longer exists in users by the time we persist here. The cards were
+        # already streamed to whoever was watching — there's no one left to
+        # show a persistence error to, so log and drop rather than surfacing
+        # a scary "Card generation failed" for what's actually just a race
+        # with account deletion.
+        if getattr(exc, "code", None) == "23503":
+            logger.warning(f"save_cards: user {user_id} no longer exists, dropping generated cards")
+        else:
+            raise
 
 
 def insert_user_card(user_id: str, card_data: dict, question: str, language: str) -> dict:
@@ -922,7 +964,16 @@ async def retranslate_cards(user_id: str, request: RetranslateRequest, req: Requ
                 if attempt == 0:
                     logger.warning(f"Retranslate JSON invalid, retrying once: {e}")
                     continue
-                raise
+                # Last attempt: fall back to recovering individual cards
+                # rather than losing the whole batch over e.g. one missing
+                # comma between two objects.
+                cards = _parse_cards_lenient(raw)
+                if not cards:
+                    raise
+                logger.warning(
+                    f"Retranslate JSON invalid on final attempt, recovered "
+                    f"{len(cards)} card(s) via lenient per-object parsing: {e}"
+                )
         if not isinstance(cards, list):
             raise ValueError("AI did not return a JSON array")
         for card in cards:
@@ -1101,7 +1152,16 @@ async def reorder_cards(user_id: str, request: ReorderRequest, req: Request, cur
     require_self(current_user_id, user_id)
     try:
         get_user_by_id(user_id)
-        payload = [{"id": item.id, "position": item.resolved_position} for item in request.order]
+        # The reorder_advisor_cards RPC (defined in Supabase) updates the
+        # `sort_order` column — send both key names so it's correct
+        # regardless of which one the RPC's JSON extraction actually reads.
+        # (Previously only "position" was sent, which — if the RPC reads
+        # "sort_order" as its column name suggests — meant every reorder
+        # request wrote NULL into a NOT NULL column.)
+        payload = [
+            {"id": item.id, "position": item.resolved_position, "sort_order": item.resolved_position}
+            for item in request.order
+        ]
         user_sb.rpc("reorder_advisor_cards", {"payload": payload}).execute()
         logger.info(f"Successfully reordered {len(request.order)} cards for user {user_id}")
         return {"reordered": len(request.order)}
