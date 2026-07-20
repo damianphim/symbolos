@@ -20,7 +20,7 @@ import {
 } from 'react'
 import { useAuth } from './AuthContext'
 import { useLanguage } from './PreferencesContext'
-import { coursesAPI } from '../lib/api'
+import { coursesAPI, usersAPI } from '../lib/api'
 import favoritesAPI from '../lib/favoritesAPI'
 import completedCoursesAPI from '../lib/completedCoursesAPI'
 import currentCoursesAPI from '../lib/currentCoursesAPI'
@@ -801,17 +801,17 @@ export function DashboardDataProvider({ children }) {
     if (file.size > 5 * 1024 * 1024) { alert('Image size must be less than 5MB'); return }
     setIsUploadingImage(true)
     try {
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        await updateProfile({ profile_image: reader.result })
-        setProfileImage(reader.result)
-      }
-      reader.readAsDataURL(file)
+      // Upload to Storage first — profile_image only accepts an https://
+      // URL in our own bucket, never a raw base64 data: URI.
+      const { profile_image } = await usersAPI.uploadProfileImage(user.id, file)
+      const { error } = await updateProfile({ profile_image })
+      if (error) throw error
     } catch (error) {
       console.error('Error uploading image:', error)
       alert('Failed to upload image. Please try again.')
     } finally {
       setIsUploadingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
