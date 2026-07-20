@@ -172,19 +172,29 @@ def test_clubs_list_strips_pii(client, fake_supabase):
         assert field not in row, f"{field} must be stripped"
 
 
-# ── Audit #4: private clubs hidden from the discovery view ───────────────────
-def test_private_clubs_hidden(client, fake_supabase):
+# ── Audit #4: only unverified clubs are hidden from the discovery view ───────
+def test_private_clubs_visible_but_unverified_hidden(client, fake_supabase):
+    # Product decision: "private" means join-by-application only, not
+    # hidden — verified private clubs are just as discoverable as public
+    # ones. Only unverified (not-yet-approved) clubs are excluded.
     fake_supabase.set_table("clubs", [{
         "id": "club-priv",
         "name": "Private Society",
         "is_verified": True,
         "is_private": True,
         "created_by": "owner-2",
+    }, {
+        "id": "club-unverified",
+        "name": "Pending Society",
+        "is_verified": False,
+        "is_private": False,
+        "created_by": "owner-3",
     }])
     resp = client.get("/api/clubs", headers=auth("anyone"))
     assert resp.status_code == 200, resp.text
     ids = [c["id"] for c in resp.json().get("clubs", [])]
-    assert "club-priv" not in ids
+    assert "club-priv" in ids
+    assert "club-unverified" not in ids
 
 
 # ── Audit #8: verification_token never appears in profile response ───────────
