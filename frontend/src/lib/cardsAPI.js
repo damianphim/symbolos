@@ -9,17 +9,17 @@ async function authHeaders() {
 }
 
 export const CARD_CATEGORIES = [
-  'deadlines', 'degree', 'courses', 'grades', 'planning', 'opportunities', 'other',
+  'deadlines', 'degree', 'courses', 'grades', 'planning', 'opportunities', 'advice', 'other',
 ]
 
 export const CATEGORY_LABELS = {
   deadlines: 'Deadlines', degree: 'Degree', courses: 'Courses',
-  grades: 'Grades', planning: 'Planning', opportunities: 'Opportunities', other: 'Other',
+  grades: 'Grades', planning: 'Planning', opportunities: 'Opportunities', advice: 'Advice', other: 'Other',
 }
 
 export const CATEGORY_ICONS = {
   deadlines: '📅', degree: '🎓', courses: '📚',
-  grades: '📊', planning: '🗺️', opportunities: '✨', other: '💬',
+  grades: '📊', planning: '🗺️', opportunities: '✨', advice: '💡', other: '💬',
 }
 
 // FIX: getLang is now only a fallback. All public methods accept an explicit
@@ -39,11 +39,11 @@ const cardsAPI = {
     return response.json()
   },
 
-  async generateCards(userId, force = false, language = null) {
+  async generateCards(userId, force = false, language = null, degreeProgress = null) {
     const response = await fetch(`${BASE_URL}/api/cards/generate/${userId}`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ force, language: language || getLang() }),
+      body: JSON.stringify({ force, language: language || getLang(), degree_progress: degreeProgress || undefined }),
     })
     if (!response.ok) throw new Error('Failed to generate advisor cards')
     return response.json()
@@ -55,11 +55,11 @@ const cardsAPI = {
    * Calls onDone({ count, language, fresh?, rate_limited? }) when complete.
    * Calls onError(detail) on failure.
    */
-  async generateCardsStream(userId, force = false, language = null, { onCard, onDone, onError } = {}) {
+  async generateCardsStream(userId, force = false, language = null, { onCard, onDone, onError } = {}, degreeProgress = null) {
     const response = await fetch(`${BASE_URL}/api/cards/stream/${userId}`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ force, language: language || getLang() }),
+      body: JSON.stringify({ force, language: language || getLang(), degree_progress: degreeProgress || undefined }),
     })
     if (!response.ok) {
       onError?.('Failed to start card generation')
@@ -118,11 +118,11 @@ const cardsAPI = {
     return response.json()
   },
 
-  async sendThreadMessage(cardId, userId, message, cardContext, language = null) {
+  async sendThreadMessage(cardId, userId, message, cardContext, language = null, degreeProgress = null) {
     const response = await fetch(`${BASE_URL}/api/cards/${cardId}/thread`, {
       method: 'POST',
       headers: await authHeaders(),
-      body: JSON.stringify({ user_id: userId, message, card_context: cardContext, language: language || getLang() }),
+      body: JSON.stringify({ user_id: userId, message, card_context: cardContext, language: language || getLang(), degree_progress: degreeProgress || undefined }),
     })
     if (!response.ok) throw new Error('Failed to send thread message')
     const data = await response.json()

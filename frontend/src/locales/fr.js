@@ -1208,6 +1208,7 @@ const FR_TRANSLATIONS = {
     'brief.catGrades': 'Notes',
     'brief.catPlanning': 'Planification',
     'brief.catOpportunities': 'Opportunités',
+    'brief.catAdvice': 'Conseils',
     'brief.catOther': 'Autre',
     'brief.timeJustNow': "à l'instant",
     'brief.time1Min': 'il y a 1 min',

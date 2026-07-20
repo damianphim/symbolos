@@ -954,7 +954,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
   )
 }
 
-function MyProgramCard({ profile, completedCourses, currentCourses }) {
+function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSummaryChange }) {
   const { t } = useLanguage()
 
   // ── Per-program cache ───────────────────────────────────────
@@ -1362,6 +1362,25 @@ function MyProgramCard({ profile, completedCourses, currentCourses }) {
   const coreRing          = calcRingProgress(coreData)
   const concentrationRing = calcRingProgress(concentrationData)
 
+  // Compact, per-program progress summary handed up to Dashboard so it can
+  // ground chat/card-thread requests in the student's ACTUAL requirement
+  // progress instead of just their raw course list. Built from the same
+  // `tabs` list (and calcRingProgress) the UI itself renders from, so it
+  // can't drift from what the student sees on this page — no separate
+  // matching logic, just a text rendering of numbers already computed here.
+  const progressSummaryText = tabs
+    .filter(t => t.data)
+    .map(t => {
+      const r = calcRingProgress(t.data)
+      return `${t.label}: ${r.pct}% complete (${r.earned}/${r.total} credits)`
+    })
+    .join('\n')
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    onProgressSummaryChange?.(progressSummaryText)
+  }, [progressSummaryText, onProgressSummaryChange])
+
   return (
     <div className="dp-req-card">
       <div className="dp-req-card-header">
@@ -1684,6 +1703,7 @@ export default function DegreePlanningView({
   profile = {},
   onImportTranscript,
   onImportSyllabus,
+  onProgressSummaryChange,
 }) {
   const { t } = useLanguage()
   const [subTab, setSubTab] = useState('my_courses')
@@ -1786,6 +1806,7 @@ export default function DegreePlanningView({
                 profile={profile}
                 completedCourses={completedCourses}
                 currentCourses={currentCourses}
+                onProgressSummaryChange={onProgressSummaryChange}
               />
             </div>
 

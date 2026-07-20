@@ -117,7 +117,7 @@ api.interceptors.response.use(
 
 // Chat API with session support
 export const chatAPI = {
-  async sendMessage(userId, message, sessionId = null, currentTab = null) {
+  async sendMessage(userId, message, sessionId = null, currentTab = null, degreeProgress = null) {
     const stored = localStorage.getItem('language')
     const language = ['en', 'fr', 'zh'].includes(stored) ? stored : 'en'
     try {
@@ -127,6 +127,7 @@ export const chatAPI = {
         session_id: sessionId,
         current_tab: currentTab,
         language,
+        degree_progress: degreeProgress || undefined,
       })
       return response.data
     } catch (error) {

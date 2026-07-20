@@ -126,6 +126,7 @@ export default function RightSidebar({
   onSend,
   onUnpin,
   activeTab,
+  degreeProgressRef,
 }) {
   const { user } = useAuth()
   const { t, language } = useLanguage()
@@ -237,7 +238,7 @@ export default function RightSidebar({
     setNavMessages(prev => [...prev, { role: 'user', content: text }])
     setNavThinking(true)
     try {
-      const res = await chatAPI.sendMessage(user.id, text, navSessionId, activeTab)
+      const res = await chatAPI.sendMessage(user.id, text, navSessionId, activeTab, degreeProgressRef?.current)
       if (!navSessionId && res.session_id) setNavSessionId(res.session_id)
       setNavMessages(prev => [...prev, { role: 'assistant', content: res.response }])
     } catch {

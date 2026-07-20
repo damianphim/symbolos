@@ -155,6 +155,15 @@ export default function Dashboard() {
   const fileInputRef = useRef(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
 
+  // Self-reported degree-progress summary (computed by DegreePlanningView from
+  // the same numbers it renders — see requirementMatch.js), attached to chat
+  // and card-thread requests so the AI is grounded in actual requirement
+  // progress instead of just the raw course list. A ref, not state: it's
+  // write-often/read-at-send-time, doesn't need to trigger re-renders, and
+  // is only populated once the student has visited Degree Planning this
+  // session (best-effort context, same as card_context today).
+  const degreeProgressRef = useRef('')
+
   // ── Right sidebar / pinned chat ─────────────────────────
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
   const [pinnedCard, setPinnedCard] = useState(null)
@@ -368,7 +377,7 @@ export default function Dashboard() {
         onError: (detail) => {
           console.error('Card stream error:', detail)
         },
-      })
+      }, degreeProgressRef.current)
     } catch (error) {
       console.error('Error generating advisor cards:', error)
     } finally {
@@ -475,7 +484,7 @@ export default function Dashboard() {
   const handleCardChipClick = async (cardId, message, cardTitle, cardBody) => {
     if (!user?.id) return ''
     try {
-      return await cardsAPI.sendThreadMessage(cardId, user.id, message, `${cardTitle}: ${cardBody}`, languageRef.current)
+      return await cardsAPI.sendThreadMessage(cardId, user.id, message, `${cardTitle}: ${cardBody}`, languageRef.current, degreeProgressRef.current)
     } catch (error) {
       console.error('Error in card thread:', error)
       return 'Something went wrong. Please try again.'
@@ -1077,6 +1086,7 @@ export default function Dashboard() {
                 onToggleCurrent={handleToggleCurrent}
                 onImportTranscript={() => { setTranscriptUploadTab('transcript'); setShowTranscriptUpload(true) }}
                 onImportSyllabus={() => { setTranscriptUploadTab('syllabus'); setShowTranscriptUpload(true) }}
+                onProgressSummaryChange={(text) => { degreeProgressRef.current = text }}
                 onCourseClick={undefined}
               />
             </Suspense>
@@ -1149,6 +1159,7 @@ export default function Dashboard() {
         onSend={handlePinnedSend}
         onUnpin={() => handlePinToggle(null, [])}
         activeTab={activeTab}
+        degreeProgressRef={degreeProgressRef}
       />
 
       <Suspense fallback={null}>

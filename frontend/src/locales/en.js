@@ -1289,6 +1289,7 @@ const EN_TRANSLATIONS = {
     'brief.catGrades': 'Grades',
     'brief.catPlanning': 'Planning',
     'brief.catOpportunities': 'Opportunities',
+    'brief.catAdvice': 'Advice',
     'brief.catOther': 'Other',
     'brief.timeJustNow': 'just now',
     'brief.time1Min': '1 min ago',

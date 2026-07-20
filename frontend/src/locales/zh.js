@@ -1270,6 +1270,7 @@ const ZH_TRANSLATIONS = {
     'brief.catGrades': '成绩',
     'brief.catPlanning': '规划',
     'brief.catOpportunities': '机会',
+    'brief.catAdvice': '建议',
     'brief.catOther': '其他',
     'brief.timeJustNow': '刚刚',
     'brief.time1Min': '1分钟前',

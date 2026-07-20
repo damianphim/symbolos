@@ -35,6 +35,7 @@ from api.exceptions import UserNotFoundException
 from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 from api.utils.lang import lang_instruction as _lang_instruction
+from api.routes.chat import _MILESTONES
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def get_async_anthropic_client() -> anthropic.AsyncAnthropic:
     return _async_anthropic_client
 
 
-CARD_CATEGORIES = ["deadlines", "degree", "courses", "grades", "planning", "opportunities"]
+CARD_CATEGORIES = ["deadlines", "degree", "courses", "grades", "planning", "opportunities", "advice"]
 CATEGORIES_PROMPT_LIST = "\n".join(f'  - "{c}"' for c in CARD_CATEGORIES)
 
 
@@ -94,10 +95,14 @@ class ThreadRequest(BaseModel):
     card_context: str = Field(..., max_length=4000)
     language: str = "en"
     thread_history: Optional[List[dict]] = Field(default=None, max_length=20)
+    # Client-computed degree-requirement progress — see build_system_context()
+    # in chat.py for how it's sanitized and framed in the prompt.
+    degree_progress: Optional[str] = Field(None, max_length=3000)
 
 class GenerateRequest(BaseModel):
     force: bool = False
     language: str = "en"
+    degree_progress: Optional[str] = Field(None, max_length=3000)
 
 class AskRequest(BaseModel):
     user_id: str
@@ -399,6 +404,20 @@ Include:
   - Add a disclaimer at the end of the card body: "Verify professor details on McGill's department website."
 At least 1 of the 8 cards should be an "opportunities" card with a professor
 recommendation if the student's profile has a declared major.
+
+PROACTIVE MILESTONES → "advice" CATEGORY
+The MILESTONES reference below lists situations with a stated trigger
+condition and a confirmed (or "verify at X") procedure. Check the student's
+DEGREE PROGRESS and profile data against each trigger. If one clearly
+matches — e.g. a program's progress is at/near 100%, or their GPA falls in
+a probation/unsatisfactory band — include ONE card with "category": "advice"
+surfacing that specific milestone, using the procedure from MILESTONES
+almost verbatim (don't paraphrase deadlines or numbers into something
+vaguer). If nothing matches, don't force an "advice" card — it's fine for a
+generation to have zero. Never invent a milestone that isn't in the
+reference list below.
+
+{_MILESTONES}
 """
 
 
@@ -432,7 +451,7 @@ def _deduplicate_completed(completed: list) -> list:
     return result
 
 
-def build_rich_context(ctx: dict, saved_cards: list = None, recent_titles: list[str] | None = None) -> str:
+def build_rich_context(ctx: dict, saved_cards: list = None, recent_titles: list[str] | None = None, degree_progress: str | None = None) -> str:
     user = ctx["user"]
     completed, current, favorites, calendar = (ctx["completed"], ctx["current"], ctx["favorites"], ctx["calendar"])
     # Deduplicate: remove withdrawn/failed entries when course was later passed
@@ -513,6 +532,16 @@ def build_rich_context(ctx: dict, saved_cards: list = None, recent_titles: list[
     safe_minors        = sanitise_context_field(minors_str)
     safe_concentration = sanitise_context_field(str(user.get('concentration') or 'None'))
 
+    progress_section = ""
+    if degree_progress:
+        safe_progress = sanitise_context_field(degree_progress, max_length=3000)
+        progress_section = (
+            "\nDEGREE PROGRESS (self-reported by the app, not an official record — "
+            "a helpful signal for milestone triggers, never state these numbers as "
+            "verified fact to the student):\n"
+            f"{safe_progress}\n"
+        )
+
     # The stable header + instructions + professor guide are now in
     # _CARDS_SYSTEM_PROMPT (cacheable). This returns ONLY the per-user
     # data + return-format instruction for the user message.
@@ -525,7 +554,7 @@ STUDENT PROFILE
   Concentration: {safe_concentration}
   Year         : U{user.get('year') or '?'}
   Credits done : {total_credits} (+ {adv_credits} advanced standing: {adv_summary})
-
+{progress_section}
 COMPLETED COURSES
 {fmt_completed()}
 
@@ -666,7 +695,7 @@ async def generate_cards(user_id: str, request: GenerateRequest, req: Request, c
         # Only pass recent titles when the user is forcing a refresh — on a
         # first generation there's nothing to diversify against.
         recent_titles = fetch_recent_card_titles(user_id, user_sb=user_sb) if request.force else []
-        prompt = build_rich_context(ctx, saved_cards=saved, recent_titles=recent_titles) + _lang_instruction(request.language)
+        prompt = build_rich_context(ctx, saved_cards=saved, recent_titles=recent_titles, degree_progress=request.degree_progress) + _lang_instruction(request.language)
 
         client = get_anthropic_client()
         message = client.messages.create(
@@ -767,9 +796,9 @@ async def _fetch_student_context_parallel(user_id: str, user_sb=None) -> dict:
             "joined_clubs": joined_clubs, "created_clubs": created_clubs}
 
 
-def _build_ndjson_context(ctx: dict, saved_cards: list = None, recent_titles: list[str] | None = None) -> str:
+def _build_ndjson_context(ctx: dict, saved_cards: list = None, recent_titles: list[str] | None = None, degree_progress: str | None = None) -> str:
     """Like build_rich_context but asks for NDJSON output (one card per line) for streaming."""
-    base = build_rich_context(ctx, saved_cards=saved_cards, recent_titles=recent_titles)
+    base = build_rich_context(ctx, saved_cards=saved_cards, recent_titles=recent_titles, degree_progress=degree_progress)
     # Replace the final return instruction with NDJSON variant
     return base.replace(
         "Return ONLY the JSON array — no markdown, no commentary.",
@@ -846,7 +875,7 @@ async def stream_cards(
             ctx, saved = results[0], results[1]
             recent_titles = results[2] if len(results) > 2 else []
 
-            prompt = _build_ndjson_context(ctx, saved_cards=saved, recent_titles=recent_titles) + _lang_instruction(language)
+            prompt = _build_ndjson_context(ctx, saved_cards=saved, recent_titles=recent_titles, degree_progress=request.degree_progress) + _lang_instruction(language)
             async_client = get_async_anthropic_client()
 
             collected_cards: list = []
@@ -1093,6 +1122,7 @@ async def thread_message(
             current_tab=None,
             language=reply_language,
             card_context=sanitise_context_field(request.card_context, max_length=800),
+            degree_progress=request.degree_progress,
         )
 
         # Build messages array: prior thread turns + current message
