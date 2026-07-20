@@ -357,35 +357,58 @@
   box-shadow: none;
 }
 
-/* ── Responsive ─────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE (<= 768px) — native grouped lists
+   ═══════════════════════════════════════════════════════════════
+
+   HomeTab.jsx renders an entirely different tree below the breakpoint (see the
+   `if (isMobile)` return), so the classes below are mobile-only by
+   construction: `.home-card`, `.home-grid`, `.home-brief__item`,
+   `.home-course-chip`, `.home-action` and `.home-link` are never emitted
+   there, and `.home-m-*` / `.m-*` are never emitted on desktop. The media
+   query is kept anyway as a second, explicit guarantee that desktop cannot
+   pick any of this up.
+
+   Surfaces come from MobileLayout.css's tokens rather than being re-invented:
+   the page is recessed (--m-bg-grouped, set on .mobile-shell) and each group
+   is raised (--m-bg-surface). That figure/ground pair is what replaces the
+   per-card border + radius + shadow the desktop grid uses.
+
+   Groups stay INSET (they keep --m-group-radius and the shell's 1rem gutter)
+   rather than going edge-to-edge. Home stacks six short sections; full-bleed
+   rows would erase the boundary between them, and the inset form is what
+   makes each group read as one discrete object.                            */
 @media (max-width: 768px) {
   /* HomeTab renders straight into MobileLayout's <main class="mobile-content">,
      which already supplies the 1rem side gutter and the bottom padding that
      clears the fixed tab bar. Repeating them here cost ~32px of a 360px
      screen and left a dead band under the last card. */
   .home-tab { padding: 0 0 0.5rem; }
+
+  /* Safety net only. The desktop tree is not rendered below the breakpoint,
+     but JS (useViewport) and CSS can disagree for a frame mid-resize, and a
+     two-column grid in that frame overflows the viewport sideways. */
   .home-grid { grid-template-columns: 1fr; }
 
-  .home-setup__step {
-    flex-wrap: wrap;
+  /* ── Large title ──
+     MobileLayout renders no top bar, so this greeting IS the screen title and
+     is sized like one. It scrolls away with the content, which is exactly the
+     behaviour a persistent header cannot give. */
+  .home-tab--mobile .home-header {
+    align-items: center;
+    margin-bottom: 1.25rem;
   }
 
-  .home-setup__cta {
-    margin-left: 1.9rem; /* align under text, past the check icon */
-    min-height: 44px;
+  .home-tab--mobile .home-greeting {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
-  /* ── 44px touch targets ──
-     These are all bare text/icon buttons on desktop (no vertical padding),
-     which lands them around 20-32px tall — well under the 44px minimum. */
-  .home-link {
-    min-height: 44px;
-    padding-block: 0.25rem;
-  }
-
-  .home-action,
-  .home-brief__item {
-    min-height: 44px;
+  .home-tab--mobile .home-term {
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
   }
 
   .home-header__setup-badge {
@@ -394,17 +417,228 @@
     min-height: 44px;
   }
 
-  /* The 200px cap is a desktop nicety; on a phone it just forces the title
-     to ellipsize while leaving whitespace beside the chip. */
-  .home-course-chip {
-    min-height: 44px;
-    max-width: 100%;
+  /* ── Section label row ──
+     .m-group-label already handles the quiet uppercase label; this wrapper
+     only exists where the label needs a trailing control (setup's dismiss). */
+  .home-m-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
-}
 
-@media (max-width: 360px) {
-  /* Two quick-action columns leave ~150px per button, which wraps
-     "Import transcript" onto three lines in FR. */
-  .home-actions { grid-template-columns: 1fr; }
-  .home-course-chip { width: 100%; }
+  .home-m-label-row .m-group-label { padding-bottom: 6px; }
+
+  .home-m-label-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    /* Negative block margin keeps a real 44px touch target without letting the
+       button dictate the height of the quiet label row it sits in. */
+    margin: -14px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-m-label-btn:active { color: var(--text-primary); }
+
+  .home-m-list {
+    list-style: none;
+    margin-top: 0;
+    padding: 0;
+  }
+
+  /* ── Row button ──
+     .m-row supplies the layout, padding and hairline; this only strips the
+     <button> chrome. The three explicit border sides (rather than `border: 0`)
+     leave .m-row's border-bottom untouched by specificity accident. */
+  .home-m-btn {
+    width: 100%;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-m-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    color: var(--accent-primary);
+  }
+
+  .home-m-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .home-m-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .home-m-sub {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Trailing disclosure chevron — the standard "this row goes somewhere" cue. */
+  .home-m-chevron {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--text-muted, var(--text-tertiary));
+    opacity: 0.55;
+  }
+
+  /* Navigation row that closes a group ("Open calendar", "View all"). */
+  .home-m-more-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent-primary);
+  }
+
+  .home-m-group--tight { margin-bottom: 0; }
+
+  /* ── Setup checklist rows ── */
+  .home-m-step.is-done .home-setup__check { color: var(--success-primary); }
+
+  .home-m-step.is-done .home-setup__step-title {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+  }
+
+  .home-m-step-cta {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 0.9rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-m-step-cta:active { opacity: 0.7; }
+
+  /* ── Brief preview — stays a card, restyled to native proportions ──
+     A title plus a paragraph of advisor prose is card-shaped content, not a
+     list row: forcing it into a single-line row would truncate the one thing
+     that makes it worth reading. So it keeps the card form and instead drops
+     the web chrome — no border, no shadow, a flat raised surface, and roomier
+     padding than the desktop card had. */
+  .home-m-brief {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .home-m-brief-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 14px var(--m-row-pad-x);
+    border: none;
+    border-radius: var(--m-group-radius);
+    background: var(--m-bg-surface);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .home-m-brief-card--tappable {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-m-brief-card--tappable:active { background: var(--bg-hover, rgba(0, 0, 0, 0.06)); }
+
+  .home-m-brief-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .home-m-brief-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: var(--accent-primary);
+  }
+
+  .home-m-brief-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .home-m-brief-body {
+    font-size: 0.87rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Empty states inside a group ──
+     The group is already the surface, so the empty state just needs breathing
+     room; it must not draw a second box inside the first. */
+  .home-m-empty {
+    padding: 1.25rem var(--m-row-pad-x);
+  }
+
+  .home-m-empty .ui-empty {
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  /* ── Degree tracker inside a group ── */
+  .home-m-degree {
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border-bottom: var(--m-hairline);
+  }
+
+  .home-m-degree .degree-progress-tracker {
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
 }

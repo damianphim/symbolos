@@ -360,11 +360,11 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
           </p>
         </div>
       ) : (
-        <div className="dp-electives-grid">
+        <div className="dp-electives-grid m-group">
           {electiveCourses.map((c, i) => {
             const srcStyle = SOURCE_COLORS[c._source] || SOURCE_COLORS.completed
             return (
-              <div key={i} className="dp-elective-card dp-elective-card--taken" onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
+              <div key={i} className="dp-elective-card dp-elective-card--taken m-row m-row--tappable" onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
                 <div className="dp-elective-top">
                   <span className="dp-elective-code">{c.subject} {c.catalog}</span>
                   <span className="dp-elective-cat" style={{ background: srcStyle.bg, color: srcStyle.color }}>
@@ -591,14 +591,14 @@ function RecommendationsPanel({ profile, completedCourses, currentCourses, allPr
             {recs.theme && (
               <p className="dp-electives-theme"><FaLightbulb style={{ marginRight: '5px', verticalAlign: 'middle' }} />{recs.theme}</p>
             )}
-            <div className="dp-electives-grid">
+            <div className="dp-electives-grid m-group">
               {recs.recommendations?.map((c, i) => {
                 const alreadyTaken = [...completedCourses, ...currentCourses].some(uc =>
                   `${uc.subject} ${uc.catalog}`.toUpperCase() === `${c.subject} ${c.catalog}`.toUpperCase()
                 )
                 const catStyle = CATEGORY_COLORS[c.category] || CATEGORY_COLORS['Breadth']
                 return (
-                  <div key={i} className={`dp-elective-card ${alreadyTaken ? 'dp-elective-card--taken' : ''}`} onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
+                  <div key={i} className={`dp-elective-card m-row m-row--tappable ${alreadyTaken ? 'dp-elective-card--taken' : ''}`} onClick={() => openCourse(c.subject, c.catalog)} style={{ cursor: 'pointer' }}>
                     <div className="dp-elective-top">
                       <span className="dp-elective-code">{c.subject} {c.catalog}</span>
                       <span className="dp-elective-cat" style={{ background: catStyle.bg, color: catStyle.color }}>{c.category}</span>
@@ -813,9 +813,9 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
         const pillMod = blockDone ? 'dp-req-pill--done' : blockInProgress ? 'dp-req-pill--progress' : 'dp-req-pill--none'
 
         return (
-          <div key={block.id} className={`dp-req-block ${blockDone ? 'dp-req-block--done' : blockInProgress ? 'dp-req-block--progress' : ''}`}>
+          <div key={block.id} className={`dp-req-block m-group ${blockDone ? 'dp-req-block--done' : blockInProgress ? 'dp-req-block--progress' : ''}`}>
             <button
-              className="dp-req-block-header"
+              className="dp-req-block-header m-row m-row--tappable"
               onClick={() => setOpenBlocks(p => ({ ...p, [block.id]: !p[block.id] }))}
             >
               <div className="dp-req-block-left">
@@ -850,7 +850,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                     ? (allProgramData.find(p => p?.program_key === allocatedTo)?.name?.replace(/\s*[–-]\s*(Major|Minor|Honours|Concentration).*/, '') || allocatedTo)
                     : null
                   return (
-                    <div key={c.id} className={`dp-req-course ${done && !allocatedElsewhere ? 'dp-req-course--done' : ''} ${taking && !allocatedElsewhere ? 'dp-req-course--taking' : ''} ${allocatedElsewhere ? 'dp-req-course--conflict' : ''}`}>
+                    <div key={c.id} className={`dp-req-course m-row ${done && !allocatedElsewhere ? 'dp-req-course--done' : ''} ${taking && !allocatedElsewhere ? 'dp-req-course--taking' : ''} ${allocatedElsewhere ? 'dp-req-course--conflict' : ''}`}>
                       {done && !allocatedElsewhere
                         ? <FaCheckCircle className="dp-req-course-icon dp-req-course-icon--done" />
                         : taking && !allocatedElsewhere
@@ -900,9 +900,9 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
       {/* Other Courses (Added by you) — electives the user manually counted
           toward this program. Collapsible like a requirement block. */}
       {manuallyAdded.length > 0 && (
-        <div className="dp-req-block dp-req-block--manual">
+        <div className="dp-req-block dp-req-block--manual m-group">
           <button
-            className="dp-req-block-header"
+            className="dp-req-block-header m-row m-row--tappable"
             onClick={() => setOpenBlocks(p => ({ ...p, [`__manual_${progKey}`]: !p[`__manual_${progKey}`] }))}
           >
             <div className="dp-req-block-left">
@@ -922,7 +922,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
               {manuallyAdded.map(uc => {
                 const key = `${uc.subject} ${uc.catalog}`.toUpperCase()
                 return (
-                  <div key={key} className="dp-req-course dp-req-course--done">
+                  <div key={key} className="dp-req-course dp-req-course--done m-row">
                     <FaCheckCircle className="dp-req-course-icon dp-req-course-icon--done" />
                     <div className="dp-req-course-main">
                       <div

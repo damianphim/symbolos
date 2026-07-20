@@ -355,3 +355,129 @@
   .ar-link { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
   .ar-footer > *, .ar-footer-link { min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Scoped to `.mobile-shell` (only rendered under 768px) inside the 768px
+   media query, so desktop matches nothing here.
+
+   The resource list was a column of individually bordered, radiused,
+   0.5rem-apart accordion cards. It becomes one raised surface running
+   edge to edge, with hairline-separated rows — same grammar as the
+   course lists and the requirement blocks, so the whole Degree Planning
+   section reads as one app rather than five pages. */
+@media (max-width: 768px) {
+
+  /* Browse / Saved → the same segmented control used everywhere else in
+     Courses and Degree Planning, rather than a Material underline strip.
+     See CoursesView.css for why the segmented control won. */
+  .mobile-shell .ar-view .ar-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    overflow: visible;
+    border: none;
+    border-bottom: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+  }
+  .mobile-shell .ar-view .ar-tab {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    min-height: 32px;
+    margin-bottom: 0;
+    padding: 6px 10px;
+    border: none;
+    border-bottom: none;
+    border-radius: 7px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .ar-view .ar-tab--active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .mobile-shell .ar-view .ar-tab:hover { color: var(--text-secondary); }
+  @media (hover: hover) {
+    .mobile-shell .ar-view .ar-tab:hover { color: var(--text-primary); }
+  }
+  .mobile-shell .ar-view .ar-tab--active:hover { color: var(--text-primary); }
+
+  /* ── Program list → grouped list ────────────────────────────── */
+  .mobile-shell .ar-view .ar-cards.m-group {
+    display: block;
+    gap: 0;
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+  }
+
+  .mobile-shell .ar-view .ar-card {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .ar-view .ar-cards > .ar-card:last-child { border-bottom: none; }
+  .mobile-shell .ar-view .ar-card:hover,
+  .mobile-shell .ar-view .ar-card--open { border-color: transparent; }
+
+  /* The header is the row; .m-row supplies its padding, min-height and
+     press feedback. */
+  .mobile-shell .ar-view .ar-card-header.m-row {
+    justify-content: space-between;
+    border-bottom: none;
+  }
+  .mobile-shell .ar-view .ar-card--open .ar-card-header.m-row {
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .ar-view .ar-card-body { border-top: none; }
+
+  /* Filter pills and bookmark buttons: hover states are applied on tap
+     and then stay until you touch something else. */
+  .mobile-shell .ar-view .ar-pill:hover {
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .ar-view .ar-pill:hover:not(.ar-pill--on) {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .ar-view .ar-pill:active { opacity: 0.6; }
+  .mobile-shell .ar-view .ar-pill--on:hover {
+    border-color: var(--accent-primary);
+    color: var(--bg-primary, #fff);
+  }
+  .mobile-shell .ar-view .ar-bm:hover {
+    border-color: var(--border-primary);
+    color: var(--text-muted, #9ca3af);
+  }
+  @media (hover: hover) {
+    .mobile-shell .ar-view .ar-bm:hover:not(.ar-bm--on) {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .ar-view .ar-bm--on:hover { color: var(--bg-primary, #fff); }
+  .mobile-shell .ar-view .ar-link:hover {
+    background: none;
+    border-color: var(--border-primary);
+    color: var(--text-primary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .ar-view .ar-link:hover {
+      background: var(--text-primary);
+      border-color: var(--text-primary);
+      color: var(--bg-primary, #fff);
+    }
+  }
+  .mobile-shell .ar-view .ar-link:active { opacity: 0.6; }
+}

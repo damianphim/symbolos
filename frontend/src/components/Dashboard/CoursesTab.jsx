@@ -65,10 +65,14 @@ export default function CoursesTab({
         </button>
       </form>
 
-      {/* ── Filters (always visible) ────────────────────────── */}
-      <div className="courses-filter-bar">
+      {/* ── Filters (always visible) ─────────────────────────────
+          `m-group` / `m-row` are the mobile grouped-list primitives from
+          MobileLayout.css. They are scoped to `.mobile-shell`, which only
+          ever renders below 768px, so the class names are inert on desktop
+          and the filter bar keeps its existing inline shape there. */}
+      <div className="courses-filter-bar m-group">
         {availableTerms.length > 0 && setSearchTerm && (
-          <div className="filter-group">
+          <div className="filter-group m-row">
             <label htmlFor="term-select" className="sort-label">{t('courses.semester')}</label>
             <select
               id="term-select"
@@ -81,7 +85,7 @@ export default function CoursesTab({
             </select>
           </div>
         )}
-        <div className="filter-group">
+        <div className="filter-group m-row">
           <label htmlFor="sort-select" className="sort-label">{t('courses.sortBy')}</label>
           <select id="sort-select" className="sort-select" value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
             <option value="relevance">{t('courses.relevance')}</option>
@@ -98,7 +102,7 @@ export default function CoursesTab({
         href={`https://vsb.mcgill.ca/criteria.jsp?access=0&lang=${language === 'fr' ? 'fr' : 'en'}&tip=2&page=criteria&scratch=0&advice=0&legend=1&term=202601&sort=none&filters=iiiiiiiiii&bbs=&ds=&cams=OFF-CAMPUS_DISTANCE_DOWNTOWN_MACDONALD&locs=any&isrts=any&ses=any&pl=&pac=1`}
         target="_blank"
         rel="noopener noreferrer"
-        className="vsb-banner"
+        className="vsb-banner m-group m-row m-row--tappable"
       >
         <div className="vsb-banner__left">
           <FaCalendarAlt className="vsb-banner__icon" />
@@ -114,9 +118,9 @@ export default function CoursesTab({
 
       {/* ── Loading skeletons ───────────────────────────────── */}
       {isSearching && (
-        <div className="course-list">
+        <div className="course-list m-group">
           {[0, 1, 2, 3].map(i => (
-            <div key={i} className="course-card course-card--skeleton">
+            <div key={i} className="course-card course-card--skeleton m-row">
               <Skeleton width="8rem" height="1.1rem" />
               <Skeleton width="60%" height="1rem" />
               <Skeleton width="40%" height="0.85rem" />
@@ -154,7 +158,7 @@ export default function CoursesTab({
             </h3>
           </div>
 
-          <div className="course-list">
+          <div className="course-list m-group">
             {pageResults.map((course) => {
               const cardKey     = `${course.subject}-${course.catalog}`
               const rating      = getBestRating(course)
@@ -163,7 +167,7 @@ export default function CoursesTab({
               const diffColor   = getDifficultyColor(course.rmp_difficulty)
 
               return (
-                <div key={cardKey} className="course-card">
+                <div key={cardKey} className="course-card m-row m-row--tappable">
                   <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>

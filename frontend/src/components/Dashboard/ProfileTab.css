@@ -64,7 +64,12 @@
   transition: all 0.3s ease;
 }
 
-.profile-avatar-xl-wrapper:hover { transform: scale(1.05); }
+/* Hover-guarded: on touch the scale/overlay latches after the tap that opens
+   the file picker, so the avatar stays dimmed behind the sheet. Desktop
+   pointers report `hover: hover`, so this is a no-op above 768px. */
+@media (hover: hover) {
+  .profile-avatar-xl-wrapper:hover { transform: scale(1.05); }
+}
 
 .profile-avatar-xl {
   width: 100%;
@@ -102,7 +107,9 @@
   text-align: center;
 }
 
-.profile-avatar-xl-wrapper:hover .avatar-xl-overlay { opacity: 1; }
+@media (hover: hover) {
+  .profile-avatar-xl-wrapper:hover .avatar-xl-overlay { opacity: 1; }
+}
 
 .camera-xl-icon {
   font-size: 20px;
@@ -200,9 +207,11 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.profile-section-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+@media (hover: hover) {
+  .profile-section-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .card-header {
@@ -257,9 +266,11 @@
   transition: transform 0.2s ease;
 }
 
-.interest-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(237, 27, 47, 0.3);
+@media (hover: hover) {
+  .interest-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(237, 27, 47, 0.3);
+  }
 }
 
 .empty-state {
@@ -375,7 +386,57 @@
   transition: opacity 0.15s, transform 0.15s;
 }
 
-.btn-import-transcript:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn-import-transcript:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NATIVE SURFACES (<= 768px)
+
+   The page becomes the recessed background and the content groups inside
+   it become the raised surfaces. That means the section *wrappers* stop
+   being cards: PersonalInfoCard and Settings draw their own grouped lists
+   directly on the page, so a card around them would be a second, larger
+   box drawn around a box.
+
+   Last block in the file so it wins over the 768/480 patches above.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .mobile-shell .profile-page { background: var(--m-bg-grouped); }
+
+  /* Wrapper only — no surface of its own. */
+  .mobile-shell .profile-section-card {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  /* Groups carry their own bottom margin; the grid gap would double it. */
+  .mobile-shell .profile-grid { gap: 0; }
+
+  /* ── Sign out: a single destructive grouped row ── */
+  .mobile-shell .profile-signout-group { margin-bottom: 0.5rem; }
+
+  .mobile-shell .profile-signout-row {
+    width: 100%;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    color: var(--accent-primary, #ed1b2f);
+  }
+
+  .mobile-shell .profile-signout-icon { flex-shrink: 0; }
+  .mobile-shell .profile-signout-label { flex: 1; min-width: 0; }
+  .mobile-shell .profile-signout-chev {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+  }
 }

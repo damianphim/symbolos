@@ -984,57 +984,88 @@
   }
 
   .advisor-cards-header {
-    padding: 0 0 10px;
+    padding: 0 0 14px;
+    align-items: flex-start;
     border-bottom: none;
     background: transparent;
   }
 
-  /* The mobile top bar already reads "Brief" — don't show it twice. Hidden
-     visually rather than with display:none so the page keeps its heading for
-     screen readers and heading navigation. */
+  /* MobileLayout renders no top bar, so this heading IS the screen title.
+     Sized like a native large title and left in flow so it scrolls away with
+     the content — which is the behaviour a persistent header cannot give.
+     (It used to be visually hidden, from when the shell still had a top bar.) */
   .advisor-cards-header__title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
-  .advisor-cards-header__left  { flex: 1; min-width: 0; }
+  .advisor-cards-header__left {
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
   .advisor-cards-header__timestamp { margin-left: 0; }
 
   .advisor-cards-refresh {
     width: 40px;
     height: 40px;
     flex-shrink: 0;
+    border-radius: 999px;
   }
 
+  /* ── Category filter ──
+     A row of underlined tabs is web navigation chrome. On the phone this is a
+     filter, so it becomes a scrolling row of pills: each one sized to its own
+     label, selected state filled rather than underlined. */
   .category-bar {
-    padding: 0;
-    margin-bottom: 12px;
+    padding: 2px 0;
+    margin-bottom: 16px;
     background: transparent;
-    gap: 6px;
-    border-bottom: 1px solid var(--card-border, var(--border-primary));
+    gap: 8px;
+    border-bottom: none;
   }
 
-  /* Tabs size to their label and scroll horizontally rather than squeezing
-     eight targets into 360px. */
   .category-tab {
     flex: 0 0 auto;
-    padding: 10px 12px;
-    font-size: 0.8rem;
     min-height: 44px;
+    padding: 0 14px;
+    border: none;
+    border-bottom: none;
+    border-radius: 999px;
+    background: var(--m-bg-surface, var(--bg-primary));
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    transition: none;
     -webkit-tap-highlight-color: transparent;
   }
+
+  .category-tab.active {
+    background: var(--accent-primary);
+    border-bottom-color: transparent;
+    color: #fff;
+  }
+
+  .category-tab.active .category-tab__icon { color: #fff; opacity: 1; }
+
+  .category-tab.active .category-tab__count,
+  .category-tab--saved.active .category-tab__count {
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+  }
+
+  .category-tab:active { opacity: 0.65; }
 
   .advisor-cards-feed {
     padding: 0;
     overflow: visible;
-    gap: 10px;
+    gap: 12px;
   }
 
   /* Reordering is hidden on mobile (see MobileFeed in AdvisorCards.jsx). */
@@ -1071,6 +1102,31 @@
     width: 42px;
     height: 42px;
   }
+
+  /* ── Touch feedback ──
+     Hover sticks after a tap on touch, so the last control you pressed stays
+     lit until you press something else. Below the breakpoint every one of
+     these controls is touch-driven, so their hover states are cancelled and
+     replaced with :active press feedback. Each rule matches the specificity of
+     the desktop rule it cancels and sits later in the file, so it wins without
+     !important — and none of it exists above 768px. */
+  .advisor-cards-refresh:hover:not(:disabled) {
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+    background: var(--btn-secondary-bg, transparent);
+  }
+  .advisor-cards-refresh:active:not(:disabled) {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+  }
+
+  .category-tab:hover        { color: var(--text-secondary); }
+  .category-tab.active:hover { color: #fff; }
+
+  .freeform-send:hover:not(:disabled) {
+    transform: none;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
+  }
+  .freeform-send:active:not(:disabled) { transform: scale(0.94); }
 }
 
 @media (max-width: 480px) {
@@ -1258,21 +1314,64 @@
    AdvisorCards.jsx, so they need no media query to stay off desktop.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Mobile list card ── */
+/* ── Mobile list card ──
+   An advisor card is a headline plus a paragraph of prose, so unlike Up Next
+   or Quick Actions it is genuinely card-shaped content and stays a card rather
+   than being squeezed into an .m-row. What it drops is the *web* card chrome:
+   no 1px border, no shadow, no hover lift. It becomes a flat raised surface
+   (--m-bg-surface) on the shell's recessed page (--m-bg-grouped), with the
+   same corner radius as the grouped lists on Home so the two screens read as
+   one system. Padding is more generous than desktop's, which is what makes it
+   feel like an app card rather than a dense listing. */
 .advisor-card--mobile {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  gap: 8px;
+  gap: 10px;
+  padding: 16px var(--m-row-pad-x, 16px) 12px;
+  border: none;
+  border-radius: var(--m-group-radius, 12px);
+  background: var(--m-bg-surface, var(--bg-primary));
+  box-shadow: none;
+  transition: background 0.12s ease;
 }
 
+/* Press state replaces hover. Kept subtle — the whole card is the target, so a
+   strong flash across that much area reads as an error, not a tap. */
 .advisor-card--mobile:active {
-  border-color: var(--accent-primary);
-  background: var(--bg-secondary);
+  background: var(--bg-hover, rgba(0, 0, 0, 0.05));
 }
+
+/* ── Touch feedback guards ──
+   These neutralise the shared desktop :hover rules for the mobile card only.
+   They are unconditional rather than wrapped in @media (hover: none) because
+   .advisor-card--mobile is emitted solely by the mobile components, so there
+   is no desktop rendering to preserve — and a hover-capable touch device
+   (iPad + trackpad, Android + mouse) would otherwise still get sticky states.
+   Each selector matches the specificity of the desktop rule it cancels and
+   sits later in the file, so it wins without !important. */
+.advisor-card--mobile:hover {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.advisor-card--mobile .advisor-card__save:hover:not(:disabled) {
+  color: var(--text-muted, var(--text-tertiary));
+  transform: none;
+}
+
+.advisor-card--mobile .advisor-card__save--active:hover:not(:disabled) {
+  color: var(--accent-primary);
+}
+
+.advisor-card--mobile .advisor-card__delete:hover { color: var(--text-muted, var(--text-tertiary)); }
+
+.advisor-card--mobile .advisor-card__save:active,
+.advisor-card--mobile .advisor-card__delete:active { opacity: 0.5; }
 
 /* Hover-reveal is meaningless on touch — the delete control is always shown,
-   just quietly. */
-.advisor-card--mobile .advisor-card__delete { opacity: 0.55; }
+   just quietly. Doubled class only to out-specify `.advisor-card:hover
+   .advisor-card__delete`, which would otherwise light it up and leave it lit. */
+.advisor-card--mobile.advisor-card--mobile .advisor-card__delete { opacity: 0.55; }
 
 /* Header controls need real 44px targets, and must not be clipped by the
    card's own tap handler being the whole article. */
@@ -1304,7 +1403,7 @@
   min-height: 40px;
   padding: 8px 0 0;
   border: none;
-  border-top: 1px solid var(--border-primary);
+  border-top: var(--m-hairline, 1px solid var(--border-primary));
   border-radius: 0;
   background: none;
   font-family: inherit;
@@ -1314,6 +1413,8 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+.advisor-card__mobile-open:active { opacity: 0.6; }
 
 .advisor-card__mobile-open-label {
   flex: 1;
@@ -1341,7 +1442,16 @@
 
 /* ── Full-screen thread ──
    z-index clears MobileLayout's fixed tab bar (100) and More sheet (130): this
-   view deliberately covers the tab bar, and the back control is the way out. */
+   view deliberately covers the tab bar, and the back control is the way out.
+
+   Motion is NOT defined here. The element carries .m-push-enter / .m-push-exit
+   from MobileLayout.css so the card -> thread navigation uses the app's one
+   shared push gesture: a full slide in from the trailing edge, and a slide
+   back out the same way on the pop. The old local keyframe only faded in from
+   6% — a hint of a transition rather than a direction, which reads as a page
+   load. prefers-reduced-motion is handled by the primitive; AdvisorCards.jsx
+   checks the same query so the unmount timer does not leave the view stranded
+   when the animation is suppressed. */
 .mobile-card-thread {
   position: fixed;
   inset: 0;
@@ -1349,16 +1459,6 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
-  animation: mobileThreadPush 0.24s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-@keyframes mobileThreadPush {
-  from { transform: translateX(6%); opacity: 0; }
-  to   { transform: translateX(0);  opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mobile-card-thread { animation: none; }
 }
 
 .mobile-card-thread__bar {
@@ -1471,3 +1571,28 @@
   height: 40px;
   font-size: 0.85rem;
 }
+
+/* ── Thread view touch feedback ──
+   Same rationale as the mobile card's guards: .mobile-card-thread is emitted
+   only by the mobile component, so cancelling hover here cannot reach
+   desktop. Press states take over. */
+.mobile-card-thread .advisor-card__chip:hover:not(:disabled) {
+  border-color: var(--border-primary);
+  color: var(--text-secondary);
+  background: var(--btn-secondary-bg, transparent);
+}
+
+.mobile-card-thread .advisor-card__chip:active:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(237, 27, 47, 0.08);
+}
+
+.mobile-card-thread .advisor-card__save:hover:not(:disabled) { transform: none; }
+
+.mobile-card-thread .card-chat-bar__send:hover:not(:disabled) {
+  transform: none;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
+}
+
+.mobile-card-thread .card-chat-bar__send:active:not(:disabled) { transform: scale(0.94); }

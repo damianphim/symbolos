@@ -62,7 +62,7 @@ export default function SavedCoursesView({
         href={`https://vsb.mcgill.ca/criteria.jsp?access=0&lang=${language === 'fr' ? 'fr' : 'en'}&tip=2&page=criteria&scratch=0&advice=0&legend=1&term=202601&sort=none&filters=iiiiiiiiii&bbs=&ds=&cams=OFF-CAMPUS_DISTANCE_DOWNTOWN_MACDONALD&locs=any&isrts=any&ses=any&pl=&pac=1`}
         target="_blank"
         rel="noreferrer"
-        className="vsb-banner"
+        className="vsb-banner m-group m-row m-row--tappable"
       >
         <div className="vsb-banner__left">
           <FaCalendarAlt className="vsb-banner__icon" />
@@ -84,9 +84,9 @@ export default function SavedCoursesView({
               <p>{t('saved.noSavedCoursesDesc')}</p>
             </div>
           ) : (
-            <div className="course-list">
+            <div className="course-list m-group">
               {favorites.map((course, idx) => (
-                <div key={idx} className="course-card">
+                <div key={idx} className="course-card m-row m-row--tappable">
                   <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
@@ -161,8 +161,15 @@ export default function SavedCoursesView({
                   {group.isActive ? t('saved.currentTerm') : t('saved.upcoming')}
                 </span>
               </div>
+              {/* The term header must stay a direct child of the auto-fill grid
+                  on desktop (it relies on `grid-column: 1 / -1`), so the cards
+                  get their own wrapper instead of the header being lifted out.
+                  `.saved-term-group` is `display: contents` on desktop — the
+                  grid sees the cards exactly as before — and becomes the
+                  raised `.m-group` surface only inside `.mobile-shell`. */}
+              <div className="saved-term-group m-group">
               {group.courses.map((course, idx) => (
-                <div key={idx} className="course-card">
+                <div key={idx} className="course-card m-row m-row--tappable">
                   <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>
@@ -211,6 +218,7 @@ export default function SavedCoursesView({
                   </div>
                 </div>
               ))}
+              </div>
             </div>
             ))
           )}
@@ -227,9 +235,9 @@ export default function SavedCoursesView({
               <p>{t('saved.noCompletedCoursesDesc')}</p>
             </div>
           ) : (
-            <div className="course-list">
+            <div className="course-list m-group">
               {completedCourses.map((course, idx) => (
-                <div key={idx} className="course-card completed-course-card">
+                <div key={idx} className="course-card completed-course-card m-row m-row--tappable">
                   <div className="course-card-content" onClick={() => openCourse(course.subject, course.catalog, course.term && course.year ? `${course.term} ${course.year}` : undefined)}>
                     <div className="course-header">
                       <div className="course-code">{course.subject} {course.catalog}</div>

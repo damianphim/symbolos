@@ -504,3 +504,172 @@
 .vsb-banner:hover .vsb-banner__arrow {
   color: var(--accent-primary);
 }
+
+/* ─── Term group wrapper ──────────────────────────────────────
+   Added so the mobile grouped list has a surface to live on. On desktop
+   it must be invisible to layout: .course-list is an auto-fill grid and
+   the cards have to stay its direct children, so `display: contents`
+   removes the wrapper box entirely. Desktop renders byte-identically. */
+.saved-term-group { display: contents; }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   All scoped to `.mobile-shell` (rendered only under 768px) and wrapped
+   in the 768px query, so desktop matches nothing here.
+
+   Appended at end-of-file deliberately: the .vsb-banner base rules this
+   overrides are declared *after* the earlier @media blocks, and media
+   queries add no specificity. */
+@media (max-width: 768px) {
+
+  /* ── Sub-tab bar → segmented control ────────────────────────
+     This bar used to be a Material-style underline tab strip sitting
+     directly beneath CoursesView's .dp-subtab segmented control — two
+     different tab languages within 60px of each other on a 390px screen.
+     Both are segmented controls now; this one is the secondary (smaller,
+     inside the My Courses branch) and the outer one stays primary. */
+  .mobile-shell .saved-courses-view .saved-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    margin-bottom: 14px;
+    border: none;
+    border-bottom: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+  }
+  .mobile-shell .saved-courses-view .saved-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 32px;
+    margin-bottom: 0;
+    padding: 6px 8px;
+    border: none;
+    border-bottom: none;
+    border-radius: 7px;
+    background: transparent;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .saved-courses-view .saved-tab.active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  /* Hover is meaningless on touch and sticks after a tap. */
+  .mobile-shell .saved-courses-view .saved-tab:hover { background: transparent; }
+  @media (hover: hover) {
+    .mobile-shell .saved-courses-view .saved-tab:hover:not(.active) {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+    }
+  }
+  .mobile-shell .saved-courses-view .saved-tab.active:hover {
+    background: var(--m-bg-surface);
+  }
+  .mobile-shell .saved-courses-view .tab-count {
+    background: var(--text-secondary);
+    color: var(--m-bg-surface);
+    opacity: 0.55;
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+  .mobile-shell .saved-courses-view .saved-tab.active .tab-count {
+    background: var(--accent-primary);
+    color: #fff;
+    opacity: 1;
+  }
+
+  /* ── Course lists → grouped lists ───────────────────────────
+     One raised surface per list, hairline-separated rows inside it,
+     running edge-to-edge by taking back exactly .mobile-content's gutter. */
+  .mobile-shell .saved-courses-view .course-list.m-group,
+  .mobile-shell .saved-courses-view .saved-term-group.m-group {
+    display: block;
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+    gap: 0;
+  }
+  /* The current-courses tab nests the group inside .course-list (which
+     still holds the term header), so the outer element must not also
+     claim the negative margin or it would double. */
+  .mobile-shell .saved-courses-view .course-list:not(.m-group) {
+    display: block;
+    gap: 0;
+    margin-top: 0;
+  }
+
+  .mobile-shell .saved-courses-view .course-card.m-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+  }
+  .mobile-shell .saved-courses-view .m-group > .course-card:last-child {
+    border-bottom: none;
+  }
+  /* A :hover lift on touch stays applied until you tap elsewhere. */
+  .mobile-shell .saved-courses-view .course-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* The completed cards' 4px red rail was a per-card border; inside one
+     shared surface it reads as a stray stripe. The grade badge already
+     carries the state. */
+  .mobile-shell .saved-courses-view .completed-course-card {
+    border-left: none;
+    background: transparent;
+  }
+
+  /* The in-card divider above the action pills is now redundant — the row
+     is already separated from its neighbours by a hairline. */
+  .mobile-shell .saved-courses-view .course-card-content {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  /* ── Term header → group label ──────────────────────────────
+     Was a bold 14px heading styled like a web <h2> sitting on top of a
+     card. It becomes the quiet uppercase label that introduces the group
+     below it, sitting on the recessed page background. */
+  .mobile-shell .saved-courses-view .term-group-header {
+    margin: 0 0 6px !important;
+    padding: 0 var(--m-row-pad-x) 0 0;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* ── VSB banner → single-row group ──────────────────────────
+     .m-group + .m-row on one element: one tappable row that leaves the
+     app. The trailing hairline is dropped because the row IS the group. */
+  .mobile-shell .saved-courses-view .vsb-banner.m-row {
+    border: none;
+    border-bottom: none;
+    justify-content: space-between;
+    transform: none;
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+  }
+  .mobile-shell .saved-courses-view .vsb-banner:hover {
+    transform: none;
+    border-color: transparent;
+  }
+
+  /* A genuine empty state belongs on the page, not inside a surface. */
+  .mobile-shell .saved-courses-view .empty-state { padding: 48px 16px; }
+}

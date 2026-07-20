@@ -384,3 +384,129 @@
   .sa-link { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
   .sa-footer > *, .sa-footer-link { min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Scoped to `.mobile-shell` (only rendered under 768px) inside the 768px
+   media query, so desktop matches nothing here.
+
+   The program list was a column of individually bordered, radiused,
+   0.5rem-apart accordion cards. It becomes one raised surface running
+   edge to edge, with hairline-separated rows — same grammar as the
+   course lists and the requirement blocks, so the whole Degree Planning
+   section reads as one app rather than five pages. */
+@media (max-width: 768px) {
+
+  /* Browse / Saved → the same segmented control used everywhere else in
+     Courses and Degree Planning, rather than a Material underline strip.
+     See CoursesView.css for why the segmented control won. */
+  .mobile-shell .sa-view .sa-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    overflow: visible;
+    border: none;
+    border-bottom: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+  }
+  .mobile-shell .sa-view .sa-tab {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    min-height: 32px;
+    margin-bottom: 0;
+    padding: 6px 10px;
+    border: none;
+    border-bottom: none;
+    border-radius: 7px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .sa-view .sa-tab--active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .mobile-shell .sa-view .sa-tab:hover { color: var(--text-secondary); }
+  @media (hover: hover) {
+    .mobile-shell .sa-view .sa-tab:hover { color: var(--text-primary); }
+  }
+  .mobile-shell .sa-view .sa-tab--active:hover { color: var(--text-primary); }
+
+  /* ── Program list → grouped list ────────────────────────────── */
+  .mobile-shell .sa-view .sa-cards.m-group {
+    display: block;
+    gap: 0;
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+  }
+
+  .mobile-shell .sa-view .sa-card {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .sa-view .sa-cards > .sa-card:last-child { border-bottom: none; }
+  .mobile-shell .sa-view .sa-card:hover,
+  .mobile-shell .sa-view .sa-card--open { border-color: transparent; }
+
+  /* The header is the row; .m-row supplies its padding, min-height and
+     press feedback. */
+  .mobile-shell .sa-view .sa-card-header.m-row {
+    justify-content: space-between;
+    border-bottom: none;
+  }
+  .mobile-shell .sa-view .sa-card--open .sa-card-header.m-row {
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .sa-view .sa-card-body { border-top: none; }
+
+  /* Filter pills and bookmark buttons: hover states are applied on tap
+     and then stay until you touch something else. */
+  .mobile-shell .sa-view .sa-pill:hover {
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .sa-view .sa-pill:hover:not(.sa-pill--on) {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .sa-view .sa-pill:active { opacity: 0.6; }
+  .mobile-shell .sa-view .sa-pill--on:hover {
+    border-color: var(--accent-primary);
+    color: var(--bg-primary, #fff);
+  }
+  .mobile-shell .sa-view .sa-bm:hover {
+    border-color: var(--border-primary);
+    color: var(--text-muted, #9ca3af);
+  }
+  @media (hover: hover) {
+    .mobile-shell .sa-view .sa-bm:hover:not(.sa-bm--on) {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .sa-view .sa-bm--on:hover { color: var(--bg-primary, #fff); }
+  .mobile-shell .sa-view .sa-link:hover {
+    background: none;
+    border-color: var(--border-primary);
+    color: var(--text-primary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .sa-view .sa-link:hover {
+      background: var(--text-primary);
+      border-color: var(--text-primary);
+      color: var(--bg-primary, #fff);
+    }
+  }
+  .mobile-shell .sa-view .sa-link:active { opacity: 0.6; }
+}

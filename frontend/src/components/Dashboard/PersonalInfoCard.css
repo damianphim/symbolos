@@ -79,10 +79,12 @@
   flex-shrink: 0;
 }
 
-.pic-edit-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(237, 27, 47, 0.3);
+@media (hover: hover) {
+  .pic-edit-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(237, 27, 47, 0.3);
+  }
 }
 
 /* ── Completeness strip — one quiet line ──────────────── */
@@ -388,4 +390,92 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NATIVE GROUPED LISTS (<= 768px)
+
+   This card is already a definition list, so it needs almost no
+   restructuring — only a change of which element is the surface:
+
+     .pic-card        card      -> transparent wrapper
+     .pic-header      card head -> plain page heading on the recessed bg
+     .pic-progress    strip     -> its own one-row group
+     .pic-group-label label     -> already a quiet uppercase label; it just
+                                   moves OUTSIDE the surface, which happens
+                                   for free once .pic-rows becomes the group
+     .pic-rows        rows      -> the group surface
+     .pic-row         row       -> .m-row proportions + hairline
+
+   Last block in the file so it wins over the 900/768/520 patches above.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  .mobile-shell .pic-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  /* ── Header: a page heading, not a card head ── */
+  .mobile-shell .pic-header {
+    padding: 0 var(--m-row-pad-x) 12px;
+    border-bottom: none;
+  }
+  .mobile-shell .pic-header-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  .mobile-shell .pic-title { font-size: 1.05rem; }
+
+  /* ── Completeness: one row on its own surface ── */
+  .mobile-shell .pic-progress {
+    min-height: var(--m-row-min-height);
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    background: var(--m-bg-surface);
+    border: none;
+    border-radius: var(--m-group-radius);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Body: the groups stack; each supplies its own bottom margin ── */
+  .mobile-shell .pic-body {
+    padding: 0;
+    gap: 0;
+  }
+  .mobile-shell .pic-col { gap: 0; }
+
+  .mobile-shell .pic-group { margin-bottom: 1.25rem; }
+
+  .mobile-shell .pic-group-label {
+    padding: 0 var(--m-row-pad-x) 6px;
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+  }
+
+  /* ── The group surface ── */
+  .mobile-shell .pic-rows {
+    background: var(--m-bg-surface);
+    border-radius: var(--m-group-radius);
+    overflow: hidden;
+  }
+
+  .mobile-shell .pic-row {
+    min-height: var(--m-row-min-height);
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .pic-row:last-child { border-bottom: none; }
+  /* Superseded by the border-bottom above — a row would otherwise carry
+     both a top and a bottom hairline and read as double-ruled. */
+  .mobile-shell .pic-row + .pic-row { border-top: none; }
+
+  /* ── Edit form keeps its own padding back, since .pic-card no longer
+        supplies any. ── */
+  .mobile-shell .pic-edit-wrap { padding: 0; }
 }

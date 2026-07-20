@@ -2367,14 +2367,21 @@
     border-radius: 0;
     overscroll-behavior: contain;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    /* Slides up rather than in from the right — at full width a
-       horizontal slide reads as the page itself moving. */
-    animation-name: club-drawer-up;
+    box-shadow: none;
+    /* Motion is owned by .m-push-enter / .m-push-exit (MobileLayout.css),
+       applied by ClubDetailDrawer when the viewport is mobile. The drawer is
+       a detail view *pushed* on top of the browse list, so it enters from the
+       trailing edge and leaves the same way — direction is what makes
+       "deeper" and "back" readable. Clearing the inherited desktop animation
+       here stops the two from fighting. */
+    animation: none;
   }
-  @keyframes club-drawer-up {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
+
+  /* The scrim must fade out with the sheet, not vanish under it. */
+  .club-drawer-overlay--closing {
+    animation: overlay-out 0.2s ease both;
   }
+  @keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
 
   .club-drawer__strip {
     padding: 12px 16px 16px;
@@ -2668,6 +2675,79 @@
    rendering — stays exactly as it was. */
 @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
   .club-drawer,
+  .club-drawer-overlay--closing,
   .clubs-toast,
   .clubs-modal { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NATIVE PROPORTIONS (<= 768px)
+
+   Club cards stay cards. A club is genuinely card-shaped content — a logo,
+   a name and a description are a *thing*, not a property/value row — and
+   flattening them into hairline rows would throw away the logo, which is
+   the fastest way to recognise a club. What changes is the chrome: the
+   1.5px border, the heavy radius and the drop shadow are web card
+   affordances, so they go, and the padding grows to native proportions.
+
+   The one exception is My Clubs, which is a list of memberships rather
+   than a browse surface — those rows become a real grouped list.
+
+   Last block in the file so it wins over everything above.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Browse cards: flatter, roomier, still cards ── */
+  .mobile-shell .club-card {
+    border: none;
+    border-radius: var(--m-group-radius);
+    background: var(--m-bg-surface);
+    box-shadow: none;
+  }
+  .mobile-shell .club-card:active { background: var(--bg-hover, rgba(0, 0, 0, 0.04)); }
+
+  /* The joined marker was a 3px left border, which only reads as a border
+     once the rest of the border is gone. An accent rule on a flat surface
+     is cleaner and does not shift the content by 3px. */
+  .mobile-shell .club-card--joined {
+    border-left: none;
+    box-shadow: inset 3px 0 0 var(--accent-primary, #dc2626);
+    background: var(--m-bg-surface);
+  }
+
+  .mobile-shell .club-card__body { padding: 16px; gap: 9px; }
+  .mobile-shell .club-card__footer {
+    padding: 12px 16px 14px;
+    border-top: var(--m-hairline);
+  }
+
+  /* Curated strips: same flattening, and the cards keep their own surface
+     against the recessed page. */
+  .mobile-shell .club-card--featured { border: none; }
+
+  /* ── My Clubs → grouped list ──
+     A membership row is label-and-actions, which is exactly a .m-row. */
+  .mobile-shell .clubs-mine__section { margin-bottom: 1.25rem; }
+
+  .mobile-shell .clubs-mine__list {
+    background: var(--m-bg-surface);
+    border-radius: var(--m-group-radius);
+    overflow: hidden;
+    gap: 0;
+  }
+
+  .mobile-shell .my-club-row {
+    border: none;
+    border-radius: 0;
+    border-bottom: var(--m-hairline);
+    background: none;
+    box-shadow: none;
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    min-height: var(--m-row-min-height);
+  }
+  .mobile-shell .clubs-mine__list > *:last-child .my-club-row,
+  .mobile-shell .my-club-row:last-child { border-bottom: none; }
+
+  /* ── Detail sheet: no rounded corners, it owns the whole screen ── */
+  .mobile-shell .club-drawer__strip { border-radius: 0; }
 }

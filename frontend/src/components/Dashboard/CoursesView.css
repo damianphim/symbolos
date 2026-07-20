@@ -75,3 +75,95 @@
      space, so keep the icons — they carry the tab's meaning. */
   .courses-view .dp-subtab-icon { display: inline-block; }
 }
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Scoped to `.mobile-shell` (only rendered under 768px) inside the 768px
+   query, so desktop matches nothing below.
+
+   ── The two stacked sub-tab bars ────────────────────────────────
+   This screen showed two tab bars back to back: the .dp-subtab segmented
+   control (My Courses / Search) and, immediately under it whenever My
+   Courses was open, SavedCoursesView's .saved-tabs underline strip
+   (Saved / Current / Completed). Two different visual languages for the
+   same job, ~60px apart, on a 390px screen.
+
+   They are unified on the SEGMENTED CONTROL, not the underline bar:
+
+     * The underline tab is a web/Material idiom. Nothing in an iOS or
+       Android app moves a coloured 3px rule under a label; a segmented
+       control is what native uses for "pick one of these views".
+     * The segmented control already exists here, already carries the
+       `data-tour="courses-mycourses"` anchor, and is the one an outside
+       agent's tour depends on — restyling the other bar to match keeps
+       that anchor untouched.
+     * Flattening both into a single four-segment bar was the other
+       option and was rejected: SavedCoursesView owns its own active-tab
+       state internally, so driving it from CoursesView would mean
+       changing its prop API.
+
+   The two bars stay two bars — they are genuinely two levels of
+   navigation — but they now differ only in weight, not in kind: the
+   outer is the primary control, the inner (styled in
+   SavedCoursesView.css) is the same shape one step smaller and quieter. */
+@media (max-width: 768px) {
+  .mobile-shell .courses-view { gap: 12px; }
+
+  .mobile-shell .courses-view .dp-subtab-bar {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+    overflow: hidden;
+  }
+
+  .mobile-shell .courses-view .dp-subtab-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 34px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .mobile-shell .courses-view .dp-subtab-btn--active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Hover sticks after a tap on touch — the segment you last pressed
+     would stay looking half-selected next to the real one. */
+  .mobile-shell .courses-view .dp-subtab-btn:hover:not(.dp-subtab-btn--active) {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .courses-view .dp-subtab-btn:hover:not(.dp-subtab-btn--active) {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .courses-view .dp-subtab-btn:active { opacity: 0.6; }
+
+  .mobile-shell .courses-view .dp-subtab-icon { font-size: 12.5px; }
+
+  .mobile-shell .courses-view .dp-subtab-count {
+    background: var(--text-secondary);
+    color: var(--m-bg-surface);
+    opacity: 0.55;
+    font-size: 10px;
+  }
+  .mobile-shell .courses-view .dp-subtab-btn--active .dp-subtab-count {
+    background: var(--accent-primary);
+    color: #fff;
+    opacity: 1;
+  }
+}

@@ -200,6 +200,13 @@
   flex-shrink: 0;
 }
 
+/* Disclosure chevron on a program row. Rendered unconditionally in the
+   JSX (no isMobile branch) but hidden everywhere except inside
+   .mobile-shell, so the desktop sidebar list is byte-identical to before:
+   there the list is a persistent master pane, not a push destination, and
+   a chevron on every row would be promising navigation that never happens. */
+.drv-program-chevron { display: none; }
+
 /* ─── Seed button ─────────────────────────────────────────── */
 .drv-seed-btn {
   margin: 10px 12px;
@@ -970,4 +977,195 @@
 .drv-foundation-close:hover {
   color: var(--text-primary);
   background: var(--bg-tertiary);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Scoped to `.mobile-shell` (rendered only under 768px) and wrapped in
+   the 768px media query, so desktop matches none of it. This block sits
+   after the existing responsive block above and refines it — it does not
+   replace the list/detail screen swap, which is deliberately a CSS swap
+   with both panes mounted so search text, the faculty filter and the
+   list scroll position survive the transition. */
+@media (max-width: 768px) {
+
+  /* ── Recessed page ──────────────────────────────────────────
+     .drv-root paints --bg-primary, which is the same colour the .m-group
+     surfaces use. On desktop that is right (the panes ARE the surface),
+     but on mobile it would flatten the figure/ground the grouped lists
+     depend on — groups would be invisible against the page. Letting the
+     shell's --m-bg-grouped show through is what makes the raised groups
+     read as raised. */
+  .mobile-shell .drv-root { background: transparent; }
+
+  /* ── Push / pop ─────────────────────────────────────────────
+     The swap now has direction. For the duration of the animation only,
+     both screens are on screen: the list in flow and the detail overlaid
+     on top of it, sliding in from (or out to) the trailing edge. Without
+     this the pane would animate against an empty background, which reads
+     as a page load rather than a level of navigation.
+
+     .drv-root--animating is set by the component for exactly one
+     animation duration and then cleared, so the normal one-screen-at-a-
+     time rules above are back in force the rest of the time. */
+  .mobile-shell .drv-root--animating { position: relative; overflow-x: clip; }
+  .mobile-shell .drv-root--animating .drv-sidebar--open + .drv-main { display: block; }
+  .mobile-shell .drv-root--animating .drv-main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    min-height: 100%;
+    /* Opaque so the list underneath does not show through the pane that
+       is moving over it. */
+    background: var(--m-bg-grouped);
+  }
+
+  /* ── Program list → grouped list ────────────────────────────
+     Was a flat column of borderless buttons on the page background —
+     readable, but nothing said "this is a list you can push into". It is
+     now one raised surface with hairline-separated rows and a trailing
+     chevron, running to both screen edges by taking back exactly
+     .mobile-content's gutter. */
+  .mobile-shell .drv-program-list .m-group {
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-shell .drv-program-item.m-row {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border-radius: 0;
+  }
+  .mobile-shell .drv-program-item.m-row:hover { background: none; }
+  @media (hover: hover) {
+    .mobile-shell .drv-program-item.m-row:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+
+  /* The 3px left rail marked the selected item in a persistent sidebar.
+     In push navigation there is no persistent selection to mark — you
+     are either on the list or on the program — so it only ever flashed. */
+  .mobile-shell .drv-program-item--active {
+    background: none;
+    border-left: none;
+    padding-left: var(--m-row-pad-x);
+  }
+
+  .mobile-shell .drv-program-name { flex: 1; min-width: 0; }
+  .mobile-shell .drv-program-credits { flex-shrink: 0; }
+
+  /* Disclosure chevron — the affordance that says this row pushes. */
+  .mobile-shell .drv-program-chevron {
+    display: block;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-muted, #9ca3af);
+    opacity: 0.6;
+  }
+
+  /* Faculty group headings (B.A. & Sc.) → quiet uppercase group label
+     sitting on the recessed background, outside the group it introduces. */
+  .mobile-shell .drv-group-label {
+    padding: 14px var(--m-row-pad-x) 6px 0 !important;
+  }
+
+  /* ── Requirement blocks → grouped lists ─────────────────────
+     Each block was a bordered, radiused card containing a padded list of
+     bordered rows. It becomes one surface: a header row, then course
+     rows separated by hairlines — edge to edge like the program list. */
+  .mobile-shell .drv-blocks { gap: 14px; }
+
+  .mobile-shell .drv-block.m-group {
+    border: none;
+    border-radius: 0;
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    margin-bottom: 0;
+  }
+
+  .mobile-shell .drv-block-header.m-row {
+    justify-content: space-between;
+    border-bottom: var(--m-hairline);
+    background: none;
+  }
+  .mobile-shell .drv-block-header:hover { background: none; }
+  @media (hover: hover) {
+    .mobile-shell .drv-block-header:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+
+  .mobile-shell .drv-block-body {
+    padding: 0;
+    border-top: none;
+  }
+  .mobile-shell .drv-block-info,
+  .mobile-shell .drv-block-notes {
+    margin: 0;
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border-radius: 0;
+    border-bottom: var(--m-hairline);
+  }
+
+  .mobile-shell .drv-course-list { gap: 0; padding-top: 0; }
+
+  .mobile-shell .drv-course-row.m-row {
+    align-items: flex-start;
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+  }
+  .mobile-shell .drv-course-list > .drv-course-row:last-child {
+    border-bottom: none;
+  }
+  /* The required-course left rail was a border on a free-floating row.
+     Inside one shared surface it becomes a stray stripe, and the
+     "Required" badge already in the row says the same thing. */
+  .mobile-shell .drv-course-row--required { border-left: none; }
+  .mobile-shell .drv-course-row:hover { background: transparent; }
+  @media (hover: hover) {
+    .mobile-shell .drv-course-row:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+
+  .mobile-shell .drv-show-more {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    min-height: var(--m-row-min-height);
+  }
+  .mobile-shell .drv-show-more:hover { background: none; border-color: transparent; }
+  @media (hover: hover) {
+    .mobile-shell .drv-show-more:hover { background: var(--bg-hover, rgba(0, 0, 0, 0.03)); }
+  }
+  .mobile-shell .drv-show-more:active { background: var(--bg-hover, rgba(0, 0, 0, 0.06)); }
+
+  /* ── Back control ───────────────────────────────────────────
+     Reads as a nav bar back item, not a bordered button. */
+  .mobile-shell .drv-open-sidebar--back {
+    padding: 4px 0 4px 2px;
+    border: none;
+    background: none;
+    color: var(--accent-primary);
+    font-size: 15px;
+    min-height: 44px;
+  }
+  .mobile-shell .drv-open-sidebar--back:active { opacity: 0.5; }
+
+  /* Filter chips: hover state sticks after a tap on touch. */
+  .mobile-shell .drv-type-chip:hover { border-color: var(--border-primary); }
+  @media (hover: hover) {
+    .mobile-shell .drv-type-chip:hover { border-color: var(--accent-primary); }
+  }
+  .mobile-shell .drv-type-chip:active { opacity: 0.6; }
+  .mobile-shell .drv-faculty-select:hover { border-color: var(--border-primary); }
 }

@@ -378,3 +378,84 @@
      its own line even when the text fits.) */
   .info-note > span { min-width: 0; overflow-wrap: anywhere; }
 }
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Scoped to `.mobile-shell` (under 768px only) inside the 768px query.
+
+   The credit breakdown was four separately-bordered, separately-tinted
+   boxes that collapsed to a single column on a phone — i.e. four cards
+   stacked vertically, each with its own border, radius and pastel fill.
+   That is the clearest "responsive website" tell on this screen.
+
+   It becomes one hairline-separated list inset inside the card that
+   already surrounds it (.dp-section-card is the raised surface, so the
+   rows do not need a second one of their own). The four colours survive
+   where they carry meaning — on the leading icon — instead of as four
+   competing background fills. */
+@media (max-width: 768px) {
+  .mobile-shell .credits-breakdown.m-group {
+    display: block;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    margin-bottom: 0;
+  }
+
+  .mobile-shell .credits-breakdown .credit-item.m-row {
+    gap: 12px;
+    padding: var(--m-row-pad-y) 0;
+    background: transparent;
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    min-width: 0;
+  }
+  .mobile-shell .credits-breakdown .credit-item.m-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  /* The dashed "remaining" outline was the box's only distinguishing
+     mark; without a box it has nothing to dash. */
+  .mobile-shell .credits-breakdown .credit-item.remaining {
+    border-style: none;
+    border-bottom: none;
+  }
+
+  /* A :hover lift is applied on tap and then stays until you touch
+     something else, so the last row you pressed looks stuck. */
+  .mobile-shell .credits-breakdown .credit-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .mobile-shell .credits-breakdown .credit-icon {
+    min-width: 24px;
+    font-size: 17px;
+  }
+
+  /* Value moves to the trailing edge — label left, value right is the
+     native settings-row shape and reads far faster than a stacked pair. */
+  .mobile-shell .credits-breakdown .credit-details {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .mobile-shell .credits-breakdown .credit-label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .mobile-shell .credits-breakdown .credit-value {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+}

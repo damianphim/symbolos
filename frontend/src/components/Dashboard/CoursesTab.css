@@ -398,3 +398,171 @@
      label plus a select does not fit, so give each filter its own row. */
   .courses-filter-bar .filter-group { flex: 1 1 100%; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR
+   ══════════════════════════════════════════════════════════════
+   Everything below is scoped to `.mobile-shell`, the wrapper MobileLayout
+   renders only under 768px, AND wrapped in the 768px media query. Desktop
+   can match neither, so the rules above are the complete desktop story.
+
+   Placed at the end of the file because several of the base rules these
+   override (`.vsb-banner`, `.courses-filter-bar`) are themselves declared
+   after the earlier @media blocks — media queries add no specificity, so
+   at equal specificity source order is what decides.
+
+   The move: search results stop being a stack of bordered, shadowed,
+   individually-floating cards and become ONE raised surface whose items
+   are separated by hairlines. Tokens come from MobileLayout.css
+   (--m-hairline, --m-group-radius, --m-row-pad-*, --m-gutter). */
+@media (max-width: 768px) {
+
+  /* ── Edge-to-edge groups ────────────────────────────────────
+     .mobile-content supplies the page gutter; a grouped list wants to run
+     to both screen edges, so it takes back exactly that gutter and no
+     more. --m-gutter is the same token .mobile-content pads with, so the
+     two can never drift apart. */
+  .mobile-shell .courses-container .course-list.m-group,
+  .mobile-shell .courses-container .courses-filter-bar.m-group,
+  .mobile-shell .courses-container .vsb-banner.m-group {
+    margin-left: calc(-1 * var(--m-gutter));
+    margin-right: calc(-1 * var(--m-gutter));
+    border-radius: 0;
+  }
+
+  /* ── Result rows ────────────────────────────────────────────
+     .m-row gives padding + the hairline separator; a search result is a
+     stacked composite (code/title/instructor/ratings, then the action
+     cluster), so only the axis is overridden — the row metrics stay the
+     shared ones. */
+  .mobile-shell .courses-container .course-card.m-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    /* Strip the web card chrome: the group is the surface now. */
+    background: transparent;
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    min-width: 0;
+  }
+  .mobile-shell .courses-container .course-list.m-group > .course-card:last-child {
+    border-bottom: none;
+  }
+
+  /* Hover lifts stick after a tap on touch — the last card you touched
+     stays looking selected. Press feedback replaces it (the tappable
+     :active state comes from the .m-row--tappable primitive). */
+  .mobile-shell .courses-container .course-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
+  }
+  @media (hover: hover) {
+    .mobile-shell .courses-container .course-card:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+
+  .mobile-shell .courses-container .course-card--skeleton.m-row {
+    min-height: 96px;
+    justify-content: center;
+  }
+
+  /* The divider above the action cluster is redundant once the row itself
+     is hairline-separated from its neighbours — two rules 12px apart is
+     the "web card" tell. */
+  .mobile-shell .courses-container .course-card-actions {
+    border-top: none;
+    padding-top: 0;
+    justify-content: flex-start;
+  }
+
+  /* ── Filter rows ────────────────────────────────────────────
+     Semester + Sort read as a two-row settings group: label on the lead
+     edge, control on the trailing edge. */
+  .mobile-shell .courses-container .courses-filter-bar.m-group {
+    display: block;
+    gap: 0;
+    margin-top: 0;
+  }
+  .mobile-shell .courses-container .courses-filter-bar .filter-group.m-row {
+    flex: none;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mobile-shell .courses-container .courses-filter-bar .sort-label {
+    flex: 0 0 auto;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .mobile-shell .courses-container .courses-filter-bar .sort-select {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: 60%;
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    text-align: right;
+    text-align-last: right;
+    padding-right: 1.4rem;
+    background-position: right 0.1rem center;
+  }
+
+  /* ── VSB banner ─────────────────────────────────────────────
+     A single-row group: one tappable row that leaves the app. */
+  .mobile-shell .courses-container .vsb-banner.m-row {
+    border: none;
+    border-bottom: none;
+    justify-content: space-between;
+    transform: none;
+  }
+  .mobile-shell .courses-container .vsb-banner:hover {
+    transform: none;
+    border-color: transparent;
+  }
+
+  /* ── Results header ─────────────────────────────────────────
+     A web <h3> above a card becomes the quiet uppercase group label that
+     introduces the list. */
+  .mobile-shell .courses-container .results-header-bar {
+    margin-bottom: 6px;
+  }
+  .mobile-shell .courses-container .results-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 0 var(--m-row-pad-x) 0 0;
+  }
+  .mobile-shell .courses-container .results-page-info {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Pagination keeps its own shape but loses the top rule — the list it
+     follows already ends in a rounded edge. */
+  .mobile-shell .courses-container .pagination { border-top: none; }
+
+  /* The pre-search placeholder is a genuine empty state, not a content
+     card: it should sit on the page, not float in a bordered box. */
+  .mobile-shell .courses-container .placeholder-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 3rem 1rem;
+  }
+
+  /* Tooltips are hover-only affordances; on touch they can only appear
+     stuck after a tap. The buttons carry accessible titles already. */
+  .mobile-shell .courses-container .favorite-btn[data-tooltip]::after,
+  .mobile-shell .courses-container .completed-btn[data-tooltip]::after,
+  .mobile-shell .courses-container .current-btn[data-tooltip]::after {
+    display: none;
+  }
+}

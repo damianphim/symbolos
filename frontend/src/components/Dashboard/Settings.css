@@ -60,8 +60,14 @@
   overflow: hidden;
 }
 
-.settings-section:hover {
-  box-shadow: var(--shadow-md);
+/* Hover is guarded throughout this file: on a touch screen a :hover state
+   latches after a tap and the last-touched control stays lit until you tap
+   elsewhere. Desktop pointers all report `hover: hover`, so every one of
+   these guards is a no-op above 768px. */
+@media (hover: hover) {
+  .settings-section:hover {
+    box-shadow: var(--shadow-md);
+  }
 }
 
 .section-header {
@@ -131,18 +137,19 @@
   border-bottom: none;
 }
 
-.setting-item:hover {
-  background: var(--bg-secondary);
+@media (hover: hover) {
+  .setting-item:hover {
+    background: var(--bg-secondary);
+  }
+  .setting-item--block:hover {
+    background: transparent;
+  }
 }
 
 .setting-item--block {
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-}
-
-.setting-item--block:hover {
-  background: transparent;
 }
 
 .setting-info {
@@ -192,9 +199,11 @@
 
 .theme-btn-icon { font-size: 12px; }
 
-.theme-btn:hover {
-  color: var(--text-secondary);
-  background: var(--bg-hover);
+@media (hover: hover) {
+  .theme-btn:hover {
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+  }
 }
 
 .theme-btn.active {
@@ -261,7 +270,9 @@
   font-family: inherit;
 }
 
-.setting-select:hover { border-color: var(--input-border-hover); }
+@media (hover: hover) {
+  .setting-select:hover { border-color: var(--input-border-hover); }
+}
 .setting-select:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(237,27,47,0.1);
@@ -319,10 +330,12 @@
   transition: all 0.18s;
 }
 
-.notif-method-btn:hover {
-  border-color: var(--accent-primary);
-  background: var(--accent-lighter);
-  color: var(--accent-primary);
+@media (hover: hover) {
+  .notif-method-btn:hover {
+    border-color: var(--accent-primary);
+    background: var(--accent-lighter);
+    color: var(--accent-primary);
+  }
 }
 
 .notif-method-btn.active {
@@ -370,9 +383,11 @@
 
 .notif-timing-chip input { display: none; }
 
-.notif-timing-chip:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+@media (hover: hover) {
+  .notif-timing-chip:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
 }
 
 .notif-timing-chip.active {
@@ -407,8 +422,10 @@
 
 .notif-type-chip input { display: none; }
 
-.notif-type-chip:hover {
-  filter: brightness(0.95);
+@media (hover: hover) {
+  .notif-type-chip:hover {
+    filter: brightness(0.95);
+  }
 }
 
 .notif-type-chip.active {
@@ -462,10 +479,12 @@
 
 .export-btn-icon { font-size: 13px; }
 
-.export-btn:hover {
-  background: var(--accent-lighter);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+@media (hover: hover) {
+  .export-btn:hover {
+    background: var(--accent-lighter);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
 }
 
 /* ── Modal ─────────────────────────────────────────────────── */
@@ -637,9 +656,11 @@
   flex-shrink: 0;
 }
 
-.delete-account-btn:hover {
-  background: #dc2626;
-  color: #fff;
+@media (hover: hover) {
+  .delete-account-btn:hover {
+    background: #dc2626;
+    color: #fff;
+  }
 }
 
 .settings-btn--primary,
@@ -749,7 +770,9 @@
   transition: all 0.15s ease;
 }
 .clubs-visibility-option:first-child { border-right: 1.5px solid var(--border-secondary, #e5e7eb); }
-.clubs-visibility-option:hover { background: var(--bg-hover, #f9fafb); }
+@media (hover: hover) {
+  .clubs-visibility-option:hover { background: var(--bg-hover, #f9fafb); }
+}
 .clubs-visibility-option.active {
   background: var(--accent-primary, #dc2626);
   color: #fff;
@@ -807,4 +830,125 @@
   .modal-content { padding: 20px; }
   .modal-actions { flex-wrap: wrap; }
   .modal-btn { flex: 1 1 auto; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NATIVE GROUPED LISTS (<= 768px)
+
+   Settings is the canonical grouped-list screen, so on phones it stops
+   being a stack of bordered web cards and becomes: a quiet uppercase
+   label on the recessed page, then one raised surface whose rows are
+   divided by hairlines.
+
+   The whole restructure is done without touching the JSX by shifting
+   which element carries the "group" surface:
+
+     .settings-section   card      -> transparent wrapper (no surface)
+     .section-header     card head -> .m-group-label (now OUTSIDE the group)
+     .section-content    padding   -> the group surface itself
+     .setting-item       row       -> .m-row proportions + hairline
+
+   Every selector is prefixed with .mobile-shell, which only ever renders
+   below 768px and is where the --m-* tokens are defined, so desktop can
+   match none of it.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* .mobile-content supplies the page gutter; the groups run to it. */
+  .mobile-shell .settings-container { padding: 4px 0 8px; }
+
+  /* Groups carry their own bottom margin, so the flex gap would double it. */
+  .mobile-shell .settings-sections { gap: 0; }
+
+  /* ── Page header: quieter, it sits under a top bar that already
+        names the screen. ── */
+  .mobile-shell .settings-header { margin-bottom: 18px; }
+  .mobile-shell .settings-title { font-size: 1.35rem; letter-spacing: -0.02em; }
+  .mobile-shell .settings-subtitle { font-size: 0.8rem; }
+
+  /* ── Section wrapper: no longer a card ── */
+  .mobile-shell .settings-section,
+  .mobile-shell .settings-section--danger {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Section header -> .m-group-label ── */
+  .mobile-shell .section-header {
+    padding: 0 var(--m-row-pad-x) 6px;
+    background: transparent;
+    border-bottom: none;
+    gap: 7px;
+  }
+
+  /* The 32px accent tile reads as card chrome; downgrade it to an inline
+     glyph sitting on the label baseline. */
+  .mobile-shell .section-icon {
+    width: auto;
+    height: auto;
+    min-width: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+  }
+  .mobile-shell .section-icon--danger { color: #dc2626; }
+
+  .mobile-shell .section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .section-title--danger { color: #dc2626; }
+
+  /* ── Section content -> the group surface ── */
+  .mobile-shell .section-content {
+    padding: 0;
+    background: var(--m-bg-surface);
+    border-radius: var(--m-group-radius);
+    overflow: hidden;
+  }
+
+  /* ── Setting row -> .m-row ── */
+  .mobile-shell .setting-item {
+    gap: 14px;
+    min-height: var(--m-row-min-height);
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .setting-item:last-child { border-bottom: none; }
+
+  /* Block rows own a control grid underneath their label — they need a
+     little more breathing room than a plain label/control row. */
+  .mobile-shell .setting-item--block {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .mobile-shell .setting-label { font-size: 0.9rem; margin-bottom: 3px; }
+  .mobile-shell .setting-description { font-size: 0.78rem; }
+
+  /* Controls sitting at the trailing edge of a row must never be squeezed
+     by a long label. */
+  .mobile-shell .setting-item > .theme-toggle,
+  .mobile-shell .setting-item > .export-btn,
+  .mobile-shell .setting-item > .delete-account-btn,
+  .mobile-shell .setting-item > .toggle-switch,
+  .mobile-shell .setting-item > .setting-select { flex-shrink: 0; }
+
+  /* Press feedback on the row-trailing buttons. */
+  .mobile-shell .export-btn:active,
+  .mobile-shell .delete-account-btn:active,
+  .mobile-shell .theme-btn:active,
+  .mobile-shell .notif-method-btn:active,
+  .mobile-shell .notif-timing-chip:active,
+  .mobile-shell .notif-type-chip:active,
+  .mobile-shell .clubs-visibility-option:active { opacity: 0.6; }
+
 }

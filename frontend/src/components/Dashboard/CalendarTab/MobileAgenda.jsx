@@ -90,13 +90,24 @@ export default function MobileAgenda({
                   const style = getEventStyle(e, typeConfig)
                   return (
                     <li key={e.id}>
+                      {/* The event type is carried by a colour dot rather than
+                          by tinting the whole row. A tinted, separately
+                          bordered row is card chrome: it makes each event a
+                          floating box, and it forces hardcoded dark text
+                          because the tint is light in both themes. A dot
+                          leaves the row on the group surface, so it inherits
+                          theme colours and reads as one list. */}
                       <button
                         type="button"
                         className="cal-agenda-event"
-                        style={{ borderLeftColor: style.color, background: style.bg }}
                         onClick={() => onSelectEvent(e)}
                       >
-                        <span className="cal-agenda-event__time" style={{ color: style.color }}>
+                        <span
+                          className="cal-agenda-event__dot"
+                          style={{ background: style.color }}
+                          aria-hidden="true"
+                        />
+                        <span className="cal-agenda-event__time">
                           {e.time
                             ? `${e.time}${e.end_time ? `–${e.end_time}` : ''}`
                             : t('cal.allDay')}

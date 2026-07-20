@@ -3335,3 +3335,115 @@
   .cal-gcal-overlay { padding: 12px; }
   .cal-gcal-modal { max-width: 100%; max-height: 88vh; overflow-y: auto; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   AGENDA → NATIVE GROUPED LIST (<= 768px)
+
+   The agenda was already list-shaped; what made it read as a web page was
+   that every event was its own bordered, tinted, rounded box with a gap
+   between it and the next. Here a day becomes one raised surface whose
+   events are divided by hairlines, under a quiet sticky day label sitting
+   on the recessed page.
+
+   IMPORTANT: the day headers are `position: sticky` against
+   <main class="mobile-content">, which is the app's only scroller. Nothing
+   below may introduce overflow on an ancestor — that would create a second
+   scrollport and the headers would stick to it instead of to the page.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Let the day groups align with the gutter .mobile-content already
+     supplies, instead of being inset by a second layer of card padding. */
+  .mobile-shell .cal-body { padding-left: 0; padding-right: 0; }
+
+  /* Groups carry their own bottom margin. */
+  .mobile-shell .cal-agenda { gap: 0; }
+  .mobile-shell .cal-agenda-day {
+    gap: 0;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Day header → quiet label on the recessed background ──
+     Opaque background is load-bearing: the rows scroll underneath it. */
+  .mobile-shell .cal-agenda-day__header {
+    padding: 6px var(--m-row-pad-x);
+    background: var(--m-bg-grouped);
+  }
+
+  .mobile-shell .cal-agenda-day__label { min-height: 34px; gap: 9px; }
+  .mobile-shell .cal-agenda-day__num { font-size: 1.05rem; }
+  .mobile-shell .cal-agenda-day__weekday { font-size: 0.7rem; }
+
+  /* A dashed outline on a bare "+" is web affordance; on a phone the glyph
+     alone is understood, so drop the box and keep the touch target. */
+  .mobile-shell .cal-agenda-day__add {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 999px;
+    color: var(--accent-primary);
+  }
+  .mobile-shell .cal-agenda-day__add:active {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+  }
+
+  /* ── The group surface ── */
+  .mobile-shell .cal-agenda-day__list {
+    gap: 0;
+    background: var(--m-bg-surface);
+    border-radius: var(--m-group-radius);
+    /* `hidden` is safe here: this element is not an ancestor of the sticky
+       day header (they are siblings), so it cannot become its scrollport. */
+    overflow: hidden;
+  }
+
+  /* ── One event → .m-row ── */
+  .mobile-shell .cal-agenda-event {
+    min-height: var(--m-row-min-height);
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+    background: none;
+    color: inherit;
+  }
+  .mobile-shell .cal-agenda-day__list > li:last-child .cal-agenda-event {
+    border-bottom: none;
+  }
+  .mobile-shell .cal-agenda-event:active {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+  }
+
+  /* Type indicator, replacing the row tint + left stripe. */
+  .mobile-shell .cal-agenda-event__dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    align-self: center;
+  }
+
+  /* The row now sits on the theme surface rather than on a fixed light
+     tint, so text follows the theme instead of being pinned to near-black. */
+  .mobile-shell .cal-agenda-event__time {
+    width: 52px;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .cal-agenda-event__title { color: var(--text-primary); }
+  .mobile-shell .cal-agenda-event__cat { color: var(--text-tertiary); }
+  .mobile-shell .cal-agenda-event__chev { color: var(--text-tertiary); }
+
+  /* Empty states lose their dashed boxes too. */
+  .mobile-shell .cal-agenda-day__empty {
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border: none;
+    border-radius: var(--m-group-radius);
+    background: var(--m-bg-surface);
+  }
+  .mobile-shell .cal-agenda--empty {
+    padding: 32px var(--m-row-pad-x);
+    border: none;
+    border-radius: var(--m-group-radius);
+    background: var(--m-bg-surface);
+  }
+}

@@ -583,7 +583,7 @@ function MobileAdvisorCard({ card, thread = [], isThinking = false, onOpen, onSa
 // that only sat above it would leave the composer wedged between a keyboard
 // and a nav rail; covering it gives the thread the whole screen, and the back
 // control is the single, obvious way out.
-function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveToggle }) {
+function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveToggle, isClosing = false }) {
   const { t } = useLanguage()
   const [saving, setSaving] = useState(false)
 
@@ -607,11 +607,16 @@ function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveTog
   }
 
   return (
+    /* Motion comes from MobileLayout.css's shared push primitives rather than a
+       local keyframe, so opening a thread here reads as the same gesture as
+       every other list -> detail push in the app: in from the trailing edge,
+       back out the same way. */
     <div
-      className="mobile-card-thread"
+      className={`mobile-card-thread ${isClosing ? 'm-push-exit' : 'm-push-enter'}`}
       role="dialog"
       aria-modal="true"
       aria-label={card.title}
+      aria-hidden={isClosing || undefined}
     >
       <header className="mobile-card-thread__bar">
         <button
@@ -815,6 +820,9 @@ export default function AdvisorCards({
   const [timeAgo, setTimeAgo] = useState('')
   // Mobile only: which card's thread is showing as a full-screen push view.
   const [mobileThreadId, setMobileThreadId] = useState(null)
+  // The pop half of the push. The view has to stay mounted while it slides
+  // back out, so "closing" is a distinct state from "closed".
+  const [threadClosing, setThreadClosing] = useState(false)
 
   const storageKey = userId ? `advisor_threads_${userId}` : 'advisor_threads'
   const deletedKey = userId ? `advisor_deleted_${userId}` : 'advisor_deleted'
@@ -858,6 +866,7 @@ export default function AdvisorCards({
     // On mobile the equivalent of "open this card's chat" is pushing its
     // full-screen thread, not expanding a panel somewhere down the feed.
     if (isMobile) {
+      setThreadClosing(false)
       setMobileThreadId(openCardId)
       onOpenedCard?.()
       return
@@ -874,8 +883,35 @@ export default function AdvisorCards({
   // Crossing the breakpoint mid-session (rotation, desktop resize) must not
   // leave a full-screen mobile overlay hanging over the desktop layout.
   useEffect(() => {
-    if (!isMobile) setMobileThreadId(null)
+    if (!isMobile) { setMobileThreadId(null); setThreadClosing(false) }
   }, [isMobile])
+
+  // Open a card's thread. Clearing `threadClosing` matters when the user taps a
+  // second card during the pop animation of the first.
+  const openMobileThread = useCallback((cardId) => {
+    setThreadClosing(false)
+    setMobileThreadId(cardId)
+  }, [])
+
+  // Start the pop; the unmount below finishes it.
+  const closeMobileThread = useCallback(() => setThreadClosing(true), [])
+
+  // Unmount once the exit animation has had time to run. A timer rather than
+  // `animationend` because prefers-reduced-motion sets `animation: none` on the
+  // push classes, so no animation event would ever fire and the view would be
+  // stranded on screen.
+  useEffect(() => {
+    if (!threadClosing) return
+    const reduced = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+    // Matches .m-push-exit's 0.2s, with a frame of slack.
+    const id = setTimeout(() => {
+      setMobileThreadId(null)
+      setThreadClosing(false)
+    }, reduced ? 0 : 210)
+    return () => clearTimeout(id)
+  }, [threadClosing])
 
   const feedRef = useRef(null)
   const prevLen = useRef(visibleCards.length)
@@ -1090,7 +1126,7 @@ export default function AdvisorCards({
             cards={filteredCards}
             threadMap={threadMap}
             thinkingCards={thinkingCards}
-            onOpen={setMobileThreadId}
+            onOpen={openMobileThread}
             onSaveToggle={onSaveToggle}
             onDelete={handleDelete}
           />
@@ -1141,8 +1177,9 @@ export default function AdvisorCards({
           thread={threadMap[mobileThreadCard.id] || []}
           isThinking={thinkingCards.has(mobileThreadCard.id)}
           onSend={(msg) => handleSend(mobileThreadCard.id, msg, mobileThreadCard.title, mobileThreadCard.body)}
-          onClose={() => setMobileThreadId(null)}
+          onClose={closeMobileThread}
           onSaveToggle={onSaveToggle}
+          isClosing={threadClosing}
         />
       )}
 

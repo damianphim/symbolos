@@ -1567,3 +1567,236 @@
   .dp-electives-title-row { min-width: 0; }
   .dp-electives-title-row > div { min-width: 0; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE — NATIVE GRAMMAR  (must stay LAST in this file)
+   ══════════════════════════════════════════════════════════════
+   Every rule is scoped to `.mobile-shell`, the wrapper MobileLayout
+   renders only under 768px, and wrapped in the 768px media query — so
+   desktop can match none of it.
+
+   Last in the file for the same reason the "Responsive, part 2" block
+   above is: several base rules these override are declared after the
+   first @media block, and media queries add no specificity, so source
+   order decides ties. */
+@media (max-width: 768px) {
+
+  /* ── Sub-tabs → segmented control ───────────────────────────
+     Same language as the Courses screen's control (see CoursesView.css
+     for the reasoning). Four destinations, so the 2x2 grid stays — a
+     scrolling strip would hide half of a top-level section behind a
+     swipe — but the tray, the pill radius, the active-surface treatment
+     and the type are now identical to every other tab control in these
+     two screens. */
+  .mobile-shell .dp-view .dp-subtab-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 2px;
+    border: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+    overflow: hidden;
+  }
+  .mobile-shell .dp-view .dp-subtab-btn {
+    min-height: 40px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .mobile-shell .dp-view .dp-subtab-btn--active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .mobile-shell .dp-view .dp-subtab-btn:hover:not(.dp-subtab-btn--active) {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .dp-view .dp-subtab-btn:hover:not(.dp-subtab-btn--active) {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .dp-view .dp-subtab-btn:active { opacity: 0.6; }
+  .mobile-shell .dp-view .dp-subtab-count {
+    background: var(--text-secondary);
+    color: var(--m-bg-surface);
+    opacity: 0.55;
+  }
+  .mobile-shell .dp-view .dp-subtab-btn--active .dp-subtab-count {
+    background: var(--accent-primary);
+    color: #fff;
+    opacity: 1;
+  }
+
+  /* ── Page = recessed, content = raised ──────────────────────
+     The figure/ground relationship replaces per-card borders and
+     shadows. The two top-level cards keep their own surface (they are
+     genuine cards — a progress hero and a requirements panel — not list
+     items), but lose the border and drop shadow that made them read as
+     web cards floating on a page. */
+  .mobile-shell .dp-view .dp-section-card,
+  .mobile-shell .dp-view .dp-req-card {
+    background: var(--m-bg-surface);
+    border: none;
+    border-radius: var(--m-group-radius);
+    box-shadow: none;
+  }
+
+  /* ── Program switcher → same pill language ──────────────────
+     Stays a scrolling strip (the list is unbounded — a double major with
+     two minors makes six tabs) but adopts the segmented control's tray
+     and active pill so it is recognisably the same control. */
+  .mobile-shell .dp-view .dp-prog-tabs {
+    gap: 2px;
+    padding: 2px;
+    border: none;
+    border-radius: 9px;
+    background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
+  }
+  .mobile-shell .dp-view .dp-prog-tab {
+    min-height: 34px;
+    border-radius: 7px;
+    font-size: 12.5px;
+  }
+  .mobile-shell .dp-view .dp-prog-tab--active {
+    background: var(--m-bg-surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .mobile-shell .dp-view .dp-prog-tab:hover:not(.dp-prog-tab--active) {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  @media (hover: hover) {
+    .mobile-shell .dp-view .dp-prog-tab:hover:not(.dp-prog-tab--active) {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+      color: var(--text-primary);
+    }
+  }
+  .mobile-shell .dp-view .dp-prog-tab:active { opacity: 0.6; }
+
+  /* ── Requirement blocks → grouped lists ─────────────────────
+     Each block was a bordered, tinted, radiused box containing another
+     bordered list. It becomes one group: a header row, then its course
+     rows separated by hairlines, all on the requirements card's own
+     surface. The block body runs to the card edges; the non-list
+     children of the body keep the card's inset. */
+  .mobile-shell .dp-view .dp-req-body {
+    padding: var(--m-row-pad-y) 0 var(--m-row-pad-x);
+    gap: var(--m-row-pad-y);
+  }
+  .mobile-shell .dp-view .dp-req-progress-row,
+  .mobile-shell .dp-view .dp-prog-tabs,
+  .mobile-shell .dp-view .drv-foundation-waived-banner,
+  .mobile-shell .dp-view .dp-prog-bar-wrap,
+  .mobile-shell .dp-view .dp-electives-header,
+  .mobile-shell .dp-view .dp-electives-recs-header,
+  .mobile-shell .dp-view .dp-electives-theme,
+  .mobile-shell .dp-view .dp-electives-recs-prompt,
+  .mobile-shell .dp-view .dp-electives-loading,
+  .mobile-shell .dp-view .dp-electives-error,
+  .mobile-shell .dp-view .dp-electives-empty,
+  .mobile-shell .dp-view .rsb-disclaimer {
+    margin-left: var(--m-row-pad-x);
+    margin-right: var(--m-row-pad-x);
+  }
+
+  .mobile-shell .dp-view .dp-req-block.m-group {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    margin-bottom: 0;
+  }
+  /* Done / in-progress no longer tint a whole box — the status pill in
+     the header already says it, and a column of pastel fills down a
+     phone screen is exactly the card chrome being removed. */
+  .mobile-shell .dp-view .dp-req-block--done,
+  .mobile-shell .dp-view .dp-req-block--progress { background: transparent; }
+  .mobile-shell .dp-view .dp-req-block--manual {
+    border: none;
+    border-style: none;
+  }
+
+  .mobile-shell .dp-view .dp-req-block-header.m-row {
+    justify-content: space-between;
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .dp-view .dp-req-block-header:hover { background: none; }
+  @media (hover: hover) {
+    .mobile-shell .dp-view .dp-req-block-header:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+  .mobile-shell .dp-view .dp-req-block-name { white-space: normal; }
+
+  .mobile-shell .dp-view .dp-req-block-courses {
+    padding: 0;
+    border-top: none;
+    gap: 0;
+  }
+  .mobile-shell .dp-view .dp-req-course.m-row {
+    align-items: flex-start;
+    border-radius: 0;
+    border-bottom: var(--m-hairline);
+  }
+  .mobile-shell .dp-view .dp-req-block-courses > .dp-req-course:last-child {
+    border-bottom: none;
+  }
+  .mobile-shell .dp-view .dp-req-course:hover { background: transparent; }
+  @media (hover: hover) {
+    .mobile-shell .dp-view .dp-req-course:hover {
+      background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+    }
+  }
+  .mobile-shell .dp-view .dp-req-course:active {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+  }
+  .mobile-shell .dp-view .dp-req-course-title { white-space: normal; }
+  .mobile-shell .dp-view .dp-req-block-note {
+    margin: 0;
+    padding: var(--m-row-pad-y) var(--m-row-pad-x);
+    border-radius: 0;
+    border-bottom: var(--m-hairline);
+  }
+
+  /* ── Electives / recommendations → grouped list ─────────────
+     Same move: a one-column grid of bordered cards becomes one surface
+     with hairline-separated rows. The rows stay stacked internally
+     (code, title, reason, assign control), so only the axis is
+     overridden — padding and separator come from .m-row. */
+  .mobile-shell .dp-view .dp-electives-grid.m-group {
+    display: block;
+    background: transparent;
+    margin-bottom: 0;
+  }
+  .mobile-shell .dp-view .dp-elective-card.m-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    border: none;
+    border-bottom: var(--m-hairline);
+    border-radius: 0;
+    background: transparent;
+  }
+  .mobile-shell .dp-view .dp-electives-grid > .dp-elective-card:last-child {
+    border-bottom: none;
+  }
+  .mobile-shell .dp-view .dp-elective-card:hover { border-color: transparent; }
+  .mobile-shell .dp-view .dp-elective-assign { border-top: none; }
+
+  /* Import buttons: the hover translate is applied on tap and then stays
+     until you touch something else. */
+  .mobile-shell .dp-view .dp-import-btn:hover,
+  .mobile-shell .dp-view .dp-import-btn--secondary:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

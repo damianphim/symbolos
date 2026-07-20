@@ -501,7 +501,7 @@ function ResourceCard({ resource, saved, onToggleSave, t }) {
 
   return (
     <div className={`ar-card ${open ? 'ar-card--open' : ''}`}>
-      <div className="ar-card-header" onClick={() => setOpen(o => !o)}>
+      <div className="ar-card-header m-row m-row--tappable" onClick={() => setOpen(o => !o)}>
         <div className="ar-card-left">
           <span className="ar-badge">
             <CatIcon className="ar-badge-icon" />
@@ -648,13 +648,13 @@ export default function AdvisingResourcesView() {
 
           {browsed.length === 0
             ? <div className="ar-empty"><FaSearch className="ar-empty-ico" /><p>{t('ar.noMatch')}</p></div>
-            : <div className="ar-cards">{browsed.map(r => <ResourceCard key={r.id} resource={r} saved={savedIds.has(r.id)} onToggleSave={toggleSave} t={t} />)}</div>
+            : <div className="ar-cards m-group">{browsed.map(r => <ResourceCard key={r.id} resource={r} saved={savedIds.has(r.id)} onToggleSave={toggleSave} t={t} />)}</div>
           }
         </>
       )}
 
       {view === 'saved' && (
-        <div className="ar-cards">
+        <div className="ar-cards m-group">
           {savedResources.length === 0 ? (
             <div className="ar-empty">
               <FaRegBookmark className="ar-empty-ico" />

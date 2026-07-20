@@ -123,6 +123,64 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   const [sidebarOpen, setSidebarOpen]     = useState(true)
   const [facultyFilter, setFacultyFilter] = useState(normalizeFaculty(profile?.faculty))
 
+  // ── Mobile push/pop direction ───────────────────────────────
+  // The list→detail swap itself stays exactly as it was (a CSS screen swap
+  // keyed off .drv-sidebar--open, with BOTH panes mounted so the search box,
+  // faculty filter and list scroll position survive). This only gives that
+  // swap a direction: the detail pane animates in from the trailing edge on
+  // push and back out the same way on pop, so "deeper" and "back" read
+  // without a breadcrumb.
+  //
+  // During the animation BOTH screens are on screen — the list underneath,
+  // the detail sliding over it — which is what makes the motion read as one
+  // screen moving rather than two states swapping. `.drv-root--animating`
+  // (CSS) suspends the usual "one or the other" display rule for that window
+  // only; the state flips when the animation lands.
+  const [pushPhase, setPushPhase] = useState(null)  // 'enter' | 'exit' | null
+
+  // The phase is self-clearing: the handlers below only set it, and this
+  // effect ends it when the animation lands. Keeping the timer in an effect
+  // (rather than a ref the handlers poke) gets unmount cleanup for free and
+  // keeps the render path free of ref reads.
+  useEffect(() => {
+    if (!pushPhase) return undefined
+    // Durations match m-push-in / m-push-out in MobileLayout.css.
+    const id = setTimeout(() => {
+      // Push: the list is only taken down once the detail has finished
+      // covering it. Pop: the list is already back, so there is nothing
+      // left to do but drop the overlay.
+      if (pushPhase === 'enter') setSidebarOpen(false)
+      setPushPhase(null)
+    }, pushPhase === 'enter' ? 260 : 200)
+    return () => clearTimeout(id)
+  }, [pushPhase])
+
+  const prefersReducedMotion = () =>
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+  const openProgram = (key) => {
+    setSelectedKey(key)
+    setDetailError(null)
+    if (!isMobile) return
+    if (prefersReducedMotion()) { setSidebarOpen(false); return }
+    // Sidebar stays open so the list is visible behind the incoming detail.
+    setPushPhase('enter')
+  }
+
+  // Back control. On desktop this is just "re-open the collapsed sidebar".
+  const popToList = () => {
+    if (!isMobile || prefersReducedMotion()) {
+      setPushPhase(null)
+      setSidebarOpen(true)
+      return
+    }
+    // List comes back immediately and sits underneath; the detail slides off
+    // over it rather than vanishing.
+    setSidebarOpen(true)
+    setPushPhase('exit')
+  }
+
   const advStanding = profile?.advanced_standing || []
   const transferCredits = advStanding.reduce((s, c) => s + (c.credits || 0), 0)
   const foundationWaived = transferCredits >= 24 &&
@@ -360,7 +418,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   const toggleShowAll = id => setShowAllCourses(p => ({ ...p, [id]: !p[id] }))
 
   return (
-    <div className="drv-root">
+    <div className={`drv-root ${pushPhase ? 'drv-root--animating' : ''}`}>
 
       {/* Sidebar */}
       <aside className={`drv-sidebar ${sidebarOpen ? 'drv-sidebar--open' : 'drv-sidebar--collapsed'}`}>
@@ -488,6 +546,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 return (
                   <div key={faculty}>
                     <button
+                      className="drv-group-label m-group-label"
                       onClick={() => toggleGroup(faculty)}
                       style={{
                         width: '100%', background: 'none', border: 'none', cursor: 'pointer',
@@ -498,45 +557,54 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                       <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280' }}>{label}</span>
                       <span style={{ fontSize: '10px', color: '#9ca3af', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
                     </button>
-                    {!isCollapsed && groupProgs.map(prog => (
-                      <button
-                        key={prog.program_key}
-                        className={`drv-program-item ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
-                        onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (isMobile) setSidebarOpen(false) }}
-                      >
-                        <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
-                        <span className="drv-program-name">{prog.name}</span>
-                        <span className="drv-program-credits">{prog.total_credits}cr</span>
-                      </button>
-                    ))}
+                    {!isCollapsed && (
+                      <div className="m-group">
+                        {groupProgs.map(prog => (
+                          <button
+                            key={prog.program_key}
+                            className={`drv-program-item m-row m-row--tappable ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
+                            onClick={() => openProgram(prog.program_key)}
+                          >
+                            <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
+                            <span className="drv-program-name">{prog.name}</span>
+                            <span className="drv-program-credits">{prog.total_credits}cr</span>
+                            <FaChevronRight className="drv-program-chevron" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })
             })()
           ) : (
-            filteredPrograms.map(prog => (
-              <button
-                key={prog.program_key}
-                className={`drv-program-item ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
-                onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (isMobile) setSidebarOpen(false) }}
-              >
-                <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
-                <span className="drv-program-name">{prog.name}</span>
-                <span className="drv-program-credits">{prog.total_credits}cr</span>
-              </button>
-            ))
+            <div className="m-group">
+              {filteredPrograms.map(prog => (
+                <button
+                  key={prog.program_key}
+                  className={`drv-program-item m-row m-row--tappable ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
+                  onClick={() => openProgram(prog.program_key)}
+                >
+                  <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
+                  <span className="drv-program-name">{prog.name}</span>
+                  <span className="drv-program-credits">{prog.total_credits}cr</span>
+                  <FaChevronRight className="drv-program-chevron" />
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="drv-main">
+      {/* Main. The push classes are no-ops outside .mobile-shell, so desktop
+          never animates. */}
+      <main className={`drv-main ${pushPhase === 'enter' ? 'm-push-enter' : ''} ${pushPhase === 'exit' ? 'm-push-exit' : ''}`}>
         {/* Desktop: re-opens the collapsed sidebar. Mobile: the back control
             of the push navigation — pops the detail screen and returns to
             the program list. */}
         <button
           className={`drv-open-sidebar ${isMobile ? 'drv-open-sidebar--back' : ''}`}
-          onClick={() => setSidebarOpen(true)}
+          onClick={popToList}
           aria-label={isMobile ? t('dp.degreeRequirements') : undefined}
         >
           {isMobile
@@ -620,7 +688,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           <div className="drv-detail">
             <Breadcrumb
               items={[
-                { key: 'requirements', label: t('dp.degreeRequirements'), onClick: () => setSidebarOpen(true) },
+                { key: 'requirements', label: t('dp.degreeRequirements'), onClick: popToList },
                 { key: 'program', label: programDetail.name },
               ]}
             />
@@ -718,8 +786,8 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 const pillMod = blockDone ? 'drv-block-pill--done' : blockInProgress ? 'drv-block-pill--progress' : 'drv-block-pill--none'
 
                 return (
-                  <div key={block.id} className={`drv-block ${blockDone ? 'drv-block--done' : blockInProgress ? 'drv-block--progress' : ''}`}>
-                    <button className="drv-block-header" onClick={() => toggleBlock(block.id)}>
+                  <div key={block.id} className={`drv-block m-group ${blockDone ? 'drv-block--done' : blockInProgress ? 'drv-block--progress' : ''}`}>
+                    <button className="drv-block-header m-row m-row--tappable" onClick={() => toggleBlock(block.id)}>
                       <div className="drv-block-header-left">
                         <span className="drv-chevron">
                           {isOpen ? <FaChevronDown /> : <FaChevronRight />}
@@ -765,7 +833,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                               <div
                                 key={course.id}
                                 className={[
-                                  'drv-course-row',
+                                  'drv-course-row', 'm-row', 'm-row--tappable',
                                   course.is_required ? 'drv-course-row--required' : '',
                                   isCompleted        ? 'drv-course-row--done'     : '',
                                   isCurrent          ? 'drv-course-row--current'  : '',

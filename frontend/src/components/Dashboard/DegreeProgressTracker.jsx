@@ -110,9 +110,12 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
 
       {detailsOpen && (
         <>
-      {/* Credit Breakdown */}
-      <div className="credits-breakdown">
-        <div className="credit-item">
+      {/* Credit Breakdown. On mobile the four tinted boxes collapse into one
+          grouped list (`m-group` / `m-row`, scoped to `.mobile-shell` so the
+          desktop grid of cards is untouched) — four separate coloured cards
+          stacked in a single column is the "web page on a phone" tell. */}
+      <div className="credits-breakdown m-group">
+        <div className="credit-item m-row">
           <div className="credit-icon"><FaBook /></div>
           <div className="credit-details">
             <div className="credit-label">{t('degree.completedCourses')}</div>
@@ -123,7 +126,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
         </div>
 
         {stats.advancedStandingCredits > 0 && (
-          <div className="credit-item highlight">
+          <div className="credit-item highlight m-row">
             <div className="credit-icon"><FaBolt /></div>
             <div className="credit-details">
               <div className="credit-label">{t('degree.advancedStanding')}</div>
@@ -135,7 +138,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
           </div>
         )}
 
-        <div className="credit-item total">
+        <div className="credit-item total m-row">
           <div className="credit-icon"><FaCheck /></div>
           <div className="credit-details">
             <div className="credit-label">{t('degree.totalEarned')}</div>
@@ -143,7 +146,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
           </div>
         </div>
 
-        <div className="credit-item remaining">
+        <div className="credit-item remaining m-row">
           <div className="credit-icon"><FaBullseye /></div>
           <div className="credit-details">
             <div className="credit-label">{t('degree.remaining')}</div>

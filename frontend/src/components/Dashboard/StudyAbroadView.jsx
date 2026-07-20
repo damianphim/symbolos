@@ -398,7 +398,7 @@ function ProgramCard({ program, saved, onToggleSave, t }) {
   const [open, setOpen] = useState(false)
   return (
     <div className={`sa-card ${open ? 'sa-card--open' : ''}`}>
-      <div className="sa-card-header" onClick={() => setOpen(o => !o)}>
+      <div className="sa-card-header m-row m-row--tappable" onClick={() => setOpen(o => !o)}>
         <div className="sa-card-left">
           <span className={`sa-badge sa-badge--${program.type}`}>
             {t(TYPE_BADGE_KEYS[program.type])}
@@ -573,13 +573,13 @@ export default function StudyAbroadView({ profile = {} }) {
 
           {browsed.length === 0
             ? <div className="sa-empty"><FaPlane className="sa-empty-ico" /><p>{t('sa.noMatch')}</p></div>
-            : <div className="sa-cards">{browsed.map(p => <ProgramCard key={p.id} program={p} saved={savedIds.has(p.id)} onToggleSave={toggleSave} t={t} />)}</div>
+            : <div className="sa-cards m-group">{browsed.map(p => <ProgramCard key={p.id} program={p} saved={savedIds.has(p.id)} onToggleSave={toggleSave} t={t} />)}</div>
           }
         </>
       )}
 
       {view === 'saved' && (
-        <div className="sa-cards">
+        <div className="sa-cards m-group">
           {savedPrograms.length === 0 ? (
             <div className="sa-empty">
               <FaRegBookmark className="sa-empty-ico" />

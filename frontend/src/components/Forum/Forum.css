@@ -1072,3 +1072,100 @@
   .forum-modal__footer { flex-wrap: wrap; }
 }
 .forum-linkout-banner__text u { text-decoration: underline; color: #3b82f6; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   NATIVE GROUPED LIST (<= 768px)
+
+   The feed is list-shaped, so on phones it stops being a stack of floating
+   bordered cards with gaps between them and becomes one raised surface
+   whose posts are divided by hairlines. Posts are multi-line cells rather
+   than single label/value rows, which grouped lists handle natively.
+
+   Every selector is prefixed with .mobile-shell — it only renders below
+   768px and is where the --m-* tokens live, so desktop matches none of it.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── The group surface ── */
+  .mobile-shell .forum-posts {
+    gap: 0;
+    background: var(--m-bg-surface);
+    border-radius: var(--m-group-radius);
+    overflow: hidden;
+  }
+
+  /* ── One post → a grouped-list cell ── */
+  .mobile-shell .forum-post-card {
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: var(--m-hairline);
+    padding: 14px var(--m-row-pad-x);
+  }
+  .mobile-shell .forum-post-card:last-child { border-bottom: none; }
+
+  /* Dark mode gave the card its own lighter background to lift it off the
+     page; on one shared surface that would stripe the list. */
+  [data-theme="dark"] .mobile-shell .forum-post-card { background: none; }
+
+  /* The review marker was a left border on a bordered card. With the border
+     gone it needs to be drawn rather than inherited, and an inset rule keeps
+     the text aligned with every other post in the group. */
+  .mobile-shell .forum-post-card--review {
+    border-left: none;
+    box-shadow: inset 3px 0 0 var(--tab-forum-accent);
+  }
+
+  /* The review strip is inset by the cell padding, so it needs to bleed back
+     out to the group edges to still read as a full-width band. */
+  .mobile-shell .forum-review-strip {
+    margin-left: calc(-1 * var(--m-row-pad-x));
+    margin-right: calc(-1 * var(--m-row-pad-x));
+    padding-left: var(--m-row-pad-x);
+    padding-right: var(--m-row-pad-x);
+  }
+
+  /* ── Empty / loading / error states: same surface, no dashed boxes ── */
+  .mobile-shell .forum-empty,
+  .mobile-shell .forum-loading-bar,
+  .mobile-shell .forum-error-bar {
+    border: none;
+    border-radius: var(--m-group-radius);
+    background: var(--m-bg-surface);
+  }
+
+  /* ── Touch feedback + hover guards ──
+     A :hover latches after a tap on touch, so the last post you opened stays
+     lit until you tap elsewhere. */
+  .mobile-shell .forum-post-card:hover {
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .mobile-shell .forum-post-card--review:hover {
+    box-shadow: inset 3px 0 0 var(--tab-forum-accent);
+  }
+  .mobile-shell .forum-linkout-banner:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    border-left-color: var(--tab-courses-accent);
+  }
+  .mobile-shell .forum-linkout-banner:active { opacity: 0.7; }
+  .mobile-shell .forum-star:hover { transform: none; }
+
+  .mobile-shell .forum-action-btn:active,
+  .mobile-shell .forum-section-btn:active,
+  .mobile-shell .forum-btn:active,
+  .mobile-shell .forum-new-btn:active { opacity: 0.6; }
+
+  /* No hover: hover restore for .forum-post-card — the card hover raised a
+     shadow and darkened a border that no longer exist on the flat grouped
+     list, so there is nothing to give back to pointer devices. */
+  @media (hover: hover) {
+    .mobile-shell .forum-linkout-banner:hover {
+      background: var(--bg-primary);
+      border-color: var(--tab-courses-accent);
+    }
+    .mobile-shell .forum-star:hover { transform: scale(1.15); }
+  }
+}
