@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { FaSun, FaMoon } from 'react-icons/fa'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import { supabase } from '../../lib/supabase'
@@ -265,7 +266,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           onClick={cycleTheme}
           title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {resolvedTheme === 'dark' ? '☀' : '☽'}
+          {resolvedTheme === 'dark' ? <FaSun /> : <FaMoon />}
         </button>
       </div>
 

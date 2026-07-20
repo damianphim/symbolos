@@ -135,7 +135,6 @@ function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = 
 function ClubCardSkeleton() {
   return (
     <div className="club-card club-card--skeleton" aria-hidden>
-      <div className="club-card__accent" style={{ background: 'var(--border-color)' }} />
       <div className="club-card__body">
         <div className="club-card__top">
           <div className="club-skel club-skel--avatar" />
@@ -692,7 +691,6 @@ function ClubCard({ club, joined, calSynced, isSubscribed, onLeave, onToggleCale
       className={`club-card ${joined ? 'club-card--joined' : ''} ${isFeatured ? 'club-card--featured' : ''}`}
       onClick={() => onOpen(club)}
     >
-      <div className="club-card__accent" style={{ background: meta.color, opacity: joined ? 1 : 0.6 }} />
       {isFeatured && (
         <div className="club-card__featured-badge" style={{ background: meta.color }}>
           <FaFire size={8} /> {t('clubs.featuredBadge') || 'Trending'}

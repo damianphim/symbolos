@@ -36,7 +36,15 @@
   top: 16px;
 }
 @media (max-width: 900px) {
+  /* align-items: flex-start sizes flex children to their own content width
+     on the cross axis — once the row becomes a column, that's horizontal
+     width, so .dp-program-row__main was shrink-to-fitting its (wide) inner
+     content instead of stretching to the viewport, pushing everything
+     inside it past the screen edge. Explicit 100% width fixes it. */
   .dp-program-row { flex-direction: column; }
+  .dp-program-row__main {
+    width: 100%;
+  }
   .dp-program-row__side {
     flex-basis: auto;
     width: 100%;
@@ -399,7 +407,8 @@
 /* Progress rings */
 .dp-req-progress-row {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   padding: 4px 0 8px;
 }
 

@@ -8,6 +8,16 @@
 
 @import './theme.css';
 
+/* Without this, `width: 100%` + padding/border silently renders wider than
+   the parent (padding/border add on top of the content width instead of
+   being carved out of it) — the root cause behind a whole class of mobile
+   width-overflow bugs found across the app (Degree Planning's Academic
+   Performance card being one). Elements that already set box-sizing
+   explicitly are unaffected; this only changes the ones that never did. */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* ────────────────────────────────────────────────────────────────
    ROOT / HTML
    ──────────────────────────────────────────────────────────────── */

@@ -774,6 +774,13 @@
     min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    /* 11 pills (8 tabs + theme + language + feedback) at a full 44px touch
+       target don't all fit on a narrow phone — that's a deliberate
+       trade-off (see the comment on .mini-pill below), so the row scrolls.
+       Without a hint, though, the cut-off pills are invisible and easy to
+       never discover. Fade the trailing edge to signal "more this way". */
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
   }
   .mini-capsule::-webkit-scrollbar { display: none; }
   .mini-capsule-divider { width: 1px; height: 20px; margin: 0 3px; flex-shrink: 0; }
