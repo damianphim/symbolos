@@ -113,3 +113,28 @@ symboulos-security/.venv/
 
 # Honeytoken playbook — deception asset, never commit
 symboulos-security/honeytokens.md
+
+# -- Mobile app (Capacitor) -------------------------------------------------
+# Signing material. Losing the release keystore means you can NEVER ship an
+# update to the existing Play Store listing again -- back it up somewhere
+# durable and private, never here.
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.cer
+key.properties
+frontend/android/keystore.properties
+frontend/android/app/google-services.json
+frontend/ios/App/GoogleService-Info.plist
+
+# Native build output (the projects themselves ARE tracked)
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/.idea/
+frontend/ios/App/build/
+frontend/ios/App/Pods/
+frontend/ios/App/App.xcworkspace/xcuserdata/
+frontend/ios/App/App.xcodeproj/xcuserdata/
