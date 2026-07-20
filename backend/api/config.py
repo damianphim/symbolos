@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     LANGFUSE_SECRET_KEY: str = ""
     LANGFUSE_HOST: str = "https://cloud.langfuse.com"
 
+    # ── Inngest (transcript/syllabus background jobs) ─────────────────────
+    # Required in production so Inngest can verify its callbacks to
+    # /api/inngest are genuine. Not required locally — the local Inngest
+    # dev server skips signature validation entirely.
+    INNGEST_EVENT_KEY: str = ""
+    INNGEST_SIGNING_KEY: str = ""
+
     # ── AI ───────────────────────────────────────────────────────────────
     ANTHROPIC_API_KEY: str
     CLAUDE_MODEL: str = "claude-haiku-4-5-20251001"
@@ -187,6 +194,23 @@ class Settings(BaseSettings):
             raise ValueError(
                 "ADMIN_EMAILS must be set in production. "
                 "Add a comma-separated list of admin email addresses to your environment variables."
+            )
+
+        # Without INNGEST_SIGNING_KEY in production, every callback Inngest
+        # makes to /api/inngest fails signature validation — every transcript
+        # and syllabus upload silently fails at the background-job step, with
+        # no error until the request timeline shows up in Sentry as "missing
+        # signing key". Fail at startup instead of discovering it there.
+        if self.ENVIRONMENT == "production" and not self.INNGEST_SIGNING_KEY.strip():
+            raise ValueError(
+                "INNGEST_SIGNING_KEY must be set in production — get it from the Inngest "
+                "Cloud dashboard for this app. Without it, all transcript/syllabus background "
+                "jobs fail signature validation."
+            )
+        if self.ENVIRONMENT == "production" and not self.INNGEST_EVENT_KEY.strip():
+            raise ValueError(
+                "INNGEST_EVENT_KEY must be set in production — get it from the Inngest "
+                "Cloud dashboard for this app. Without it, uploads can't enqueue background jobs."
             )
 
         return self

@@ -6,14 +6,14 @@ and syllabus upload endpoints. Inngest calls back our /api/inngest endpoint
 on Vercel once per job, so each job runs in its own serverless invocation
 with no timeout on the HTTP request that originated the upload.
 
-Env vars required:
+Env vars required (validated in config.py — required in production, optional
+locally since the Inngest dev server skips signature validation):
   INNGEST_EVENT_KEY   — from Inngest dashboard (used to send events)
   INNGEST_SIGNING_KEY — from Inngest dashboard (used to verify Inngest callbacks)
 """
 from __future__ import annotations
 
 import logging
-import os
 
 import inngest
 
@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 inngest_client = inngest.Inngest(
     app_id="ai-advisor",
-    event_key=os.getenv("INNGEST_EVENT_KEY", ""),
-    signing_key=os.getenv("INNGEST_SIGNING_KEY", ""),
+    event_key=settings.INNGEST_EVENT_KEY,
+    signing_key=settings.INNGEST_SIGNING_KEY,
     is_production=settings.ENVIRONMENT == "production",
     logger=logger,
 )

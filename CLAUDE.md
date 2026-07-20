@@ -54,7 +54,7 @@ frontend/src/
 - **History**: `settings.CHAT_CONTEXT_MESSAGES` (default 6) controls how many turns are sent to Claude.
 
 ## Env vars (backend)
-`ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`, `CRON_SECRET`, `ADMIN_SECRET`, `ADMIN_EMAILS`
+`ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`, `CRON_SECRET`, `ADMIN_SECRET`, `ADMIN_EMAILS`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` (last two required in production only — get both from the Inngest Cloud dashboard for this app; without them every transcript/syllabus background job fails signature validation)
 
 ## Common tasks
 - **Edit AI prompts**: edit files in `backend/api/prompts/` → restart server
