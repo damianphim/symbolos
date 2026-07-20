@@ -755,3 +755,56 @@
   color: #fff;
   font-weight: 700;
 }
+
+/* ── Mobile (<=768px) ──────────────────────────────────────────────────
+   Deliberately last in the file so it wins over the <=640px block and the
+   compact/danger-zone rules above it at equal specificity.
+
+   Settings renders inside ProfileTab's .profile-section-card, NOT directly
+   in .mobile-content, so it keeps its own side padding — that padding is
+   card-internal. Only the oversized bottom padding is trimmed. */
+@media (max-width: 768px) {
+  .settings-container { padding: 18px 16px 20px; }
+  .settings-title { font-size: 22px; }
+
+  /* iOS zooms the whole page in when a focused control is under 16px. */
+  .setting-select,
+  .setting-input,
+  .modal-confirm-input { font-size: 16px; }
+
+  .setting-select,
+  .setting-input { min-height: 44px; }
+
+  /* ── 44px touch targets ── these all sit around 28-36px on desktop. */
+  .theme-btn,
+  .notif-timing-chip,
+  .notif-type-chip,
+  .export-btn,
+  .notif-save-btn,
+  .delete-account-btn,
+  .modal-btn,
+  .clubs-visibility-option { min-height: 44px; }
+
+  .notif-method-btn { min-height: 56px; }
+
+  /* Keep the switch visually 46x26 but give the label a 44px-tall hit area
+     by centring the slider inside a taller box. */
+  .toggle-switch { height: 44px; }
+  .toggle-slider {
+    top: 50%;
+    bottom: auto;
+    height: 26px;
+    transform: translateY(-50%);
+  }
+
+  /* fit-content left the two options as a narrow pair floating in a
+     full-width stacked row; split the row instead. */
+  .clubs-visibility-toggle { width: 100%; }
+  .clubs-visibility-option { flex: 1; justify-content: center; }
+
+  .settings-header-row { flex-wrap: wrap; }
+
+  .modal-content { padding: 20px; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-btn { flex: 1 1 auto; }
+}

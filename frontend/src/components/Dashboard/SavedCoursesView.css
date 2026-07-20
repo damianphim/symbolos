@@ -304,12 +304,28 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  /* This panel sits inside CoursesView inside <main class="mobile-content">,
+     which already supplies the 1rem side gutter — its own 12px on top of
+     that was pure lost width. */
   .saved-courses-view {
-    padding: 12px;
+    padding: 0 0 12px;
   }
 
   .saved-tabs {
     margin-bottom: 16px;
+  }
+
+  /* 10px padding + a 13px label is ~37px tall. */
+  .saved-tab {
+    min-height: 44px;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
   }
 
   /* Fixed auto-width tabs could overflow the viewport combined (3 tabs x
@@ -335,8 +351,12 @@
     gap: 12px;
   }
 
+  /* Three labelled pills ("Saved" / "Completed" / "Current") need ~316px in
+     a 328px-wide card at 360px — one long FR/ZH label tips it over. Wrapping
+     is the safe failure mode; the row is no longer allowed to overflow. */
   .saved-courses-view .course-card .course-card-actions {
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .saved-courses-view .course-card .course-card-actions .favorite-btn,
@@ -344,6 +364,7 @@
   .saved-courses-view .course-card .course-card-actions .current-btn {
     padding: 6px 10px;
     font-size: 0.75rem;
+    min-height: 44px;
   }
 }
 

@@ -460,3 +460,22 @@
 .target-gpa-calculator--compact .scenarios-section { padding: 12px; }
 .target-gpa-calculator--compact .scenario-item { padding: 8px 10px; border-width: 1px; }
 .target-gpa-calculator--compact .reset-btn { padding: 8px 16px; font-size: 13px; }
+
+/* ── Mobile (<=768px) ──────────────────────────────────────────────────
+   Deliberately last in the file so it outranks the --compact overrides
+   above at equal specificity. */
+@media (max-width: 768px) {
+  /* iOS zooms the whole page in when a focused input is under 16px, and the
+     compact variant drops the GPA field to 14px. */
+  .target-gpa-calculator--compact .gpa-input { font-size: 16px; }
+
+  .gpa-input,
+  .calculate-btn,
+  .reset-btn,
+  .target-gpa-calculator--compact .calculate-btn,
+  .target-gpa-calculator--compact .reset-btn { min-height: 44px; }
+
+  /* "Required GPA" + the difficulty badge share one row; at 360px the
+     uppercase label and the badge collide. */
+  .result-header { flex-wrap: wrap; gap: 8px; }
+}

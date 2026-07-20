@@ -28,12 +28,14 @@
   margin-left: calc(-2rem - 36px);
 }
 
-/* The base (non-mini) 768px/480px header margins are already handled
-   further down (see the existing @media blocks below) and already match
-   .content-area's padding correctly. Only the collapsed-sidebar mini-rail
-   case was missing a mobile override: Dashboard.css bumps the rail
-   reserve from 36px to 44px at <=768px and never redefines it again at
-   <=480px, so this single override covers both. */
+/* NOTE (mobile shell): at <=768px the app now renders MobileLayout, whose
+   tab content lives in <main class="mobile-content"> — there is no .sidebar
+   and no .content-area — so this override can no longer match and is kept
+   only as a safety net if the desktop shell is ever shown below 768px.
+   The rule that actually governs the header banner on phones is the
+   `.profile-page-header { margin: -1rem -1rem 1rem }` in the plain
+   @media (max-width: 768px) block below, which is scoped to the element
+   itself (no .content-area ancestor) and therefore still applies. */
 @media (max-width: 768px) {
   .sidebar--mini ~ .main-content .content-area .profile-page-header {
     margin-left: calc(-1rem - 44px);
@@ -319,8 +321,17 @@
   }
   .profile-display-name { font-size: 2rem; }
   .profile-badges { justify-content: center; }
-  .profile-content { padding: 0 1rem 1rem 1rem; }
+  /* <main class="mobile-content"> already supplies the 1rem side gutter.
+     Keeping it here too stacked three levels of padding on this screen
+     (mobile-content + profile-content + the cards' own 16px), leaving only
+     ~264px of usable width at 360px. The header banner's -1rem bleed still
+     measures against mobile-content, so it is unaffected. */
+  .profile-content { padding: 0 0 1rem; }
   .profile-grid { grid-template-columns: 1fr; }
+  .btn-import-transcript { min-height: 44px; }
+  /* Card headers pair a title with an action button; at 360px they need to
+     be allowed to stack rather than squeeze the title to nothing. */
+  .card-header { flex-wrap: wrap; gap: 10px; }
   .sign-out-section {
     flex-direction: column;
     align-items: flex-start;

@@ -753,6 +753,10 @@ const ZH_TRANSLATIONS = {
 
     // ── Calendar ──────────────────────────────────────────
     'calendar.today': '今天',
+    'cal.filters': '筛选',
+    'cal.allDay': '全天',
+    'cal.noEventsToday': '今天没有活动',
+    'cal.noEventsInRange': '此期间没有活动',
     'calendar.month': '月',
     'calendar.week': '周',
     'calendar.day': '日',
@@ -1262,6 +1266,8 @@ const ZH_TRANSLATIONS = {
     'brief.you': '你',
     'brief.ai': 'AI',
     'brief.msgs': '{n}条消息',
+    'cards.back': '返回',
+    'cards.openThread': '打开对话',
     'brief.msgsPlural': '{n}条消息',
     'brief.errorSend': '出现问题，请重试。',
     'brief.followUpPlaceholder': '提出后续问题…',

@@ -3,8 +3,9 @@ import { useLanguage } from '../../contexts/PreferencesContext'
 import { useCourseDetail } from '../../contexts/CourseDetailContext'
 import { getAuthHeaders } from '../../lib/apiConfig'
 import { matchCourse as matchCourseWildcard, explicitlyClaimedCourseKeys } from '../../utils/requirementMatch'
+import useViewport from '../../hooks/useViewport'
 import {
-  FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight,
+  FaGraduationCap, FaChevronDown, FaChevronUp, FaChevronRight, FaChevronLeft,
   FaCheckCircle, FaCircle, FaStar, FaSearch,
   FaLightbulb, FaExternalLinkAlt, FaTimes
 } from 'react-icons/fa'
@@ -99,6 +100,12 @@ function matchTransfer(req, advancedStanding = [], { requireMajorCredit = false 
 export default function DegreeRequirementsView({ completedCourses = [], currentCourses = [], profile = {} }) {
   const { t, language } = useLanguage()
   const { openCourse } = useCourseDetail()
+  // Drives the mobile push-navigation: on phones the program list and the
+  // program detail are two *screens* (list → tap → full-screen detail →
+  // back), not a sidebar next to a pane. Both stay mounted so search /
+  // filter / scroll state survives the transition; the CSS in the
+  // max-width:768px block shows exactly one of them at a time.
+  const { isMobile } = useViewport()
   const [programs, setPrograms]           = useState([])
   const [selectedKey, setSelectedKey]     = useState(null)
   const [programDetail, setProgramDetail] = useState(null)
@@ -494,7 +501,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                       <button
                         key={prog.program_key}
                         className={`drv-program-item ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
-                        onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (window.innerWidth < 760) setSidebarOpen(false) }}
+                        onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (isMobile) setSidebarOpen(false) }}
                       >
                         <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
                         <span className="drv-program-name">{prog.name}</span>
@@ -510,7 +517,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               <button
                 key={prog.program_key}
                 className={`drv-program-item ${selectedKey === prog.program_key ? 'drv-program-item--active' : ''}`}
-                onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (window.innerWidth < 760) setSidebarOpen(false) }}
+                onClick={() => { setSelectedKey(prog.program_key); setDetailError(null); if (isMobile) setSidebarOpen(false) }}
               >
                 <span className="drv-type-dot" style={{ background: TYPE_COLORS[prog.program_type] }} />
                 <span className="drv-program-name">{prog.name}</span>
@@ -523,8 +530,18 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
 
       {/* Main */}
       <main className="drv-main">
-        <button className="drv-open-sidebar" onClick={() => setSidebarOpen(true)}>
-          <FaGraduationCap /> Browse Programs
+        {/* Desktop: re-opens the collapsed sidebar. Mobile: the back control
+            of the push navigation — pops the detail screen and returns to
+            the program list. */}
+        <button
+          className={`drv-open-sidebar ${isMobile ? 'drv-open-sidebar--back' : ''}`}
+          onClick={() => setSidebarOpen(true)}
+          aria-label={isMobile ? t('dp.degreeRequirements') : undefined}
+        >
+          {isMobile
+            ? <><FaChevronLeft /> {t('dp.degreeRequirements')}</>
+            : <><FaGraduationCap /> Browse Programs</>
+          }
         </button>
 
         {error && (

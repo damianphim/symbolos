@@ -397,10 +397,52 @@ select.pef-control option {
   .pef-actions {
     padding: 14px 16px;
   }
+
+  /* iOS zooms the whole page in when a focused control is under 16px.
+     textarea.pef-control keeps its 70px min-height (element-qualified
+     selector outranks this one). */
+  .pef-control {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  /* 13-15px checkbox squares are the smallest tap targets on this form;
+     enlarge the box and give the whole label a 44px row. */
+  .pef-check,
+  .pef-flag {
+    min-height: 44px;
+  }
+
+  .pef-check input { width: 20px; height: 20px; }
+  .pef-flag input  { width: 18px; height: 18px; }
+
+  .pef-as-remove {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .pef-add-tag,
+  .pef-add-btn,
+  .pef-btn,
+  .pef-dropdown-item {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 520px) {
   .pef-control {
+    max-width: none;
+  }
+
+  /* The 340px dropdown and the 150px "narrow" control both ignored the
+     full-width treatment above; at 360px the dropdown overflowed the card
+     once its padding was subtracted (~296px available). */
+  .pef-dropdown {
+    max-width: none;
+  }
+
+  .pef-control--narrow {
     max-width: none;
   }
 

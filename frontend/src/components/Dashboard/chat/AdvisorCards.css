@@ -959,25 +959,123 @@
   cursor: default;
 }
 
-/* ── Responsive ── */
+/* ── Responsive ─────────────────────────────────────────────────
+   On mobile the Brief renders inside MobileLayout's <main class="mobile-content">,
+   which is itself the scroll container and already supplies 1rem gutters plus
+   bottom padding clearing the fixed tab bar. Two consequences drive this block:
+
+   1. The root stops being a fixed-height, inner-scrolling card. Nesting a
+      scroller inside .mobile-content produced the classic two-scrollbar trap
+      where a flick could land on either one; here the feed flows and
+      .mobile-content owns all vertical scrolling.
+   2. Nothing re-adds horizontal padding or bottom-nav clearance — the shell
+      owns both. The old rules did both and double-counted them.            */
 @media (max-width: 768px) {
-  .advisor-cards-feed,
-  .advisor-cards-header,
-  .advisor-cards-freeform { padding-left: 16px; padding-right: 16px; }
-  .category-bar           { padding-left: 16px; padding-right: 16px; }
-  /* The freeform bar sits at the bottom of a height:100% card, which on
-     mobile lands right under the fixed bottom-nav rail + Feedback button —
-     reserve enough bottom padding to clear both instead of being covered. */
+  .advisor-cards-root {
+    height: auto;
+    /* overflow:visible is load-bearing: an overflow:hidden ancestor would make
+       the sticky composer below inert. */
+    overflow: visible;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .advisor-cards-header {
+    padding: 0 0 10px;
+    border-bottom: none;
+    background: transparent;
+  }
+
+  /* The mobile top bar already reads "Brief" — don't show it twice. Hidden
+     visually rather than with display:none so the page keeps its heading for
+     screen readers and heading navigation. */
+  .advisor-cards-header__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .advisor-cards-header__left  { flex: 1; min-width: 0; }
+  .advisor-cards-header__timestamp { margin-left: 0; }
+
+  .advisor-cards-refresh {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .category-bar {
+    padding: 0;
+    margin-bottom: 12px;
+    background: transparent;
+    gap: 6px;
+    border-bottom: 1px solid var(--card-border, var(--border-primary));
+  }
+
+  /* Tabs size to their label and scroll horizontally rather than squeezing
+     eight targets into 360px. */
+  .category-tab {
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .advisor-cards-feed {
+    padding: 0;
+    overflow: visible;
+    gap: 10px;
+  }
+
+  /* Reordering is hidden on mobile (see MobileFeed in AdvisorCards.jsx). */
+  .advisor-card__drag-handle { display: none; }
+
+  /* Reading order on mobile is feed -> disclaimer -> composer, so the sticky
+     composer is genuinely the last thing on the page and nothing slides
+     underneath it. `order` only moves the boxes; DOM/tab order is unchanged. */
+  .rsb-disclaimer          { order: 1; }
+  .advisor-cards-freeform  { order: 2; }
+
+  /* Pinned above the fixed tab bar (56px tall + its safe-area padding) so the
+     ask box is reachable at any scroll position without a keyboard plugin. */
   .advisor-cards-freeform {
-    padding-bottom: calc(18px + 56px + env(safe-area-inset-bottom, 0px));
+    position: sticky;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    margin-top: 12px;
+    padding: 8px;
+    gap: 8px;
+    border: 1px solid var(--card-border, var(--border-primary));
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+    background: var(--card-bg, var(--bg-primary));
+  }
+
+  .freeform-input {
+    padding: 11px 16px;
+    /* 16px exactly: anything smaller makes iOS Safari zoom on focus. */
+    font-size: 16px;
+  }
+
+  .freeform-send {
+    width: 42px;
+    height: 42px;
   }
 }
 
 @media (max-width: 480px) {
-  .advisor-cards-root  { border-radius: 8px; }
-  .advisor-card        { padding: 14px 14px 12px 20px; }
+  .advisor-card        { padding: 14px 14px 12px; }
   .advisor-card__title { font-size: 0.88rem; }
-  .freeform-input      { font-size: 16px; }
 }
 
 /* ── Drag handle ── */
@@ -1151,4 +1249,225 @@
 [data-theme='dark'] .advisor-card__thread--preview .thread-message--assistant .thread-text {
   background: #000 !important;
   color: var(--text-primary) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE (<= 768px) — list card + full-screen thread push view
+
+   These classes are only ever emitted by the mobile components in
+   AdvisorCards.jsx, so they need no media query to stay off desktop.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Mobile list card ── */
+.advisor-card--mobile {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  gap: 8px;
+}
+
+.advisor-card--mobile:active {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+/* Hover-reveal is meaningless on touch — the delete control is always shown,
+   just quietly. */
+.advisor-card--mobile .advisor-card__delete { opacity: 0.55; }
+
+/* Header controls need real 44px targets, and must not be clipped by the
+   card's own tap handler being the whole article. */
+.advisor-card--mobile .advisor-card__save,
+.advisor-card--mobile .advisor-card__delete {
+  min-width: 40px;
+  min-height: 40px;
+  justify-content: center;
+  margin-top: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.advisor-card--mobile .advisor-card__header-actions { gap: 0; }
+
+/* Body is a summary here; the full text lives in the thread view. */
+.advisor-card--mobile .advisor-card__body {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── "open thread" affordance row ── */
+.advisor-card__mobile-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 0 0;
+  border: none;
+  border-top: 1px solid var(--border-primary);
+  border-radius: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  color: var(--text-muted, var(--text-tertiary));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.advisor-card__mobile-open-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.advisor-card__mobile-count {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.advisor-card__mobile-chevron {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* ── Full-screen thread ──
+   z-index clears MobileLayout's fixed tab bar (100) and More sheet (130): this
+   view deliberately covers the tab bar, and the back control is the way out. */
+.mobile-card-thread {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  animation: mobileThreadPush 0.24s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes mobileThreadPush {
+  from { transform: translateX(6%); opacity: 0; }
+  to   { transform: translateX(0);  opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-card-thread { animation: none; }
+}
+
+.mobile-card-thread__bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  padding-left:  max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+}
+
+.mobile-card-thread__back {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-card-thread__back:active { background: var(--bg-secondary); }
+
+.mobile-card-thread__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-card-thread__title {
+  margin: 1px 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mobile-card-thread__bar .advisor-card__save {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  margin-top: 0;
+  font-size: 0.95rem;
+}
+
+/* The transcript is this view's only scroller, so it takes the free space and
+   drops the desktop card's max-height cap. */
+.thread-messages--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 14px 16px;
+  padding-left:  max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  overscroll-behavior: contain;
+}
+
+.mobile-card-thread__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.mobile-card-thread__intro .advisor-card__body { font-size: 0.9rem; }
+
+.mobile-card-thread__intro .advisor-card__chip {
+  min-height: 36px;
+  font-size: 0.8rem;
+}
+
+.mobile-card-thread .thread-text { max-width: 92%; }
+
+/* Composer. No tab-bar clearance is needed because this view covers the tab
+   bar; only the home-indicator inset applies. */
+.mobile-card-thread__composer {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  padding-left:   max(16px, env(safe-area-inset-left));
+  padding-right:  max(16px, env(safe-area-inset-right));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+}
+
+.mobile-card-thread__composer .card-chat-bar__input {
+  /* 16px exactly: anything smaller makes iOS Safari zoom on focus. */
+  font-size: 16px;
+  padding: 8px 0 10px;
+}
+
+.mobile-card-thread__composer .card-chat-bar__send {
+  width: 40px;
+  height: 40px;
+  font-size: 0.85rem;
 }

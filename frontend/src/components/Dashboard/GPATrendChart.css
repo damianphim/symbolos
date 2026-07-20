@@ -249,4 +249,39 @@
     font-size: 10px;
     padding: 2px 5px;
   }
+
+  /* ── X-axis overflow ──
+     .x-axis is a flex row of one label group per semester with no
+     min-width:0 and `white-space: nowrap` on the label. Once a student has
+     ~6 semesters the "Fall '24" labels stop fitting their flex track and
+     push the row wider than the card, scrolling the whole page sideways.
+     Letting them shrink and wrap keeps the axis aligned with the plot
+     (which is percentage-positioned) without any horizontal scroll.
+     margin-left also re-matches the y-axis, which narrows to 28px + 8px
+     gap here but left the x-axis pinned at the desktop 40px. */
+  .x-axis {
+    margin-left: 36px;
+    gap: 2px;
+  }
+
+  .x-label-group { min-width: 0; }
+
+  .x-label-main {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container { height: 150px; }
+
+  /* The per-point GPA bubbles are always-visible (not hover-only), so on a
+     ~280px-wide plot they overlap into an unreadable smear. Keep the one
+     that matters — the current GPA — and leave the rest reachable via each
+     point's title tooltip. */
+  .data-point:not(.current-point) .point-label { display: none; }
+
+  /* Two-line x labels ("Fall '24" over "Sem 3") cost real vertical space on
+     a short screen; the semester number is redundant with the ordering. */
+  .x-label-sub { display: none; }
 }

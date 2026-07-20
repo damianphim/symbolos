@@ -770,6 +770,10 @@ const FR_TRANSLATIONS = {
 
     // ── Calendar ──────────────────────────────────────────
     'calendar.today': 'Aujourd\'hui',
+    'cal.filters': 'Filtres',
+    'cal.allDay': 'Toute la journée',
+    'cal.noEventsToday': 'Aucun événement aujourd\'hui',
+    'cal.noEventsInRange': 'Aucun événement pour cette période',
     'calendar.month': 'Mois',
     'calendar.week': 'Semaine',
     'calendar.day': 'Jour',
@@ -1200,6 +1204,8 @@ const FR_TRANSLATIONS = {
     'brief.you': 'Vous',
     'brief.ai': 'IA',
     'brief.msgs': '{n} msg',
+    'cards.back': 'Retour',
+    'cards.openThread': 'Ouvrir la discussion',
     'brief.msgsPlural': '{n} msgs',
     'brief.errorSend': "Une erreur s'est produite. Veuillez réessayer.",
     'brief.followUpPlaceholder': 'Posez une question de suivi…',

@@ -31,3 +31,22 @@
 .courses-view .courses-my-panel {
   width: 100%;
 }
+
+/* ── Responsive ─────────────────────────────────────────────
+   The sub-tab bar borrows .dp-subtab-* from DegreePlanningView.css, whose
+   mobile rules were tuned for that tab's FOUR long buttons. Courses only
+   has two short ones, so re-tune locally rather than touching the shared
+   file (which we don't own). */
+@media (max-width: 768px) {
+  .courses-view { gap: 14px; }
+
+  /* 10px padding + 12.5px label lands at ~35px tall. */
+  .courses-view .dp-subtab-btn { min-height: 44px; }
+}
+
+@media (max-width: 360px) {
+  /* The shared rule drops the sub-tab icons here to claw back room for
+     four long labels. With only "My Courses" / "Search" there is plenty of
+     space, so keep the icons — they carry the tab's meaning. */
+  .courses-view .dp-subtab-icon { display: inline-block; }
+}

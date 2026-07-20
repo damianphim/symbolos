@@ -359,6 +359,11 @@
   .pic-row-label {
     flex-basis: 120px;
   }
+
+  /* 8px padding + a 13px label is ~35px tall. */
+  .pic-edit-btn {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 520px) {

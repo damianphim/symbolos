@@ -119,3 +119,18 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* 7px padding + a 13px label leaves the segmented toggle ~31px tall, and
+     the FR/ZH labels ("Évolution de la moyenne") overflow a half-width pill
+     with nowrap inherited from the flex default. */
+  .apc-toggle-btn {
+    min-height: 44px;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .apc-hero-value { font-size: 2rem; }
+}

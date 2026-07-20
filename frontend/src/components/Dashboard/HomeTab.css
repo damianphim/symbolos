@@ -359,7 +359,11 @@
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .home-tab { padding: 1rem 1rem 2.5rem; }
+  /* HomeTab renders straight into MobileLayout's <main class="mobile-content">,
+     which already supplies the 1rem side gutter and the bottom padding that
+     clears the fixed tab bar. Repeating them here cost ~32px of a 360px
+     screen and left a dead band under the last card. */
+  .home-tab { padding: 0 0 0.5rem; }
   .home-grid { grid-template-columns: 1fr; }
 
   .home-setup__step {
@@ -368,5 +372,39 @@
 
   .home-setup__cta {
     margin-left: 1.9rem; /* align under text, past the check icon */
+    min-height: 44px;
   }
+
+  /* ── 44px touch targets ──
+     These are all bare text/icon buttons on desktop (no vertical padding),
+     which lands them around 20-32px tall — well under the 44px minimum. */
+  .home-link {
+    min-height: 44px;
+    padding-block: 0.25rem;
+  }
+
+  .home-action,
+  .home-brief__item {
+    min-height: 44px;
+  }
+
+  .home-header__setup-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* The 200px cap is a desktop nicety; on a phone it just forces the title
+     to ellipsize while leaving whitespace beside the chip. */
+  .home-course-chip {
+    min-height: 44px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Two quick-action columns leave ~150px per button, which wraps
+     "Import transcript" onto three lines in FR. */
+  .home-actions { grid-template-columns: 1fr; }
+  .home-course-chip { width: 100%; }
 }

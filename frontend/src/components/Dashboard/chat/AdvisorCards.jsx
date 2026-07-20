@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLanguage } from '../../../contexts/PreferencesContext'
 import {
   FaSync, FaChevronDown, FaChevronUp,
+  FaChevronLeft, FaChevronRight,
   FaBolt, FaArrowRight, FaGraduationCap,
   FaClipboardList, FaComments, FaCalendarAlt,
   FaChartBar, FaMapMarkedAlt, FaLightbulb,
@@ -9,6 +10,7 @@ import {
   FaGripVertical, FaTrash, FaMapPin,
 } from 'react-icons/fa'
 import { CARD_CATEGORIES, CATEGORY_LABELS } from '../../../lib/cardsAPI'
+import useViewport from '../../../hooks/useViewport'
 import './AdvisorCards.css'
 
 const CATEGORY_ICON_COMPONENTS = {
@@ -22,7 +24,10 @@ const CATEGORY_ICON_COMPONENTS = {
 }
 
 // ── Thread messages scroller ──────────────────────────────────
-function ThreadMessages({ thread, isThinking }) {
+// `className` / `leading` exist for the mobile full-screen thread, where this
+// element becomes the page's only scroller and carries the card summary +
+// starter chips above the transcript. Both default to the desktop behaviour.
+function ThreadMessages({ thread, isThinking, className = '', leading = null }) {
   const scrollRef = useRef(null)
   useEffect(() => {
     const el = scrollRef.current
@@ -30,7 +35,8 @@ function ThreadMessages({ thread, isThinking }) {
   }, [thread.length, isThinking])
 
   return (
-    <div className="thread-messages" ref={scrollRef}>
+    <div className={`thread-messages${className ? ` ${className}` : ''}`} ref={scrollRef}>
+      {leading}
       {thread.map((msg, i) => (
         <div
           key={i}
@@ -113,6 +119,47 @@ function CardChatBar({ onSend, isThinking, onFocus }) {
   )
 }
 
+// ── Follow-up chips ───────────────────────────────────────────
+// Shared by the desktop inline panel and the mobile full-screen thread so the
+// typed-action map below only ever exists in one place. Renders exactly the
+// markup the desktop panel used before this was extracted.
+function CardChips({ chips, isThinking, onSend }) {
+  if (!chips.length) return null
+  return (
+    <div className="advisor-card__chips">
+      {chips.map((chip, i) => {
+        const chipLabel = typeof chip === 'string' ? chip : (chip?.label ?? '')
+        const chipType  = typeof chip === 'object' ? chip?.type : null
+        // Typed actions short-circuit the normal chat-send flow.
+        // Keep this list in sync with Dashboard's window listeners.
+        const TYPED_ACTIONS = {
+          open_transcript_upload: 'open-transcript-upload',
+          open_degree_planning:   'open-degree-planning',
+        }
+        const dispatchEvent = TYPED_ACTIONS[chipType]
+        const handleChipClick = () => {
+          if (dispatchEvent) {
+            window.dispatchEvent(new CustomEvent(dispatchEvent))
+            return
+          }
+          onSend(chipLabel)
+        }
+        return (
+          <button
+            key={i}
+            className="advisor-card__chip"
+            onClick={handleChipClick}
+            disabled={isThinking && !dispatchEvent}
+          >
+            <FaBolt className="chip-icon" />
+            {chipLabel}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // Helper: translated category label
 function catLabel(cat, t) {
   const map = {
@@ -189,8 +236,14 @@ function AdvisorCard({
     finally { setSaving(false) }
   }
 
+  // `onPinToggle` is undefined in shells with no right sidebar to pin into
+  // (MobileLayout), so the button is not rendered at all there — this guard is
+  // belt-and-braces for any other shell that omits the prop.
+  const canPin = typeof onPinToggle === 'function'
+
   const handlePin = (e) => {
     e.stopPropagation()
+    if (!canPin) return
     onPinToggle(card, thread)
   }
 
@@ -280,13 +333,15 @@ function AdvisorCard({
             {isSaved ? <FaBookmark /> : <FaRegBookmark />}
           </button>
 
-          <button
-            className={`advisor-card__pin ${isPinned ? 'advisor-card__pin--active' : ''}`}
-            onClick={handlePin}
-            {...{ title: isPinned ? t('brief.unpin') : t('brief.pin') }}
-          >
-            <FaMapPin style={isPinned ? {} : { opacity: 0.45 }} />
-          </button>
+          {canPin && (
+            <button
+              className={`advisor-card__pin ${isPinned ? 'advisor-card__pin--active' : ''}`}
+              onClick={handlePin}
+              {...{ title: isPinned ? t('brief.unpin') : t('brief.pin') }}
+            >
+              <FaMapPin style={isPinned ? {} : { opacity: 0.45 }} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -298,39 +353,7 @@ function AdvisorCard({
         <div className="advisor-card__panel-inner">
 
           {/* Follow-up question chips */}
-          {chips.length > 0 && (
-            <div className="advisor-card__chips">
-              {chips.map((chip, i) => {
-                const chipLabel = typeof chip === 'string' ? chip : (chip?.label ?? '')
-                const chipType  = typeof chip === 'object' ? chip?.type : null
-                // Typed actions short-circuit the normal chat-send flow.
-                // Keep this list in sync with Dashboard's window listeners.
-                const TYPED_ACTIONS = {
-                  open_transcript_upload: 'open-transcript-upload',
-                  open_degree_planning:   'open-degree-planning',
-                }
-                const dispatchEvent = TYPED_ACTIONS[chipType]
-                const handleChipClick = () => {
-                  if (dispatchEvent) {
-                    window.dispatchEvent(new CustomEvent(dispatchEvent))
-                    return
-                  }
-                  handleSend(chipLabel)
-                }
-                return (
-                  <button
-                    key={i}
-                    className="advisor-card__chip"
-                    onClick={handleChipClick}
-                    disabled={isThinking && !dispatchEvent}
-                  >
-                    <FaBolt className="chip-icon" />
-                    {chipLabel}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <CardChips chips={chips} isThinking={isThinking} onSend={handleSend} />
 
           {thread.length > 0 && (
             <div className={`advisor-card__thread ${isExpanded ? '' : 'advisor-card__thread--preview'}`}>
@@ -421,6 +444,238 @@ function CardSkeleton() {
         <div className="skeleton-chip" /><div className="skeleton-chip" />
       </div>
     </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════
+// MOBILE (<= 768px)
+//
+// The desktop card is a self-contained inline chat: it expands in place, can
+// be dragged to reorder, and can be pinned into the right sidebar. None of
+// those three metaphors survive a phone — there is no sidebar to pin into,
+// HTML5 drag events never fire from touch, and an inline expanding thread
+// fights the page scroller for the small amount of vertical space there is.
+//
+// So mobile gets a list -> detail push instead: a compact, whole-card-tappable
+// summary in the feed, and a full-screen thread view with a back control. The
+// desktop components below are left exactly as they were.
+// ══════════════════════════════════════════════════════════════
+
+// ── Mobile: compact card in the list ──────────────────────────
+function MobileAdvisorCard({ card, thread = [], isThinking = false, onOpen, onSaveToggle, onDelete }) {
+  const { t } = useLanguage()
+  const [saving, setSaving] = useState(false)
+
+  const CardIcon = CATEGORY_ICON_COMPONENTS[card.category || 'other'] || FaComments
+  const isSaved  = card.is_saved || false
+  const isUser   = card.source === 'user'
+  const last     = thread.length > 0 ? thread[thread.length - 1] : null
+
+  const handleSave = async (e) => {
+    e.stopPropagation()
+    if (saving) return
+    setSaving(true)
+    try { await onSaveToggle(card.id, !isSaved) }
+    finally { setSaving(false) }
+  }
+
+  const handleDelete = (e) => {
+    e.stopPropagation()
+    onDelete(card.id)
+  }
+
+  const open = () => onOpen(card.id)
+
+  const countKey = thread.length === 1 ? 'brief.msgs' : 'brief.msgsPlural'
+
+  return (
+    /* The whole card is tappable, but it deliberately is NOT role="button":
+       it already contains buttons, and nesting button roles breaks assistive
+       tech. The footer row below is a real <button>, so keyboard and screen
+       reader users get an explicit, focusable way in. */
+    <article
+      data-card-id={card.id}
+      onClick={open}
+      className={[
+        'advisor-card',
+        'advisor-card--mobile',
+        `advisor-card--${card.card_type || card.type}`,
+        isUser  ? 'advisor-card--user' : '',
+        isSaved ? 'advisor-card--saved' : '',
+      ].filter(Boolean).join(' ')}
+      style={{
+        ...(card._streamIdx !== undefined && !card.id
+          ? { animationDelay: `${card._streamIdx * 0.18}s` }
+          : {}),
+      }}
+    >
+      <div className="advisor-card__header">
+        <span className="advisor-card__icon"><CardIcon /></span>
+
+        <div className="advisor-card__meta">
+          <div className="advisor-card__meta-top">
+            <span className="advisor-card__label">{card.label}</span>
+            {isUser && <span className="advisor-card__user-badge">{t('brief.askedByYou')}</span>}
+            {isSaved && (
+              <span className="advisor-card__saved-badge">
+                <FaThumbtack className="saved-badge__icon" /> {t('brief.savedBadge')}
+              </span>
+            )}
+          </div>
+          <h3 className="advisor-card__title">{card.title}</h3>
+        </div>
+
+        {/* No pin button: there is no right sidebar on mobile to pin into. */}
+        <div className="advisor-card__header-actions">
+          <button
+            className={`advisor-card__save ${isSaved ? 'advisor-card__save--active' : ''}`}
+            onClick={handleSave}
+            disabled={saving}
+            {...{ 'aria-label': isSaved ? t('brief.removeBookmark') : t('brief.bookmark') }}
+          >
+            {isSaved ? <FaBookmark /> : <FaRegBookmark />}
+          </button>
+
+          <button
+            className="advisor-card__delete"
+            onClick={handleDelete}
+            {...{ 'aria-label': t('brief.deleteCard') }}
+          >
+            <FaTrash />
+          </button>
+        </div>
+      </div>
+
+      <p className="advisor-card__body">{card.body}</p>
+
+      <button
+        type="button"
+        className="advisor-card__mobile-open"
+        onClick={(e) => { e.stopPropagation(); open() }}
+      >
+        <span className="advisor-card__mobile-open-label">
+          {isThinking
+            ? <span className="thinking-dots small"><span /><span /><span /></span>
+            : last
+              ? (
+                <>
+                  <span className={`thread-peek__role thread-peek__role--${last.role}`}>
+                    {last.role === 'user' ? t('brief.you') : t('brief.ai')}:
+                  </span>{' '}
+                  <span className="thread-peek__text">{last.content}</span>
+                </>
+              )
+              : t('cards.openThread')}
+        </span>
+        {thread.length > 0 && (
+          <span className="advisor-card__mobile-count">
+            {t(countKey).replace('{n}', thread.length)}
+          </span>
+        )}
+        <FaChevronRight className="advisor-card__mobile-chevron" />
+      </button>
+    </article>
+  )
+}
+
+// ── Mobile: full-screen thread push view ──────────────────────
+// Deliberately covers the fixed bottom tab bar (z-index 100). A detail view
+// that only sat above it would leave the composer wedged between a keyboard
+// and a nav rail; covering it gives the thread the whole screen, and the back
+// control is the single, obvious way out.
+function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveToggle }) {
+  const { t } = useLanguage()
+  const [saving, setSaving] = useState(false)
+
+  const CardIcon = CATEGORY_ICON_COMPONENTS[card.category || 'other'] || FaComments
+  const isSaved  = card.is_saved || false
+  const chips    = card.actions || []
+
+  // Escape closes the view. Android's back gesture surfaces as Escape in some
+  // WebView configurations, matching how MobileLayout closes its More sheet.
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const handleSave = async () => {
+    if (saving) return
+    setSaving(true)
+    try { await onSaveToggle(card.id, !isSaved) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div
+      className="mobile-card-thread"
+      role="dialog"
+      aria-modal="true"
+      aria-label={card.title}
+    >
+      <header className="mobile-card-thread__bar">
+        <button
+          className="mobile-card-thread__back"
+          onClick={onClose}
+          {...{ 'aria-label': t('cards.back') }}
+        >
+          <FaChevronLeft />
+        </button>
+
+        <div className="mobile-card-thread__heading">
+          <span className="advisor-card__label">{card.label}</span>
+          <h2 className="mobile-card-thread__title">{card.title}</h2>
+        </div>
+
+        <button
+          className={`advisor-card__save ${isSaved ? 'advisor-card__save--active' : ''}`}
+          onClick={handleSave}
+          disabled={saving}
+          {...{ 'aria-label': isSaved ? t('brief.removeBookmark') : t('brief.bookmark') }}
+        >
+          {isSaved ? <FaBookmark /> : <FaRegBookmark />}
+        </button>
+      </header>
+
+      {/* The transcript is the only scroller in this view; the card summary and
+          starter chips ride along at the top of it rather than eating fixed
+          height above it. */}
+      <ThreadMessages
+        thread={thread}
+        isThinking={isThinking}
+        className="thread-messages--fill"
+        leading={
+          <div className="mobile-card-thread__intro">
+            <span className="advisor-card__icon"><CardIcon /></span>
+            <p className="advisor-card__body">{card.body}</p>
+            <CardChips chips={chips} isThinking={isThinking} onSend={onSend} />
+          </div>
+        }
+      />
+
+      <div className="mobile-card-thread__composer">
+        <CardChatBar onSend={onSend} isThinking={isThinking} />
+      </div>
+    </div>
+  )
+}
+
+// ── Mobile: plain (non-reorderable) feed ──────────────────────
+function MobileFeed({ cards, threadMap, thinkingCards, onOpen, onSaveToggle, onDelete }) {
+  return (
+    <>
+      {cards.map(card => (
+        <MobileAdvisorCard
+          key={card.id}
+          card={card}
+          thread={threadMap[card.id] || []}
+          isThinking={thinkingCards.has(card.id)}
+          onOpen={onOpen}
+          onSaveToggle={onSaveToggle}
+          onDelete={onDelete}
+        />
+      ))}
+    </>
   )
 }
 
@@ -555,8 +810,11 @@ export default function AdvisorCards({
   onOpenedCard,
 }) {
   const { t, language } = useLanguage()
+  const { isMobile } = useViewport()
   const [activeCategory, setActiveCategory] = useState('all')
   const [timeAgo, setTimeAgo] = useState('')
+  // Mobile only: which card's thread is showing as a full-screen push view.
+  const [mobileThreadId, setMobileThreadId] = useState(null)
 
   const storageKey = userId ? `advisor_threads_${userId}` : 'advisor_threads'
   const deletedKey = userId ? `advisor_deleted_${userId}` : 'advisor_deleted'
@@ -597,6 +855,13 @@ export default function AdvisorCards({
   // others that were open) and scroll to it.
   useEffect(() => {
     if (!openCardId || !cards.some(c => c.id === openCardId)) return
+    // On mobile the equivalent of "open this card's chat" is pushing its
+    // full-screen thread, not expanding a panel somewhere down the feed.
+    if (isMobile) {
+      setMobileThreadId(openCardId)
+      onOpenedCard?.()
+      return
+    }
     setExpanded(new Set([openCardId]))
     requestAnimationFrame(() => {
       const el = document.querySelector(`[data-card-id="${openCardId}"]`)
@@ -604,7 +869,13 @@ export default function AdvisorCards({
     })
     onOpenedCard?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openCardId, cards])
+  }, [openCardId, cards, isMobile])
+
+  // Crossing the breakpoint mid-session (rotation, desktop resize) must not
+  // leave a full-screen mobile overlay hanging over the desktop layout.
+  useEffect(() => {
+    if (!isMobile) setMobileThreadId(null)
+  }, [isMobile])
 
   const feedRef = useRef(null)
   const prevLen = useRef(visibleCards.length)
@@ -689,9 +960,11 @@ export default function AdvisorCards({
   // component remounts every time the user switches to the Brief tab
   // (Dashboard conditionally renders it), so the guard just prevents it
   // from re-firing on every re-render within a single visit.
+  // Skipped on mobile: there is no inline panel to open, and auto-pushing a
+  // full-screen thread on arrival would hide the card list the user came for.
   const autoExpandedRef = useRef(false)
   useEffect(() => {
-    if (autoExpandedRef.current || showSkeletons) return
+    if (isMobile || autoExpandedRef.current || showSkeletons) return
     // If Home deep-linked a specific card, let that effect own the expansion —
     // don't also open the top card (which would leave two cards open).
     if (openCardId) { autoExpandedRef.current = true; return }
@@ -699,7 +972,7 @@ export default function AdvisorCards({
     if (!topCard) return
     autoExpandedRef.current = true
     setExpanded(prev => new Set([...prev, topCard.id]))
-  }, [showSkeletons, visibleCards, openCardId])
+  }, [showSkeletons, visibleCards, openCardId, isMobile])
 
   // Counts are all based on visibleCards (deleted cards excluded)
   const categoryCounts = visibleCards.reduce((acc, card) => {
@@ -716,6 +989,12 @@ export default function AdvisorCards({
     visibleCards.filter(c => (c.category || 'other') === activeCategory)
 
   const activeCats = CARD_CATEGORIES.filter(cat => categoryCounts[cat])
+
+  // Resolved from visibleCards so a refresh or a delete that drops the card
+  // also dismisses the thread instead of stranding a stale overlay.
+  const mobileThreadCard = mobileThreadId
+    ? visibleCards.find(c => c.id === mobileThreadId) || null
+    : null
 
   return (
     <div className="advisor-cards-root">
@@ -805,6 +1084,16 @@ export default function AdvisorCards({
             {(() => { const I = CATEGORY_ICON_COMPONENTS[activeCategory] || FaComments; return <I className="empty-icon" /> })()}
             <p>{t('brief.noCards').replace('{category}', catLabel(activeCategory, t))}</p>
           </div>
+        ) : isMobile ? (
+          /* Reordering is intentionally absent here — see MobileFeed's note. */
+          <MobileFeed
+            cards={filteredCards}
+            threadMap={threadMap}
+            thinkingCards={thinkingCards}
+            onOpen={setMobileThreadId}
+            onSaveToggle={onSaveToggle}
+            onDelete={handleDelete}
+          />
         ) : (
           <DraggableFeed
             cards={filteredCards}
@@ -845,6 +1134,17 @@ export default function AdvisorCards({
       </form>
 
       <p className="rsb-disclaimer">{t('rsb.disclaimer')}</p>
+
+      {isMobile && mobileThreadCard && (
+        <MobileCardThread
+          card={mobileThreadCard}
+          thread={threadMap[mobileThreadCard.id] || []}
+          isThinking={thinkingCards.has(mobileThreadCard.id)}
+          onSend={(msg) => handleSend(mobileThreadCard.id, msg, mobileThreadCard.title, mobileThreadCard.body)}
+          onClose={() => setMobileThreadId(null)}
+          onSaveToggle={onSaveToggle}
+        />
+      )}
 
     </div>
   )

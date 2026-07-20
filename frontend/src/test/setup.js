@@ -10,6 +10,30 @@ afterEach(() => {
   cleanup()
 })
 
+// jsdom does not implement window.matchMedia. Without this stub, any component
+// reaching useViewport() — i.e. anything that adapts its layout for mobile —
+// throws `window.matchMedia is not a function` the moment a test renders it.
+// Defaults to the desktop branch (matches: false) so existing characterization
+// tests keep asserting against the layout they were written for. A test that
+// wants the mobile branch can override window.matchMedia itself.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: (query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      // Deprecated MediaQueryList API — some libraries still call these.
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  })
+}
+
 // Node >=22's built-in `localStorage` global (unconfigured, no --localstorage-file)
 // shadows jsdom's fully-functional window.localStorage with a non-functional
 // stub (getItem/setItem/clear all missing). CI pins Node 22 without this

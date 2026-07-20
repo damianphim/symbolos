@@ -771,6 +771,10 @@ const EN_TRANSLATIONS = {
 
     // ── Calendar ──────────────────────────────────────────
     'calendar.today': 'Today',
+    'cal.filters': 'Filters',
+    'cal.allDay': 'All day',
+    'cal.noEventsToday': 'No events today',
+    'cal.noEventsInRange': 'No events in this period',
     'calendar.month': 'Month',
     'calendar.week': 'Week',
     'calendar.day': 'Day',
@@ -1281,6 +1285,8 @@ const EN_TRANSLATIONS = {
     'brief.you': 'You',
     'brief.ai': 'AI',
     'brief.msgs': '{n} msg',
+    'cards.back': 'Back',
+    'cards.openThread': 'Open chat',
     'brief.msgsPlural': '{n} msgs',
     'brief.errorSend': 'Something went wrong. Please try again.',
     'brief.followUpPlaceholder': 'Ask a follow-up…',

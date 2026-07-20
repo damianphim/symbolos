@@ -294,8 +294,17 @@
   .sort-select { flex: 1; }
   .course-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .course-card-actions { gap: 8px; }
-  .favorite-btn, .completed-btn, .current-btn { width: 36px; height: 36px; }
-  .favorite-icon, .completed-icon, .current-icon { font-size: 15px; }
+  /* These used to shrink to 36px on phones — the opposite of what a touch
+     screen wants. The row is right-aligned with room to spare at 360px. */
+  .favorite-btn, .completed-btn, .current-btn { width: 44px; height: 44px; }
+  .favorite-icon, .completed-icon, .current-icon { font-size: 17px; }
+  /* iOS zooms the whole page when a focused control is under 16px. */
+  .sort-select { font-size: 16px; min-height: 44px; }
+  /* 4rem/2rem of padding around a 4rem icon dominates a phone screen. */
+  .placeholder-content { padding: 2.5rem 1.25rem; }
+  .placeholder-icon { font-size: 3rem; }
+  .placeholder-content h3 { font-size: 1.25rem; }
+  .placeholder-content p { font-size: 1rem; }
 }
 
 @media (max-width: 480px) {
@@ -306,7 +315,12 @@
   .sort-controls { flex-direction: column; align-items: stretch; }
   .sort-select { width: 100%; }
   .rmp-compact { flex-direction: column; }
-  .pagination-btn, .pagination-page { width: 32px; height: 32px; min-width: 32px; font-size: 0.8rem; }
+  /* Up to 9 controls can render (prev + 5 pages + 2 ellipses + next). Keep
+     them narrow but 44px tall, and let the row wrap instead of pushing the
+     page sideways. */
+  .pagination { flex-wrap: wrap; }
+  .pagination-btn, .pagination-page { width: 40px; min-width: 40px; height: 44px; font-size: 0.85rem; }
+  .pagination-ellipsis { width: 20px; line-height: 44px; }
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -377,4 +391,10 @@
   .courses-filter-bar { gap: 10px; }
   .courses-filter-bar .filter-group { flex: 1 1 45%; }
   .courses-filter-bar .sort-select { flex: 1; }
+}
+
+@media (max-width: 480px) {
+  /* Two half-width groups leave ~160px each — the "Semester"/"Sort by"
+     label plus a select does not fit, so give each filter its own row. */
+  .courses-filter-bar .filter-group { flex: 1 1 100%; }
 }

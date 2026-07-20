@@ -4,9 +4,10 @@ import {
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
   FaStar, FaBullseye, FaNewspaper, FaSearch, FaBellSlash, FaEllipsisH, FaTag,
-  FaApple, FaWindows
+  FaApple, FaWindows, FaFilter, FaChevronDown
 } from 'react-icons/fa'
 import { useLanguage, useTimezone } from '../../contexts/PreferencesContext'
+import useViewport from '../../hooks/useViewport'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
 import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
 import { lookupExams, formatExamTime } from '../../utils/examSchedule'
@@ -26,6 +27,7 @@ import { downloadICS } from './CalendarTab/calendarUtils'
 import EventModal from './CalendarTab/EventModal'
 import EventPopup from './CalendarTab/EventPopup'
 import DayDrawer from './CalendarTab/DayDrawer'
+import MobileAgenda from './CalendarTab/MobileAgenda'
 import BulkDeleteModal from './CalendarTab/BulkDeleteModal'
 import AnnouncementModal from './CalendarTab/AnnouncementModal'
 
@@ -34,6 +36,7 @@ import './CalendarTab.css'
 export default function CalendarTab({ user, authFlags, clubEvents = [], managedClubs = [] }) {
   const { t, language } = useLanguage()
   const { getTodayStr, getNow } = useTimezone()
+  const { isMobile } = useViewport()
   const [notifPrefs] = useNotificationPrefs(user?.id, user?.email)
 
   const today = getNow()
@@ -483,6 +486,10 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     return counts
   }, [allEvents])
   const [showAllFilterChips, setShowAllFilterChips] = useState(false)
+  // Phones get the chip row behind a compact disclosure — six chips wrap into
+  // three rows at 360px and push the calendar itself below the fold.
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const mutedFilterCount = Object.values(filter).filter(v => v === false).length
 
   const eventsByDate = useMemo(() => {
     const map = {}
@@ -509,6 +516,15 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   const cells = []
   for (let i = 0; i < firstDay; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  // Every day of the visible month as a Date — the mobile agenda works with
+  // Date objects (same shape as weekDates) so one component renders both
+  // granularities.
+  const monthDates = useMemo(
+    () => Array.from({ length: getDaysInMonth(currentYear, currentMonth) },
+      (_, i) => new Date(currentYear, currentMonth, i + 1)),
+    [currentYear, currentMonth]
+  )
 
   const to24h = (t) => {
     if (!t) return null
@@ -662,6 +678,19 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     setPreselectedDate(dateStr); setEditEvent(null); setShowModal(true)
   }
 
+  // Mobile agenda: tapping a day heading keeps the desktop month-grid
+  // behaviour (drawer when the day has events, add-event otherwise) so the
+  // DayDrawer stays reachable without a month grid to click.
+  const handleAgendaDayClick = (date) => {
+    const dateStr = toDateStr(date.getFullYear(), date.getMonth(), date.getDate())
+    const eventsOnDay = eventsByDate[dateStr] || []
+    if (eventsOnDay.length > 0) {
+      setDayDrawer({ date: dateStr, events: eventsOnDay })
+    } else {
+      setPreselectedDate(dateStr); setEditEvent(null); setShowModal(true)
+    }
+  }
+
   const handleAddFromDrawer = () => {
     const date = dayDrawer?.date
     setDayDrawer(null)
@@ -772,8 +801,24 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
         </div>
       </div>
 
+      {/* Mobile: chip row folds behind a compact disclosure */}
+      {isMobile && (
+        <button
+          className={`cal-filter-toggle ${showMobileFilters ? 'is-open' : ''}`}
+          onClick={() => setShowMobileFilters(p => !p)}
+          aria-expanded={showMobileFilters}
+        >
+          <FaFilter size={11} />
+          <span>{t('cal.filters')}</span>
+          {mutedFilterCount > 0 && (
+            <span className="cal-filter-toggle__count">{mutedFilterCount}</span>
+          )}
+          <FaChevronDown size={10} className="cal-filter-toggle__chev" />
+        </button>
+      )}
+
       {/* Filter Bar — chips for types with zero events fold behind "+N more" */}
-      <div className="cal-filter-bar">
+      <div className={`cal-filter-bar${isMobile && !showMobileFilters ? ' cal-filter-bar--collapsed' : ''}`}>
         {(() => {
           const visibleTypes = Object.entries(typeConfig).filter(([key]) => key !== 'newsletter' || isMcGillEmail)
           const withEvents = visibleTypes.filter(([key]) => (eventCountsByType[key] || 0) > 0)
@@ -830,6 +875,20 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                 </div>
                 <button onClick={nextMonth}><FaChevronRight /></button>
               </div>
+              {isMobile ? (
+                <MobileAgenda
+                  dates={monthDates}
+                  eventsByDate={eventsByDate}
+                  todayStr={getTodayStr()}
+                  MONTHS={MONTHS} DAYS={DAYS}
+                  onSelectEvent={setPopupEvent}
+                  onOpenDay={handleAgendaDayClick}
+                  onAddOnDate={handleWeekDayAdd}
+                  typeConfig={typeConfig} getEventStyle={getEventStyle}
+                  t={t}
+                />
+              ) : (
+              <>
               <div className="cal-grid-header">
                 {DAYS.map(d => <div key={d} className="cal-grid-day-label">{d}</div>)}
               </div>
@@ -870,6 +929,8 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                   )
                 })}
               </div>
+              </>
+              )}
             </>
           ) : (
             <>
@@ -885,6 +946,19 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                 </div>
                 <button onClick={nextWeek}><FaChevronRight /></button>
               </div>
+              {isMobile ? (
+                <MobileAgenda
+                  dates={weekDates}
+                  eventsByDate={eventsByDate}
+                  todayStr={getTodayStr()}
+                  MONTHS={MONTHS} DAYS={DAYS}
+                  onSelectEvent={setPopupEvent}
+                  onOpenDay={handleAgendaDayClick}
+                  onAddOnDate={handleWeekDayAdd}
+                  typeConfig={typeConfig} getEventStyle={getEventStyle}
+                  t={t}
+                />
+              ) : (
               <div className="cal-week-grid">
                 {weekDates.map(date => {
                   const dateStr = toDateStr(date.getFullYear(), date.getMonth(), date.getDate())
@@ -919,6 +993,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                   )
                 })}
               </div>
+              )}
             </>
           )}
 

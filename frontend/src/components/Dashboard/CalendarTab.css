@@ -2930,3 +2930,408 @@
   justify-content: center;
   transition: color 0.15s;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE AGENDA (<= 768px)
+
+   The 7-column month grid is unreadable at 360px, so MobileAgenda.jsx
+   renders the same period as a day-grouped list instead. These classes
+   exist only in that component, which only mounts when useViewport()
+   reports isMobile — so nothing below can reach desktop.
+═══════════════════════════════════════════════════════════════════ */
+
+.cal-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cal-agenda--empty {
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--border-secondary);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.cal-agenda--empty p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
+.cal-agenda__empty-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── One day group ── */
+.cal-agenda-day {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cal-agenda-day__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 4px 0;
+  background: var(--bg-secondary);
+}
+
+.cal-agenda-day__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cal-agenda-day__num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-agenda-day__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cal-agenda-day__weekday {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.cal-agenda-day__month {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.cal-agenda-day__today {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cal-agenda-day.is-today .cal-agenda-day__num,
+.cal-agenda-day.is-today .cal-agenda-day__weekday {
+  color: var(--accent-primary);
+}
+
+.cal-agenda-day__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px dashed var(--border-secondary);
+  border-radius: 8px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.cal-agenda-day__empty {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-primary);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+.cal-agenda-day__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── One event row ── */
+.cal-agenda-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;          /* comfortable touch target */
+  padding: 9px 10px;
+  border: 1px solid var(--border-primary);
+  border-left: 4px solid var(--accent-primary);
+  border-radius: 10px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cal-agenda-event__time {
+  flex-shrink: 0;
+  width: 58px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.cal-agenda-event__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Row backgrounds are always a light tint (set inline from typeConfig), so
+   text must stay dark in BOTH themes — same rule as .cal-week-event above:
+   theme-variable colours go light in dark mode and vanish against the tint. */
+.cal-agenda-event__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.cal-agenda-event__cat {
+  font-size: 0.7rem;
+  color: #4b5563;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-agenda-event__chev {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+/* ── Collapsible filter disclosure (mobile only) ── */
+.cal-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cal-filter-toggle__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.cal-filter-toggle__chev {
+  margin-left: auto;
+  transition: transform 0.15s;
+}
+
+.cal-filter-toggle.is-open .cal-filter-toggle__chev {
+  transform: rotate(180deg);
+}
+
+.cal-filter-bar--collapsed {
+  display: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE LAYOUT OVERRIDES (<= 768px)
+   Placed last so they win over the 900/640 patches above.
+═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* On mobile the tab renders inside <main class="mobile-content">, which is
+     itself the scroll container. A 100%-height container with its own
+     overflow:auto body would nest two scrollers and strand content. Let the
+     page grow and let mobile-content do the scrolling.
+
+     NOTE: deliberately no `overflow-x: hidden` here — setting one axis to
+     hidden forces the other to `auto`, which would turn .cal-container into a
+     (never-scrolling) scrollport and break the sticky agenda day headers.
+     .mobile-content already clips horizontal overflow for the whole shell. */
+  .cal-container {
+    height: auto;
+    min-height: 0;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .cal-body,
+  .cal-announcements {
+    flex: 0 0 auto;
+    overflow-y: visible;
+    padding: 10px 10px 14px;
+  }
+
+  /* The mobile top bar already reads "Calendar" — repeating the title and its
+     subtitle here costs ~56px of a 640px-tall viewport for no information. */
+  .cal-header-left { display: none; }
+
+  .cal-header {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .cal-header-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Icon-only controls (labels already hidden at 640) sized for thumbs. */
+  .cal-view-toggle { flex: 1; }
+  .cal-view-toggle button span { display: none; }
+  .cal-view-toggle button {
+    flex: 1;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 10px;
+  }
+  .cal-add-btn span { display: none; }
+  .cal-add-btn,
+  .cal-more-btn {
+    min-width: 42px;
+    min-height: 38px;
+    justify-content: center;
+    padding: 0 12px;
+  }
+
+  .cal-filter-bar {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .cal-filter-chip {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+  }
+
+  /* Granularity toggle: two equal halves, full width, thumb-sized. */
+  .cal-granularity-toggle {
+    align-self: stretch;
+    width: 100%;
+  }
+  .cal-granularity-toggle button {
+    flex: 1;
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .cal-month-nav {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .cal-month-nav > button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .cal-month-title h3 { font-size: 0.95rem; }
+
+  .cal-legend {
+    gap: 8px 12px;
+    padding: 4px 0 0;
+  }
+  .cal-legend-item { font-size: 0.68rem; }
+
+  /* Announcement cards stack (already done at 640) — keep the countdown row
+     from overflowing on very narrow screens. */
+  .cal-announce-card { padding: 12px; }
+  .cal-announce-card-right { flex-wrap: wrap; gap: 6px; }
+
+  /* Overlays: use the full width of a phone instead of a 300px min. The
+     popup overlay has no scrim on desktop; on a phone it covers the whole
+     screen, so without one the popup reads as part of the page behind it. */
+  .cal-popup-overlay {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+  .cal-event-popup {
+    min-width: 0;
+    max-width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .cal-event-popup-actions { flex-wrap: wrap; }
+  .cal-event-popup-actions > * { flex: 1 1 auto; justify-content: center; }
+
+  .cal-day-drawer {
+    max-height: 85vh;
+    border-radius: 14px 14px 0 0;
+  }
+  .cal-day-drawer__header { flex-wrap: wrap; gap: 8px; }
+  /* Type badge + title side-by-side leaves ~140px for the title on a phone.
+     Stacking them lets the title use the full row and wrap instead. */
+  .cal-day-drawer__item-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .cal-day-drawer__item-title {
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .cal-gcal-overlay { padding: 12px; }
+  .cal-gcal-modal { max-width: 100%; max-height: 88vh; overflow-y: auto; }
+}

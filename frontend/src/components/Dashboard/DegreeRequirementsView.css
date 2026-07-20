@@ -796,32 +796,98 @@
   box-shadow: 0 0 0 2px rgba(237, 27, 47, 0.1);
 }
 
-/* ─── Responsive ──────────────────────────────────────────── */
-@media (max-width: 760px) {
-  .drv-sidebar {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    height: 100vh;
-    z-index: 200;
-    transition: left 0.25s ease;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
-    width: 85%;
-    max-width: 320px;
+/* ─── Responsive ──────────────────────────────────────────────
+   Push navigation on phones. The desktop master-detail (sidebar +
+   pane) becomes two full-width screens: the program list, and — after
+   tapping a program — the program detail with a back control at the
+   top of .drv-main. Both nodes stay mounted so the search box, faculty
+   filter and list scroll position survive; this block shows exactly
+   one of them, keyed off the --open / --collapsed state class that
+   DegreeRequirementsView.jsx already maintains.
+
+   The breakpoint is 768px to match useViewport()/MOBILE_BREAKPOINT —
+   the JS that flips that state class. It replaces an ad-hoc 760px
+   check, which left an 8px band where JS and CSS disagreed.
+
+   Everything here scrolls with the page: on mobile this view renders
+   inside <main class="mobile-content">, which owns the scroll and the
+   bottom-tab clearance, so no nested scrollers and no bottom padding
+   of our own. */
+@media (max-width: 768px) {
+  .drv-root {
+    flex-direction: column;
+    height: auto;
   }
-  .drv-sidebar--open   { left: 0; }
-  .drv-sidebar-close   { display: block; }
-  .drv-sidebar-collapse { display: none; }   /* mobile uses the X instead */
-  .drv-open-sidebar    { display: flex; }
-  /* On mobile the off-canvas sidebar keeps its width even when collapsed —
-     it's hidden by the left:-100% transform, not by zero width. */
-  .drv-sidebar--collapsed { width: 85%; min-width: 0; max-width: 320px; }
-  /* .drv-main scrolls internally (independent of .content-area), so it
-     needs its own bottom clearance to not hide the last block behind the
-     fixed bottom-nav rail. */
-  .drv-main            { padding: 16px; padding-bottom: calc(16px + 56px + env(safe-area-inset-bottom, 0px)); }
-  .drv-detail-header   { flex-direction: column; }
-  .drv-detail-meta     { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; }
+
+  /* Screen 1 — the program list. In flow and full width, not a fixed
+     off-canvas drawer: a drawer would sit above the bottom tab bar and
+     read as a modal rather than a level of navigation. */
+  .drv-sidebar {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    background: transparent;
+    border-right: none;
+    box-shadow: none;
+    transition: none;
+  }
+  /* Collapsed === "we are on the detail screen", so the list is gone
+     entirely rather than squeezed to zero width. */
+  .drv-sidebar--collapsed { display: none; }
+  /* …and while the list is up, the detail screen is not rendered. */
+  .drv-sidebar--open + .drv-main { display: none; }
+
+  /* The list is the root of the stack — there is nothing to close it
+     back to, so neither the desktop collapse chevron nor the X applies. */
+  .drv-sidebar-close,
+  .drv-sidebar-collapse { display: none; }
+
+  .drv-sidebar-header { padding: 2px 0 12px; }
+  .drv-faculty-select-wrap,
+  .drv-sidebar-search,
+  .drv-type-filters { padding-left: 0; padding-right: 0; }
+  .drv-search-icon { left: 10px; }
+  /* 16px keeps iOS Safari from zooming the viewport on focus. */
+  .drv-search-input,
+  .drv-faculty-select { font-size: 16px; padding-top: 10px; padding-bottom: 10px; }
+  .drv-type-chip { padding: 6px 12px; font-size: 12px; }
+
+  /* The list grows with its content and scrolls with the page. */
+  .drv-program-list {
+    flex: none;
+    overflow: visible;
+    padding: 4px 0 0;
+  }
+  .drv-program-item { padding: 12px 8px; }          /* ~44px touch target */
+  .drv-program-item--active { padding-left: 5px; }  /* offset the 3px marker */
+  .drv-program-name { font-size: 13.5px; }
+
+  /* Screen 2 — the program detail. */
+  .drv-main {
+    padding: 0;
+    overflow: visible;
+  }
+  .drv-open-sidebar {
+    display: inline-flex;
+    margin-bottom: 12px;
+    padding: 10px 14px 10px 12px;
+  }
+  .drv-open-sidebar--back { font-weight: 600; }
+  /* The back control above already says where "up" goes — a breadcrumb
+     under it is the same affordance twice. */
+  .drv-detail .ui-breadcrumb { display: none; }
+
+  .drv-detail        { max-width: none; }
+  .drv-detail-header { flex-direction: column; align-items: flex-start; }
+  .drv-detail-meta   { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; }
+  .drv-detail-title  { font-size: 18px; }
+
+  /* Long block titles wrap instead of being ellipsed away. */
+  .drv-block-header { padding: 12px 12px; }
+  .drv-block-title  { white-space: normal; }
+  .drv-course-row   { padding: 12px 10px; }
 }
 /* ─── Foundation Year Waived Banner ───────────────────────── */
 .drv-foundation-waived-banner {

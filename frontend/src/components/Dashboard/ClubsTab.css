@@ -504,6 +504,12 @@
 }
 .club-drawer__back:hover { color: var(--text-primary, #0a0c10); }
 .club-drawer__breadcrumb { margin-bottom: 0; }
+/* Wrapper around the breadcrumb + the mobile-only close button. On desktop
+   it collapses out of the box model entirely, so .club-drawer__breadcrumb
+   remains a direct flex child of .club-drawer__strip and the close button
+   renders nothing. Both are re-enabled in the ≤768px block at the bottom. */
+.club-drawer__strip-top { display: contents; }
+.club-drawer__mobile-close { display: none; }
 .club-drawer__strip-main { display: flex; align-items: center; gap: 14px; }
 .club-drawer__strip-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .club-drawer__name {
@@ -2168,4 +2174,500 @@
 .club-subscribe-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE (≤ 768px) — matches MOBILE_BREAKPOINT in hooks/useViewport.js
+   ────────────────────────────────────────────────────────────────────
+   At this width the tab renders inside <main class="mobile-content">
+   (MobileLayout), which already supplies 1rem side padding and enough
+   bottom padding to clear the fixed tab bar. Nothing below should add
+   its own page padding or bottom-nav clearance.
+
+   This block is intentionally the LAST thing in the file so it wins over
+   the older 600/640/700px blocks above wherever they disagree. Desktop
+   (> 768px) is untouched by everything here.
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Shell ─────────────────────────────────────────────────── */
+  .clubs-tab {
+    padding: 0;
+    max-width: none;
+  }
+  /* Nothing in the tab may push the page wider than the viewport. */
+  .clubs-tab,
+  .clubs-explore,
+  .clubs-mine,
+  .clubs-mine__section {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .club-card__name,
+  .club-drawer__name,
+  .clubs-invite-row__text,
+  .club-member-email,
+  .club-manage__quick-info,
+  .club-drawer__desc {
+    overflow-wrap: anywhere;
+  }
+
+  /* ── Toast — must clear the fixed bottom tab bar ───────────── */
+  .clubs-toast {
+    left: 12px;
+    right: 12px;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+    transform: none;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    /* toast-pop bakes translateX(-50%) into its keyframes, which would
+       drag the now-full-width toast off screen. */
+    animation-name: toast-pop-mobile;
+  }
+  @keyframes toast-pop-mobile {
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* ── Header ────────────────────────────────────────────────── */
+  .clubs-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+  .clubs-header__left { gap: 11px; }
+  .clubs-header__icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .clubs-header__icon-wrap svg { width: 21px; height: 21px; }
+  .clubs-header__title { font-size: 1.3rem; }
+  .clubs-header__sub { font-size: 0.8rem; }
+  .clubs-submit-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* ── View tabs — split the full width, 44px touch target ───── */
+  .clubs-tabs { margin-bottom: 14px; }
+  .clubs-tab-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    padding: 11px 8px;
+  }
+
+  /* ── Toolbar: search on its own row, the two selects share one ─ */
+  .clubs-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .clubs-search-wrap {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  /* 16px is the threshold below which iOS Safari zooms the page in on
+     focus; every text input in this tab stays at or above it. */
+  .clubs-search-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .clubs-sort-wrap {
+    min-width: 0;
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+  .clubs-sort-select {
+    min-width: 0;
+    width: 100%;
+    flex: 1;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Discovery grid ────────────────────────────────────────── */
+  .clubs-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .clubs-results-label { margin-bottom: 10px; }
+
+  /* Curated strips bleed to the screen edges so the next card peeks in
+     and reads as swipeable. The negative margin mirrors the padding
+     .mobile-content applies to this tab. */
+  .clubs-curated-row { margin-bottom: 16px; }
+  .clubs-curated-row__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .clubs-curated-row__strip {
+    grid-auto-columns: 80%;
+    gap: 10px;
+    margin-inline: calc(-1 * max(1rem, env(safe-area-inset-left, 0px)));
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px));
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  }
+
+  /* ── Club card ─────────────────────────────────────────────── */
+  .club-card__body { padding: 14px; gap: 7px; }
+  .club-card__name { font-size: 1rem; }
+  .club-card__desc { font-size: 0.85rem; }
+  .club-card__footer {
+    padding: 10px 14px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .club-card__cta-row { gap: 8px; }
+  .club-bell-toggle { width: 44px; min-height: 44px; }
+  .club-join-btn--primary,
+  .club-join-btn--locked,
+  .club-subscribe-btn {
+    min-height: 44px;
+    font-size: 0.875rem;
+  }
+  .club-card__footer-joined { flex-wrap: wrap; gap: 8px; }
+  .club-cal-chip,
+  .club-leave-chip,
+  .club-manage-btn { min-height: 38px; }
+  .club-card__open-btn,
+  .club-delete-chip { width: 38px; height: 38px; }
+
+  /* ── Empty state / load more ───────────────────────────────── */
+  .clubs-empty { padding: 44px 12px; }
+  .clubs-empty__actions { width: 100%; }
+  .clubs-empty__actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .clubs-load-more__btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  /* ── Detail drawer → full-screen bottom sheet ──────────────── */
+  .club-drawer-overlay {
+    height: 100dvh;
+    align-items: stretch;
+  }
+  .club-drawer {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    border-left: none;
+    border-radius: 0;
+    overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* Slides up rather than in from the right — at full width a
+       horizontal slide reads as the page itself moving. */
+    animation-name: club-drawer-up;
+  }
+  @keyframes club-drawer-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .club-drawer__strip {
+    padding: 12px 16px 16px;
+    gap: 12px;
+  }
+  .club-drawer__strip-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .club-drawer__breadcrumb {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .club-drawer__strip-main { gap: 12px; }
+  .club-drawer__name { font-size: 1.15rem; }
+  .club-drawer__strip-actions { flex-wrap: wrap; }
+  .club-drawer__strip-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    text-align: center;
+    min-height: 44px;
+  }
+  .club-drawer__quick-actions {
+    padding: 12px 16px 0;
+    gap: 8px;
+  }
+  .club-drawer__quick-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 42px;
+  }
+  .club-drawer__body { padding: 16px; gap: 18px; }
+  .club-drawer__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
+    gap: 8px;
+  }
+  .club-drawer__stat { min-width: 0; padding: 10px 6px; }
+  .club-drawer__stat-value { overflow-wrap: anywhere; }
+  .club-drawer__cal-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .club-cal-toggle-btn {
+    justify-content: center;
+    min-height: 44px;
+  }
+  .club-drawer__links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .club-drawer__link-btn {
+    justify-content: center;
+    min-height: 44px;
+    overflow-wrap: anywhere;
+  }
+  .club-drawer__activity-item { flex-direction: column; gap: 6px; }
+
+  /* Mobile-only close control (rendered by ClubDetailDrawer when the
+     viewport is mobile) — the drawer is full-screen there, so tapping
+     the overlay is no longer available as a way out. */
+  .club-drawer__mobile-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border-secondary, #e5e7eb);
+    border-radius: 10px;
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    padding: 0;
+  }
+  .club-drawer__mobile-close:active {
+    background: var(--bg-hover, #f3f4f6);
+    color: var(--text-primary, #0a0c10);
+  }
+
+  /* ── Members list (drawer + manage dashboard) ──────────────── */
+  .club-member-row { flex-wrap: wrap; gap: 8px; }
+  .club-member-info { flex: 1 1 100%; min-width: 0; }
+  .club-member-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .club-member-role-toggle,
+  .club-member-remove { min-height: 34px; }
+  .club-members-search { font-size: 16px; }
+
+  /* ── My Clubs rows ─────────────────────────────────────────── */
+  .my-club-row {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+  .my-club-row__info { flex: 1 1 auto; min-width: 0; }
+  .my-club-row__name { max-width: none; }
+  .my-club-row__right {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .my-club-row__right > button { min-height: 38px; }
+
+  /* ── Manager-invite inbox ──────────────────────────────────── */
+  .clubs-invite-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .clubs-invite-row__actions { width: 100%; }
+  .clubs-invite-row__actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  /* ── Modals (submit / edit / join requests) → bottom sheets ── */
+  .clubs-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .clubs-modal {
+    width: 100%;
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+  .clubs-modal__header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 14px 16px 12px;
+    background: var(--modal-bg, #fff);
+  }
+  .clubs-modal__icon { width: 38px; height: 38px; }
+  .clubs-modal__close { padding: 10px; }
+  .clubs-modal__body {
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .clubs-modal__footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+  .clubs-modal__footer > * {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+  .clubs-modal__success { padding: 36px 20px; }
+
+  /* Forms: one field per row, no iOS zoom-on-focus. */
+  .clubs-field-row { grid-template-columns: 1fr; }
+  .clubs-field input,
+  .clubs-field select,
+  .clubs-field textarea {
+    font-size: 16px;
+    padding: 11px 12px;
+  }
+  .clubs-visibility-toggle { width: 100%; }
+  .clubs-visibility-toggle > .clubs-visibility-option {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* ── Join-request modal ────────────────────────────────────── */
+  .club-join-modal {
+    width: calc(100vw - 24px);
+    max-width: none;
+    max-height: 88dvh;
+    overflow-y: auto;
+  }
+  .club-join-modal__field input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  /* ── Join requests list ────────────────────────────────────── */
+  .join-request-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .join-request-actions { width: 100%; }
+  .join-request-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  /* ── Manage dashboard (lowest priority: dense but usable) ──── */
+  .club-manage-dashboard {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .club-manage__header {
+    padding: 12px 14px;
+    border-radius: 0;
+    gap: 10px;
+  }
+  .club-manage__header-left { flex: 1 1 auto; min-width: 0; gap: 10px; }
+  .club-manage__header-left > div { min-width: 0; }
+  .club-manage__header-right { flex: 0 0 auto; gap: 6px; }
+  .club-manage__title {
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .club-manage__subtitle { font-size: 0.72rem; }
+  .club-manage__delete-btn {
+    padding: 6px 9px;
+    font-size: 0.7rem;
+  }
+  .club-manage__tabs {
+    padding: 0.5rem 0.75rem;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .club-manage__tabs::-webkit-scrollbar { display: none; }
+  .club-manage__tab {
+    min-height: 40px;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.7rem;
+  }
+  .club-manage__content {
+    padding: 1rem 0.9rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .club-manage__stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .club-manage__stat-card { padding: 10px 6px; }
+  .club-manage__add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .club-manage__add-row input { font-size: 16px; min-height: 44px; }
+  .club-manage__add-row > button {
+    justify-content: center;
+    min-height: 44px;
+  }
+  .club-logo-uploader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .club-logo-uploader__actions { align-items: stretch; }
+  .club-logo-uploader__actions > button {
+    justify-content: center;
+    min-height: 44px;
+  }
+  .club-manage__ann-item,
+  .club-manage__event-item { overflow-wrap: anywhere; }
+  .club-manage__event-meta { flex-wrap: wrap; }
+}
+
+/* Touch devices keep the hover lift permanently stuck after a tap, which
+   leaves cards looking selected. Drop the transform there. */
+@media (max-width: 768px) and (hover: none) {
+  .club-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--card-border, #e5e7eb);
+  }
+  .clubs-submit-btn:hover,
+  .club-drawer__chip:hover:not(:disabled),
+  .clubs-cat-pill:hover,
+  .club-join-btn:hover:not(:disabled),
+  .club-action-btn--join:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Scoped to mobile so desktop rendering — including its reduced-motion
+   rendering — stays exactly as it was. */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .club-drawer,
+  .clubs-toast,
+  .clubs-modal { animation: none; }
 }

@@ -369,13 +369,29 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
           background: `linear-gradient(135deg, ${meta.bg}, transparent)`,
           borderBottom: `3px solid ${meta.color}`
         }}>
-          <Breadcrumb
-            className="club-drawer__breadcrumb"
-            items={[
-              { key: 'clubs', label: t('nav.clubs'), onClick: onClose },
-              { key: 'club', label: display.name },
-            ]}
-          />
+          {/* On mobile the drawer becomes a full-screen sheet, so no overlay
+              is left to tap — the close button beside the breadcrumb is the
+              way out. On desktop the wrapper is `display: contents` and the
+              button `display: none`, so the breadcrumb stays the direct flex
+              child it has always been and nothing about the layout changes. */}
+          <div className="club-drawer__strip-top">
+            <Breadcrumb
+              className="club-drawer__breadcrumb"
+              items={[
+                { key: 'clubs', label: t('nav.clubs'), onClick: onClose },
+                { key: 'club', label: display.name },
+              ]}
+            />
+            <button
+              type="button"
+              className="club-drawer__mobile-close"
+              onClick={onClose}
+              aria-label={t('clubs.back')}
+              title={t('clubs.back')}
+            >
+              <FaTimes size={16} />
+            </button>
+          </div>
           <div className="club-drawer__strip-main">
             <ClubAvatar
               name={display.name}

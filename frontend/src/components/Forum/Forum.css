@@ -1023,4 +1023,52 @@
   line-height: 1.45;
 }
 .forum-linkout-banner__text strong { color: var(--text-primary); }
+
+/* ── Mobile (<=768px) ──────────────────────────────────────────────────
+   Deliberately last in the file so it wins over the <=640px and <=600px
+   blocks above at equal specificity. */
+@media (max-width: 768px) {
+  /* Forum renders straight into <main class="mobile-content">, which
+     already supplies the 1rem side gutter and the bottom padding clearing
+     the fixed tab bar — the 14px/48px here was doubling both. */
+  .forum-root { padding: 4px 0 8px; }
+
+  /* iOS zooms the whole page in when a focused control is under 16px. */
+  .forum-search,
+  .forum-subject-filter,
+  .forum-modal__input,
+  .forum-modal__textarea,
+  .forum-reply-box__input { font-size: 16px; }
+
+  .forum-search,
+  .forum-subject-filter { min-height: 44px; }
+
+  /* The toolbar stacks at <=640px, so a fit-content select left a stub
+     control on its own row. */
+  .forum-subject-filter { width: 100%; }
+
+  /* ── Touch targets ── */
+  .forum-new-btn,
+  .forum-btn,
+  .forum-section-btn,
+  .forum-action-btn,
+  .forum-modal__cat-btn { min-height: 44px; }
+
+  /* Reply-level actions stay a little denser — they sit 3-4 to a row inside
+     an already-nested card, and the row wraps. */
+  .forum-action-btn--sm { min-height: 38px; }
+  .forum-cat-btn { min-height: 36px; }
+
+  .forum-modal__close { width: 44px; height: 44px; }
+
+  .forum-header__icon { width: 40px; height: 40px; }
+  .forum-empty { padding: 32px 16px; }
+
+  /* Reclaim the modal's chrome on a short screen. */
+  .forum-modal-overlay { padding: 12px; }
+  .forum-modal { max-height: 88dvh; }
+  .forum-modal__header { padding: 16px 16px 12px; }
+  .forum-modal__body { padding: 16px; }
+  .forum-modal__footer { flex-wrap: wrap; }
+}
 .forum-linkout-banner__text u { text-decoration: underline; color: #3b82f6; }

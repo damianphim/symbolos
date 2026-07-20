@@ -8,7 +8,9 @@ export default function DayDrawer({ date, events, onClose, onAddEvent, onEditEve
         <div className="cal-day-drawer__header">
           <div className="cal-day-drawer__title">
             <span className="cal-day-drawer__date">{formatDate(date)}</span>
-            <span className="cal-day-drawer__count">{events.length} event{events.length !== 1 ? 's' : ''}</span>
+            <span className="cal-day-drawer__count">
+              {events.length} {events.length === 1 ? t('calendar.event') : t('calendar.events')}
+            </span>
           </div>
           <div className="cal-day-drawer__actions">
             <button className="cal-day-drawer__add-btn" onClick={onAddEvent}>

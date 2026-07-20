@@ -167,56 +167,6 @@
   overflow: hidden;
 }
 
-/* Phones — 2×2 grid so the four tabs stay readable.
-   The old approach shrank to flex:1 + 11px font and hid icons, but the
-   longer labels ("Degree Requirements", "Advising Resources") still
-   overflowed and got clipped under the parent's overflow:hidden. A
-   2-column grid gives each tab ~50% width, plenty of room for the
-   full label at a comfortable size. */
-@media (max-width: 600px) {
-  .dp-subtab-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 12px;
-    overflow: visible;
-  }
-  .dp-subtab-btn {
-    flex: initial;        /* override flex:1 from the desktop rule */
-    padding: 10px 8px;
-    font-size: 12.5px;
-    gap: 6px;
-    border-radius: 9px;
-    min-width: 0;
-    /* Allow the label to wrap onto a 2nd line if a translation is
-       extra-long (FR/ZH) so it never truncates. */
-    white-space: normal;
-    text-align: center;
-    line-height: 1.2;
-  }
-  .dp-subtab-btn span {
-    /* The label sits inside a span — make it shrink properly */
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .dp-subtab-icon {
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .dp-subtab-count {
-    font-size: 10px;
-    padding: 1px 5px;
-    min-width: 16px;
-  }
-}
-
-/* Very small phones — drop the icons to claw back space for the label */
-@media (max-width: 360px) {
-  .dp-subtab-btn { gap: 4px; padding: 9px 6px; font-size: 12px; }
-  .dp-subtab-icon { display: none; }
-}
-
 .dp-subtab-btn {
   flex: 1;
   display: flex;
@@ -268,6 +218,65 @@
 .dp-subtab-btn:not(.dp-subtab-btn--active) .dp-subtab-count {
   background: var(--text-secondary);
   opacity: 0.6;
+}
+
+/* Phones — 2×2 grid so all four tabs stay readable and, crucially, all
+   four stay *visible*. A horizontally-scrolling strip was the other
+   option, but it hides half the destinations behind a swipe, and on a
+   primary bottom-tab section that costs real discoverability. Two rows
+   of two shows every tab at ~50% width with room for the full label.
+
+   These rules must live *after* the .dp-subtab-btn base block: they are
+   the same specificity, so source order is what decides. (They used to
+   sit above it, which silently lost flex/white-space/font-size back to
+   the desktop values and let the long labels overflow the grid cell.)
+
+   Breakpoint is 768px to match useViewport()/MOBILE_BREAKPOINT; at the
+   old 600px the 601-768px band still flexed four nowrap labels into one
+   row and clipped them under the bar's overflow:hidden. */
+@media (max-width: 768px) {
+  .dp-subtab-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    overflow: visible;
+  }
+  .dp-subtab-btn {
+    flex: initial;        /* override flex:1 from the desktop rule */
+    min-height: 44px;     /* comfortable touch target */
+    padding: 10px 8px;
+    font-size: 12.5px;
+    gap: 6px;
+    border-radius: 9px;
+    min-width: 0;
+    /* Allow the label to wrap onto a 2nd line if a translation is
+       extra-long (FR/ZH) so it never truncates. */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .dp-subtab-btn span {
+    /* The label sits inside a span — make it shrink properly */
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .dp-subtab-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .dp-subtab-count {
+    font-size: 10px;
+    padding: 1px 5px;
+    min-width: 16px;
+  }
+}
+
+/* Very small phones — drop the icons to claw back space for the label */
+@media (max-width: 360px) {
+  .dp-subtab-btn { gap: 4px; padding: 9px 6px; font-size: 12px; }
+  .dp-subtab-icon { display: none; }
 }
 
 /* Degree requirements tab wrapper */
@@ -1341,15 +1350,66 @@
 }
 
 /* ── Responsive ─────────────────────────────────────── */
-@media (max-width: 640px) {
-  .dp-view { padding: 12px; gap: 12px; }
-  .dp-section-card { padding: 16px; }
+@media (max-width: 768px) {
+  /* On mobile this view renders inside <main class="mobile-content">,
+     which already supplies 1rem of padding — .dp-view adding 20px more
+     on each side cost ~13% of a 390px screen. */
+  .dp-view { padding: 0; gap: 12px; }
+  .dp-section-card { padding: 14px; }
   .dp-accordion-header { padding: 14px 16px; }
   .dp-course-row { padding: 10px 16px; flex-wrap: wrap; }
   .dp-course-info { flex-wrap: nowrap; }
   .dp-course-title { font-size: 0.85rem; }
   .dp-action-btn { width: 30px; height: 30px; font-size: 0.75rem; }
-  .dp-import-btn { font-size: 0.75rem; padding: 5px 10px; }
+  .dp-import-btn { font-size: 0.75rem; padding: 7px 12px; }
+
+  /* The sub-tab panels are fixed-height (620px) internally-scrolling
+     boxes on desktop. Inside .mobile-content — which is itself the
+     scroller — that nests two scroll areas, so a swipe that starts on a
+     requirement block scrolls the inner box while the page appears
+     frozen. Let the panels size to their content and hand scrolling
+     back to the page. */
+  .dp-req-tab-wrap,
+  .dp-sa-tab-wrap {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* Program switcher (major / minor / extra programs / Electives /
+     Recommendations). Unlike the four fixed sub-tabs above, this list is
+     unbounded — a double-major with two minors produces six tabs — so a
+     grid can't be sized ahead of time. A scrolling strip is the right
+     shape here. Sizing tabs to their label (rather than flex:1 + ellipsis)
+     means an overflowing strip always cuts the last tab mid-word, which
+     is the affordance — and when the tabs do fit there is no artificial
+     fade to explain away. */
+  .dp-prog-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dp-prog-tabs::-webkit-scrollbar { display: none; }
+  .dp-prog-tab {
+    flex: 0 0 auto;
+    max-width: 60vw;
+    min-height: 40px;
+    scroll-snap-align: start;
+  }
+
+  .dp-req-card-header { padding: 14px 14px 12px; gap: 10px; }
+  .dp-req-progress-row { gap: 10px 16px; }
+  .dp-electives-header { flex-wrap: wrap; }
+  /* Native select + assignment dropdowns need a full-width tap target
+     and 16px text so iOS Safari doesn't zoom the page on focus. */
+  .dp-elective-assign-select,
+  .dp-req-overlap-select { width: 100%; font-size: 16px; }
 }
 
 /* ── Import button group ──────────────────────────────── */
