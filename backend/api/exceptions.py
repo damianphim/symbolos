@@ -166,18 +166,41 @@ async def app_exception_handler(request: Request, exc: AppException):
     )
 
 
+def _json_safe_errors(errors) -> list:
+    """
+    Strip non-JSON-serializable values out of Pydantic error dicts before
+    they go into a JSONResponse.
+
+    A custom @field_validator that raises a plain ValueError (e.g. the
+    username/profile_image validators in users.py) makes Pydantic put that
+    exception OBJECT — not a string — in each error's ctx.error. FastAPI's
+    RequestValidationError.errors() is a plain passthrough (no kwargs to
+    ask Pydantic to omit it), so building the response straight from
+    exc.errors() crashed JSONResponse.render() with "Object of type
+    ValueError is not JSON serializable", turning a clean 422 into an
+    unhandled 500. The human-readable text is already in `msg`, so ctx
+    (only used for message interpolation) can just be dropped.
+    """
+    safe = []
+    for err in errors:
+        if isinstance(err, dict) and "ctx" in err:
+            err = {k: v for k, v in err.items() if k != "ctx"}
+        safe.append(err)
+    return safe
+
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handler for Pydantic validation errors"""
     logger.warning(
         f"Validation error on {request.url.path}: {exc.errors()}"
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "code": ErrorCode.VALIDATION_ERROR,
             "message": "Invalid request data",
-            "details": exc.errors()
+            "details": _json_safe_errors(exc.errors())
         }
     )
 

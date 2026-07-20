@@ -279,6 +279,28 @@ def test_user_update_ignores_year_anchor_injection():
     assert dumped.get("year") == 2
 
 
+# ── Sentry TypeError: ValueError in ctx isn't JSON-serializable ──────────────
+def test_invalid_username_returns_clean_422_not_500(client, fake_supabase):
+    """A @field_validator raising a plain ValueError puts the exception
+    OBJECT in Pydantic's error ctx. That used to crash JSONResponse.render()
+    with 'Object of type ValueError is not JSON serializable', turning a
+    clean 422 into an unhandled 500 (Sentry issue, prod). An all-underscore
+    username is what triggered it in production."""
+    resp = client.patch(
+        "/api/users/user-1", json={"username": "_____"}, headers=auth("user-1"),
+    )
+    assert resp.status_code == 422
+    body = resp.json()
+    assert body["code"] == "validation_error"
+    assert "letter or number" in body["details"][0]["msg"]
+    assert "ctx" not in body["details"][0]
+
+
+def test_username_all_letters_or_numbers_still_valid(client, fake_supabase):
+    from api.routes.users import UserUpdate
+    assert UserUpdate(username="alex_2026").username == "alex_2026"
+
+
 # ── Perf: /api/clubs must be public-cacheable on the CDN edge ────────────────
 def test_clubs_response_is_public_cacheable(client, fake_supabase):
     """If a future refactor reintroduces per-user data, this test fails
