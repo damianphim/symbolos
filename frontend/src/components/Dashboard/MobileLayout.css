@@ -14,9 +14,127 @@
      whole app and the page scrolls sideways. */
   width: 100%;
   max-width: 100vw;
-  background: var(--bg-secondary);
+  background: var(--m-bg-grouped);
   color: var(--text-primary);
   overflow: hidden;
+
+  /* ── Native surface tokens ──────────────────────────────────────────
+     Screens style themselves from these rather than each inventing its
+     own idea of what a mobile row looks like. Scoped to .mobile-shell,
+     which only ever renders below the 768px breakpoint, so desktop can
+     never pick them up. */
+
+  /* System font. Disproportionately effective: text rendering is what
+     the eye reads as "native app" before layout or colour register. */
+  --m-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
+            Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Grouped-list palette. The page sits on a recessed background and the
+     content groups sit on a raised one — that figure/ground relationship
+     is what replaces per-card borders and shadows. */
+  --m-bg-grouped: var(--bg-secondary);
+  --m-bg-surface: var(--bg-primary);
+
+  /* A hairline is a real 1px device pixel, not a scaled border. */
+  --m-hairline: 0.5px solid var(--border-primary, #e5e7eb);
+  --m-group-radius: 12px;
+  --m-row-min-height: 48px;
+  --m-row-pad-y: 12px;
+  --m-row-pad-x: 16px;
+  --m-gutter: 1rem;
+
+  font-family: var(--m-font);
+  /* Stop iOS inflating text in landscape. */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports not (border: 0.5px solid black) {
+  .mobile-shell { --m-hairline: 1px solid var(--border-primary, #e5e7eb); }
+}
+
+[data-theme="dark"] .mobile-shell {
+  --m-hairline: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Grouped list primitives ─────────────────────────────────────────
+   The replacement for bordered cards. A .m-group is one raised surface
+   with rounded ends; .m-row children are separated by hairlines rather
+   than by gaps, so a list reads as one object instead of a stack of
+   floating boxes. This is the single biggest difference between "web
+   page on a phone" and "app". */
+.mobile-shell .m-group {
+  background: var(--m-bg-surface);
+  border-radius: var(--m-group-radius);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.mobile-shell .m-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--m-row-min-height);
+  padding: var(--m-row-pad-y) var(--m-row-pad-x);
+  border-bottom: var(--m-hairline);
+}
+
+/* Last row carries no separator — a trailing hairline against the group's
+   rounded edge is the classic tell of a web list faking a native one. */
+.mobile-shell .m-row:last-child { border-bottom: none; }
+
+/* Quiet uppercase section label sitting on the recessed background,
+   outside the group it introduces. */
+.mobile-shell .m-group-label {
+  padding: 0 var(--m-row-pad-x) 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Touch feedback ──────────────────────────────────────────────────
+   Hover is meaningless on touch and, worse, sticks after a tap: a
+   :hover lift stays applied until you tap elsewhere, so the last thing
+   you touched looks permanently selected. Screens should wrap their own
+   hover rules in @media (hover: hover); these primitives do it here. */
+@media (hover: hover) {
+  .mobile-shell .m-row--tappable:hover { background: var(--bg-hover, rgba(0, 0, 0, 0.03)); }
+}
+
+.mobile-shell .m-row--tappable:active {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+/* ── Push / pop transitions ──────────────────────────────────────────
+   Motion with direction communicates hierarchy: a detail view slides in
+   from the trailing edge and back out the same way, so "deeper" and
+   "back" are legible without a breadcrumb. An instant swap reads as a
+   page load, which is exactly the web feel we're removing. */
+@keyframes m-push-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes m-push-out {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+.mobile-shell .m-push-enter {
+  animation: m-push-in 0.26s cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform;
+}
+.mobile-shell .m-push-exit {
+  animation: m-push-out 0.2s cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-shell .m-push-enter,
+  .mobile-shell .m-push-exit {
+    animation: none;
+  }
 }
 
 /* ── Scrolling page area ── */
