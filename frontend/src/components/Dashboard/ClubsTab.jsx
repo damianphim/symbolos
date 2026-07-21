@@ -329,6 +329,11 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
   const [logoBusy, setLogoBusy] = useState(false)
   const drawerLogoInputRef = useRef(null)
   const instructionsRef = useRef(null)
+  const { language } = useLanguage()
+  // AI-translated detail fields for FR/ZH viewers, fetched on open and merged
+  // over the English source below. Keyed on club + language so switching
+  // language while a club is open refetches.
+  const [translatedFields, setTranslatedFields] = useState(null)
 
   useEffect(() => {
     if (!club?.id) return
@@ -336,8 +341,22 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
     clubsAPI.getClubActivity(club.id, { limit: 4 }).then(setActivity).catch(() => setActivity({ items: [] }))
   }, [club?.id])
 
+  useEffect(() => {
+    setTranslatedFields(null)
+    if (!club?.id || language === 'en') return
+    let alive = true
+    clubsAPI.getClubTranslation(club.id, language)
+      .then(res => { if (alive) setTranslatedFields(res || null) })
+      .catch(() => { /* fall back to English */ })
+    return () => { alive = false }
+  }, [club?.id, language])
+
   if (!club) return null
-  const display = liveClub ? { ...club, ...liveClub } : club
+  // English source, then live updates, then (last) the AI translation so FR/ZH
+  // viewers see translated description / meeting_schedule / join_instructions.
+  // Empty-string guards keep a blank translation from hiding real English text.
+  const _t = Object.fromEntries(Object.entries(translatedFields || {}).filter(([, v]) => (v || '').trim()))
+  const display = { ...club, ...(liveClub || {}), ..._t }
   const meta = getCat(display.category)
   const isLoading = clubLoading[club.id] ?? false
   const isOwnerOrAdmin = isAdmin || (userId && display.created_by === userId)

@@ -21,6 +21,7 @@ from . import (  # noqa: F401 — imported for their route-registration side eff
     managers,
     submissions,
     activity,
+    translation,
 )
 from .cron import run_stale_club_cleanup_cron  # noqa: F401 — re-exported for notifications.py
 
