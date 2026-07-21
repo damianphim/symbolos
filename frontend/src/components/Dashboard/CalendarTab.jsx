@@ -443,8 +443,8 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   const allEvents = useMemo(() => {
     const tEvent = (ev) => ({
       ...ev,
-      title:       ev.titleKey    ? t(ev.titleKey)    : ev.title    || '',
-      category:    ev.categoryKey ? t(ev.categoryKey) : ev.category || '',
+      title:       ev.titleKey    ? t(ev.titleKey)    : ev.titleEn    ? L(language, ev.titleEn, ev.titleFr, ev.titleZh)    : ev.title    || '',
+      category:    ev.categoryKey ? t(ev.categoryKey) : ev.categoryEn ? L(language, ev.categoryEn, ev.categoryFr, ev.categoryZh) : ev.category || '',
       description: ev.descKey     ? t(ev.descKey)     : ev.description || '',
     })
     const retypedUser = userEvents.map(ev =>
