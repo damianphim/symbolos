@@ -352,11 +352,21 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
   }, [club?.id, language])
 
   if (!club) return null
-  // English source, then live updates, then (last) the AI translation so FR/ZH
-  // viewers see translated description / meeting_schedule / join_instructions.
-  // Empty-string guards keep a blank translation from hiding real English text.
-  const _t = Object.fromEntries(Object.entries(translatedFields || {}).filter(([, v]) => (v || '').trim()))
-  const display = { ...club, ...(liveClub || {}), ..._t }
+  // `display` is the real (English) club record — used for onManage/editing
+  // and everything else. It must NEVER be overwritten with translated text:
+  // the drawer's own "Manage" button hands this exact object to the edit
+  // form, and if description/meeting_schedule/join_instructions were
+  // translated in place, an owner viewing in French/Chinese could silently
+  // save the translation back over their own English original.
+  const display = { ...club, ...(liveClub || {}) }
+  // Text actually rendered below — English source, with any cached AI
+  // translation preferred for FR/ZH viewers. Empty-string guards keep a
+  // blank translation from hiding real English text.
+  const displayText = {
+    description: (translatedFields?.description || '').trim() || display.description,
+    meeting_schedule: (translatedFields?.meeting_schedule || '').trim() || display.meeting_schedule,
+    join_instructions: (translatedFields?.join_instructions || '').trim() || display.join_instructions,
+  }
   const meta = getCat(display.category)
   const isLoading = clubLoading[club.id] ?? false
   const isOwnerOrAdmin = isAdmin || (userId && display.created_by === userId)
@@ -548,7 +558,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
             {display.meeting_schedule && (
               <div className="club-drawer__stat">
                 <FaCalendarAlt size={18} style={{ color: meta.color }} />
-                <span className="club-drawer__stat-value" style={{ fontSize: '0.78rem', textAlign: 'center' }}>{display.meeting_schedule}</span>
+                <span className="club-drawer__stat-value" style={{ fontSize: '0.78rem', textAlign: 'center' }}>{displayText.meeting_schedule}</span>
                 <span className="club-drawer__stat-label">{t('clubs.meets')}</span>
               </div>
             )}
@@ -595,14 +605,14 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
           {display.description && (
             <section className="club-drawer__section">
               <h3 className="club-drawer__section-title"><FaCheck size={12} /> {t('clubs.about')}</h3>
-              <p className="club-drawer__desc">{display.description}</p>
+              <p className="club-drawer__desc">{displayText.description}</p>
             </section>
           )}
 
           {display.join_instructions && (
             <section ref={instructionsRef} className="club-drawer__section">
               <h3 className="club-drawer__section-title"><FaUserPlus size={12} /> {t('clubs.howToJoin')}</h3>
-              <p className="club-drawer__desc" style={{ whiteSpace: 'pre-line' }}>{display.join_instructions}</p>
+              <p className="club-drawer__desc" style={{ whiteSpace: 'pre-line' }}>{displayText.join_instructions}</p>
               {display.application_url && (
                 <a
                   className="club-drawer__link-btn"
@@ -624,7 +634,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
                 <div className="club-drawer__cal-info">
                   <p>{t('clubs.calSyncDesc')}</p>
                   {display.meeting_schedule && (
-                    <span className="club-drawer__cal-schedule"><FaCalendarAlt size={11} /> {display.meeting_schedule}</span>
+                    <span className="club-drawer__cal-schedule"><FaCalendarAlt size={11} /> {displayText.meeting_schedule}</span>
                   )}
                 </div>
                 <button
@@ -746,22 +756,25 @@ function ClubCard({ club, joined, calSynced, isSubscribed, onLeave, onToggleCale
           </div>
         </div>
         {club.description && (
-          <p className="club-card__desc club-card__desc--clamped">{club.description}</p>
+          <p className="club-card__desc club-card__desc--clamped">{club.description_translated || club.description}</p>
         )}
         {(club.subscriber_count != null || club.meeting_schedule || club.location) && (
           <div className="club-card__meta-line">
             {club.subscriber_count != null && (
               <span title={t('clubs.subscribers') || 'Subscribers'}><FaBell size={9} /> {club.subscriber_count}</span>
             )}
-            {club.meeting_schedule && (
-              <>
-                <span className="club-card__meta-sep">\u00b7</span>
-                <span><FaCalendarAlt size={9} /> {club.meeting_schedule.length > 18 ? club.meeting_schedule.slice(0,18) + '\u2026' : club.meeting_schedule}</span>
-              </>
-            )}
+            {club.meeting_schedule && (() => {
+              const schedText = club.meeting_schedule_translated || club.meeting_schedule
+              return (
+                <>
+                  <span className="club-card__meta-sep">{'\u00b7'}</span>
+                  <span><FaCalendarAlt size={9} /> {schedText.length > 18 ? schedText.slice(0,18) + '\u2026' : schedText}</span>
+                </>
+              )
+            })()}
             {club.location && (
               <>
-                <span className="club-card__meta-sep">\u00b7</span>
+                <span className="club-card__meta-sep">{'\u00b7'}</span>
                 <span><FaStar size={9} /> {club.location}</span>
               </>
             )}
@@ -886,7 +899,7 @@ function MyClubRow({ club, calSynced, onLeave, onToggleCalendar, onOpen, onDelet
       </div>
       <div className="my-club-row__right" onClick={e => e.stopPropagation()}>
         {club.meeting_schedule && (
-          <span className="my-club-row__schedule"><FaCalendarAlt size={10} /> {club.meeting_schedule}</span>
+          <span className="my-club-row__schedule"><FaCalendarAlt size={10} /> {club.meeting_schedule_translated || club.meeting_schedule}</span>
         )}
         <button
           className={`club-cal-chip ${calSynced ? 'active' : ''}`}
@@ -1842,6 +1855,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
         category: categoryFilter || undefined,
         limit: PAGE_SIZE,
         offset: (pageNum - 1) * PAGE_SIZE,
+        lang: language,
       })
       const results = Array.isArray(data) ? data : data.clubs ?? []
       if (!isMounted.current) return
@@ -1854,14 +1868,14 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     } finally {
       if (isMounted.current) { setLoading(false); setLoadingMore(false) }
     }
-  }, [debouncedSearch, categoryFilter])
+  }, [debouncedSearch, categoryFilter, language])
 
   const fetchMyClubs = useCallback(async () => {
     if (!user?.id) return
     // Only show the spinner if we don't already have cached data on screen
     if (myClubs.length === 0) setMyClubsLoading(true)
     try {
-      const data = await clubsAPI.getUserClubs(user.id)
+      const data = await clubsAPI.getUserClubs(user.id, language)
       const list = Array.isArray(data) ? data : data.clubs ?? []
       if (!isMounted.current) return
       setMyClubs(list)
@@ -1869,7 +1883,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
       if (onClubEventsChange) onClubEventsChange(buildClubCalendarEvents(list))
     } catch { /* silent */ }
     finally { if (isMounted.current) setMyClubsLoading(false) }
-  }, [user?.id, onClubEventsChange, myClubs.length])
+  }, [user?.id, onClubEventsChange, myClubs.length, language])
 
   const fetchCreatedClubs = useCallback(async () => {
     if (!user?.id) return

@@ -25,6 +25,36 @@ _SUPPORTED_LANGS = ("fr", "zh")
 _LANG_NAMES = {"fr": "French", "zh": "Simplified Chinese (Mandarin)"}
 
 
+def apply_cached_translation(club: dict, lang: str | None) -> dict:
+    """Overlay any ALREADY-CACHED translation onto a club dict for list views —
+    never calls the AI. Used by list/discovery endpoints (list_clubs, starter,
+    created, user's joined clubs) so a club translated once (via the detail
+    drawer) also shows translated in card previews from then on, without
+    ever triggering a translation call from a list of many clubs.
+
+    IMPORTANT: adds `{field}_translated` alongside the original `description` /
+    `meeting_schedule` / `join_instructions` — it never overwrites those. The
+    same club objects returned here also feed the club-edit form on the
+    frontend (no separate re-fetch); overwriting the source field would risk
+    an owner viewing in French/Chinese silently saving the translated text
+    back over their own English original. Display components must read
+    `{field}_translated || {field}`; the edit form keeps reading `{field}`.
+
+    Always strips the raw _fr/_zh columns from the response — nothing outside
+    this module needs them and they'd otherwise leak onto the wire per card.
+    """
+    lang = (lang or "").lower().split("-")[0] if lang else None
+    if lang in _SUPPORTED_LANGS:
+        for f in _TRANSLATABLE_FIELDS:
+            cached = club.get(f"{f}_{lang}")
+            if (cached or "").strip():
+                club[f"{f}_translated"] = cached
+    for f in _TRANSLATABLE_FIELDS:
+        for l in _SUPPORTED_LANGS:
+            club.pop(f"{f}_{l}", None)
+    return club
+
+
 def clear_translations_for_fields(supabase, club_id: str, changed_fields: list[str]) -> None:
     """Null out the cached _fr/_zh columns for any source field that changed,
     so the stale translation is regenerated on next view. Called from edit_club.

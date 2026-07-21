@@ -20,13 +20,14 @@ async function authHeaders(json = true) {
 
 
 const clubsAPI = {
-  async getClubs({ search, category, limit = 50, offset = 0 } = {}) {
+  async getClubs({ search, category, limit = 50, offset = 0, lang } = {}) {
     try {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
       if (category) params.set('category', category)
       if (limit) params.set('limit', String(limit))
       if (offset) params.set('offset', String(offset))
+      if (lang) params.set('lang', lang)
       const res = await fetch(`${BASE_URL}/api/clubs?${params}`, { headers: await authHeaders() })
       if (!res.ok) throw new Error('Failed to fetch clubs')
       return await res.json()
@@ -36,10 +37,11 @@ const clubsAPI = {
     }
   },
 
-  async getStarterClubs(userId, major) {
+  async getStarterClubs(userId, major, lang) {
     try {
       const params = new URLSearchParams({ user_id: userId })
       if (major) params.set('major', major)
+      if (lang) params.set('lang', lang)
       const res = await fetch(`${BASE_URL}/api/clubs/starter?${params}`, { headers: await authHeaders() })
       if (res.ok) {
         const data = await res.json()
@@ -49,9 +51,10 @@ const clubsAPI = {
     return { starter_clubs: [] }
   },
 
-  async getUserClubs(userId) {
+  async getUserClubs(userId, lang) {
     try {
-      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}`, { headers: await authHeaders() })
+      const params = lang ? `?lang=${encodeURIComponent(lang)}` : ''
+      const res = await fetch(`${BASE_URL}/api/clubs/user/${userId}${params}`, { headers: await authHeaders() })
       if (res.ok) return res.json()
     } catch { /* ignore */ }
     return { clubs: [], count: 0 }

@@ -1,7 +1,8 @@
 """Joining/leaving clubs, a user's own club-scoped views, Join Requests,
 and the calendar-sync feed (see CONTEXT.md — distinct from Subscription)."""
-from fastapi import HTTPException, Request, Depends
+from fastapi import HTTPException, Request, Query, Depends
 from datetime import datetime, timedelta
+from typing import Optional
 import logging
 
 from ...utils.supabase_client import get_supabase
@@ -86,7 +87,7 @@ async def handle_join_request(request_id: str, body: JoinRequestAction, current_
 
 
 @router.get("/user/{user_id}")
-async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
+async def get_user_clubs(user_id: str, req: Request, lang: Optional[str] = Query(None, max_length=5), current_user_id: str = Depends(get_current_user_id), user_sb = Depends(get_user_db)):
     """Return all clubs a user has joined."""
     require_self(current_user_id, user_id)
     try:
@@ -96,13 +97,14 @@ async def get_user_clubs(user_id: str, req: Request, current_user_id: str = Depe
             .eq("user_id", user_id)
             .execute()
         )
+        from .translation import apply_cached_translation
         clubs = []
         for row in (result.data or []):
             club_data = row.get("clubs") or {}
             club_data["calendar_synced"] = row.get("calendar_synced", False)
             club_data["joined_at"] = row.get("joined_at")
             club_data["user_club_id"] = row.get("id")
-            clubs.append(club_data)
+            clubs.append(apply_cached_translation(club_data, lang))
         return {"clubs": clubs, "count": len(clubs)}
     except Exception as e:
         logger.exception(f"Error fetching user clubs: {e}")

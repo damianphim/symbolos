@@ -21,6 +21,7 @@ async def list_clubs(
     category: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    lang: Optional[str] = Query(None, max_length=5),
     current_user_id: str = Depends(get_current_user_id),
 ):
     """Return the public discovery view of verified clubs (public + private).
@@ -100,6 +101,13 @@ async def list_clubs(
         for c in visible:
             c["subscriber_count"] = sub_counts.get(c.get("id"), 0)
 
+        # Overlay any already-cached FR/ZH translation (never calls the AI
+        # from a list of many clubs — see translation.py). `lang` becomes
+        # part of the edge cache key below, so each language gets its own
+        # cached copy.
+        from .translation import apply_cached_translation
+        visible = [apply_cached_translation(c, lang) for c in visible]
+
         # `public` = shared cache (Vercel edge) may store this response.
         # `s-maxage=60` = edge keeps it 1 min; `max-age=30` = browsers
         # reuse briefly so a quick back-button doesn't refetch.
@@ -116,7 +124,7 @@ async def list_clubs(
 
 
 @router.get("/starter")
-async def get_starter_clubs(user_id: str, major: Optional[str] = None, current_user_id: str = Depends(get_current_user_id)):
+async def get_starter_clubs(user_id: str, major: Optional[str] = None, lang: Optional[str] = Query(None, max_length=5), current_user_id: str = Depends(get_current_user_id)):
     """Return personalised starter club suggestions based on major."""
     require_self(current_user_id, user_id)
     try:
@@ -135,6 +143,8 @@ async def get_starter_clubs(user_id: str, major: Optional[str] = None, current_u
         joined_ids = {row["club_id"] for row in (joined_result.data or [])}
         for club in matched:
             club["is_joined"] = club["id"] in joined_ids
+        from .translation import apply_cached_translation
+        matched = [apply_cached_translation(c, lang) for c in matched]
         return {"starter_clubs": matched}
     except Exception as e:
         logger.exception(f"Error fetching starter clubs: {e}")
