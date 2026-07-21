@@ -147,6 +147,86 @@ def parse_course_code(course_code: str):
     return None, None
 
 
+# ── AI grounding: real catalogue facts for courses mentioned in a chat message ──
+# The AI's student context only ever includes courses already in the student's
+# OWN saved/completed/current lists — ask about anything else (e.g. "should I
+# take COMP 550?") and there was zero real data to ground on, so the model
+# fell back to guessing grade averages / ratings from training data. These
+# two helpers let a caller (chat.py) detect course codes in free text and
+# pull real facts for a small, bounded number of them.
+_COURSE_CODE_RE = re.compile(r'\b([A-Za-z]{3,4})[\s-]?(\d{3}[A-Za-z0-9]{0,2})\b')
+
+
+def extract_course_codes(text: str, limit: int = 3) -> list[str]:
+    """Find up to `limit` distinct McGill-style course codes (e.g. "COMP 202",
+    "comp202") in free text. Over-matching is harmless — a code with no
+    catalogue match just yields no grounding data (see fetch_course_grounding)."""
+    codes: list[str] = []
+    for subject, number in _COURSE_CODE_RE.findall(text or ""):
+        code = f"{subject.upper()}{number.upper()}"
+        if code not in codes:
+            codes.append(code)
+        if len(codes) >= limit:
+            break
+    return codes
+
+
+def fetch_course_grounding(course_code: str) -> dict | None:
+    """Lean version of get_course_details's RPC call for AI-grounding use —
+    just the facts (title, grade average, RMP rating, prerequisites), no
+    schedule/term data. Returns None if the course isn't found or the lookup
+    fails (caller should treat that as "no verified data", not an error)."""
+    try:
+        supabase = get_supabase()
+        rpc_resp = supabase.rpc("get_course_details", {"p_course_code": course_code}).execute()
+        rows = rpc_resp.data or []
+        if not rows:
+            return None
+        row = rows[0]
+        result = {
+            "code": course_code,
+            "title": row.get("course_name") or "",
+            "average": row.get("recent_avg"),
+            "prerequisites": row.get("prerequisites") or None,
+        }
+        if row.get("rmp_rating"):
+            result["rmp_rating"] = row.get("rmp_rating")
+            result["rmp_difficulty"] = row.get("rmp_difficulty")
+        return result
+    except Exception as e:
+        logger.warning(f"Course grounding lookup failed for {course_code}: {e}")
+        return None
+
+
+def build_course_grounding_block(text: str, limit: int = 3) -> str | None:
+    """Extract course codes from `text` and format any real catalogue matches
+    into a short, ungrounded-vs-grounded-explicit block for a system prompt.
+    Returns None if no codes were found or none matched a real course."""
+    codes = extract_course_codes(text, limit=limit)
+    if not codes:
+        return None
+    facts = [f for c in codes if (f := fetch_course_grounding(c))]
+    if not facts:
+        return None
+    lines = []
+    for f in facts:
+        parts = []
+        if f.get("average") is not None:
+            parts.append(f"class average {f['average']}")
+        if f.get("rmp_rating"):
+            parts.append(f"RMP rating {f['rmp_rating']}/5 (difficulty {f.get('rmp_difficulty', '?')})")
+        if f.get("prerequisites"):
+            parts.append(f"prerequisites: {f['prerequisites']}")
+        detail = "; ".join(parts) if parts else "no grade/rating data on file"
+        lines.append(f"  - {f['code']} ({f['title']}): {detail}")
+    return (
+        "REAL MCGILL CATALOGUE DATA for courses mentioned in this message — use "
+        "this instead of recalling from training, and don't state grade averages "
+        "or ratings for any OTHER course you aren't given data for here:\n"
+        + "\n".join(lines)
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # ROUTES — specific paths must come before wildcard /{subject}/{catalog}
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -54,6 +54,7 @@ from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 from api.utils.lang import lang_instruction as _lang_instruction
 from api.utils.posthog_client import capture as _ph_capture
+from api.routes.courses import build_course_grounding_block
 
 # ── Load static prompt content once at startup ────────────────────────────────
 _PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
@@ -501,6 +502,16 @@ async def send_message(
         degree_progress=request.degree_progress,
     )
 
+    # Real catalogue data for any course code mentioned in THIS message (e.g.
+    # "should I take COMP 550?") — the student context above only covers
+    # courses already in their own saved/completed/current lists, so without
+    # this the model had nothing to ground an answer about any other course
+    # and would guess grade averages/ratings from training data. Kept as a
+    # separate, uncached system block (see cache_control below) since it
+    # varies per message and would otherwise bust the cache on the large,
+    # stable system_context block.
+    course_grounding = build_course_grounding_block(request.message)
+
     # Build message list: history minus the just-saved user message + current message
     prior_history = history[:-1]  # everything except the message we just saved
     recent = prior_history[-ctx_limit:] if len(prior_history) > ctx_limit else prior_history
@@ -527,14 +538,17 @@ async def send_message(
             model=settings.CLAUDE_MODEL,
             max_tokens=settings.CLAUDE_MAX_TOKENS,
         ) as gen:
+            system_blocks = [{
+                "type": "text",
+                "text": system_context,
+                "cache_control": {"type": "ephemeral"},
+            }]
+            if course_grounding:
+                system_blocks.append({"type": "text", "text": course_grounding})
             message = client.messages.create(
                 model=settings.CLAUDE_MODEL,
                 max_tokens=settings.CLAUDE_MAX_TOKENS,
-                system=[{
-                    "type": "text",
-                    "text": system_context,
-                    "cache_control": {"type": "ephemeral"},
-                }],
+                system=system_blocks,
                 messages=formatted,
             )
             gen.finish(message)

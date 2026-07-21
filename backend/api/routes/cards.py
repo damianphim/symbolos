@@ -36,6 +36,7 @@ from api.auth import get_current_user_id, require_self, get_user_db
 from api.utils.sanitise import sanitise_user_message, sanitise_context_field
 from api.utils.lang import lang_instruction as _lang_instruction
 from api.routes.chat import _MILESTONES
+from api.routes.courses import build_course_grounding_block
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -585,14 +586,15 @@ Generate exactly 8 cards based on the schema in the system prompt.
 Return ONLY the JSON array — no markdown, no commentary."""
 
 
-def _build_single_card_prompt(question: str, ctx: dict, language: str) -> str:
+def _build_single_card_prompt(question: str, ctx: dict, language: str, course_grounding: str | None = None) -> str:
+    grounding_section = f"\n{course_grounding}\n" if course_grounding else ""
     return f"""You are a proactive AI academic advisor for McGill University.
 A student has asked: "{question}"
 
 Based on their profile below, generate a single helpful advisor card that directly answers their question.
 
 {build_rich_context(ctx)}
-
+{grounding_section}
 Return a single JSON object (not an array) with these fields:
   "type"     : one of "urgent" | "warning" | "insight" | "progress"
   "icon"     : single emoji relevant to the answer
@@ -1067,7 +1069,8 @@ async def ask_card(user_id: str, request: AskRequest, req: Request, current_user
     try:
         get_user_by_id(user_id)
         ctx = fetch_student_context(user_id, user_sb=user_sb)
-        prompt = _build_single_card_prompt(request.question, ctx, request.language)
+        course_grounding = build_course_grounding_block(request.question)
+        prompt = _build_single_card_prompt(request.question, ctx, request.language, course_grounding)
 
         client = get_anthropic_client()
         message = client.messages.create(model=settings.CLAUDE_MODEL, max_tokens=1024,
@@ -1131,6 +1134,14 @@ async def thread_message(
             card_context=sanitise_context_field(request.card_context, max_length=800),
             degree_progress=request.degree_progress,
         )
+
+        # Real catalogue data for any course code mentioned in THIS message —
+        # see build_course_grounding_block's docstring / chat.py's send_message
+        # for why this exists. No cache_control is used on this endpoint's
+        # system param, so it's safe to just concatenate.
+        course_grounding = build_course_grounding_block(request.message)
+        if course_grounding:
+            system_context = f"{system_context}\n\n{course_grounding}"
 
         # Build messages array: prior thread turns + current message
         messages = []
