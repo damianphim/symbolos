@@ -27,6 +27,7 @@ Run these in the Supabase SQL Editor, in order.
 | `2026_07_20_profile_images_bucket.sql` | Creates the public `profile-images` storage bucket + per-user RLS (upload/update/delete scoped to `{user_id}/...`), so profile photo uploads actually persist — the frontend previously sent a raw base64 data URI which the `profile_image` https-only validator always rejected. |
 | `2026_07_20_clubs_private_visible.sql` | **Product change**: private clubs are now discoverable in Explore/Trending like public ones — "private" means join-by-application only, not hidden. Updates the `2026_06_01_sec_rls_clubs_pii.sql` RLS to drop the `is_private = false` condition, keeping only `is_verified = true`. |
 | `2026_07_20_advisor_cards_advice_category.sql` | **Bug fix**: adds `"advice"` to `advisor_cards_category_check` — the new proactive-milestone card category was added in code but never in the DB constraint, so every "advice" card 500'd on insert (Sentry `23514`). |
+| `2026_07_21_clubs_translation_cache.sql` | Adds `description_{fr,zh}`, `meeting_schedule_{fr,zh}`, `join_instructions_{fr,zh}` to `clubs` — cache for on-demand AI translations of a club's detail fields, filled the first time a club is opened in FR/ZH and cleared when the owner edits the source field. |
 
 All migrations are idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `DO $$ ... END $$` guards) so re-running them is a no-op.
 

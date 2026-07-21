@@ -316,6 +316,18 @@ const clubsAPI = {
     return { items: [], count: 0 }
   },
 
+  // AI-translated detail fields (description / meeting_schedule /
+  // join_instructions) for a non-English viewer. Cached server-side, so this
+  // is one Haiku call per club per language, ever. Returns {} on any failure
+  // so the caller just falls back to the original (English) text.
+  async getClubTranslation(clubId, lang) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/translation?lang=${encodeURIComponent(lang)}`, { headers: await authHeaders() })
+      if (res.ok) return res.json()
+    } catch { /* ignore */ }
+    return {}
+  },
+
   async getClubFacultyStats(clubId) {
     try {
       const res = await fetch(`${BASE_URL}/api/clubs/${clubId}/faculty-stats`, { headers: await authHeaders() })

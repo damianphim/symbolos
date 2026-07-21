@@ -226,6 +226,12 @@ async def edit_club(club_id: str, body: UpdateClubRequest, current_user_id: str 
             return {"success": True, "message": "No changes"}
 
         supabase.table("clubs").update(update_data).eq("id", club_id).execute()
+
+        # Any edited free-text field invalidates its cached AI translations, so
+        # a stale FR/ZH version isn't served after the English source changed.
+        from .translation import clear_translations_for_fields
+        clear_translations_for_fields(supabase, club_id, list(update_data.keys()))
+
         # Return updated club
         updated = supabase.table("clubs").select("*").eq("id", club_id).execute()
         return {"success": True, "club": (updated.data or [None])[0]}
