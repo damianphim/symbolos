@@ -5,18 +5,21 @@
  * Each section fades + slides up as it enters the viewport (IntersectionObserver
  * via useScrollReveal). Sticky top nav keeps the "Sign in" CTA one click away.
  *
- * SCREENSHOTS expected at frontend/src/assets/landing/ (drop them here as PNGs):
- *   - brief.png      — Advisor cards / Brief tab
- *   - degree1.png    — Degree Planning overview (first of two side-by-side shots)
- *   - degree2.png    — Degree Requirements detail (second of two)
- *   - calendar.png   — Calendar grid with exam dots
- *   - clubs1.png     — Clubs directory (first of two side-by-side shots)
- *   - clubs2.png     — Club detail / drawer / manage (second of two)
+ * SCREENSHOTS expected at frontend/src/assets/landing/, one per
+ * section × language × theme: `{prefix}-{langToken}-{light|dark}.{ext}`
+ *   - brief-{english|french|mand}-{light|dark}  — Advisor cards / Brief tab
+ *   - deg-{eng|fr|mand}-{light|dark}            — Degree Planning
+ *   - cal-{eng|fr|mand}-{light|dark}            — Calendar grid with exam dots
+ *   - club-{eng|fr|mand}-{light|dark}           — Clubs directory / detail
  *
- * Missing screenshots gracefully render as a styled "Screenshot placeholder"
- * so the page never breaks if you haven't dropped them yet.
+ * <ThemedScreenshot prefix="brief" .../> picks the file matching the visitor's
+ * current language + resolved theme (light/dark, "auto" included) live, and
+ * re-picks on the fly if they switch either. Falls back to a legacy static
+ * `{prefix}.png` (no lang/theme suffix) for backwards compat, then to a
+ * styled "Screenshot placeholder" so the page never breaks if a variant
+ * is missing.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { HiChevronDown } from 'react-icons/hi'
 import { FaSun, FaMoon, FaPalette } from 'react-icons/fa'
 import logoMark from '../../assets/loading-logo.png'
@@ -30,21 +33,31 @@ import './LandingPage.css'
 
 // Vite's import.meta.glob — bundles whichever screenshots actually exist in
 // frontend/src/assets/landing/ at build time, no errors if some are missing.
-// Drop a file in that folder (named e.g. brief.png), restart dev/redeploy, and
-// it picks up automatically.
+// Drop files in that folder and restart dev/redeploy to pick them up.
 const _shots = import.meta.glob('../../assets/landing/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })
 const _findShot = (basename) => {
   const match = Object.entries(_shots).find(([path]) => path.split('/').pop().startsWith(basename + '.'))
   return match ? match[1] : null
 }
-const brief    = _findShot('brief')
-const degree1  = _findShot('degree1') || _findShot('degree')   // backwards compat
-const degree2  = _findShot('degree2')
-const calendar = _findShot('calendar')
-const clubs1   = _findShot('clubs1') || _findShot('clubs')     // backwards compat
-const clubs2   = _findShot('clubs2')
 
-function Screenshot({ src, alt, caption }) {
+// Screenshot filenames use inconsistent language tokens across sections
+// (brief: "english"/"french"; calendar/club/deg: "eng"/"fr") — try every
+// known token for the language rather than hardcoding one per prefix.
+const _LANG_TOKENS = { en: ['english', 'eng'], fr: ['french', 'fr'], zh: ['mand', 'zh', 'chinese'] }
+
+function _resolveShot(prefix, language, resolvedTheme) {
+  for (const token of _LANG_TOKENS[language] || _LANG_TOKENS.en) {
+    const match = _findShot(`${prefix}-${token}-${resolvedTheme}`)
+    if (match) return match
+  }
+  return _findShot(prefix) // legacy static fallback (no lang/theme suffix)
+}
+
+function ThemedScreenshot({ prefix, alt, caption }) {
+  const { language } = useLanguage()
+  const { resolvedTheme } = useTheme()
+  const src = useMemo(() => _resolveShot(prefix, language, resolvedTheme), [prefix, language, resolvedTheme])
+
   if (!src) {
     return (
       <div className="landing-shot landing-shot--placeholder" aria-label={alt}>
@@ -157,7 +170,7 @@ export default function LandingPage({ onSignIn }) {
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={brief} alt={t('landing.briefAlt')} />
+            <ThemedScreenshot prefix="brief" alt={t('landing.briefAlt')} />
           </Reveal>
         </div>
       </section>
@@ -174,9 +187,8 @@ export default function LandingPage({ onSignIn }) {
               <li>{t('landing.degreeB3')}</li>
             </ul>
           </Reveal>
-          <Reveal delay={120} className="landing-feature__visual landing-feature__visual--double">
-            <Screenshot src={degree1} alt={t('landing.degreeAlt1')} />
-            <Screenshot src={degree2} alt={t('landing.degreeAlt2')} />
+          <Reveal delay={120} className="landing-feature__visual">
+            <ThemedScreenshot prefix="deg" alt={t('landing.degreeAlt1')} />
           </Reveal>
         </div>
       </section>
@@ -194,7 +206,7 @@ export default function LandingPage({ onSignIn }) {
             </ul>
           </Reveal>
           <Reveal delay={120} className="landing-feature__visual">
-            <Screenshot src={calendar} alt={t('landing.calAlt')} />
+            <ThemedScreenshot prefix="cal" alt={t('landing.calAlt')} />
           </Reveal>
         </div>
       </section>
@@ -211,9 +223,8 @@ export default function LandingPage({ onSignIn }) {
               <li>{t('landing.clubsB3')}</li>
             </ul>
           </Reveal>
-          <Reveal delay={120} className="landing-feature__visual landing-feature__visual--double">
-            <Screenshot src={clubs1} alt={t('landing.clubsAlt1')} />
-            <Screenshot src={clubs2} alt={t('landing.clubsAlt2')} />
+          <Reveal delay={120} className="landing-feature__visual">
+            <ThemedScreenshot prefix="club" alt={t('landing.clubsAlt1')} />
           </Reveal>
         </div>
       </section>

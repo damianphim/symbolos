@@ -392,7 +392,9 @@ html[data-theme="dark"] #root:has(.landing-root) {
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.04),
     0 32px 80px rgba(0, 0, 0, 0.16);
-  border: 1px solid var(--land-border);
+  /* Fixed brand red, not the theme-neutral --land-border — same thin
+     accent line in both light and dark so screenshots read as one set. */
+  border: 1.5px solid var(--land-accent);
 }
 .landing-shot img {
   display: block;
