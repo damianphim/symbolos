@@ -3031,6 +3031,72 @@
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
+/* ── Mobile week strip ────────────────────────────────────────────────
+   Horizontal 7-day selector (mobile only), the week counterpart to
+   .cal-mgrid. Selected day's events render in the agenda below. */
+.cal-wstrip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.cal-wstrip__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-wstrip__weekday {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.cal-wstrip__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.cal-wstrip__cell.is-today .cal-wstrip__num {
+  color: var(--accent-primary, #d32f2f);
+  font-weight: 700;
+}
+
+.cal-wstrip__cell.is-selected .cal-wstrip__num {
+  background: var(--accent-primary, #d32f2f);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-wstrip__dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  align-items: center;
+}
+
+.cal-wstrip__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
 .cal-agenda {
   display: flex;
   flex-direction: column;

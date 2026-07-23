@@ -29,6 +29,7 @@ import EventPopup from './CalendarTab/EventPopup'
 import DayDrawer from './CalendarTab/DayDrawer'
 import MobileAgenda from './CalendarTab/MobileAgenda'
 import MobileMonthGrid from './CalendarTab/MobileMonthGrid'
+import MobileWeekStrip from './CalendarTab/MobileWeekStrip'
 import BulkDeleteModal from './CalendarTab/BulkDeleteModal'
 import AnnouncementModal from './CalendarTab/AnnouncementModal'
 
@@ -526,14 +527,28 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   // month being shown. Paging to another month jumps to today if it's that
   // month, else the 1st — never leaves a stale day from the previous month.
   // (today is omitted from deps: getNow() returns a fresh Date each render, and
-  // we only need to react to the visible month changing.)
+  // we only need to react to the visible month/granularity changing.)
   useEffect(() => {
+    if (calGranularity !== 'month') return
     const inMonth = selectedDate.getFullYear() === currentYear && selectedDate.getMonth() === currentMonth
     if (inMonth) return
     const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth
     setSelectedDate(isCurrentMonth ? today : new Date(currentYear, currentMonth, 1))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentYear, currentMonth])
+  }, [currentYear, currentMonth, calGranularity])
+
+  // Same idea for the week strip: keep the selected day inside the visible
+  // week. Paging weeks (or switching to week granularity) lands on today when
+  // it's in view, else the first day of the week.
+  useEffect(() => {
+    if (calGranularity !== 'week') return
+    const selStr = toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
+    const weekStrs = weekDates.map(d => toDateStr(d.getFullYear(), d.getMonth(), d.getDate()))
+    if (weekStrs.includes(selStr)) return
+    const todayIdx = weekStrs.indexOf(getTodayStr())
+    setSelectedDate(todayIdx >= 0 ? weekDates[todayIdx] : weekDates[0])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart, calGranularity])
 
   const to24h = (t) => {
     if (!t) return null
@@ -965,24 +980,38 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
                   <h3>
                     {formatWeekRange(weekDates[0], weekDates[6])}
                   </h3>
-                  <button className="cal-today-btn" onClick={() => setWeekStart(startOfWeek(today))}>
+                  <button className="cal-today-btn" onClick={() => { setWeekStart(startOfWeek(today)); setSelectedDate(today) }}>
                     {t('calendar.todayBtn')}
                   </button>
                 </div>
                 <button onClick={nextWeek}><FaChevronRight /></button>
               </div>
               {isMobile ? (
-                <MobileAgenda
-                  dates={weekDates}
-                  eventsByDate={eventsByDate}
-                  todayStr={getTodayStr()}
-                  MONTHS={MONTHS} DAYS={DAYS}
-                  onSelectEvent={setPopupEvent}
-                  onOpenDay={handleAgendaDayClick}
-                  onAddOnDate={handleWeekDayAdd}
-                  typeConfig={typeConfig} getEventStyle={getEventStyle}
-                  t={t}
-                />
+                <>
+                  {/* Week strip so all 7 days are visible and tappable; the
+                      selected day's events render below (mirrors month view). */}
+                  <MobileWeekStrip
+                    weekDates={weekDates}
+                    DAYS={DAYS}
+                    eventsByDate={eventsByDate}
+                    selectedStr={toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())}
+                    todayStr={getTodayStr()}
+                    onSelectDay={setSelectedDate}
+                    typeConfig={typeConfig} getEventStyle={getEventStyle}
+                  />
+                  <MobileAgenda
+                    dates={[selectedDate]}
+                    eventsByDate={eventsByDate}
+                    todayStr={getTodayStr()}
+                    pinnedDateStr={toDateStr(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())}
+                    MONTHS={MONTHS} DAYS={DAYS}
+                    onSelectEvent={setPopupEvent}
+                    onOpenDay={handleAgendaDayClick}
+                    onAddOnDate={handleWeekDayAdd}
+                    typeConfig={typeConfig} getEventStyle={getEventStyle}
+                    t={t}
+                  />
+                </>
               ) : (
               <div className="cal-week-grid">
                 {weekDates.map(date => {
