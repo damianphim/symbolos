@@ -2470,6 +2470,37 @@
 [data-theme='dark'] .cal-v2-btn-danger { background: rgba(220,38,38,0.12); }
 [data-theme='dark'] .cal-v2-btn-danger:hover { background: rgba(220,38,38,0.2); }
 
+/* On phones the event modal becomes a full-screen sheet. Centering a tall
+   form inside a `100vh - 40px` box pushed the footer — with the "Add Event"
+   submit button — off the bottom of the screen: 100vh ignores the browser/
+   native chrome, the notch, the home indicator and the fixed bottom tab bar,
+   so the modal is taller than what's actually visible. Fill the *visible*
+   viewport with 100dvh instead, drop the rounded frame, and pad the header
+   and footer into the safe area so the close (×) and submit buttons are
+   always reachable. The body still scrolls between the pinned header/footer. */
+@media (max-width: 768px) {
+  .cal-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .cal-modal-v2 {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .cal-modal-accent { border-radius: 0; }
+  .cal-modal-header-v2 {
+    padding-top: calc(1.1rem + env(safe-area-inset-top, 0px));
+  }
+  .cal-v2-footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (max-width: 480px) {
   .cal-v2-type-row { grid-template-columns: repeat(2, 1fr); }
   .cal-v2-row { grid-template-columns: 1fr 1fr; }
