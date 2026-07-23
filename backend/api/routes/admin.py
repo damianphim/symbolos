@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from ..config import settings
 from ..utils.supabase_client import get_supabase
+from ..utils.audit import log_access
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -210,6 +211,10 @@ async def verify_admin(request: AdminLoginRequest, req: Request):
         )
 
     logger.info(f"Admin access granted from {client_ip}")
+    # Persist to the append-only audit trail — server logs alone (above) roll
+    # off with the hosting provider's retention window; this is the durable
+    # record of when the admin credential was used.
+    log_access(user_id=None, action="admin_login", req=req)
     # Return a scoped, time-limited admin session token — NOT the CRON_SECRET.
     return {
         "token": _issue_admin_token(),

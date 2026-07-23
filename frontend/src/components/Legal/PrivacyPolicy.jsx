@@ -82,6 +82,7 @@ export default function PrivacyPolicy({ onClose }) {
             <h2>{t('privacy.s5Title')}</h2>
             <p>{t('privacy.s5Text1')}</p>
             <p>{t('privacy.s5Text2')}</p>
+            <p>{t('privacy.s5Text3')}</p>
           </section>
           <section className="legal-section">
             <h2>{t('privacy.s6Title')}</h2>

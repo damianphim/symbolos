@@ -22,19 +22,24 @@ logger = logging.getLogger(__name__)
 
 
 def log_access(
-    user_id: str,
+    user_id: Optional[str],
     action: str,
     resource: Optional[str] = None,
     req: Optional[Request] = None,
 ) -> None:
     """Write one append-only row to audit_log.
 
-    action  — short label, e.g. 'transcript_read', 'data_export',
-              'account_delete', 'admin_view_user'
+    action   — short label, e.g. 'transcript_read', 'data_export',
+               'account_delete', 'admin_login', 'admin_view_feedback'
     resource — optional ID of the thing accessed, e.g. a user_id or table name
     req      — FastAPI Request, used to capture IP and User-Agent
+
+    user_id may be None for actions with no single target user (e.g. an
+    admin login, or an admin bulk-viewing a list) — the row is still
+    written, just without the FK to auth.users. Do NOT pass a falsy
+    placeholder to force a no-op; omit the call instead.
     """
-    if not user_id or not action:
+    if not action:
         return
 
     ip = user_agent = None

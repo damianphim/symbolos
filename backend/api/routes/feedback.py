@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 from ..auth import get_current_user_id
 from ..config import settings
 from ..utils.supabase_client import get_supabase
+from ..utils.audit import log_access
 from ..routes.admin import verify_admin_token
 
 router = APIRouter()
@@ -145,6 +146,7 @@ async def admin_list_feedback(req: Request):
             .limit(100)
             .execute()
         )
+        log_access(user_id=None, action="admin_view_feedback", resource=f"limit=100,count={len(rows.data or [])}", req=req)
         return {"items": rows.data or []}
     except Exception as exc:
         logger.warning("admin feedback list failed: %s", exc)

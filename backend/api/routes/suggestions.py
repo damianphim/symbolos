@@ -12,6 +12,7 @@ import logging
 from ..utils.supabase_client import get_supabase, get_user_by_id
 from ..exceptions import DatabaseException, UserNotFoundException
 from ..auth import get_current_user_id, require_self, get_user_db
+from ..utils.audit import log_access
 from .admin import verify_admin_token
 
 router = APIRouter()
@@ -104,7 +105,7 @@ async def submit_suggestion(
 
 # ── Admin: list all pending suggestions ───────────────────────
 @router.get("/admin/pending", response_model=dict)
-async def get_pending_suggestions(x_cron_secret: Optional[str] = Header(None)):
+async def get_pending_suggestions(req: Request, x_cron_secret: Optional[str] = Header(None)):
     """Admin endpoint — list all pending suggestions. Protected by CRON_SECRET."""
     _verify_admin_token_header(x_cron_secret)
 
@@ -117,6 +118,7 @@ async def get_pending_suggestions(x_cron_secret: Optional[str] = Header(None)):
             .order("created_at", desc=False)
             .execute()
         )
+        log_access(user_id=None, action="admin_view_suggestions", resource="pending", req=req)
         return {"suggestions": response.data or [], "count": len(response.data or [])}
     except HTTPException:
         raise
@@ -130,6 +132,7 @@ async def get_pending_suggestions(x_cron_secret: Optional[str] = Header(None)):
 async def review_suggestion(
     suggestion_id: str,
     review: SuggestionReview,
+    req: Request,
     x_cron_secret: Optional[str] = Header(None),
 ):
     """
@@ -159,6 +162,10 @@ async def review_suggestion(
 
         # Update suggestion status
         supabase.table("prof_suggestions").update({"status": review.status}).eq("id", suggestion_id).execute()
+        # Logged against the SUBMITTER's user_id (not the admin, who has no
+        # per-identity account) so it surfaces in that student's own audit
+        # trail via the table's "see your own entries" RLS policy.
+        log_access(user_id=suggestion.get("user_id"), action="admin_review_suggestion", resource=suggestion_id, req=req)
 
         # If approved, update the instructor in the courses table
         if review.status == "approved":
@@ -182,7 +189,7 @@ async def review_suggestion(
 
 # ── Admin: list all suggestions (all statuses) ────────────────
 @router.get("/admin/all", response_model=dict)
-async def get_all_suggestions(x_cron_secret: Optional[str] = Header(None)):
+async def get_all_suggestions(req: Request, x_cron_secret: Optional[str] = Header(None)):
     """Admin endpoint — list all suggestions regardless of status. Protected by CRON_SECRET."""
     _verify_admin_token_header(x_cron_secret)
 
@@ -194,6 +201,7 @@ async def get_all_suggestions(x_cron_secret: Optional[str] = Header(None)):
             .order("created_at", desc=True)
             .execute()
         )
+        log_access(user_id=None, action="admin_view_suggestions", resource="all", req=req)
         return {"suggestions": response.data or [], "count": len(response.data or [])}
     except HTTPException:
         raise

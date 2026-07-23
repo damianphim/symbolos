@@ -34,12 +34,13 @@ import logging
 import time
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from api.config import settings
 from api.utils.supabase_client import get_supabase
+from api.utils.audit import log_access
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -231,7 +232,7 @@ async def approve_review(user_id: str, token: str):
 
 
 @router.get("/approve/confirm", response_class=HTMLResponse)
-async def approve_confirm(user_id: str, token: str):
+async def approve_confirm(user_id: str, token: str, req: Request):
     """Confirm step (step 2). Reached only from the review page's link."""
     if not _verify_token(user_id, token):
         return _page("Invalid link", "<h2>Link invalid or expired</h2>")
@@ -241,5 +242,6 @@ async def approve_confirm(user_id: str, token: str):
     if not user.get("email_confirmed_at"):
         _confirm_auth_user(user_id)
         logger.info("Manually approved account %s", user_id)
+        log_access(user_id=user_id, action="admin_account_approve", req=req)
     return _page("Approved",
                  f"<h2>Approved</h2><p>{html.escape(user.get('email',''))} can now log in.</p>")
