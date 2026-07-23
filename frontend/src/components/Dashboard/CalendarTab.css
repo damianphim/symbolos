@@ -2941,6 +2941,96 @@
    reports isMobile — so nothing below can reach desktop.
 ═══════════════════════════════════════════════════════════════════ */
 
+/* ── Mobile month grid ────────────────────────────────────────────────
+   Compact, tappable month view for phones (rendered only on mobile). Day
+   numbers + event dots rather than event text in cells, so the whole month
+   stays legible at 360px. The selected day's events render in the agenda
+   below (see MobileMonthGrid.jsx). */
+.cal-mgrid {
+  margin-bottom: 16px;
+}
+
+.cal-mgrid__weekdays,
+.cal-mgrid__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.cal-mgrid__weekday {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  padding-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.cal-mgrid__grid {
+  gap: 2px;
+}
+
+.cal-mgrid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: 44px;
+  padding: 4px 0 3px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-mgrid__cell--empty {
+  visibility: hidden;
+  cursor: default;
+}
+
+.cal-mgrid__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* Today: accent ring + colour, until it's the selected day (filled). */
+.cal-mgrid__cell.is-today .cal-mgrid__num {
+  color: var(--accent-primary, #d32f2f);
+  font-weight: 700;
+}
+
+.cal-mgrid__cell.is-selected .cal-mgrid__num {
+  background: var(--accent-primary, #d32f2f);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-mgrid__dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  align-items: center;
+}
+
+.cal-mgrid__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+/* Dots read against the filled selected-day pill as white. */
+.cal-mgrid__cell.is-selected .cal-mgrid__dot {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
 .cal-agenda {
   display: flex;
   flex-direction: column;
