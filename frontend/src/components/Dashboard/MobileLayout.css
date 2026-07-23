@@ -57,6 +57,22 @@
   --m-hairline: 0.5px solid rgba(255, 255, 255, 0.12);
 }
 
+/* ── iOS focus-zoom guard ─────────────────────────────────────────────
+   iOS Safari / the Capacitor WebView auto-zoom into any text field whose
+   computed font-size is under 16px the moment it's focused. Our viewport
+   (index.html) intentionally keeps user scaling enabled for accessibility,
+   so nothing zooms back out — the user is left magnified inside e.g. the
+   Calendar "Add event" modal with the close button pushed off-screen,
+   unable to escape. Pinning every editable control in the mobile shell to
+   16px stops the zoom from ever triggering, without disabling pinch-zoom.
+   !important because component styles (e.g. .cal-field input[type="text"],
+   .cal-v2-input) set smaller sizes with higher specificity. */
+.mobile-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.mobile-shell select,
+.mobile-shell textarea {
+  font-size: 16px !important;
+}
+
 /* ── Grouped list primitives ─────────────────────────────────────────
    The replacement for bordered cards. A .m-group is one raised surface
    with rounded ends; .m-row children are separated by hairlines rather

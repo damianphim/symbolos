@@ -21,6 +21,7 @@ export default function MobileAgenda({
   dates,
   eventsByDate,
   todayStr,
+  pinnedDateStr,
   MONTHS,
   DAYS,
   onSelectEvent,
@@ -39,7 +40,11 @@ export default function MobileAgenda({
         events: (eventsByDate[dateStr] || []).slice().sort(byTime),
       }
     })
-    .filter(g => g.events.length > 0 || g.dateStr === todayStr)
+    // Empty days are dropped to keep the list scannable, except today (always an
+    // anchor) and any explicitly pinned day — e.g. the day selected in the month
+    // grid, which must stay visible even with no events so its add button is
+    // reachable.
+    .filter(g => g.events.length > 0 || g.dateStr === todayStr || g.dateStr === pinnedDateStr)
 
   if (groups.length === 0) {
     return (

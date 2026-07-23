@@ -2108,6 +2108,9 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Don't chain scroll to the page behind the modal — that chaining is what
+     read as a "freeze" on the mobile shell when the body reached its end. */
+  overscroll-behavior: contain;
   padding: 1.1rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -2469,6 +2472,45 @@
 
 [data-theme='dark'] .cal-v2-btn-danger { background: rgba(220,38,38,0.12); }
 [data-theme='dark'] .cal-v2-btn-danger:hover { background: rgba(220,38,38,0.2); }
+
+/* On phones the event modal becomes a full-screen sheet. Centering a tall
+   form inside a `100vh - 40px` box pushed the footer — with the "Add Event"
+   submit button — off the bottom of the screen: 100vh ignores the browser/
+   native chrome, the notch, the home indicator and the fixed bottom tab bar,
+   so the modal is taller than what's actually visible. Fill the *visible*
+   viewport with 100dvh instead, drop the rounded frame, and pad the header
+   and footer into the safe area so the close (×) and submit buttons are
+   always reachable. The body still scrolls between the pinned header/footer. */
+@media (max-width: 768px) {
+  .cal-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .cal-modal-v2 {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .cal-modal-accent { border-radius: 0; }
+  .cal-modal-header-v2 {
+    padding-top: calc(1.1rem + env(safe-area-inset-top, 0px));
+  }
+  .cal-v2-footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* Keep the iOS focus-zoom guard on modal fields even though the modal now
+     portals to <body>, outside .mobile-shell (which carries the app-wide
+     16px rule). Without this, focusing a field here would auto-zoom again. */
+  .cal-modal input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .cal-modal select,
+  .cal-modal textarea {
+    font-size: 16px !important;
+  }
+}
 
 @media (max-width: 480px) {
   .cal-v2-type-row { grid-template-columns: repeat(2, 1fr); }
@@ -2940,6 +2982,162 @@
    exist only in that component, which only mounts when useViewport()
    reports isMobile — so nothing below can reach desktop.
 ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Mobile month grid ────────────────────────────────────────────────
+   Compact, tappable month view for phones (rendered only on mobile). Day
+   numbers + event dots rather than event text in cells, so the whole month
+   stays legible at 360px. The selected day's events render in the agenda
+   below (see MobileMonthGrid.jsx). */
+.cal-mgrid {
+  margin-bottom: 16px;
+}
+
+.cal-mgrid__weekdays,
+.cal-mgrid__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.cal-mgrid__weekday {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  padding-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.cal-mgrid__grid {
+  gap: 2px;
+}
+
+.cal-mgrid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: 44px;
+  padding: 4px 0 3px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-mgrid__cell--empty {
+  visibility: hidden;
+  cursor: default;
+}
+
+.cal-mgrid__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* Today: accent ring + colour, until it's the selected day (filled). */
+.cal-mgrid__cell.is-today .cal-mgrid__num {
+  color: var(--accent-primary, #d32f2f);
+  font-weight: 700;
+}
+
+.cal-mgrid__cell.is-selected .cal-mgrid__num {
+  background: var(--accent-primary, #d32f2f);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-mgrid__dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  align-items: center;
+}
+
+.cal-mgrid__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+/* Dots read against the filled selected-day pill as white. */
+.cal-mgrid__cell.is-selected .cal-mgrid__dot {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ── Mobile week strip ────────────────────────────────────────────────
+   Horizontal 7-day selector (mobile only), the week counterpart to
+   .cal-mgrid. Selected day's events render in the agenda below. */
+.cal-wstrip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.cal-wstrip__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-wstrip__weekday {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.cal-wstrip__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.cal-wstrip__cell.is-today .cal-wstrip__num {
+  color: var(--accent-primary, #d32f2f);
+  font-weight: 700;
+}
+
+.cal-wstrip__cell.is-selected .cal-wstrip__num {
+  background: var(--accent-primary, #d32f2f);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-wstrip__dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  align-items: center;
+}
+
+.cal-wstrip__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
 
 .cal-agenda {
   display: flex;
