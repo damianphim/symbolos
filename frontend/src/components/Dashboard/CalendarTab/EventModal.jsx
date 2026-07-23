@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { FaTimes, FaBell, FaCheck, FaTrash, FaGraduationCap, FaClipboardList, FaStar, FaBullseye, FaLink, FaTag, FaPlus } from 'react-icons/fa'
 import { L, EVENT_TYPE_OPTIONS, CUSTOM_TYPE_COLOR_CHOICES, withAlpha } from './calendarConstants'
 
@@ -84,7 +85,21 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
     setShowNewType(false)
   }
 
-  return (
+  // Lock the page behind the modal so the mobile shell's scroll container
+  // (.mobile-content) can't scroll under it — that background scroll is what
+  // makes touches feel frozen while the modal is open.
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  // Rendered through a portal to <body> rather than inline: inside the mobile
+  // shell this modal is a descendant of the scrollable .mobile-content, which
+  // trapped it beneath the fixed bottom tab bar (so the submit button was
+  // hidden) and fought its scrolling. At the body root it's a true
+  // viewport-level overlay above everything.
+  return createPortal(
     <div className="cal-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="cal-modal cal-modal-v2">
         <div className="cal-modal-accent" style={{ background: selectedType.color }} />
@@ -284,6 +299,7 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

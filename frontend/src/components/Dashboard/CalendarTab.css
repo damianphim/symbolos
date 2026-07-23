@@ -2108,6 +2108,9 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Don't chain scroll to the page behind the modal — that chaining is what
+     read as a "freeze" on the mobile shell when the body reached its end. */
+  overscroll-behavior: contain;
   padding: 1.1rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -2498,6 +2501,14 @@
   }
   .cal-v2-footer {
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* Keep the iOS focus-zoom guard on modal fields even though the modal now
+     portals to <body>, outside .mobile-shell (which carries the app-wide
+     16px rule). Without this, focusing a field here would auto-zoom again. */
+  .cal-modal input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .cal-modal select,
+  .cal-modal textarea {
+    font-size: 16px !important;
   }
 }
 
