@@ -53,6 +53,10 @@
   ],
   "rewrites": [
     {
+      "source": "/storage/:path*",
+      "destination": "https://jgkfeyqnpsivbgoiekze.supabase.co/storage/v1/object/public/:path*"
+    },
+    {
       "source": "/privacy",
       "destination": "/?show=privacy"
     },

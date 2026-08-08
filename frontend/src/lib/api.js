@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { supabase } from './supabase'
 import { assertRasterImage } from './imageBytes'
+import { toProxiedStorageUrl } from './storageUrl'
 
 const API_URL = import.meta.env.VITE_API_URL || (
   import.meta.env.PROD
@@ -291,7 +292,7 @@ export const usersAPI = {
     if (upErr) throw new Error(upErr.message || 'Upload failed')
 
     const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(path)
-    return { profile_image: `${urlData.publicUrl}?v=${Date.now()}` }
+    return { profile_image: `${toProxiedStorageUrl(urlData.publicUrl)}?v=${Date.now()}` }
   },
 
   /**

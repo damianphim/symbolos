@@ -9,6 +9,7 @@ const BASE_URL = normalizeUrl(API_URL)
 
 import { supabase } from './supabase'
 import { assertRasterImage } from './imageBytes'
+import { toProxiedStorageUrl } from './storageUrl'
 
 async function authHeaders(json = true) {
   const { data: { session } } = await supabase.auth.getSession()
@@ -360,7 +361,7 @@ const clubsAPI = {
 
     const { data: urlData } = supabase.storage.from('club-logos').getPublicUrl(path)
     // Cache-bust so the new logo shows immediately
-    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`
+    const publicUrl = `${toProxiedStorageUrl(urlData.publicUrl)}?v=${Date.now()}`
 
     // Persist the URL on the club row via the existing PUT endpoint
     await this.editClub(clubId, { logo_url: publicUrl })

@@ -173,12 +173,51 @@ class UserUpdate(BaseModel):
         parsed = urlparse(v)
         if parsed.scheme != 'https':
             raise ValueError('profile_image must be a valid https:// URL')
-        expected_host = urlparse(settings.SUPABASE_URL).netloc
-        if not expected_host or expected_host not in parsed.netloc:
-            raise ValueError('profile_image must point to our Supabase Storage')
-        if '/storage/v1/object/public/profile-images/' not in parsed.path:
-            raise ValueError('profile_image must reference the profile-images bucket')
-        return v
+
+        # Two accepted shapes, both still pinned to hosts we control:
+        #
+        #   1. Direct Supabase Storage —
+        #      https://<project>.supabase.co/storage/v1/object/public/profile-images/…
+        #      Still accepted because rows written before the proxy existed
+        #      hold this form, and rejecting them would break every existing
+        #      avatar on the next profile save.
+        #
+        #   2. Same-origin proxy —
+        #      https://symbolos.ca/storage/profile-images/…
+        #      Serving avatars from our own origin means our security headers
+        #      (notably X-Content-Type-Options: nosniff) apply, which they
+        #      cannot on Supabase's CDN. See docs/security-review-2026-07-25.md.
+        #
+        # The proxy host is checked against ALLOWED_ORIGINS — the same
+        # validated allowlist CORS uses — so this stays an allowlist and does
+        # not become "any https URL", which is exactly what F-06 existed to
+        # prevent (tracking pixels, SVG-based XSS, unbounded data: blobs).
+        # Exact host match, NOT a substring test. The original check was
+        # `supabase_host in parsed.netloc`, which any attacker-registered
+        # domain ending in the project host satisfied — e.g.
+        # "<project>.supabase.co.evil.com" contains "<project>.supabase.co".
+        # That let profile_image be pointed at an arbitrary attacker origin:
+        # a tracking pixel harvesting every viewer's IP/User-Agent, or an SVG
+        # they serve as image/svg+xml (which does execute script, unlike the
+        # Supabase-hosted case). The app's CSP img-src blocks the in-page load,
+        # but the stored value still escapes anywhere CSP doesn't apply.
+        supabase_host = urlparse(settings.SUPABASE_URL).netloc
+        if supabase_host and parsed.netloc == supabase_host:
+            if '/storage/v1/object/public/profile-images/' not in parsed.path:
+                raise ValueError('profile_image must reference the profile-images bucket')
+            return v
+
+        allowed_hosts = {
+            urlparse(o).netloc
+            for o in (settings.ALLOWED_ORIGINS or [])
+            if str(o).startswith('https://')
+        }
+        if parsed.netloc in allowed_hosts:
+            if not parsed.path.startswith('/storage/profile-images/'):
+                raise ValueError('profile_image must reference the profile-images bucket')
+            return v
+
+        raise ValueError('profile_image must point to our Supabase Storage')
 
     @field_validator('username', mode='before')
     @classmethod
