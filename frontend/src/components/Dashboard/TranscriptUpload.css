@@ -22,7 +22,7 @@
 .tu-modal {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 18px;
+  border-radius: var(--radius-container);
   width: 100%;
   max-width: 600px;
   max-height: 88vh;
@@ -58,8 +58,8 @@
 .tu-header-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  border-radius: var(--radius-container);
+  background: var(--accent-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -88,7 +88,7 @@
   color: var(--text-muted);
   font-size: 1rem;
   padding: 0.4rem;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +169,7 @@
 /* ── Dropzone ────────────────────────────────────────── */
 .tu-dropzone {
   border: 2px dashed var(--border-secondary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   padding: 2.25rem 1.5rem;
   text-align: center;
   cursor: pointer;
@@ -246,7 +246,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 0.3rem;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   font-size: 0.9rem;
   transition: color 0.15s;
   flex-shrink: 0;
@@ -263,7 +263,7 @@
   padding: 0.625rem 0.875rem;
   background: var(--error-light, #fee2e2);
   border: 1px solid rgba(220, 38, 38, 0.2);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   color: var(--error-text, #dc2626);
   font-size: 0.875rem;
 }
@@ -286,7 +286,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.375rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -295,7 +295,7 @@
 }
 
 .tu-btn--primary {
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
 }
 
@@ -330,7 +330,7 @@
   padding: 0.625rem 0.875rem;
   background: var(--success-light, #f0fdf4);
   border: 1px solid #bbf7d0;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   color: var(--success-text, #15803d);
   font-size: 0.875rem;
   font-weight: 500;
@@ -371,7 +371,7 @@
   gap: 0.15rem;
   padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
 }
 
 .tu-info-label {
@@ -403,7 +403,7 @@
   gap: 0.625rem;
   padding: 0.45rem 0.75rem;
   background: var(--bg-secondary);
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   font-size: 0.8125rem;
 }
 
@@ -421,7 +421,7 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-left: 3px solid var(--accent-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 12px 14px;
   margin: 0 0 14px 0;
   font-size: 0.8125rem;
@@ -450,7 +450,7 @@
   padding: 1px 6px;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.75rem;
   color: var(--text-primary);
@@ -495,7 +495,7 @@
   font-size: 0.78rem;
   padding: 0.1rem 0.4rem;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   color: var(--text-primary);
   flex-shrink: 0;
 }
@@ -506,7 +506,7 @@
   color: var(--accent-primary);
   background: var(--accent-lighter);
   padding: 0.1rem 0.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   flex-shrink: 0;
 }
 
@@ -576,7 +576,7 @@
   align-items: center;
   padding: 0.75rem 1.125rem;
   background: var(--bg-secondary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   min-width: 88px;
   gap: 0.2rem;
 }
@@ -610,7 +610,7 @@
   padding: 10px 14px;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(245, 158, 11, 0.25);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.78rem;
   color: var(--text-secondary);
   line-height: 1.45;
@@ -630,7 +630,7 @@
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.45);
   border-left: 3px solid #f59e0b;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.8125rem;
   color: var(--text-primary);
   line-height: 1.5;
@@ -659,7 +659,7 @@
   padding: 0.625rem 0.875rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.875rem;
 }
 
@@ -690,7 +690,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 0.2rem;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   font-size: 0.75rem;
   display: flex;
   align-items: center;
@@ -715,7 +715,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.5rem 0.875rem;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.8125rem;
   background: var(--bg-secondary);
 }

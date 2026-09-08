@@ -3,13 +3,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-primary);
   padding: 2rem;
 }
 
 .error-container {
   background: var(--bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   padding: 3rem;
   max-width: 600px;
   width: 100%;
@@ -38,7 +38,7 @@
 .error-details {
   text-align: left;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 1rem;
   margin-bottom: 2rem;
 }
@@ -67,7 +67,7 @@
 
 .error-actions .btn {
   padding: 0.875rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -75,7 +75,7 @@
 }
 
 .error-actions .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
+  background: var(--accent-primary);
   color: white;
 }
 

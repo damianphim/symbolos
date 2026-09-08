@@ -72,7 +72,7 @@ export default function CoursesView({
         </button>
       </div>
 
-      {/* ── My Courses — unmount when not active ── */}
+      {/* ── My Courses, unmount when not active ── */}
       {subTab === 'my_courses' && (
         <div className="courses-my-panel">
           <SavedCoursesView
@@ -90,7 +90,7 @@ export default function CoursesView({
         </div>
       )}
 
-      {/* ── Course Search — always mounted to preserve search state ── */}
+      {/* ── Course Search, always mounted to preserve search state ── */}
       <div
         className="courses-search-panel"
         style={{ display: subTab === 'course_search' ? 'block' : 'none' }}

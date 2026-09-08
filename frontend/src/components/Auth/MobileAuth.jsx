@@ -7,7 +7,7 @@ import logoMark from '../../assets/logo-mark.png'
 import './MobileAuth.css'
 
 /**
- * Mobile presentation of the auth flow (<=768px, viewport-gated — mobile web
+ * Mobile presentation of the auth flow (<=768px, viewport-gated, mobile web
  * gets this too, not just the installed app).
  *
  * Pure presentation. Every piece of state and every handler is owned by
@@ -16,8 +16,8 @@ import './MobileAuth.css'
  * Login's JSX is deliberate: the desktop tree then stays literally untouched,
  * which is the one thing that must not regress on a live product.
  *
- * Continues MobileWelcome.jsx — same system font stack, same 50px/12px button
- * geometry, same spacing rhythm — so signing up doesn't feel like a hand-off
+ * Continues MobileWelcome.jsx, same system font stack, same 50px/12px button
+ * geometry, same spacing rhythm, so signing up doesn't feel like a hand-off
  * to a website.
  */
 export default function MobileAuth({
@@ -70,7 +70,7 @@ export default function MobileAuth({
       {legalModal === 'terms'   && <TermsOfService onClose={() => setLegalModal(null)} />}
       {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
 
-      {/* Not a title bar — the screen title lives in the content. This strip
+      {/* Not a title bar, the screen title lives in the content. This strip
           only carries navigation and the two global toggles. */}
       <div className="ma-nav">
         {back ? (
@@ -100,7 +100,7 @@ export default function MobileAuth({
       </div>
 
       {/* The single scroller for the screen. The submit button sits in normal
-          flow at the end of it (never position:fixed — a fixed footer renders
+          flow at the end of it (never position:fixed, a fixed footer renders
           *behind* the iOS keyboard), and .ma-scroll carries enough bottom
           padding + scroll-padding that the browser's focus scroll can always
           lift the active field and the button clear of the keyboard. */}

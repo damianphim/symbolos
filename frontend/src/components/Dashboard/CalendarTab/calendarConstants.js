@@ -3,7 +3,7 @@
 // ── McGill Academic Dates 2025–26 ────────────────────────────────
 // titleEn/Fr/Zh + categoryEn/Fr/Zh (not a single `title`/`category`) so this
 // static data can be shown in the student's chosen language via the L()
-// helper below — same tri-language pattern as EVENT_TYPE_OPTIONS.
+// helper below, same tri-language pattern as EVENT_TYPE_OPTIONS.
 export const MCGILL_ACADEMIC_DATES = [
   { id: 'f-01', titleEn: 'Deadline to Register (avoid penalty)',         titleFr: "Date limite d'inscription (éviter la pénalité)",                    titleZh: '注册截止日期（避免罚款）',           date: '2025-08-14', type: 'academic', categoryEn: 'Fall 2025', categoryFr: 'Automne 2025', categoryZh: '2025年秋季' },
   { id: 'f-02', titleEn: 'Fall Classes Begin',                           titleFr: "Début des cours d'automne",                                          titleZh: '秋季课程开始',                       date: '2025-08-27', type: 'academic', categoryEn: 'Fall 2025', categoryFr: 'Automne 2025', categoryZh: '2025年秋季' },
@@ -66,7 +66,7 @@ export const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 export const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
 export const DAYS_ZH = ['日','一','二','三','四','五','六']
 
-// Tri-language inline helper — avoids adding dozens of LanguageContext keys for calendar-only strings
+// Tri-language inline helper, avoids adding dozens of LanguageContext keys for calendar-only strings
 export function L(lang, en, fr, zh) { return lang === 'zh' ? zh : lang === 'fr' ? fr : en }
 
 export function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
@@ -117,6 +117,6 @@ export function saveCustomEventTypes(userId, types) {
   try {
     localStorage.setItem(CUSTOM_TYPES_KEY_PREFIX + userId, JSON.stringify(types))
   } catch {
-    // localStorage unavailable (private browsing, quota) — custom types just won't persist
+    // localStorage unavailable (private browsing, quota), custom types just won't persist
   }
 }

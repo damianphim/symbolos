@@ -4,7 +4,7 @@
   padding: 32px;
   background: var(--bg-primary, #fff);
   border: 1.5px solid #d1d5db;
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   text-align: center;
 }
@@ -23,7 +23,7 @@
   width: 100%;
   padding: 9px 13px;
   border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.95rem;
   margin-bottom: 12px;
   box-sizing: border-box;
@@ -42,7 +42,7 @@
   background: #ED1B2F;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
@@ -85,7 +85,7 @@
 .filter-btn {
   padding: 6px 16px;
   border: 1.5px solid #d1d5db;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   background: none;
   font-size: 0.85rem;
   font-weight: 600;
@@ -106,7 +106,7 @@
   background: #fee2e2;
   color: #dc2626;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   margin-bottom: 16px;
   font-size: 0.9rem;
 }
@@ -133,7 +133,7 @@
   padding: 16px 20px;
   background: #f9fafb;
   border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   transition: box-shadow 0.15s;
 }
 
@@ -178,7 +178,7 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -199,7 +199,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   border: none;
   font-size: 0.85rem;
   font-weight: 700;
@@ -258,7 +258,7 @@
   padding: 16px 18px;
   background: #f9fafb;
   border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
 }
 
 .stat-icon {
@@ -321,7 +321,7 @@
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
 }
 
 /* ── Club Submission Details ──────────────────── */
@@ -330,7 +330,7 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 0.7rem;
   font-weight: 700;
   margin-left: 8px;
@@ -350,7 +350,7 @@
   padding: 2px 8px;
   background: #ede9fe;
   color: #7c3aed;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 0.73rem;
   font-weight: 700;
 }

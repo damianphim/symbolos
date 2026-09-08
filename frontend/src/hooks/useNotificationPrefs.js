@@ -57,7 +57,7 @@ function loadFromLocalStorage() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored ? mergeWithDefaults(JSON.parse(stored)) : { ...DEFAULT_PREFS }
-  } catch (_) {
+  } catch {
     return { ...DEFAULT_PREFS }
   }
 }

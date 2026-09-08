@@ -22,7 +22,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   // Restore verify screen if the component remounts mid-verification
   const storedVerify = (() => { try { return JSON.parse(sessionStorage.getItem('symbolos_verify') || 'null') } catch { return null } })()
 
-  // `initialMode` lets a caller open straight on signup — the in-app welcome
+  // `initialMode` lets a caller open straight on signup, the in-app welcome
   // screen's "Get started" should not land on a login form. An in-progress
   // verification still wins, so a remount mid-signup resumes correctly.
   const [mode, setMode] = useState(forceVerify || storedVerify ? 'verify' : initialMode) // 'login' | 'signup' | 'forgot' | 'reset' | 'verify'
@@ -42,7 +42,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const [resendLoading, setResendLoading] = useState(false)
   // 6-digit OTP entry on the verify screen. McGill inboxes (Microsoft 365)
   // run Safe Links, which auto-fetches the confirmation link seconds after
-  // delivery — confirming the account before the user ever opens the email
+  // delivery, confirming the account before the user ever opens the email
   // (which often sits in Junk). A typed code can't be consumed by a scanner,
   // so this is the reliable path; link-click and polling remain as fallbacks.
   const [verifyCode, setVerifyCode] = useState('')
@@ -79,13 +79,13 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   // Two paths:
   //   A. Session present (autoconfirm ON or partial session): check
   //      session.user.email_confirmed_at and refresh so SIGNED_IN re-fires.
-  //   B. No session (autoconfirm OFF — the common partner-configured case):
+  //   B. No session (autoconfirm OFF, the common partner-configured case):
   //      call our unauthenticated /check-verified endpoint. When the phone's
   //      magic-link confirms the address in Supabase Auth, the backend sees
   //      email_confirmed_at and returns verified=true. We then auto-sign-in
   //      using the password still held in component state (typed during signup
   //      and never cleared on mode-switch). If the page was reloaded and the
-  //      password is gone, we fall back to a "Verified — please sign in" state.
+  //      password is gone, we fall back to a "Verified, please sign in" state.
   useEffect(() => {
     if (mode !== 'verify') {
       if (pollRef.current) clearInterval(pollRef.current)
@@ -103,7 +103,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           return
         }
 
-        // Path B: no session — poll our unauthenticated endpoint
+        // Path B: no session, poll our unauthenticated endpoint
         if (!pendingUserId) return
         const { verified } = await authAPI.checkVerified(pendingUserId)
         if (!verified) return
@@ -115,7 +115,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           // Auto-sign-in using the credentials still in state
           const { error: signInErr } = await signIn(pendingEmail || email, password)
           if (signInErr) {
-            // Sign-in failed — surface the login form so user can retry
+            // Sign-in failed, surface the login form so user can retry
             sessionStorage.removeItem('symbolos_verify')
             setMode('login')
           }
@@ -126,7 +126,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
           pendingMsgRef.current = t('auth.verifiedSignIn') || 'Email verified! Please sign in to continue.'
           setMode('login')
         }
-      } catch { /* network errors are silent — next tick retries */ }
+      } catch { /* network errors are silent, next tick retries */ }
     }
 
     pollRef.current = setInterval(checkAndAdvance, 3000)
@@ -372,7 +372,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                 {t('auth.codeSubtitle')}
               </p>
 
-              {/* 6-digit code entry — the reliable path (see verifyCode note) */}
+              {/* 6-digit code entry, the reliable path (see verifyCode note) */}
               <form className="auth-verify-code-row" onSubmit={handleVerifyCode}>
                 <input
                   className="auth-input auth-verify-code-input"
@@ -411,7 +411,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             </div>
           )}
 
-          {/* Tabs — only for login/signup */}
+          {/* Tabs, only for login/signup */}
           {!isForgot && !isVerify && (
             <div className="auth-tabs" role="tablist">
               <button
@@ -610,7 +610,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
                   </p>
                 )}
               </div>
-              {/* Legal links — shown on mobile (branding panel is hidden) */}
+              {/* Legal links, shown on mobile (branding panel is hidden) */}
               <div className="auth-legal-links">
                 <button type="button" className="auth-legal-link" onClick={() => setLegalModal('about')}>{t('legal.navAbout')}</button>
                 <span className="auth-legal-sep">·</span>

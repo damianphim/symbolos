@@ -1,7 +1,7 @@
 import React from 'react'
 import { FaTimes, FaPlus, FaChevronRight, FaEdit } from 'react-icons/fa'
 
-export default function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEvent, t, language, formatDate, typeConfig, getEventStyle, userEventIds }) {
+export default function DayDrawer({ date, events, onClose, onAddEvent, onEditEvent, onSelectEvent, t, formatDate, typeConfig, getEventStyle, userEventIds }) {
   return (
     <div className="cal-day-drawer-overlay" onClick={onClose}>
       <div className="cal-day-drawer" onClick={e => e.stopPropagation()}>

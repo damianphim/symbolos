@@ -78,7 +78,7 @@ export default function AdminSuggestions() {
       })
       if (res.ok) setFeedback((await res.json()).items || [])
     } catch {
-      // feedback admin endpoint may not exist yet — silent
+      // feedback admin endpoint may not exist yet, silent
     } finally {
       setFeedbackLoading(false)
     }

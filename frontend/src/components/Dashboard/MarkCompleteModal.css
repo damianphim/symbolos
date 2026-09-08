@@ -21,7 +21,7 @@
 /* Modal Content */
 .modal-content {
   background: var(--bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
@@ -64,7 +64,7 @@
   color: var(--text-tertiary);
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   cursor: pointer;
   font-size: 20px;
   display: flex;
@@ -88,7 +88,7 @@
 .course-info {
   background: var(--card-bg);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   border: 2px solid #fecaca;
   margin-bottom: 24px;
 }
@@ -136,7 +136,7 @@
 .form-group select {
   padding: 10px 12px;
   border: 2px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s;
@@ -159,7 +159,7 @@
   padding: 12px 16px;
   background: var(--bg-secondary);
   border-left: 4px solid #6b7280;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -184,7 +184,7 @@
 .btn-primary {
   flex: 1;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;

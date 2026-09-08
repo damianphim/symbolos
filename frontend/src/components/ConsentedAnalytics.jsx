@@ -3,7 +3,7 @@ import { getConsent, CONSENT_EVENT } from '../lib/telemetry'
 
 /**
  * Vercel Analytics is a non-essential cookie under Law 25, so we only mount it
- * while consent is granted — and UNMOUNT it the moment consent is withdrawn
+ * while consent is granted, and UNMOUNT it the moment consent is withdrawn
  * (Law 25 / GDPR: revoking must be as easy as granting). We react to the
  * consent-change event in both directions.
  */
@@ -23,6 +23,6 @@ export default function ConsentedAnalytics() {
     }
   }, [accepted, Analytics])
 
-  // Only render while consent is currently granted — withdrawal unmounts it.
+  // Only render while consent is currently granted, withdrawal unmounts it.
   return accepted && Analytics ? <Analytics /> : null
 }

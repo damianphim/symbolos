@@ -105,7 +105,7 @@
   width: 100%;
   min-height: 50px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;

@@ -1,7 +1,40 @@
-// McGill AI Advisor — EN translations
+// McGill AI Advisor, EN translations
 // Auto-split from LanguageContext.jsx
 
 const EN_TRANSLATIONS = {
+    "gpa.enteredGrades": "GPA from entered grades",
+
+    "courses.correctTransfer": "Correct transfer classifications",
+    "courses.correctTransferHint": "If you took one of these courses at McGill, enter its term and grade. Saving replaces its transfer exemption with a completed McGill course.",
+    "courses.takenAtMcGill": "Taken at McGill",
+
+    "common.save": "Save",
+    "common.remove": "Remove",
+
+    "courses.compare": "Compare",
+    "courses.compareHint": "Compare up to 3 courses. Historical averages and student ratings are context, not a prediction of your grade.",
+    "courses.noComparisonData": "Not available",
+    "dp.chooseProgram": "Choose or edit your program",
+    "dp.addCoursesManually": "Find and add courses manually",
+
+    "clubs.directoryGrowing": "This directory is just getting started and is not a complete list of McGill clubs. More clubs will appear as organizers add them.",
+
+    "gpa.horizon": "Calculation window",
+    "gpa.horizon.degree": "Remaining degree",
+    "gpa.horizon.term": "This term",
+    "gpa.horizon.year": "This academic year",
+    "gpa.horizon.custom": "Custom window",
+    "gpa.scopeHint": "Enter only GPA-bearing credits and grades within this window. Adjust the suggested credit total to your course load.",
+    "gpa.scopeTotal": "Total credits in window",
+    "gpa.scopeCompleted": "Graded credits in window",
+    "gpa.scopeGpa": "GPA on those graded credits",
+
+    "common.saving": "Saving…",
+    "upload.syllabusPdfHelp": "Syllabus import accepts PDFs up to 15 MB each. For Word or Google Docs, export or download as PDF first.",
+
+    "courses.editCompleted": "Edit completed course",
+    "courses.saveFailed": "Could not save changes. Please try again.",
+
     // ── Sidebar Nav ───────────────────────────────────────
     'nav.home': 'Home',
     'nav.chat': 'Brief',
@@ -29,8 +62,8 @@ const EN_TRANSLATIONS = {
     'home.currentCourses': 'Current courses',
     'home.exploreCourses': 'Explore courses',
     'home.coursesEmptyTitle': 'No current courses',
-    'home.coursesEmptySub': 'Import your transcript to see your courses here.',
-    'home.coursesEmptyCta': 'Upload transcript',
+    'home.coursesEmptySub': "Find and add courses manually, or import your transcript as a shortcut.",
+    'home.coursesEmptyCta': "Find courses",
     'home.coursesNoneThisTerm': 'No courses this term',
     'home.coursesUpcomingSub': '{count} registered for upcoming terms',
     'home.coursesUpcomingCta': 'View upcoming courses',
@@ -543,7 +576,7 @@ const EN_TRANSLATIONS = {
     'clubs.calOff': 'Calendar Off',
     'clubs.leave': 'Leave',
 
-    // 2026-04 redesign — new keys
+    // 2026-04 redesign, new keys
     'clubs.manageClub':         'Manage club',
     'clubs.manageBtnShort':     'Manage',
     'clubs.manage.members':     'Members',
@@ -662,7 +695,7 @@ const EN_TRANSLATIONS = {
     'clubs.manage.removeManager': 'Remove manager',
     'clubs.manage.removeManagerConfirm': 'Remove {name} as manager?',
     'clubs.manage.noManagers': 'No additional managers yet.',
-    // Clubs — join modal, members, admin
+    // Clubs, join modal, members, admin
     'clubs.requestToJoin': 'Request to Join',
     'clubs.joinName': 'Name',
     'clubs.joinEmail': 'Email',
@@ -1143,12 +1176,12 @@ const EN_TRANSLATIONS = {
     'forum.retry': 'Retry',
     'forum.noPostsFiltered': 'No posts match your filters.',
     'forum.noPostsYet': 'No posts yet, be the first!',
-    'forum.noReviewsYet': 'No reviews yet — be the first!',
+    'forum.noReviewsYet': 'No reviews yet, be the first!',
     'forum.optional': 'optional',
     'forum.reviewCourseLabel': 'Course',
-    'forum.reviewCoursePlaceholder': '— choose a course —',
+    'forum.reviewCoursePlaceholder': ', choose a course ,',
     'forum.reviewLoadingCourses': 'Loading your courses…',
-    'forum.reviewNoCourses': 'No courses yet — import your transcript to enable course reviews.',
+    'forum.reviewNoCourses': 'No courses yet, import your transcript to enable course reviews.',
     'forum.reviewProfessorLabel': 'Professor',
     'forum.reviewProfessorNone': 'No professor specified',
     'forum.reviewProfessorCustom': '+ Type a different name…',
@@ -1239,8 +1272,8 @@ const EN_TRANSLATIONS = {
     'dp.countTowardAutoNamed': 'Decide for me (currently {program})',
     'dp.countedTowardFoundation': 'Counted toward your Foundation (U0) year',
     'dp.sharedCoursesTitle': 'Courses claimed by more than one program',
-    'dp.sharedCoursesSub': 'A course can only count once. Pick where each of these should go — otherwise we place it in the first program that needs it.',
-    'dp.decisionsNeededHint': 'Courses two programs both want — pick where each should count.',
+    'dp.sharedCoursesSub': 'A course can only count once. Pick where each of these should go, otherwise we place it in the first program that needs it.',
+    'dp.decisionsNeededHint': 'Courses two programs both want, pick where each should count.',
     'dp.sharedCoursesBadge': '{n} programs',
     'dp.dismiss': 'Dismiss',
     'dp.tabCore': 'Core: {label}',
@@ -1392,7 +1425,7 @@ const EN_TRANSLATIONS = {
     'brief.noSaved': 'No saved cards yet. Bookmark cards to keep them here.',
     'brief.noCards': 'No {category} cards right now.',
     'brief.placeholder': 'Ask anything about your academics, creates a new chat card',
-    'brief.regHint': 'Check Minerva for your assigned start time — it differs between students.',
+    'brief.regHint': 'Check Minerva for your assigned start time, it differs between students.',
     'brief.regDate': 'Date',
     'brief.regTime': 'Time (optional)',
     'brief.regSave': 'Add to calendar',
@@ -1462,12 +1495,12 @@ const EN_TRANSLATIONS = {
     'privacy.s3Text': 'We do not sell, rent, or trade your personal information to third parties for marketing purposes.',
     'privacy.s4Title': '4. Third-Party Services',
     'privacy.s4Intro': 'We use the following third-party services to operate Symbolos. Some of them (including Anthropic and Vercel) process data in the United States; before relying on them we assessed this cross-border processing as Law 25 requires, and we minimize the data shared:',
-    'privacy.s4Items': 'Supabase: Database and authentication (data stored in Canada/US; database backups retained 7 days on a rolling basis)|Anthropic Claude API: AI-powered chat, advisor cards, transcript parsing, and elective recommendations|Resend: Transactional email delivery (verification + calendar reminders)|Vercel: Hosting and serverless functions (logs retained ~30 days)|Sentry: Error and crash telemetry (no message bodies; user IDs only; events retained 90 days)|PostHog: Anonymous product analytics (respects Do-Not-Track; can be disabled in your browser; events retained per PostHog\'s then-current platform default — see their privacy policy for the current period)|dmarcian: Email-domain authentication monitoring (aggregate stats only; never sees message content)',
+    'privacy.s4Items': 'Supabase: Database and authentication (data stored in Canada/US; database backups retained 7 days on a rolling basis)|Anthropic Claude API: AI-powered chat, advisor cards, transcript parsing, and elective recommendations|Resend: Transactional email delivery (verification + calendar reminders)|Vercel: Hosting and serverless functions (logs retained ~30 days)|Sentry: Error and crash telemetry (no message bodies; user IDs only; events retained 90 days)|PostHog: Anonymous product analytics (respects Do-Not-Track; can be disabled in your browser; events retained per PostHog\'s then-current platform default, see their privacy policy for the current period)|dmarcian: Email-domain authentication monitoring (aggregate stats only; never sees message content)',
     'privacy.s4Text': 'Each of these services has its own privacy policy governing how they handle data. We do not use third-party advertising networks, marketing pixels, or cross-site tracking.',
     'privacy.s5Title': '5. Data Retention & Deletion',
     'privacy.s5Text1': 'Your account and all associated data (courses, grades, calendar events, preferences, chat history, AI cards) are retained for as long as your account is active. You may delete your account at any time from the Settings tab; the deletion is immediate and permanent across our systems.',
     'privacy.s5Text2': 'You may also export the full contents of your account as a single JSON file from Settings → "Download my data" before deleting it. The export includes your profile, courses, transcript history, chat messages, AI cards, forum posts, calendar events, and every other table we associate with your account.',
-    'privacy.s5Text3': 'Deleting your account removes your data from our application database immediately. It does not retroactively purge infrastructure-level logs already generated at our subprocessors before the deletion — those age out on each subprocessor\'s own retention window listed in §4 (for example, Vercel request logs after ~30 days, Supabase database backups after 7 days, Sentry error events after 90 days).',
+    'privacy.s5Text3': 'Deleting your account removes your data from our application database immediately. It does not retroactively purge infrastructure-level logs already generated at our subprocessors before the deletion, those age out on each subprocessor\'s own retention window listed in §4 (for example, Vercel request logs after ~30 days, Supabase database backups after 7 days, Sentry error events after 90 days).',
     'privacy.s6Title': '6. Security & Data Breaches',
     'privacy.s6Text': 'We implement industry-standard security measures including HTTPS encryption with HSTS preload, SPF/DKIM/DMARC for outbound email, JWT-based authentication, database row-level security (RLS) via Supabase, per-user rate limiting, per-user daily AI-budget caps, server-side content sanitization for community submissions, and a public security disclosure address at /.well-known/security.txt. No system is perfectly secure, please use a strong, unique password and do not share your credentials. If a confidentiality incident occurs that presents a risk of serious injury, we will notify the Commission d\'accès à l\'information du Québec and any affected users without undue delay, and keep a register of the incident, as required by Law 25.',
     'privacy.s7Title': '7. Children\'s Privacy',
@@ -1493,7 +1526,7 @@ const EN_TRANSLATIONS = {
     'tos.s5Items': 'Violate any applicable laws or regulations|Harass, bully, or harm other users|Post false, misleading, or defamatory content in the community forum or clubs|Attempt to gain unauthorized access to our systems or other users\' accounts|Upload malicious files, viruses, or harmful code|Scrape, crawl, or systematically extract data from the Service|Impersonate McGill University, its staff, or other users|Spam or send unsolicited messages to other users|Use the AI advisor to generate academic work you intend to submit as your own (academic integrity is your responsibility)',
     'tos.s6Title': '6. AI Advisor: Disclaimer & Limitations',
     'tos.s6Warning': 'Important: The AI advisor is for informational and planning purposes only. It is not a substitute for official McGill academic advising.',
-    'tos.s6Items': 'AI-generated advice may contain errors, outdated information, or inaccuracies.|Always verify course requirements, prerequisites, and deadlines directly with McGill\'s official resources (eCalendar, Minerva, your departmental advisor).|Symbolos is not responsible for academic decisions made based on AI-generated content.|Course grade data is crowdsourced and may not be accurate or current.|RateMyProfessors ratings are third-party data and reflect individual opinions.|Club descriptions, meeting details, and join instructions may be automatically translated into French or Chinese using AI for viewer convenience; these translations may not be fully accurate — the original text submitted by the club is authoritative.',
+    'tos.s6Items': 'AI-generated advice may contain errors, outdated information, or inaccuracies.|Always verify course requirements, prerequisites, and deadlines directly with McGill\'s official resources (eCalendar, Minerva, your departmental advisor).|Symbolos is not responsible for academic decisions made based on AI-generated content.|Course grade data is crowdsourced and may not be accurate or current.|RateMyProfessors ratings are third-party data and reflect individual opinions.|Club descriptions, meeting details, and join instructions may be automatically translated into French or Chinese using AI for viewer convenience; these translations may not be fully accurate, the original text submitted by the club is authoritative.',
     'tos.s7Title': '7. User-Generated Content',
     'tos.s7Text1': 'By posting content on Symbolos (forum posts, club submissions, etc.), you grant us a non-exclusive, royalty-free license to display and distribute that content as part of the Service. You retain ownership of your content.',
     'tos.s7Text2': 'You are solely responsible for content you post. We reserve the right to remove any content that violates these Terms or our community guidelines, without notice.',

@@ -164,8 +164,8 @@ export default function SavedCoursesView({
               {/* The term header must stay a direct child of the auto-fill grid
                   on desktop (it relies on `grid-column: 1 / -1`), so the cards
                   get their own wrapper instead of the header being lifted out.
-                  `.saved-term-group` is `display: contents` on desktop — the
-                  grid sees the cards exactly as before — and becomes the
+                  `.saved-term-group` is `display: contents` on desktop, the
+                  grid sees the cards exactly as before, and becomes the
                   raised `.m-group` surface only inside `.mobile-shell`. */}
               <div className="saved-term-group m-group">
               {group.courses.map((course, idx) => (
@@ -267,7 +267,7 @@ export default function SavedCoursesView({
                     <button
                       className="completed-btn completed"
                       onClick={(e) => { e.stopPropagation(); onToggleCompleted?.({ subject: course.subject, catalog: course.catalog, title: course.course_title }) }}
-                      title={t('saved.tipRemoveCompleted')}
+                      title={t('courses.editCompleted')}
                     >
                       <FaCheckCircle className="completed-icon" /> <span className="action-pill-label">{t('saved.completed')}</span>
                     </button>

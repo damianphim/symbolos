@@ -35,7 +35,7 @@
 .progress-bar-container {
   height: 10px;
   background: var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   position: relative;
 }
@@ -43,7 +43,7 @@
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-active));
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   transition: width 0.8s ease;
   position: relative;
   overflow: hidden;
@@ -96,7 +96,7 @@
   padding: 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   transition: all 0.2s;
 }
 
@@ -198,7 +198,7 @@
   padding: 12px 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   transition: all 0.2s;
 }
 
@@ -322,7 +322,7 @@
   padding: 12px 16px;
   background: var(--warning-light);
   border-left: 3px solid var(--warning-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 13.5px;
   color: var(--warning-text);
   font-weight: 500;
@@ -345,7 +345,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   transition: opacity 0.15s, background 0.15s;
 }
 .info-note-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }

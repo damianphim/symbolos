@@ -129,7 +129,7 @@ export default function CourseDetailModal({
                   </button>
                   <button
                     className={`cdm-action-btn btn-done ${isCompleted?.(subj, cat) ? 'active' : ''}`}
-                    onClick={() => onToggleCompleted?.(course)}
+                    onClick={() => { closeCourse(); onToggleCompleted?.(course) }}
                   >
                     <FaCheckCircle />
                     {isCompleted?.(subj, cat) ? t('courses.detailCompleted') : t('courses.detailDone')}

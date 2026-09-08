@@ -30,12 +30,6 @@ export function generateICS(events) {
 
   events.forEach((ev, i) => {
     const dtstart = toICSDateUTC(ev.date, ev.time)
-    const dtend = ev.end_time
-      ? toICSDateUTC(ev.date, ev.end_time)
-      : ev.time
-        ? toICSDateUTC(ev.date, ev.time)
-        : dtstart
-
     lines.push('BEGIN:VEVENT')
     lines.push(`UID:symbolos-${ev.id || i}-${ev.date}@mcgill.symbolos.ca`)
     lines.push(`DTSTAMP:${toICSDateUTC(new Date().toISOString().split('T')[0], new Date().toTimeString().slice(0,5))}`)

@@ -166,13 +166,19 @@ Extract student_info fields:
   - faculty: the degree name (e.g. "Arts", "Science", "Engineering")
   - year: the Year number shown (e.g. "Year 1" -> 1, "Year 2" -> 2) as an integer
   - cum_gpa: the CUMULATIVE GPA on the final summary line labelled "CUM GPA"
-  - advanced_standing: ALL courses listed under "Credits/Exemptions" or
-    "Advanced Placement Exams" — these are AP/IB/transfer credits. Capture every one.
-    IMPORTANT: Read the credit value shown next to each individual course on the transcript.
-    If per-course credits are not individually listed but a section total is shown
-    (e.g. "Advanced Placement Exams - 20 credits" with 6 courses), divide the total
-    evenly (20/6 ≈ 3.33 per course) — do NOT default to 3 if the total doesn't match.
+  - advanced_standing: Read every explicit advanced-standing section, including
+    "Credits/Exemptions", "Advanced Placement Exams", "CEGEP", "Advanced Standing",
+    "Transfer Credits", and "International Baccalaureate". Preserve the stated
+    total, including a 30-credit CEGEP award. Do not infer transfer status from
+    a course's subject, level, or the student's current year.
+    Keep each individually credited course with its printed credits. If only
+    an aggregate award is printed, use course_code "CEGEP" (or "TRANSFER" for
+    other awards), its actual heading as course_title, and the printed total.
+    Do not divide an aggregate award among uncredited exemptions, invent course
+    equivalents, or count the aggregate again alongside its component credits.
 == STEP 2: Completed courses ==
+Read ALL term sections, including Foundation, Freshman and U0 terms. A graded
+McGill course in a term belongs here even if the same code appears as an exemption.
 Include ANY course row that has a final grade — including:
   - Standard letter grades: A, A-, B+, B, B-, C+, C, C-, D, F
   - Pass/fail grades: P (Pass), S (Satisfactory), U (Unsatisfactory)
@@ -626,7 +632,7 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
         profile_updates["minor"] = _str_field(student_info["minor"], 100)
     if student_info.get("faculty"):
         profile_updates["faculty"] = _str_field(student_info["faculty"], 100)
-    if student_info.get("year"):
+    if student_info.get("year") is not None:
         try:
             year_val = int(student_info["year"])
             if 0 <= year_val <= 10:
@@ -652,13 +658,19 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
                     code = normalize_course_code(str(item["course_code"]))[:20]
                     title = str(item.get("course_title", "")).strip()[:200]
                     key = (code, title.lower())
-                    if key in seen_standing:
+                    if key in seen_standing and not re.search(r"\dX+$", code, re.IGNORECASE):
+                        continue
+                    try:
+                        credits = float(item.get("credits") if item.get("credits") is not None else 3)
+                    except (ValueError, TypeError):
+                        continue
+                    if not 0 <= credits <= 60:
                         continue
                     seen_standing.add(key)
                     validated.append({
                         "course_code": code,
                         "course_title": title,
-                        "credits": min(max(float(item.get("credits") or 3), 0), 20),
+                        "credits": credits,
                     })
             if validated:
                 profile_updates["advanced_standing"] = validated

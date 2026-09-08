@@ -138,7 +138,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
 .landing-nav__logo {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   object-fit: cover;
 }
 .landing-nav__name {
@@ -152,7 +152,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
   background: var(--land-fg);
   color: #fff;
   padding: 9px 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -280,7 +280,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
   appearance: none;
   border: 1.5px solid transparent;
   padding: 12px 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -379,13 +379,13 @@ html[data-theme="dark"] #root:has(.landing-root) {
   width: 12px;
   height: 2px;
   background: var(--section-color, var(--land-accent));
-  border-radius: 2px;
+  border-radius: var(--radius-container);
 }
 
 /* ── Screenshot frame ────────────────────────────────────── */
 .landing-shot {
   width: 100%;
-  border-radius: 18px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   background: var(--land-shot-bg);
   /* Larger / softer drop shadow now that screenshots are full-width */
@@ -453,7 +453,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
   padding: 26px;
   background: var(--land-bg);
   border: 1px solid var(--land-border);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
 }
 .landing-privacy__card h3 {
   font-size: 1rem;
@@ -556,7 +556,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
 .landing-footer__logo {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   object-fit: cover;
 }
 .landing-footer__links {
@@ -684,7 +684,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
   padding: 28px 24px;
   background: var(--land-bg);
   border: 1px solid var(--land-border);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   text-align: left;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -695,7 +695,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
 .landing-forum__pill {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -751,7 +751,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
 }
 .landing-lang-btn {
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-size: 0.85rem;
   font-weight: 600;
 }

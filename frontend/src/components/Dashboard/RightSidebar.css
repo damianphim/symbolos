@@ -89,7 +89,7 @@
   height: 36px;
   background: linear-gradient(135deg, var(--accent-primary, #ED1B2F) 0%, #B01B2E 100%);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,7 +136,7 @@
   color: var(--text-secondary, #6b7280);
   cursor: pointer;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +159,7 @@
   line-height: 1;
   background: var(--accent-primary, #ED1B2F);
   color: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 1px 4px;
   min-width: 14px;
   text-align: center;
@@ -230,7 +230,7 @@
   font-size: 0.8rem;
   line-height: 1.6;
   padding: 0.55rem 0.85rem;
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   margin: 0;
   word-break: break-word;
 }
@@ -285,7 +285,7 @@
   gap: 6px;
   background: var(--bg-secondary, #f3f4f6);
   border: 1px solid var(--border-primary, #E0E0E0);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 6px 8px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -319,7 +319,7 @@
   color: white;
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,7 +383,7 @@
 .rsb-suggestion-chip {
   background: var(--bg-secondary, #f3f4f6);
   border: 1px solid var(--border-primary, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 0.45rem 0.75rem;
   font-size: 0.76rem;
   color: var(--text-secondary, #374151);
@@ -447,7 +447,7 @@
   color: var(--text-secondary, #9ca3af);
   cursor: pointer;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;
   display: flex;
@@ -512,7 +512,7 @@
 
 .rsb-pinned-msg {
   padding: 0.4rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border-left: 3px solid var(--accent-primary, #ED1B2F);
   background: rgba(237, 27, 47, 0.04);
   font-size: 0.75rem;

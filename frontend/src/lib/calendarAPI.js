@@ -228,7 +228,7 @@ export async function deleteEvent(eventId, userId) {
  */
 export async function migrateLocalStorageEvents(userId) {
   const LS_KEY = 'mcgill_calendar_events'
-  let localEvents = []
+  let localEvents
   try {
     localEvents = JSON.parse(localStorage.getItem(LS_KEY) || '[]')
   } catch {

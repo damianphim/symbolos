@@ -3,23 +3,28 @@ import { useLanguage } from '../../contexts/PreferencesContext'
 import Modal from '../ui/Modal'
 import './MarkCompleteModal.css'
 
-export default function MarkCompleteModal({ 
-  course, 
-  onConfirm, 
-  onCancel 
+export default function MarkCompleteModal({
+  course,
+  onConfirm,
+  onRemove,
+  onCancel
 }) {
   const { t } = useLanguage()
+  const [saving, setSaving] = useState(false)
   const currentYear = new Date().getFullYear()
   const [formData, setFormData] = useState({
-    term: 'Fall',
-    year: currentYear.toString(),
-    grade: '',
-    credits: course.defaultCredits || 3
+    term: (course.term || 'Fall').replace(/^./, c => c.toUpperCase()),
+    year: String(course.year || currentYear),
+    grade: course.grade || '',
+    credits: course.credits ?? course.defaultCredits ?? 3
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onConfirm({
+    if (saving) return
+    setSaving(true)
+    try {
+    await onConfirm({
       course_code:  `${course.subject} ${course.catalog}`,
       course_title: course.title || course.course_title || '',
       subject:      course.subject,
@@ -29,15 +34,18 @@ export default function MarkCompleteModal({
       grade:        formData.grade || null,
       credits:      formData.credits,
     })
+    } catch { /* Parent reports the error; keep the form available to retry. */ }
+    finally { setSaving(false) }
   }
 
   return (
-    <Modal onClose={onCancel} title={t('modal.markComplete')} size="md">
+    <Modal onClose={onCancel} title={t(course.editing ? 'courses.editCompleted' : 'modal.markComplete')} size="md">
           <div className="course-info">
             <div className="course-code-display">{course.code}</div>
             <div className="course-title-display">{course.title}</div>
           </div>
 
+          {course.transferCode && <p>{t('courses.correctTransferHint')}</p>}
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -89,6 +97,7 @@ export default function MarkCompleteModal({
                   <option value="F">F</option>
                   <option value="S">S (Satisfactory)</option>
                   <option value="U">U (Unsatisfactory)</option>
+                  {['P', 'W', 'L', 'EX', 'IP', 'CO', 'HH', 'K'].map(grade => <option key={grade} value={grade}>{grade}</option>)}
                 </select>
               </div>
 
@@ -97,7 +106,7 @@ export default function MarkCompleteModal({
                 <input
                   id="credits"
                   type="number"
-                  min="1"
+                  min="0"
                   max="12"
                   step="1"
                   value={formData.credits}
@@ -108,16 +117,20 @@ export default function MarkCompleteModal({
             </div>
 
             <div className="common-credits-note">
-              <strong>Common credit values:</strong> Most courses are 3 credits. 
+              <strong>Common credit values:</strong> Most courses are 3 credits.
               Lab courses are often 1-2 credits. Some intensive courses may be 4-6 credits.
             </div>
 
             <div className="modal-actions">
+              {course.editing && onRemove && <button type="button" className="btn-secondary" disabled={saving} onClick={async () => {
+                setSaving(true)
+                try { await onRemove() } catch { alert(t('courses.saveFailed')) } finally { setSaving(false) }
+              }}>{t('saved.tipRemoveCompleted')}</button>}
               <button type="button" className="btn-secondary" onClick={onCancel}>
                 {t('common.cancel')}
               </button>
-              <button type="submit" className="btn-primary">
-                {t('courses.markCompleted')}
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {t(saving ? 'common.saving' : course.editing ? 'common.save' : 'courses.markCompleted')}
               </button>
             </div>
           </form>

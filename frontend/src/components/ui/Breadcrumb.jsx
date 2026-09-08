@@ -2,7 +2,7 @@ import './ui.css'
 
 /**
  * Presentational breadcrumb trail. `items` is an ordered array of
- * { key, label, onClick } — the last item renders as plain (current)
+ * { key, label, onClick }, the last item renders as plain (current)
  * text, every earlier item is a clickable link back to that level.
  */
 export default function Breadcrumb({ items, className = '' }) {

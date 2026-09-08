@@ -14,7 +14,7 @@
 .dp-section-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   padding: 20px 24px;
   box-shadow: var(--shadow-sm);
 }
@@ -57,10 +57,10 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -78,7 +78,7 @@
 .dp-accordion {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
@@ -135,7 +135,7 @@
   color: var(--accent-text);
   font-size: 11px;
   font-weight: 700;
-  border-radius: 11px;
+  border-radius: var(--radius-control);
 }
 
 .dp-accordion-chevron {
@@ -162,7 +162,7 @@
   gap: 0;
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   padding: 6px;
   overflow: hidden;
 }
@@ -174,7 +174,7 @@
   justify-content: center;
   gap: 7px;
   padding: 11px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -209,7 +209,7 @@
   font-size: 11px;
   font-weight: 700;
   padding: 1px 7px;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   line-height: 1.6;
   min-width: 20px;
   text-align: center;
@@ -240,7 +240,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 4px;
     padding: 4px;
-    border-radius: 12px;
+    border-radius: var(--radius-container);
     overflow: visible;
   }
   .dp-subtab-btn {
@@ -249,7 +249,7 @@
     padding: 10px 8px;
     font-size: 12.5px;
     gap: 6px;
-    border-radius: 9px;
+    border-radius: var(--radius-control);
     min-width: 0;
     /* Allow the label to wrap onto a 2nd line if a translation is
        extra-long (FR/ZH) so it never truncates. */
@@ -282,7 +282,7 @@
 /* Degree requirements tab wrapper */
 .dp-req-tab-wrap {
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   height: 620px;
   min-height: 500px;
@@ -292,7 +292,7 @@
 /* Study Abroad tab — scrollable, not fixed height */
 .dp-sa-tab-wrap {
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   height: 620px;
   min-height: 500px;
   overflow-y: auto;
@@ -305,7 +305,7 @@
 .dp-sa-tab-wrap::-webkit-scrollbar { width: 5px; }
 .dp-sa-tab-wrap::-webkit-scrollbar-thumb {
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
 }
 .dp-sa-tab-wrap::-webkit-scrollbar-track { background: transparent; }
 
@@ -316,7 +316,7 @@
 .dp-req-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
@@ -334,7 +334,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 9px;
+  border-radius: var(--radius-container);
   background: var(--accent-light);
   color: var(--accent-primary);
   font-size: 15px;
@@ -391,10 +391,10 @@
   align-items: center;
   gap: 6px;
   padding: 9px 18px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -489,7 +489,7 @@
 /* Requirement blocks */
 .dp-req-block {
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   background: var(--bg-secondary);
 }
@@ -572,7 +572,7 @@
   gap: 4px;
   font-size: 11px;
   padding: 3px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -619,7 +619,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   transition: background 0.12s;
 }
 
@@ -635,7 +635,7 @@
   font-size: 10px;
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--warning-light, #fef9c3);
   color: var(--warning-text, #92400e);
   flex-shrink: 0;
@@ -659,7 +659,7 @@
 .dp-req-overlap-select {
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: 5px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--warning-primary, #f59e0b);
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -683,7 +683,7 @@
   color: var(--accent-primary);
   background: var(--accent-lighter);
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -701,7 +701,7 @@
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   flex-shrink: 0;
 }
 
@@ -711,7 +711,7 @@
 /* Recommended section */
 .dp-req-recs {
   border: 1px solid #fde68a;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: linear-gradient(135deg, #fffbeb, #fef9c3);
   overflow: hidden;
 }
@@ -747,7 +747,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 7px 8px;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   background: rgba(255,255,255,0.5);
   flex-wrap: wrap;
 }
@@ -763,7 +763,7 @@
   color: var(--warning-text);
   background: #fef9c3;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -786,7 +786,7 @@
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   flex-shrink: 0;
   background: #fae8ff;
   color: #6b21a8;
@@ -798,14 +798,14 @@
   gap: 4px;
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 4px;
 }
 
 .dp-prog-tab {
   flex: 1;
   padding: 8px 12px;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -843,7 +843,7 @@
   flex: 1;
   height: 6px;
   background: var(--border-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   display: flex;
 }
@@ -882,7 +882,7 @@
   color: var(--text-secondary);
   padding: 6px 8px;
   background: var(--bg-primary);
-  border-radius: 5px;
+  border-radius: var(--radius-container);
   margin: 4px 0 6px;
   line-height: 1.4;
 }
@@ -906,7 +906,7 @@
   color: var(--text-secondary);
   background: none;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
@@ -985,7 +985,7 @@
 .dp-electives-refresh {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -1022,7 +1022,7 @@
   padding: 12px 14px;
   background: var(--error-light);
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 12.5px;
   color: var(--error-primary);
   display: flex;
@@ -1032,7 +1032,7 @@
 }
 .dp-electives-error button {
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   border: 1px solid #fecaca;
   background: var(--bg-primary);
   color: var(--error-primary);
@@ -1045,7 +1045,7 @@
   color: var(--text-secondary);
   padding: 10px 12px;
   background: var(--accent-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--accent-light);
   margin: 0;
   line-height: 1.5;
@@ -1068,7 +1068,7 @@
 .dp-elective-card {
   padding: 12px 14px;
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
@@ -1107,7 +1107,7 @@
   color: var(--accent-primary);
   background: var(--accent-lighter);
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   white-space: nowrap;
 }
 
@@ -1115,7 +1115,7 @@
   font-size: 10px;
   font-weight: 600;
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   letter-spacing: 0.2px;
 }
 
@@ -1125,7 +1125,7 @@
   color: var(--success-text);
   background: var(--success-light);
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
 }
 
 .dp-elective-title {
@@ -1159,7 +1159,7 @@
   width: 100%;
   font-size: 11px;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-secondary);
@@ -1214,7 +1214,7 @@
   white-space: nowrap;
   background: var(--accent-lighter);
   padding: 2px 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-container);
   flex-shrink: 0;
 }
 
@@ -1301,7 +1301,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 3px 9px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   white-space: nowrap;
 }
 
@@ -1345,7 +1345,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 0.72rem;
   font-weight: 700;
   color: #fff;
@@ -1449,7 +1449,7 @@
 .drv-foundation-waived-banner {
   background: #e8f5e9;
   border: 1px solid #a5d6a7;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 10px 14px;
   margin: 0 0 12px 0;
   font-size: 13px;
@@ -1478,7 +1478,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   transition: opacity 0.15s, background 0.15s;
 }
 .dp-banner-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }
@@ -1607,14 +1607,14 @@
     gap: 2px;
     padding: 2px;
     border: none;
-    border-radius: 9px;
+    border-radius: var(--radius-control);
     background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
     overflow: hidden;
   }
   .mobile-shell .dp-view .dp-subtab-btn {
     min-height: 40px;
     padding: 7px 8px;
-    border-radius: 7px;
+    border-radius: var(--radius-control);
     background: transparent;
     box-shadow: none;
     font-size: 12.5px;
@@ -1671,12 +1671,12 @@
     gap: 2px;
     padding: 2px;
     border: none;
-    border-radius: 9px;
+    border-radius: var(--radius-control);
     background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
   }
   .mobile-shell .dp-view .dp-prog-tab {
     min-height: 34px;
-    border-radius: 7px;
+    border-radius: var(--radius-container);
     font-size: 12.5px;
   }
   .mobile-shell .dp-view .dp-prog-tab--active {

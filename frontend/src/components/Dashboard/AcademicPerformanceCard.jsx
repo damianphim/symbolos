@@ -1,3 +1,4 @@
+import { summarizeGrades } from '../../utils/academicGrades'
 import { useMemo, useState } from 'react'
 import { FaChartBar, FaChartLine, FaBullseye, FaLightbulb } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
@@ -8,7 +9,7 @@ import TargetGPACalculator from './TargetGPACalculator'
 import './AcademicPerformanceCard.css'
 
 /**
- * Academic Performance — current GPA, trend history, and the Target GPA
+ * Academic Performance, current GPA, trend history, and the Target GPA
  * calculator merged into one card beside Degree Progress on the My Degree
  * tab. The trend chart and calculator share the space behind a segmented
  * toggle so the card stays the same height as its neighbour. Credit math
@@ -30,16 +31,18 @@ export default function AcademicPerformanceCard({ profile = {}, completedCourses
     }
   }, [completedCourses, profile])
 
-  const currentGPA = profile?.current_gpa
+  const enteredGrades = useMemo(() => summarizeGrades(completedCourses), [completedCourses])
+  const currentGPA = enteredGrades.gpa ?? profile?.current_gpa
+  const futureCredits = Math.max(0, totalRequired - earnedCredits)
 
   return (
     <div className="apc">
       <SectionHeader icon={<FaChartBar />} title={t('profile.academicPerformance')} />
 
       <div className="apc-hero">
-        <span className="apc-hero-value">{currentGPA || '--'}</span>
+        <span className="apc-hero-value">{currentGPA == null ? '--' : Number(currentGPA).toFixed(2)}</span>
         <div className="apc-hero-meta">
-          <span className="apc-hero-label">{t('profile.currentGpa')}</span>
+          <span className="apc-hero-label">{t(enteredGrades.gpa == null ? 'profile.currentGpa' : 'gpa.enteredGrades')}</span>
           <span className="apc-hero-sub">
             {Math.round(earnedCredits)} / {totalRequired} {t('courses.credits').toLowerCase()}
           </span>
@@ -76,8 +79,8 @@ export default function AcademicPerformanceCard({ profile = {}, completedCourses
           <TargetGPACalculator
             compact
             currentGPA={currentGPA}
-            completedCredits={earnedCredits}
-            totalCreditsRequired={totalRequired}
+            completedCredits={enteredGrades.credits}
+            totalCreditsRequired={enteredGrades.credits + futureCredits}
           />
         )}
       </div>
