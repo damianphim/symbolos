@@ -464,7 +464,7 @@ function ProgramCard({ program, saved, onToggleSave, t }) {
   )
 }
 
-export default function StudyAbroadView({ profile = {} }) {
+export default function StudyAbroadView() {
   const { t, language } = useLanguage()
   const [view,         setView]         = useState('browse')
   const [typeFilter,   setTypeFilter]   = useState('all')

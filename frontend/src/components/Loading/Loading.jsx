@@ -1,4 +1,4 @@
-// Lightweight loading screen — single static logo with a pulse of light
+// Lightweight loading screen, single static logo with a pulse of light
 // travelling through the red/green sigma. No video, no heavy media.
 import loadingLogo from '../../assets/loading-logo.png'
 import './Loading.css'

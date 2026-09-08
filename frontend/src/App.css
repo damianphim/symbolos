@@ -55,7 +55,7 @@ body {
   height: 85vh;
   background: var(--chat-bg);
   box-shadow: 0 12px 40px var(--shadow-color);
-  border-radius: 24px;
+  border-radius: var(--radius-container);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -109,7 +109,7 @@ body {
 .message-bubble {
   max-width: 75%;
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   line-height: 1.6;
   font-size: 15px;
   position: relative;
@@ -173,7 +173,7 @@ body {
   flex: 1;
   padding: 16px 24px;
   border: 2px solid #f0f2f5;
-  border-radius: 50px;
+  border-radius: var(--radius-control);
   font-size: 16px;
   outline: none;
   transition: all 0.2s ease;
@@ -223,7 +223,7 @@ body {
   justify-content: center;
   padding: 2rem;
   text-align: center;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
+  background: var(--accent-primary);
   color: white;
 }
 
@@ -243,7 +243,7 @@ body {
   background: var(--bg-primary);
   color: var(--accent-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -252,3 +252,5 @@ body {
 .error-screen button:hover {
   transform: translateY(-2px);
 }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:active { background: var(--accent-active); }

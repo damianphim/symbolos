@@ -1,3 +1,4 @@
+:root { --radius-control: 2px; --radius-container: 4px; --accent-hover: #c81729; --accent-active: #a81423; }
 /* ═══════════════════════════════════════════════════════════════════
    COMPREHENSIVE THEME SYSTEM
    McGill AI Advisor - Complete Dark Mode Support
@@ -88,8 +89,8 @@
   --input-disabled-text: #9ca3af;
   
   /* ─── Buttons ─── */
-  --btn-primary-bg: #ed1b2f;
-  --btn-primary-hover: #d01929;
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-hover);
   --btn-primary-active: #b01623;
   --btn-primary-text: #ffffff;
   --btn-secondary-bg: #f3f4f6;
@@ -350,8 +351,8 @@
   --input-disabled-text: #5b626d;
 
   /* ─── Buttons ─── */
-  --btn-primary-bg: #ed1b2f;
-  --btn-primary-hover: #d01929;
+  --btn-primary-bg: var(--accent-primary);
+  --btn-primary-hover: var(--accent-hover);
   --btn-primary-active: #b01623;
   --btn-primary-text: #ffffff;
   --btn-secondary-bg: #1c2027;
@@ -534,12 +535,12 @@ body,
 
 ::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
 }
 
 ::-webkit-scrollbar-thumb:hover {

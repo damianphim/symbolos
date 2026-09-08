@@ -6,7 +6,7 @@ import { toDateStr } from './calendarConstants'
  * Mobile-only replacement for the 7-column month grid / week grid.
  *
  * A 7-column grid is unreadable at 360px, so on phones the same period
- * (whatever `dates` the caller passes — a month or a week) is rendered as a
+ * (whatever `dates` the caller passes, a month or a week) is rendered as a
  * chronological list grouped by day. The caller keeps ownership of the period
  * itself, so the existing month/week toggle and the prev/next nav keep working
  * unchanged; only the rendering of the period swaps.
@@ -41,7 +41,7 @@ export default function MobileAgenda({
       }
     })
     // Empty days are dropped to keep the list scannable, except today (always an
-    // anchor) and any explicitly pinned day — e.g. the day selected in the month
+    // anchor) and any explicitly pinned day, e.g. the day selected in the month
     // grid, which must stay visible even with no events so its add button is
     // reachable.
     .filter(g => g.events.length > 0 || g.dateStr === todayStr || g.dateStr === pinnedDateStr)

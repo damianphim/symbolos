@@ -1,5 +1,5 @@
 /**
- * useScrollReveal — small IntersectionObserver hook that flips an element's
+ * useScrollReveal, small IntersectionObserver hook that flips an element's
  * `data-revealed="true"` attribute once it enters the viewport, so CSS can
  * animate it in. One observer per element, disconnects after first reveal.
  *

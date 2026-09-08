@@ -88,11 +88,9 @@ const COURSE_CREDIT_RULES = {
 /**
  * Get the credit value for a McGill course
  * @param {string} courseCode - Course code (e.g., "COMP 206" or "COMP206")
- * @param {string} [subject] - Subject code (e.g., "COMP")
- * @param {string} [catalog] - Catalog number (e.g., "206")
  * @returns {number} - Number of credits (default 3)
  */
-export function getCourseCredits(courseCode, subject = null, catalog = null) {
+export function getCourseCredits(courseCode) {
   // Normalize course code
   const normalizedCode = courseCode.replace(/\s+/g, ' ').trim().toUpperCase()
   

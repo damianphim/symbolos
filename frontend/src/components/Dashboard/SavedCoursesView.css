@@ -63,7 +63,7 @@
   color: #991b1b;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
 }
 
 .saved-tab.active .tab-count {
@@ -114,7 +114,7 @@
   position: relative;
   background: var(--bg-primary);
   border: 2px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   padding: 16px;
   transition: all 0.2s ease;
   display: flex;
@@ -147,7 +147,7 @@
   color: var(--accent-primary);
   background: var(--card-bg);
   padding: 4px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
 }
 
 .saved-courses-view .course-title {
@@ -184,7 +184,7 @@
   height: auto;
   width: auto;
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-secondary, #E0E0E0);
   background: var(--bg-primary);
   color: var(--text-secondary);
@@ -280,7 +280,7 @@
   background: var(--accent-primary);
   color: white;
   padding: 4px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-size: 14px;
   font-weight: 600;
 }
@@ -445,7 +445,7 @@
   margin: 8px 0 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
   cursor: pointer;
@@ -536,7 +536,7 @@
     margin-bottom: 14px;
     border: none;
     border-bottom: none;
-    border-radius: 9px;
+    border-radius: var(--radius-container);
     background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
   }
   .mobile-shell .saved-courses-view .saved-tab {
@@ -547,7 +547,7 @@
     padding: 6px 8px;
     border: none;
     border-bottom: none;
-    border-radius: 7px;
+    border-radius: var(--radius-container);
     background: transparent;
     font-size: 12.5px;
     font-weight: 500;

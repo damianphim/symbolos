@@ -1,10 +1,10 @@
 /**
- * CookieConsent — Quebec Law 25 §8.1 affirmative-consent banner.
+ * CookieConsent, Quebec Law 25 §8.1 affirmative-consent banner.
  *
  * Non-essential cookies (PostHog product analytics, Vercel Analytics)
  * must not run until the user explicitly accepts. Strictly-necessary
  * cookies (auth session, theme, language, the consent choice itself)
- * always run — they're exempt.
+ * always run, they're exempt.
  *
  * Behaviour:
  *   • First visit, no stored choice → banner shows.
@@ -47,7 +47,7 @@ export default function CookieConsent() {
 
   // updateConsent applies locally (analytics react at once) + records the
   // choice server-side when authenticated. On the landing page there's no
-  // session yet, so it just no-ops the server call — the choice re-syncs on
+  // session yet, so it just no-ops the server call, the choice re-syncs on
   // login (AuthContext) and can be changed later in Settings → Privacy.
   const accept = () => { updateConsent('accepted'); setVisible(false) }
   const decline = () => { updateConsent('declined'); setVisible(false) }

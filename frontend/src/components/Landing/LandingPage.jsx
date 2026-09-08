@@ -7,10 +7,10 @@
  *
  * SCREENSHOTS expected at frontend/src/assets/landing/, one per
  * section × language × theme: `{prefix}-{langToken}-{light|dark}.{ext}`
- *   - brief-{english|french|mand}-{light|dark}  — Advisor cards / Brief tab
- *   - deg-{eng|fr|mand}-{light|dark}            — Degree Planning
- *   - cal-{eng|fr|mand}-{light|dark}            — Calendar grid with exam dots
- *   - club-{eng|fr|mand}-{light|dark}           — Clubs directory / detail
+ *   - brief-{english|french|mand}-{light|dark} , Advisor cards / Brief tab
+ *   - deg-{eng|fr|mand}-{light|dark}           , Degree Planning
+ *   - cal-{eng|fr|mand}-{light|dark}           , Calendar grid with exam dots
+ *   - club-{eng|fr|mand}-{light|dark}          , Clubs directory / detail
  *
  * <ThemedScreenshot prefix="brief" .../> picks the file matching the visitor's
  * current language + resolved theme (light/dark, "auto" included) live, and
@@ -31,7 +31,7 @@ import { useLanguage, useTheme } from '../../contexts/PreferencesContext'
 import useScrollReveal from './useScrollReveal'
 import './LandingPage.css'
 
-// Vite's import.meta.glob — bundles whichever screenshots actually exist in
+// Vite's import.meta.glob, bundles whichever screenshots actually exist in
 // frontend/src/assets/landing/ at build time, no errors if some are missing.
 // Drop files in that folder and restart dev/redeploy to pick them up.
 const _shots = import.meta.glob('../../assets/landing/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })
@@ -41,7 +41,7 @@ const _findShot = (basename) => {
 }
 
 // Screenshot filenames use inconsistent language tokens across sections
-// (brief: "english"/"french"; calendar/club/deg: "eng"/"fr") — try every
+// (brief: "english"/"french"; calendar/club/deg: "eng"/"fr"), try every
 // known token for the language rather than hardcoding one per prefix.
 const _LANG_TOKENS = { en: ['english', 'eng'], fr: ['french', 'fr'], zh: ['mand', 'zh', 'chinese'] }
 
@@ -101,7 +101,7 @@ export default function LandingPage({ onSignIn }) {
   // Mark the element so [data-landing] CSS hooks (full-bleed scroll layout,
   // dark-mode overrides) can target it. The landing page follows whatever
   // theme the visitor has picked (or their system preference), same as the
-  // rest of the app — it no longer forces light mode.
+  // rest of the app, it no longer forces light mode.
   useEffect(() => {
     const html = document.documentElement
     html.setAttribute('data-landing', 'true')

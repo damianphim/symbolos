@@ -197,6 +197,9 @@ async def add_completed_course(user_id: str, course: CompletedCourse, req: Reque
         if not response.data:
             raise DatabaseException("add_completed", "No data returned")
 
+        from .chat import invalidate_context_cache
+        invalidate_context_cache(user_id)
+
         logger.info(f"Added completed course {course.course_code} for user {user_id}")
         return {
             "completed_course": response.data[0],
@@ -242,8 +245,14 @@ async def update_completed_course(
 
     try:
         update_data = {
-            k: v for k, v in updates.model_dump().items() if v is not None
+            k: v for k, v in updates.model_dump(exclude_unset=True).items()
+            if v is not None or k == "grade"
         }
+
+        if update_data.get("term"):
+            update_data["term"] = update_data["term"].capitalize()
+        if update_data.get("grade"):
+            update_data["grade"] = update_data["grade"].upper()
 
         if not update_data:
             raise HTTPException(
@@ -264,6 +273,9 @@ async def update_completed_course(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Completed course not found",
             )
+
+        from .chat import invalidate_context_cache
+        invalidate_context_cache(user_id)
 
         return {
             "completed_course": response.data[0],
@@ -289,6 +301,9 @@ async def remove_completed_course(user_id: str, course_code: str, req: Request, 
         user_sb.table("completed_courses").delete().eq(
             "user_id", user_id
         ).eq("course_code", course_code).execute()
+
+        from .chat import invalidate_context_cache
+        invalidate_context_cache(user_id)
 
         logger.info(f"Removed completed course {course_code} for user {user_id}")
         return {"message": "Course removed", "course_code": course_code}

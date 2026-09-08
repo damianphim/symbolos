@@ -1,7 +1,40 @@
-// McGill AI Advisor — FR translations
+// McGill AI Advisor, FR translations
 // Auto-split from LanguageContext.jsx
 
 const FR_TRANSLATIONS = {
+    "gpa.enteredGrades": "Moyenne des notes saisies",
+
+    "courses.correctTransfer": "Corriger les crédits de transfert",
+    "courses.correctTransferHint": "Si vous avez suivi un de ces cours à McGill, indiquez le trimestre et la note. L’enregistrement remplace son exemption par un cours terminé à McGill.",
+    "courses.takenAtMcGill": "Suivi à McGill",
+
+    "common.save": "Enregistrer",
+    "common.remove": "Supprimer",
+
+    "courses.compare": "Comparer",
+    "courses.compareHint": "Comparez jusqu’à 3 cours. Les moyennes historiques et avis étudiants ne prédisent pas votre note.",
+    "courses.noComparisonData": "Non disponible",
+    "dp.chooseProgram": "Choisir ou modifier votre programme",
+    "dp.addCoursesManually": "Rechercher et ajouter des cours manuellement",
+
+    "clubs.directoryGrowing": "Ce répertoire débute et ne comprend pas tous les clubs de McGill. D’autres clubs apparaîtront à mesure que leurs responsables les ajouteront.",
+
+    "gpa.horizon": "Période du calcul",
+    "gpa.horizon.degree": "Reste du diplôme",
+    "gpa.horizon.term": "Ce trimestre",
+    "gpa.horizon.year": "Cette année universitaire",
+    "gpa.horizon.custom": "Période personnalisée",
+    "gpa.scopeHint": "Saisissez uniquement les crédits et notes inclus dans la moyenne de cette période. Ajustez le total suggéré à votre charge de cours.",
+    "gpa.scopeTotal": "Crédits totaux de la période",
+    "gpa.scopeCompleted": "Crédits déjà notés dans la période",
+    "gpa.scopeGpa": "Moyenne de ces crédits notés",
+
+    "common.saving": "Enregistrement…",
+    "upload.syllabusPdfHelp": "Importez des plans de cours PDF de 15 Mo maximum chacun. Dans Word ou Google Docs, exportez ou téléchargez d’abord au format PDF.",
+
+    "courses.editCompleted": "Modifier le cours terminé",
+    "courses.saveFailed": "Impossible de sauvegarder. Veuillez réessayer.",
+
     // ── Sidebar Nav ───────────────────────────────────────
     'nav.home': 'Accueil',
     'nav.chat': 'Bilan',
@@ -29,8 +62,8 @@ const FR_TRANSLATIONS = {
     'home.currentCourses': 'Cours actuels',
     'home.exploreCourses': 'Explorer les cours',
     'home.coursesEmptyTitle': 'Aucun cours actuel',
-    'home.coursesEmptySub': 'Importez votre relevé de notes pour voir vos cours ici.',
-    'home.coursesEmptyCta': 'Téléverser le relevé',
+    'home.coursesEmptySub': "Recherchez et ajoutez vos cours manuellement, ou importez votre relevé pour aller plus vite.",
+    'home.coursesEmptyCta': "Rechercher des cours",
     'home.coursesNoneThisTerm': 'Aucun cours ce trimestre',
     'home.coursesUpcomingSub': '{count} inscrits pour les trimestres à venir',
     'home.coursesUpcomingCta': 'Voir les cours à venir',
@@ -543,7 +576,7 @@ const FR_TRANSLATIONS = {
     'clubs.calOff': 'Calendrier inactif',
     'clubs.leave': 'Quitter',
 
-    // 2026-04 redesign — new keys
+    // 2026-04 redesign, new keys
     'clubs.manageClub':         'Gérer le club',
     'clubs.manageBtnShort':     'Gérer',
     'clubs.manage.members':     'Membres',
@@ -662,7 +695,7 @@ const FR_TRANSLATIONS = {
     'clubs.manage.removeManager': 'Retirer le gestionnaire',
     'clubs.manage.removeManagerConfirm': 'Retirer {name} comme gestionnaire ?',
     'clubs.manage.noManagers': 'Aucun gestionnaire supplémentaire.',
-    // Clubs — join modal, members, admin
+    // Clubs, join modal, members, admin
     'clubs.requestToJoin': 'Demande d\'adhésion à',
     'clubs.joinName': 'Nom',
     'clubs.joinEmail': 'Courriel',
@@ -1063,12 +1096,12 @@ const FR_TRANSLATIONS = {
     'forum.retry': 'Réessayer',
     'forum.noPostsFiltered': 'Aucun sujet ne correspond à vos filtres.',
     'forum.noPostsYet': 'Aucun sujet pour l\'instant, soyez le premier !',
-    'forum.noReviewsYet': 'Aucun avis pour l\'instant — soyez le premier !',
+    'forum.noReviewsYet': 'Aucun avis pour l\'instant, soyez le premier !',
     'forum.optional': 'optionnel',
     'forum.reviewCourseLabel': 'Cours',
-    'forum.reviewCoursePlaceholder': '— choisir un cours —',
+    'forum.reviewCoursePlaceholder': ', choisir un cours ,',
     'forum.reviewLoadingCourses': 'Chargement de vos cours…',
-    'forum.reviewNoCourses': 'Aucun cours encore — importez votre relevé de notes pour activer les avis de cours.',
+    'forum.reviewNoCourses': 'Aucun cours encore, importez votre relevé de notes pour activer les avis de cours.',
     'forum.reviewProfessorLabel': 'Professeur',
     'forum.reviewProfessorNone': 'Aucun professeur précisé',
     'forum.reviewProfessorCustom': '+ Saisir un autre nom…',
@@ -1158,7 +1191,7 @@ const FR_TRANSLATIONS = {
     'dp.countedTowardFoundation': 'Compté pour votre année de fondation (U0)',
     'dp.sharedCoursesTitle': 'Cours revendiqués par plus d\'un programme',
     'dp.sharedCoursesSub': 'Un cours ne peut compter qu\'une seule fois. Choisissez où placer chacun de ces cours, sinon nous l\'attribuons au premier programme qui en a besoin.',
-    'dp.decisionsNeededHint': 'Cours que deux programmes revendiquent — choisissez où chacun doit compter.',
+    'dp.decisionsNeededHint': 'Cours que deux programmes revendiquent, choisissez où chacun doit compter.',
     'dp.sharedCoursesBadge': '{n} programmes',
     'dp.tabFoundationLabel': 'Fondation (U0)',
     'dp.ringFoundation': 'Fondation (U0)',
@@ -1247,7 +1280,7 @@ const FR_TRANSLATIONS = {
     'dp.browsePrograms': 'Parcourir les programmes',
     'dp.searchPrograms': 'Rechercher des programmes…',
     'dp.noProgramsMatch': 'Aucun programme correspondant.',
-    'dp.loadFacultyReqs': 'Charger les exigences — {faculty}',
+    'dp.loadFacultyReqs': 'Charger les exigences, {faculty}',
     'dp.loadProgramsError': 'Impossible de charger les programmes. Essayez d\'abord de charger les exigences.',
     'dp.loadFailed': 'Échec du chargement : {detail}',
     'dp.loadRequestFailed': 'La demande de chargement a échoué. Le serveur est-il en marche ?',
@@ -1311,7 +1344,7 @@ const FR_TRANSLATIONS = {
     'brief.noSaved': 'Aucune fiche sauvegardée. Marquez des fiches pour les retrouver ici.',
     'brief.noCards': 'Aucune fiche {category} pour le moment.',
     'brief.placeholder': 'Posez une question sur vos études, crée une nouvelle fiche de chat',
-    'brief.regHint': 'Vérifiez Minerva pour votre heure d\'ouverture — elle varie d\'un étudiant à l\'autre.',
+    'brief.regHint': 'Vérifiez Minerva pour votre heure d\'ouverture, elle varie d\'un étudiant à l\'autre.',
     'brief.regDate': 'Date',
     'brief.regTime': 'Heure (facultatif)',
     'brief.regSave': 'Ajouter au calendrier',
@@ -1462,12 +1495,12 @@ const FR_TRANSLATIONS = {
     'privacy.s3Text': 'Nous ne vendons, ne louons ni n\'échangeons vos informations personnelles à des tiers à des fins marketing.',
     'privacy.s4Title': '4. Services tiers',
     'privacy.s4Intro': 'Nous utilisons les services tiers suivants pour faire fonctionner Symbolos. Certains (dont Anthropic et Vercel) traitent des données aux États-Unis ; avant d\'y recourir, nous avons évalué ce traitement hors Québec comme l\'exige la Loi 25, et nous limitons les données partagées :',
-    'privacy.s4Items': 'Supabase : Base de données et authentification (stockées au Canada/États-Unis ; sauvegardes de la base de données conservées 7 jours de façon glissante)|Anthropic Claude API : Chat IA, cartes de conseil, analyse de relevés et recommandations de cours|Resend : Livraison d\'e-mails transactionnels (vérification, rappels de calendrier)|Vercel : Hébergement et fonctions serverless (journaux conservés ~30 jours)|Sentry : Télémétrie d\'erreurs et plantages (aucun contenu de message ; identifiants seulement ; événements conservés 90 jours)|PostHog : Analytique produit anonyme (respecte Do-Not-Track ; désactivable dans votre navigateur ; événements conservés selon la politique de conservation alors en vigueur chez PostHog — voir leur politique de confidentialité pour la durée actuelle)|dmarcian : Surveillance d\'authentification du domaine e-mail (statistiques agrégées uniquement)',
+    'privacy.s4Items': 'Supabase : Base de données et authentification (stockées au Canada/États-Unis ; sauvegardes de la base de données conservées 7 jours de façon glissante)|Anthropic Claude API : Chat IA, cartes de conseil, analyse de relevés et recommandations de cours|Resend : Livraison d\'e-mails transactionnels (vérification, rappels de calendrier)|Vercel : Hébergement et fonctions serverless (journaux conservés ~30 jours)|Sentry : Télémétrie d\'erreurs et plantages (aucun contenu de message ; identifiants seulement ; événements conservés 90 jours)|PostHog : Analytique produit anonyme (respecte Do-Not-Track ; désactivable dans votre navigateur ; événements conservés selon la politique de conservation alors en vigueur chez PostHog, voir leur politique de confidentialité pour la durée actuelle)|dmarcian : Surveillance d\'authentification du domaine e-mail (statistiques agrégées uniquement)',
     'privacy.s4Text': 'Chaque service a sa propre politique de confidentialité régissant la gestion des données. Nous n\'utilisons aucun réseau publicitaire tiers, pixel de suivi marketing ou suivi inter-sites.',
     'privacy.s5Title': '5. Conservation et suppression des données',
     'privacy.s5Text1': 'Votre compte et toutes les données associées (cours, notes, événements de calendrier, préférences, historique de discussion, cartes IA) sont conservés tant que votre compte est actif. Vous pouvez supprimer votre compte à tout moment depuis Paramètres ; la suppression est immédiate et permanente.',
     'privacy.s5Text2': 'Vous pouvez aussi exporter l\'intégralité de votre compte sous forme de fichier JSON unique depuis Paramètres → « Télécharger mes données » avant de le supprimer. L\'export inclut votre profil, vos cours, votre historique de relevés, vos messages de discussion, vos cartes IA, vos publications de forum, vos événements de calendrier et toute autre table que nous associons à votre compte.',
-    'privacy.s5Text3': 'La suppression de votre compte retire immédiatement vos données de notre base de données applicative. Elle ne purge pas rétroactivement les journaux techniques déjà générés chez nos sous-traitants avant la suppression — ceux-ci expirent selon la durée de conservation propre à chaque sous-traitant, indiquée au §4 (par exemple, les journaux de requêtes Vercel après ~30 jours, les sauvegardes Supabase après 7 jours, les événements d\'erreur Sentry après 90 jours).',
+    'privacy.s5Text3': 'La suppression de votre compte retire immédiatement vos données de notre base de données applicative. Elle ne purge pas rétroactivement les journaux techniques déjà générés chez nos sous-traitants avant la suppression, ceux-ci expirent selon la durée de conservation propre à chaque sous-traitant, indiquée au §4 (par exemple, les journaux de requêtes Vercel après ~30 jours, les sauvegardes Supabase après 7 jours, les événements d\'erreur Sentry après 90 jours).',
     'privacy.s6Title': '6. Sécurité et incidents de confidentialité',
     'privacy.s6Text': 'Nous mettons en œuvre des mesures de sécurité aux normes de l\'industrie : chiffrement HTTPS avec préchargement HSTS, SPF/DKIM/DMARC pour l\'e-mail sortant, authentification JWT, sécurité au niveau des lignes (RLS) via Supabase, limitation de débit par utilisateur, plafonds quotidiens d\'utilisation IA par utilisateur, assainissement côté serveur des contenus communautaires, et adresse publique de divulgation de sécurité à /.well-known/security.txt. Aucun système n\'est parfaitement sécurisé, veuillez utiliser un mot de passe fort et unique et ne partagez pas vos identifiants.',
     'privacy.s7Title': '7. Confidentialité des enfants',
@@ -1493,7 +1526,7 @@ const FR_TRANSLATIONS = {
     'tos.s5Items': 'Enfreindre les lois ou réglementations applicables|Harceler, intimider ou nuire à d\'autres utilisateurs|Publier du contenu faux, trompeur ou diffamatoire dans le forum communautaire ou les clubs|Tenter d\'accéder sans autorisation à nos systèmes ou aux comptes d\'autres utilisateurs|Téléverser des fichiers malveillants, des virus ou du code nuisible|Extraire, explorer ou extraire systématiquement des données du Service|Se faire passer pour l\'Université McGill, son personnel ou d\'autres utilisateurs|Envoyer du spam ou des messages non sollicités à d\'autres utilisateurs|Utiliser le conseiller IA pour générer du travail académique que vous avez l\'intention de soumettre comme le vôtre (l\'intégrité académique est votre responsabilité)',
     'tos.s6Title': '6. Conseiller IA : Avertissement et limitations',
     'tos.s6Warning': 'Important : Le conseiller IA est uniquement à titre informatif et de planification. Il ne remplace pas le conseil académique officiel de McGill.',
-    'tos.s6Items': 'Les conseils générés par l\'IA peuvent contenir des erreurs, des informations obsolètes ou des inexactitudes.|Vérifiez toujours les exigences de cours, les prérequis et les échéances directement auprès des ressources officielles de McGill (eCalendar, Minerva, votre conseiller départemental).|Symbolos n\'est pas responsable des décisions académiques prises sur la base du contenu généré par l\'IA.|Les données de notes de cours sont participatives et peuvent ne pas être exactes ou actuelles.|Les évaluations RateMyProfessors sont des données tierces et reflètent des opinions individuelles.|Les descriptions de clubs, les détails des réunions et les instructions d\'adhésion peuvent être automatiquement traduits en français ou en chinois par IA, par souci de commodité; ces traductions peuvent ne pas être entièrement exactes — le texte original soumis par le club fait foi.',
+    'tos.s6Items': 'Les conseils générés par l\'IA peuvent contenir des erreurs, des informations obsolètes ou des inexactitudes.|Vérifiez toujours les exigences de cours, les prérequis et les échéances directement auprès des ressources officielles de McGill (eCalendar, Minerva, votre conseiller départemental).|Symbolos n\'est pas responsable des décisions académiques prises sur la base du contenu généré par l\'IA.|Les données de notes de cours sont participatives et peuvent ne pas être exactes ou actuelles.|Les évaluations RateMyProfessors sont des données tierces et reflètent des opinions individuelles.|Les descriptions de clubs, les détails des réunions et les instructions d\'adhésion peuvent être automatiquement traduits en français ou en chinois par IA, par souci de commodité; ces traductions peuvent ne pas être entièrement exactes, le texte original soumis par le club fait foi.',
     'tos.s7Title': '7. Contenu généré par les utilisateurs',
     'tos.s7Text1': 'En publiant du contenu sur Symbolos (publications de forum, soumissions de clubs, etc.), vous nous accordez une licence non exclusive et libre de redevances pour afficher et distribuer ce contenu dans le cadre du Service. Vous conservez la propriété de votre contenu.',
     'tos.s7Text2': 'Vous êtes seul responsable du contenu que vous publiez. Nous nous réservons le droit de supprimer tout contenu qui enfreint ces Conditions ou nos directives communautaires, sans préavis.',

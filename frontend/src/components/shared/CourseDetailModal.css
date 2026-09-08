@@ -24,7 +24,7 @@
 .cdm-panel {
   position: relative;
   background: var(--bg-primary, #fff);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   width: 100%;
   max-width: 860px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
@@ -69,7 +69,7 @@
 .cdm-skeleton-code,
 .cdm-skeleton-title,
 .cdm-skeleton-desc {
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: linear-gradient(90deg, var(--bg-secondary, #f3f4f6) 25%, var(--border-color, #e5e7eb) 50%, var(--bg-secondary, #f3f4f6) 75%);
   background-size: 200% 100%;
   animation: cdm-shimmer 1.4s infinite;
@@ -127,7 +127,7 @@
   color: var(--color-primary, #3b82f6);
   background: color-mix(in srgb, var(--color-primary, #3b82f6) 12%, transparent);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
 }
 
 .cdm-credits {
@@ -136,7 +136,7 @@
   color: var(--text-secondary, #6b7280);
   background: var(--bg-secondary, #f3f4f6);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
 }
 
 .cdm-title {
@@ -168,7 +168,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid var(--border-color, #e5e7eb);
@@ -204,7 +204,7 @@
   gap: 6px;
   background: var(--bg-primary, #fff);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 8px 14px;
   font-size: 0.82rem;
 }
@@ -292,7 +292,7 @@
   color: var(--text-secondary, #6b7280);
   background: var(--bg-secondary, #f3f4f6);
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   margin-left: auto;
 }
 
@@ -335,7 +335,7 @@
 .cdm-schedule-card {
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -354,7 +354,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--radius-control);
   background: var(--color-primary, #3b82f6);
   color: #fff;
 }
@@ -408,7 +408,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   padding: 2px 6px;
-  border-radius: 5px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary, #fff);
   border: 1px solid var(--border-color, #d1d5db);
   color: var(--text-secondary, #4b5563);
@@ -450,7 +450,7 @@
 
 .cdm-grade-bar-wrap {
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   height: 8px;
   overflow: hidden;
 }
@@ -458,7 +458,7 @@
 .cdm-grade-bar {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #06b6d4);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   transition: width 0.4s ease;
 }
 
@@ -494,7 +494,7 @@
   min-width: 72px;
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 12px 8px;
   text-align: center;
   display: flex;
@@ -535,7 +535,7 @@
   padding: 7px 10px;
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.83rem;
   color: var(--text-primary, #374151);
 }
@@ -553,7 +553,7 @@
   background: var(--color-primary, #3b82f6);
   color: #fff;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--radius-control);
   white-space: nowrap;
 }
 
@@ -586,7 +586,7 @@
   line-height: 1.55;
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 8px 10px;
 }
 
@@ -597,3 +597,5 @@
 [data-theme="dark"] .cdm-grade-bar {
   background: linear-gradient(90deg, #60a5fa, #22d3ee);
 }
+
+.cdm-action-btn svg { flex-shrink: 0; overflow: visible; }

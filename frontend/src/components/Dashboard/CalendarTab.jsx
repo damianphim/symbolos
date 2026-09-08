@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
   FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
@@ -162,7 +162,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    // Pull BOTH current and completed courses — past exams stay in the
+    // Pull BOTH current and completed courses, past exams stay in the
     // calendar as a permanent history record even after the term ends and
     // courses move from "current" → "completed".
     Promise.all([
@@ -173,7 +173,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       const currentCourses   = curData?.current_courses    || []
       const completedCourses = compData?.completed_courses || []
 
-      // Dedupe by course_code — if a course is somehow in both lists,
+      // Dedupe by course_code, if a course is somehow in both lists,
       // current wins (it's the most recent enrollment).
       const seen = new Set()
       const allCourses = []
@@ -191,7 +191,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       const events = []
       const todayStr = new Date().toISOString().split('T')[0]
 
-      // "When did the user actually start using Symbolos?" — use account
+      // "When did the user actually start using Symbolos?", use account
       // created_at, NOT per-course created_at. Re-importing a transcript
       // moves courses from current → completed with a fresh per-row
       // timestamp, which is misleading. The account creation date is the
@@ -206,7 +206,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
         //  1. Term/year must match the course's recorded term/year so a
         //     Winter 2026 exam never shows up for a course taken in Winter
         //     2025 (and vice versa). Current courses (no term/year) get
-        //     all future exams — student is presumably enrolled.
+        //     all future exams, student is presumably enrolled.
         //  2. For HISTORICAL courses, the USER ACCOUNT must have existed on
         //     or before the exam date. Accounts created after the exam can't
         //     have had a real calendar history for that exam, so we skip it.
@@ -220,7 +220,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
             if (userCreatedAt && userCreatedAt > exam.date) return false
             return true
           } else {
-            // Current course — show all future-or-today exams
+            // Current course, show all future-or-today exams
             return exam.date >= todayStr
           }
         })
@@ -380,7 +380,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   // below. Kept inside the visible month by the effect further down so paging
   // months always lands on a day that's actually on screen.
   const [selectedDate, setSelectedDate] = useState(today)
-  // Calendar granularity — 'month' (existing grid) or 'week' (full agenda per
+  // Calendar granularity, 'month' (existing grid) or 'week' (full agenda per
   // day, so users can see clearly what's due in the next 7 days).
   const [calGranularity, setCalGranularity] = useState('month')
   const startOfWeek = (d) => { const s = new Date(d); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() - s.getDay()); return s }
@@ -407,6 +407,25 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
   const [popupEvent, setPopupEvent]   = useState(null)
   const [notifSaved, setNotifSaved]   = useState(false)
   const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const moreMenuRef = useRef(null)
+  useEffect(() => {
+    if (!showMoreMenu) return
+    const onPointer = (event) => {
+      if (!moreMenuRef.current?.contains(event.target)) setShowMoreMenu(false)
+    }
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        setShowMoreMenu(false)
+        moreMenuRef.current?.querySelector('.cal-more-btn')?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [showMoreMenu])
   const [showGCalGuide, setShowGCalGuide] = useState(false)
   const [guideProvider, setGuideProvider] = useState('google')
   const [showBulkDelete, setShowBulkDelete] = useState(false)
@@ -483,7 +502,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     [allEvents, filter, hiddenSlotKeys, mutedClubIds, hiddenEventIds]
   )
 
-  // Per-type counts from the full (unfiltered) event universe — used to fold
+  // Per-type counts from the full (unfiltered) event universe, used to fold
   // chips for types the student has no events of behind "+N more", so the
   // filter bar doesn't force everyone to scan six chips up front.
   const eventCountsByType = useMemo(() => {
@@ -492,7 +511,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     return counts
   }, [allEvents])
   const [showAllFilterChips, setShowAllFilterChips] = useState(false)
-  // Phones get the chip row behind a compact disclosure — six chips wrap into
+  // Phones get the chip row behind a compact disclosure, six chips wrap into
   // three rows at 360px and push the calendar itself below the fold.
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const mutedFilterCount = Object.values(filter).filter(v => v === false).length
@@ -525,7 +544,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
 
   // Keep the mobile month grid's selected day on a date that's actually in the
   // month being shown. Paging to another month jumps to today if it's that
-  // month, else the 1st — never leaves a stale day from the previous month.
+  // month, else the 1st, never leaves a stale day from the previous month.
   // (today is omitted from deps: getNow() returns a fresh Date each render, and
   // we only need to react to the visible month/granularity changing.)
   useEffect(() => {
@@ -736,7 +755,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
 
   const urgentEvents = upcomingEvents.filter(e => daysUntil(e.date) <= 7)
 
-  // Announcements list shows 5 at a time — urgentEvents above stays computed
+  // Announcements list shows 5 at a time, urgentEvents above stays computed
   // from the full upcomingEvents so the "N events in 7 days" banner and any
   // badge counts stay accurate regardless of how much is expanded on screen.
   const [showAllUpcoming, setShowAllUpcoming] = useState(false)
@@ -787,9 +806,14 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
               <FaNewspaper /> <span>{L(language, 'Newsletters', 'Infolettres', '通讯')}</span>
             </button>
           </div>
-          <div className="cal-export-wrap">
+          <button className="cal-export-btn" onClick={() => downloadICS(filteredEvents, 'mcgill-calendar.ics')}>
+            {t('calendar.exportICS')}
+          </button>
+          <div className="cal-export-wrap" ref={moreMenuRef}>
             <button
               className="cal-export-btn cal-more-btn"
+              aria-expanded={showMoreMenu}
+              aria-haspopup="true"
               onClick={() => setShowMoreMenu(p => !p)}
               aria-label={L(language, 'More options', "Plus d'options", '更多选项')}
               title={L(language, 'More options', "Plus d'options", '更多选项')}
@@ -841,7 +865,7 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
         </button>
       )}
 
-      {/* Filter Bar — chips for types with zero events fold behind "+N more" */}
+      {/* Filter Bar, chips for types with zero events fold behind "+N more" */}
       <div className={`cal-filter-bar${isMobile && !showMobileFilters ? ' cal-filter-bar--collapsed' : ''}`}>
         {(() => {
           const visibleTypes = Object.entries(typeConfig).filter(([key]) => key !== 'newsletter' || isMcGillEmail)

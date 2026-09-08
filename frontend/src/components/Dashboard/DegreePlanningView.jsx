@@ -1,3 +1,4 @@
+import { useDashboardData } from '../../contexts/DashboardDataContext'
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   FaHeart, FaRegHeart, FaCheckCircle, FaStar, FaBook,
@@ -39,7 +40,7 @@ async function getAuthHeaders() {
  * Economics for Management Students is the only one today: ECON 230D1/D2
  * replaces MGCR 293 and ECON 332 + ECON 333 replace MGCR 294, and those ECON
  * courses count toward the major. Their Core is 36 credits over 12 courses, not
- * 42 over 14 — which is how McGill arrives at 69 for the whole program.
+ * 42 over 14, which is how McGill arrives at 69 for the whole program.
  */
 const BCOM_CORE_VARIANTS = {
   economics_management_major_bcom: 'bcom_core_economics',
@@ -148,7 +149,7 @@ function toProgramKey(name, type = 'major', faculty = '') {
       'Information Technology Management': 'it_management',
       // These two slugs must match the seeded program_keys exactly. They used
       // to read 'ob_hr' and 'intl_management', which produced
-      // ob_hr_major_bcom / intl_management_major_bcom — neither of which
+      // ob_hr_major_bcom / intl_management_major_bcom, neither of which
       // exists, so students in those majors got a 404 and an empty
       // requirements tab.
       'Organizational Behaviour and Human Resources': 'organizational_behaviour_hr',
@@ -338,8 +339,8 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
       if (!c.subject || !c.catalog) return false
       const key = `${c.subject} ${c.catalog}`.toUpperCase()
       if (requiredCodes.has(key)) return false
-      // Anything a program already counts — including U0 Foundation work and
-      // courses the student placed by hand — is not an elective.
+      // Anything a program already counts, including U0 Foundation work and
+      // courses the student placed by hand, is not an elective.
       if (effectiveAllocation[key]) return false
       for (const b of wildcardAllBlocks) {
         if (blockWildcardMatches(b, [c]).length > 0) return false
@@ -349,8 +350,8 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
   }, [completedCourses, currentCourses, profile, requiredCodes, wildcardAllBlocks, effectiveAllocation])
 
   // Courses two or more programs would both count. Before, these were invisible
-  // — they weren't electives (a program claimed them) and no requirement row
-  // offered a picker for them unless a program named the course outright — so a
+  //, they weren't electives (a program claimed them) and no requirement row
+  // offered a picker for them unless a program named the course outright, so a
   // course quietly filled a requirement in two programs at once.
   const contestedCourses = useMemo(() => {
     const byKey = new Map()
@@ -380,7 +381,7 @@ function ElectivesPanel({ profile, completedCourses, currentCourses, allProgramD
 
   return (
     <div className="dp-electives">
-      {/* Courses more than one program could count — placed here so the
+      {/* Courses more than one program could count, placed here so the
           student decides, rather than the same 3 credits inflating two
           progress bars. */}
       {contestedCourses.length > 0 && (
@@ -733,6 +734,7 @@ function RecommendationsPanel({ profile, completedCourses, currentCourses, allPr
 
 // ── My Program Requirements card ──────────────────────────────────────────────
 function ProgramSection({ prog, completedCourses, currentCourses, advStanding, openBlocks, setOpenBlocks, courseAllocations = {}, effectiveAllocation = {}, assignCourse, overlapKeys = new Set(), allProgramData = [] }) {
+  const { handleToggleCompleted } = useDashboardData()
   const { t } = useLanguage()
   const { openCourse } = useCourseDetail()
   if (!prog) return null
@@ -740,12 +742,12 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
   const progKey = prog.program_key
 
   // Course codes explicitly named by some requirement row anywhere in this
-  // program — used to stop a wildcard/complementary block (e.g. "any COMP
+  // program, used to stop a wildcard/complementary block (e.g. "any COMP
   // 300+ course") from also claiming a course a more specific block (e.g.
   // Group D) already counts by name.
   const explicitClaims = explicitlyClaimedCourseKeys(prog.blocks)
 
-  // Progress: two-phase — exact listed courses then wildcard blocks (min_level
+  // Progress: two-phase, exact listed courses then wildcard blocks (min_level
   // / null catalog). Credit is only "earned" from COMPLETED work (transfer or
   // a final grade); currently-registered courses are tracked as in-progress
   // and shown separately, never counted as earned.
@@ -764,7 +766,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
     seenDbKeys.add(key)
     if (matchTransfer(c, advStanding)) return
     // A course that two programs could both count is resolved to exactly one
-    // of them (see effectiveAllocation) — skip it here if that isn't us.
+    // of them (see effectiveAllocation), skip it here if that isn't us.
     if (effectiveAllocation[key] && effectiveAllocation[key] !== progKey) return
     const ucCompleted = completedCourses.find(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
     const ucCurrent   = currentCourses.find(uc => `${uc.subject} ${uc.catalog}`.toUpperCase() === key)
@@ -777,8 +779,8 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
     }
   }))
 
-  // Phase 2: wildcard blocks — placeholder "Any 200-level X course",
-  // null-catalog, or min_level — capped at each block's credit need. Completed
+  // Phase 2: wildcard blocks, placeholder "Any 200-level X course",
+  // null-catalog, or min_level, capped at each block's credit need. Completed
   // matches award earned credit first; registered ones fill the remaining need
   // as in-progress. explicitClaims stops a wildcard slot from also counting a
   // course another block already claims by name.
@@ -808,7 +810,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
     takeWildcard(currentCourses, false)
   })
 
-  // Phase 3: manually-added electives — courses the user explicitly assigned
+  // Phase 3: manually-added electives, courses the user explicitly assigned
   // to THIS program from the Electives tab that no block matched. They get
   // their own "Other Courses (Added by you)" dropdown below; completed ones
   // count toward earned credit, registered ones toward in-progress.
@@ -830,7 +832,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
 
   return (
     <div className="dp-prog-section">
-      {/* Progress bar — solid = completed credit, lighter = in-progress */}
+      {/* Progress bar, solid = completed credit, lighter = in-progress */}
       <div className="dp-prog-bar-wrap">
         <div className="dp-prog-bar-track">
           <div className="dp-prog-bar-fill" style={{ width: `${pct}%` }} />
@@ -847,7 +849,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
       {/* Blocks */}
       {prog.blocks?.map(block => {
         // Block progress. A block is only DONE (green) when its required
-        // credits are met by COMPLETED work — transfer credit or a course with
+        // credits are met by COMPLETED work, transfer credit or a course with
         // a final grade. Currently-registered ("Taking") courses do NOT award
         // credit and never turn a block green; they only mark it in-progress
         // (blue) until the grade is in.
@@ -871,7 +873,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
           }
         }
 
-        // Wildcard credit — placeholder "Any 200-level X course", null-catalog,
+        // Wildcard credit, placeholder "Any 200-level X course", null-catalog,
         // or min_level. excludeKeys (explicitClaims) stops it from counting a
         // course another block already claims by name (Group D's COMP 302 can't
         // also fill this block's "any COMP 300+"). Completed wildcard matches
@@ -910,7 +912,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
           ? reqCompleted.length === reqCourses.length && creditsCompleted >= creditsNeeded
           : creditsNeeded > 0 && creditsCompleted >= creditsNeeded
         const blockInProgress = !blockDone && (creditsInProgress > 0 || reqInProgress.length > 0 || creditsCompleted > 0)
-        // Default-collapse blocks that are already 100% complete — the pill
+        // Default-collapse blocks that are already 100% complete, the pill
         // badge in the header still shows their status. Once the user
         // explicitly toggles a block, that choice wins over the default.
         const isOpen = openBlocks[block.id] ?? !blockDone
@@ -962,7 +964,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
 
                   // For a wildcard row ("Any 200-level ANTH course") the
                   // allocation belongs to the course that actually filled it,
-                  // not to the placeholder's own code — otherwise a course
+                  // not to the placeholder's own code, otherwise a course
                   // counted toward another program still showed a green tick
                   // here.
                   const matched = matchedCompleted || matchedCurrent
@@ -987,6 +989,13 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
                           ? <FaCircle className="dp-req-course-icon dp-req-course-icon--taking" />
                           : <FaCircle className="dp-req-course-icon dp-req-course-icon--empty" />
                       }
+                      {c.subject && /^\d{3}[A-Z0-9]*$/i.test(c.catalog || '') && !isTransfer && (
+                        <button type="button" className="btn-secondary"
+                          aria-label={`${t(done ? 'courses.editCompleted' : 'courses.markCompleted')}: ${c.subject} ${c.catalog}`}
+                          onClick={() => handleToggleCompleted({ ...c, title: c.title })}>
+                          {t(done ? 'courses.editCompleted' : 'courses.markCompleted')}
+                        </button>
+                      )}
                       <div className="dp-req-course-main">
                         <div
                           className="dp-req-course-row"
@@ -1028,7 +1037,7 @@ function ProgramSection({ prog, completedCourses, currentCourses, advStanding, o
         )
       })}
 
-      {/* Other Courses (Added by you) — electives the user manually counted
+      {/* Other Courses (Added by you), electives the user manually counted
           toward this program. Collapsible like a requirement block. */}
       {manuallyAdded.length > 0 && (
         <div className="dp-req-block dp-req-block--manual m-group">
@@ -1098,7 +1107,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   const _progCache = (key) => readCache(`degree_prog_${key}`, profile?.id, null)
   const _writeProgCache = (key, data) => writeCache(`degree_prog_${key}`, profile?.id, data)
 
-  // Dismissible "Foundation Year Waived" banner — persists across visits.
+  // Dismissible "Foundation Year Waived" banner, persists across visits.
   const [foundationDismissed, setFoundationDismissed] = useState(
     () => { try { return localStorage.getItem('dp_dismiss_foundation') === '1' } catch { return false } }
   )
@@ -1123,7 +1132,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   const [_loadFailed, setLoadFailed]           = useState(false)
   const [unavailable, setUnavailable]         = useState({ major: false, minor: false, core: false, concentration: false, foundation: false })
 
-  // Course allocations — lifted from ElectivesPanel so ProgramSection can also use them
+  // Course allocations, lifted from ElectivesPanel so ProgramSection can also use them
   const [courseAllocations, setCourseAllocations] = useState(() => {
     try { return JSON.parse(localStorage.getItem('dp_course_allocations') || '{}') } catch { return {} }
   })
@@ -1145,7 +1154,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   }
 
   // Hydrate allocations from the backend on mount (merging over the
-  // localStorage cache). Server wins on conflict — it's the source of truth.
+  // localStorage cache). Server wins on conflict, it's the source of truth.
   useEffect(() => {
     if (!profile?.id) return
     let alive = true
@@ -1177,7 +1186,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   const foundationWaived = transferCredits >= 24 &&
     (profile?.faculty === 'Faculty of Arts' || isBasc)
 
-  // U0 students get their own requirement tab. Waived students don't — their
+  // U0 students get their own requirement tab. Waived students don't, their
   // transfer credit replaced the Foundation year, so there's nothing to track.
   const foundationKey = (isFoundationStudent(profile) && !foundationWaived)
     ? foundationProgramKey(isBasc ? 'Faculty of Arts & Science' : (profile?.faculty || ''))
@@ -1186,7 +1195,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   // Honours students get the honours program, not the major.
   //
   // profile.is_honours was collected but never read here, so someone in
-  // Honours Physics was shown the Physics Major requirements — different
+  // Honours Physics was shown the Physics Major requirements, different
   // course lists and a different credit total. toProgramKey has always
   // understood type 'honours' (physics_honours_bsc, history_honours,
   // investment_management_honours_bcom); nothing ever passed it.
@@ -1212,8 +1221,8 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   //
   // A few B.Com. majors SUBSTITUTE core courses rather than adding to them, so
   // they get their own Core variant. Economics students don't take MGCR 293 or
-  // MGCR 294 — ECON 230D1/D2 and ECON 332 + ECON 333 replace them and are
-  // counted in the major — which is why McGill states that program as 69
+  // MGCR 294, ECON 230D1/D2 and ECON 332 + ECON 333 replace them and are
+  // counted in the major, which is why McGill states that program as 69
   // credits (36 core + 33 major) where the standard 42-credit Core would give
   // 72. Showing them the standard Core overstated their requirements by 6.
   const coreKey          = isMgmt ? (BCOM_CORE_VARIANTS[majorKey] || 'bcom_core') : null
@@ -1262,7 +1271,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
       const data = await res.json()
       setter(data)
       _writeProgCache(key, data)
-      // No prefill here — ProgramSection defaults each block's open state
+      // No prefill here, ProgramSection defaults each block's open state
       // to "open unless already complete" until the user toggles it.
       return 'ok'
     } catch {
@@ -1279,7 +1288,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
 
     // SWR: hydrate from cache for instant paint, then revalidate from the
     // network. We only show the loading spinner if there's no cached data
-    // to display — otherwise the user sees their last-known requirements
+    // to display, otherwise the user sees their last-known requirements
     // immediately and the refresh happens silently in the background.
     const majorCached = majorKey ? _progCache(majorKey) : null
     const foundCached = foundationKey ? _progCache(foundationKey) : null
@@ -1306,11 +1315,11 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
     if (Object.keys(extraMajorsCached).length) setExtraMajorsData(prev => ({ ...prev, ...extraMajorsCached }))
     if (Object.keys(extraMinorsCached).length) setExtraMinorsData(prev => ({ ...prev, ...extraMinorsCached }))
 
-    // No open-block prefill here — ProgramSection defaults each block to
+    // No open-block prefill here, ProgramSection defaults each block to
     // "open unless already complete" until the user explicitly toggles it.
 
     if (!anyCache) {
-      // Cold start — clear stale state and show the spinner.
+      // Cold start, clear stale state and show the spinner.
       setLoading(true)
       setProgramData(null)
       setFoundationData(null)
@@ -1356,7 +1365,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
       fetchProgram(foundationKey, setFoundationData),
       ...extraMajorFetches,
       ...extraMinorFetches,
-    ]).then(([majorResult, minorResult, , coreResult, concResult, foundResult]) => {
+    ]).then(([majorResult, minorResult,, coreResult, concResult, foundResult]) => {
       setUnavailable({
         major:         majorResult === 'not_found',
         minor:         minorResult === 'not_found',
@@ -1389,7 +1398,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
         const extraMinorFetches = extraMinorsList.map(({ key }) =>
           fetchProgram(key, d => setExtraMinorsData(prev => ({ ...prev, [key]: d })))
         )
-        const [majorResult, minorResult, , coreResult, concResult, foundResult] = await Promise.all([
+        const [majorResult, minorResult,, coreResult, concResult, foundResult] = await Promise.all([
           fetchProgram(majorKey, setProgramData),
           fetchProgram(minorKey, setMinorData),
           fetchProgram(sciKey, setSciData),
@@ -1411,7 +1420,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
     finally { setSeeding(false) }
   }
 
-  // U0 students often haven't declared a major yet — the Foundation program on
+  // U0 students often haven't declared a major yet, the Foundation program on
   // its own is enough to render this card for them.
   const hasSomething = profile?.major || profile?.minor ||
     profile?.other_majors?.length > 0 || profile?.other_minors?.length > 0 ||
@@ -1419,7 +1428,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
     isMgmt || !!foundationKey
   // NOTE: the bail-out on !hasSomething is deliberately at the bottom, just
   // before the JSX. Several hooks live below this point, and `hasSomething`
-  // flips from false to true when the profile loads — returning here would
+  // flips from false to true when the profile loads, returning here would
   // change the hook count between renders and blow up the component.
 
   const hasMajor         = !!programData
@@ -1432,7 +1441,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   const hasAny           = hasMajor || hasFoundation || hasMinor || hasCore || hasConcentration || hasExtraMajors || hasExtraMinors
 
   const tabs = []
-  // Foundation first — it's the year the student is actually in, and its
+  // Foundation first, it's the year the student is actually in, and its
   // courses are claimed before any other program gets to count them.
   if (foundationKey) {
     tabs.push({
@@ -1476,7 +1485,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
 
   // All programs array and overlap detection.
   // Order matters: it's the tie-break for a course two programs both want, and
-  // Foundation must come first — McGill's rule is that a course used for the
+  // Foundation must come first, McGill's rule is that a course used for the
   // U0 Foundation program can't be counted toward a major or minor as well.
   const allProgramDataArray = useMemo(() => [
     foundationData, programData, minorData, sciData, coreData, concentrationData,
@@ -1489,7 +1498,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   )
 
   // What each program could count from the courses the student has actually
-  // taken — by name OR through a wildcard/complementary block.
+  // taken, by name OR through a wildcard/complementary block.
   const claimsByProgram = useMemo(
     () => allProgramDataArray.map(prog => ({
       key: prog.program_key,
@@ -1498,7 +1507,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
     [allProgramDataArray, allUserCourses]
   )
 
-  // Course keys two or more DIFFERENT programs would both count — see
+  // Course keys two or more DIFFERENT programs would both count, see
   // overlappingCourseKeys() for why "different" is the load-bearing word.
   const overlapKeys = useMemo(
     () => overlappingCourseKeys(allProgramDataArray, allUserCourses),
@@ -1509,7 +1518,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   //
   // Resolution order:
   //   1. the student's own choice, if that program can still claim the course
-  //   2. otherwise the first program in allProgramDataArray that claims it —
+  //   2. otherwise the first program in allProgramDataArray that claims it ,
   //      Foundation, then major, then minor.
   //
   // Foundation is never overridable: McGill doesn't allow a U0 course to also
@@ -1518,7 +1527,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   const effectiveAllocation = useMemo(() => {
     const out = {}
     const foundationClaims = claimsByProgram.find(p => FOUNDATION_PROGRAM_KEYS.has(p.key))
-    // Only honour a stored choice that points at a program we actually loaded —
+    // Only honour a stored choice that points at a program we actually loaded ,
     // otherwise a course assigned to a minor the student has since dropped
     // would disappear from every program instead of falling back.
     const loadedKeys = new Set(claimsByProgram.map(p => p.key))
@@ -1537,7 +1546,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
 
     // Courses manually assigned to a program that no block matches (the
     // "Other Courses (Added by you)" path) still belong where the student put
-    // them — they're not contested, they're placed.
+    // them, they're not contested, they're placed.
     for (const [courseKey, progKey] of Object.entries(courseAllocations)) {
       if (!out[courseKey]) out[courseKey] = progKey
     }
@@ -1545,7 +1554,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   }, [claimsByProgram, courseAllocations])
 
   // How many courses genuinely need the student to decide where they count.
-  // This is the ONLY thing the MyDegree tab badge should surface — it used to
+  // This is the ONLY thing the MyDegree tab badge should surface, it used to
   // show favourites + completed + current, i.e. a running total of coursework,
   // which reads as "28 things need your attention" when nothing does.
   //
@@ -1644,7 +1653,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
   // ground chat/card-thread requests in the student's ACTUAL requirement
   // progress instead of just their raw course list. Built from the same
   // `tabs` list (and calcRingProgress) the UI itself renders from, so it
-  // can't drift from what the student sees on this page — no separate
+  // can't drift from what the student sees on this page, no separate
   // matching logic, just a text rendering of numbers already computed here.
   const progressSummaryText = tabs
     .filter(t => t.data)
@@ -1970,7 +1979,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
             </div>
           )}
 
-          {/* Electives tab — always mounted to preserve state, hidden when inactive */}
+          {/* Electives tab, always mounted to preserve state, hidden when inactive */}
           <div style={{ display: activeTab === 'electives' ? 'block' : 'none' }}>
             <ElectivesPanel
               profile={profile}
@@ -1985,7 +1994,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
             />
           </div>
 
-          {/* Recommendations tab — always mounted to preserve state, hidden when inactive */}
+          {/* Recommendations tab, always mounted to preserve state, hidden when inactive */}
           <div style={{ display: activeTab === 'recommendations' ? 'block' : 'none' }}>
             <RecommendationsPanel
               profile={profile}
@@ -2002,7 +2011,7 @@ function MyProgramCard({ profile, completedCourses, currentCourses, onProgressSu
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function DegreePlanningView({
-  // `favorites` is still passed by DashboardTabContent but no longer read here —
+  // `favorites` is still passed by DashboardTabContent but no longer read here ,
   // it only ever fed the MyDegree tab badge, which now counts decisions, not coursework.
   completedCourses = [],
   currentCourses = [],
@@ -2011,6 +2020,7 @@ export default function DegreePlanningView({
   onImportSyllabus,
   onProgressSummaryChange,
 }) {
+  const { handleTabChange } = useDashboardData()
   const { t } = useLanguage()
   const [subTab, setSubTab] = useState('my_courses')
   // Lifted out of MyProgramCard so the tab badge can show it. 0 = no badge.
@@ -2019,6 +2029,10 @@ export default function DegreePlanningView({
   return (
     <div className="dp-view">
 
+      <div className="dp-import-btns">
+        <button className="btn-secondary" onClick={() => handleTabChange('profile')}>{t('dp.chooseProgram')}</button>
+        <button className="btn-secondary" onClick={() => handleTabChange('courses')}>{t('dp.addCoursesManually')}</button>
+      </div>
       {/* ── Sub-tabs ──────────────────────────────────────── */}
       <div className="dp-subtab-bar" data-tour="degree-subtabs">
         <button
@@ -2027,7 +2041,7 @@ export default function DegreePlanningView({
         >
           <FaGraduationCap className="dp-subtab-icon" />
           <span>{t('dp.myDegree')}</span>
-          {/* Only ever a count of things the student must act on — courses two
+          {/* Only ever a count of things the student must act on, courses two
               programs both want, where they still have to pick one. This used
               to be favourites + completed + current, so a student with 28
               courses and nothing to decide saw a permanent red "28". */}

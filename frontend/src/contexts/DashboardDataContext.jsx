@@ -1,3 +1,4 @@
+import { saveCourseCompletion } from '../lib/saveCourseCompletion'
 /* eslint-disable react-refresh/only-export-components */
 /**
  * DashboardDataContext
@@ -17,7 +18,7 @@
  * sidebar, the pinned-card right sidebar, the desktop onboarding tour.
  */
 import {
-  createContext, useContext, useState, useEffect, useCallback, useRef,
+  createContext, useContext, useState, useEffect, useCallback, useRef, useMemo,
 } from 'react'
 import { useAuth } from './AuthContext'
 import { useLanguage } from './PreferencesContext'
@@ -178,9 +179,9 @@ export function DashboardDataProvider({ children }) {
     new Set((_hydratedFavorites || []).map(f => (f.course_code || '').replace(/^([A-Za-z]+)(\d)/, '$1 $2')))
   )
   const [completedCourses, setCompletedCourses]   = useState(_hydratedCompleted)
-  const [completedCoursesMap, setCompletedCoursesMap] = useState(
-    new Set((_hydratedCompleted || []).map(c => c.course_code))
-  )
+  const completedCoursesMap = useMemo(() => new Set(completedCourses.map(c =>
+    (c.course_code || `${c.subject} ${c.catalog}`).trim().toUpperCase().replace(/^([A-Z]+)(\d)/, '$1 $2')
+  )), [completedCourses])
   const [currentCourses, setCurrentCourses]       = useState(_hydratedCurrent)
   const [currentCoursesMap, setCurrentCoursesMap] = useState(
     new Set((_hydratedCurrent || []).map(c => c.course_code))
@@ -662,12 +663,10 @@ export function DashboardDataProvider({ children }) {
       const data = await completedCoursesAPI.getCompleted(user.id)
       const list = data.completed_courses || []
       setCompletedCourses(list)
-      setCompletedCoursesMap(new Set(list.map(c => c.course_code)))
       writeCache('completed', user.id, list)
     } catch (error) {
       console.error('Error loading completed courses:', error)
       setCompletedCourses([])
-      setCompletedCoursesMap(new Set())
     }
   }, [user?.id])
 
@@ -751,33 +750,30 @@ export function DashboardDataProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm])
 
-  // ── Toggle favorite ────────────────────────────────────
+  // Apply immediately and prevent overlapping writes for the same course.
+  const favoriteWrites = useRef(new Set())
   const handleToggleFavorite = async (course) => {
     if (!user?.id) return
-    // FIX: use space-separated key to match isFavorited and favoritesMap
     const courseCode = `${course.subject} ${course.catalog}`
+    if (favoriteWrites.current.has(courseCode)) return
+    favoriteWrites.current.add(courseCode)
+    const previous = favorites.find(f => f.course_code === courseCode)
     const isFav = favoritesMap.has(courseCode)
+    const item = { course_code: courseCode, course_title: course.title || course.course_title,
+      subject: course.subject, catalog: course.catalog }
+    const apply = (saved, row) => {
+      setFavorites(prev => saved ? [row, ...prev.filter(f => f.course_code !== courseCode)] : prev.filter(f => f.course_code !== courseCode))
+      setFavoritesMap(prev => { const next = new Set(prev); if (saved) next.add(courseCode); else next.delete(courseCode); return next })
+    }
+    apply(!isFav, item)
     try {
-      if (isFav) {
-        await favoritesAPI.removeFavorite(user.id, courseCode)
-        setFavorites(prev => prev.filter(f => f.course_code !== courseCode))
-        setFavoritesMap(prev => { const s = new Set(prev); s.delete(courseCode); return s })
-      } else {
-        await favoritesAPI.addFavorite(user.id, {
-          course_code: courseCode,
-          course_title: course.title,
-          subject: course.subject,
-          catalog: course.catalog,
-        })
-        setFavorites(prev => [
-          { course_code: courseCode, course_title: course.title, subject: course.subject, catalog: course.catalog },
-          ...prev,
-        ])
-        setFavoritesMap(prev => new Set([...prev, courseCode]))
-      }
+      if (isFav) await favoritesAPI.removeFavorite(user.id, courseCode)
+      else await favoritesAPI.addFavorite(user.id, item)
     } catch (error) {
-      console.error('Error toggling favorite:', error)
-      alert(error.message || 'Failed to update favorites')
+      apply(isFav, previous || item)
+      alert(error.message || t('courses.saveFailed'))
+    } finally {
+      favoriteWrites.current.delete(courseCode)
     }
   }
 
@@ -788,9 +784,10 @@ export function DashboardDataProvider({ children }) {
     const isComp = completedCoursesMap.has(courseCode)
     try {
       if (isComp) {
-        await completedCoursesAPI.removeCompleted(user.id, courseCode)
-        setCompletedCourses(prev => prev.filter(c => c.course_code !== courseCode))
-        setCompletedCoursesMap(prev => { const s = new Set(prev); s.delete(courseCode); return s })
+        const existing = completedCourses.find(c => c.course_code === courseCode)
+        setCourseToComplete({ ...course, ...existing, course_code: courseCode, editing: true,
+          transferCode: course.transferCode })
+        setShowCompleteCourseModal(true)
       } else {
         setCourseToComplete(course)
         setShowCompleteCourseModal(true)
@@ -804,9 +801,20 @@ export function DashboardDataProvider({ children }) {
   const handleConfirmComplete = async (courseData) => {
     if (!user?.id) return
     try {
-      await completedCoursesAPI.addCompleted(user.id, courseData)
-      setCompletedCourses(prev => [courseData, ...prev])
-      setCompletedCoursesMap(prev => new Set([...prev, courseData.course_code]))
+      const response = await saveCourseCompletion({
+        api: completedCoursesAPI, userId: user.id, course: courseData,
+        editing: courseToComplete?.editing, transferCode: courseToComplete?.transferCode,
+        standing: profile?.advanced_standing || [], updateProfile,
+        onRollbackFailure: async () => {
+          setCourseToComplete(prev => ({ ...prev, editing: true }))
+          await loadCompletedCourses()
+        },
+      })
+      const savedCourse = { ...completedCourses.find(c => c.course_code === courseData.course_code),
+        ...courseData, ...response?.completed_course }
+      const updatedCourses = [savedCourse, ...completedCourses.filter(c => c.course_code !== courseData.course_code)]
+      setCompletedCourses(updatedCourses)
+      writeCache('completed', user.id, updatedCourses)
 
       // Auto-remove from current if enrolled
       if (currentCoursesMap.has(courseData.course_code)) {
@@ -818,13 +826,23 @@ export function DashboardDataProvider({ children }) {
           console.warn('Could not auto-remove from current:', e)
         }
       }
-    } catch (error) {
-      console.error('Error adding completed course:', error)
-      alert(error.message || 'Failed to add completed course')
-    } finally {
       setShowCompleteCourseModal(false)
       setCourseToComplete(null)
+    } catch (error) {
+      console.error('Error adding completed course:', error)
+      alert(error.message || t('courses.saveFailed'))
+      throw error
     }
+  }
+
+  const handleRemoveCompleted = async () => {
+    if (!user?.id || !courseToComplete?.editing) return
+    await completedCoursesAPI.removeCompleted(user.id, courseToComplete.course_code)
+    const remaining = completedCourses.filter(c => c.course_code !== courseToComplete.course_code)
+    setCompletedCourses(remaining)
+    writeCache('completed', user.id, remaining)
+    setShowCompleteCourseModal(false)
+    setCourseToComplete(null)
   }
 
   const cancelCompleteCourse = useCallback(() => {
@@ -859,7 +877,6 @@ export function DashboardDataProvider({ children }) {
           try {
             await completedCoursesAPI.removeCompleted(user.id, courseCode)
             setCompletedCourses(prev => prev.filter(c => c.course_code !== courseCode))
-            setCompletedCoursesMap(prev => { const s = new Set(prev); s.delete(courseCode); return s })
           } catch (e) {
             console.warn('Could not auto-remove from completed:', e)
           }
@@ -965,7 +982,7 @@ export function DashboardDataProvider({ children }) {
     clubCalendarEvents, setClubCalendarEvents, managedClubs,
 
     // mark-complete modal
-    showCompleteCourseModal, courseToComplete, handleConfirmComplete, cancelCompleteCourse,
+    showCompleteCourseModal, courseToComplete, handleConfirmComplete, handleRemoveCompleted, cancelCompleteCourse,
 
     // transcript / syllabus upload
     showTranscriptUpload, transcriptUploadTab, setShowTranscriptUpload,

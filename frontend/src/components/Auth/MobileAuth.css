@@ -94,7 +94,7 @@
   height: 34px;
   padding: 0 10px;
   border: none;
-  border-radius: 17px;
+  border-radius: var(--radius-control);
   background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
   color: var(--text-secondary);
   font-family: inherit;
@@ -314,7 +314,7 @@
 .ma-strength-seg {
   height: 4px;
   flex: 1;
-  border-radius: 2px;
+  border-radius: var(--radius-container);
   transition: background 0.3s ease;
 }
 

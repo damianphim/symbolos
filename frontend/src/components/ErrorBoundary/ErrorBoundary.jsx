@@ -1,5 +1,5 @@
 /**
- * ErrorBoundary — catches uncaught React render errors at the root.
+ * ErrorBoundary, catches uncaught React render errors at the root.
  *
  * On error:
  *   1. Captures the exception to Sentry (if VITE_SENTRY_DSN is set)
@@ -25,7 +25,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Always log locally — Vercel function logs would have shown the
+    // Always log locally, Vercel function logs would have shown the
     // backend half but the frontend stack is harder to get without this.
     console.error('Error caught by boundary:', error, errorInfo)
 

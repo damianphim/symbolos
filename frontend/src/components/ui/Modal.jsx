@@ -3,7 +3,7 @@ import { FaTimes } from 'react-icons/fa'
 import './ui.css'
 
 /**
- * Base modal wrapper — one overlay/panel/header implementation for the
+ * Base modal wrapper, one overlay/panel/header implementation for the
  * app's simple dialogs (complex flows like EventModal and TranscriptUpload
  * keep their bespoke shells for now).
  *

@@ -13,7 +13,7 @@
 }
 .ar-header-icon {
   width: 40px; height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary, #f3f4f6);
   color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
@@ -57,7 +57,7 @@
   background: var(--bg-secondary, #f3f4f6);
   color: var(--text-secondary);
   padding: 0.1rem 0.45rem;
-  border-radius: 20px; line-height: 1.6;
+  border-radius: var(--radius-control); line-height: 1.6;
 }
 .ar-tab-pill--accent {
   background: var(--accent-primary);
@@ -88,7 +88,7 @@
   width: 100%; box-sizing: border-box;
   padding: 0.55rem 2.25rem 0.55rem 2.25rem;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary, #fff);
   color: var(--text-primary);
   font-size: 0.875rem;
@@ -117,7 +117,7 @@
 .ar-pill-row--sm { margin-bottom: 0.85rem; }
 .ar-pill {
   padding: 0.38rem 0.85rem;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-primary);
   background: transparent;
   color: var(--text-secondary);
@@ -160,7 +160,7 @@
 /* Card */
 .ar-card {
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary, #fff);
   transition: border-color 0.15s;
 }
@@ -183,7 +183,7 @@
 .ar-badge {
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.14rem 0.48rem;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   font-size: 0.67rem; font-weight: 600;
   white-space: nowrap; flex-shrink: 0;
   border: 1px solid var(--border-primary);
@@ -218,7 +218,7 @@
 .ar-bm {
   width: 26px; height: 26px;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: none; color: var(--text-muted, #9ca3af);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 0.72rem;
@@ -247,7 +247,7 @@
 .ar-card-body::-webkit-scrollbar { width: 4px; }
 .ar-card-body::-webkit-scrollbar-thumb {
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
 }
 .ar-card-body::-webkit-scrollbar-track { background: transparent; }
 
@@ -275,7 +275,7 @@
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.28rem 0.65rem;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   color: var(--text-primary); font-size: 0.76rem; font-weight: 500;
   text-decoration: none;
   transition: all 0.15s;
@@ -302,7 +302,7 @@
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0.9rem 1rem;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 0.83rem; color: var(--text-secondary);
 }
 .ar-footer-link {
@@ -379,7 +379,7 @@
     overflow: visible;
     border: none;
     border-bottom: none;
-    border-radius: 9px;
+    border-radius: var(--radius-container);
     background: var(--bg-tertiary, rgba(120, 120, 128, 0.12));
   }
   .mobile-shell .ar-view .ar-tab {
@@ -391,7 +391,7 @@
     padding: 6px 10px;
     border: none;
     border-bottom: none;
-    border-radius: 7px;
+    border-radius: var(--radius-container);
     background: transparent;
     font-size: 13px;
     font-weight: 500;

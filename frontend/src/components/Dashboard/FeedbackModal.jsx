@@ -6,7 +6,7 @@
  *   - General feedback (free text, submitted to your backend or mailto)
  *   - Missing course (course code + optional note)
  *
- * Controlled by the parent — the trigger lives in Sidebar.jsx (mini-rail
+ * Controlled by the parent, the trigger lives in Sidebar.jsx (mini-rail
  * pill + full-sidebar popup item), not in this component:
  *
  *   const [feedbackOpen, setFeedbackOpen] = useState(false)
