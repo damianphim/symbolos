@@ -789,6 +789,11 @@
   .mini-capsule::-webkit-scrollbar { display: none; }
   .mini-capsule-divider { width: 1px; height: 20px; margin: 0 3px; flex-shrink: 0; }
 
+  /* Language/theme pills are a desktop-only affordance for the collapsed
+     rail; the mobile bottom bar is already tight on space for the 8 tabs. */
+  .mini-pill--utility,
+  .mini-capsule-divider--utility { display: none; }
+
   /* 44px meets the standard mobile touch-target minimum (was 38px). */
   .mini-pill { width: 44px; height: 44px; font-size: 1.05rem; flex-shrink: 0; }
   .mini-expand-btn { width: 44px; height: 44px; margin-left: 4px; flex-shrink: 0; }
