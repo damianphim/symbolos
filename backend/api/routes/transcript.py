@@ -161,8 +161,13 @@ EXTRACTION_PROMPT = """You are parsing a McGill University unofficial transcript
 Your job is to carefully read every section and return a single JSON object.
 == STEP 1: Read the program header at the top of the transcript ==
 Extract student_info fields:
-  - major: the text after "Major Concentration" (e.g. "Computer Science")
-  - minor: the text after "Minor Concentration" (e.g. "Science for Arts Students")
+  - major: the text after "Major Concentration" (e.g. "Computer Science"). If
+    the student has more than one major concentration listed, return a single
+    string joining them with " / " (e.g. "Economics / International
+    Development Studies") — never a JSON array.
+  - minor: the text after "Minor Concentration" (e.g. "Science for Arts
+    Students"). If more than one, join with " / " the same way as major —
+    never a JSON array.
   - faculty: the degree name (e.g. "Arts", "Science", "Engineering")
   - year: the Year number shown (e.g. "Year 1" -> 1, "Year 2" -> 2) as an integer
   - cum_gpa: the CUMULATIVE GPA on the final summary line labelled "CUM GPA"
@@ -693,7 +698,7 @@ def _persist_transcript_data(user_id: str, extracted: dict, user_sb=None) -> dic
 
 # ── Import endpoint (accepts pre-parsed JSON, no Claude call needed) ─────────
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 
 
@@ -716,6 +721,15 @@ class _StudentInfo(BaseModel):
     year: int | None = None
     cum_gpa: float | None = None
     advanced_standing: list | None = None
+
+    @field_validator("major", "minor", mode="before")
+    @classmethod
+    def _join_multi(cls, v):
+        # Double-major/minor students: Claude extraction returns a list
+        # (e.g. ["Economics", "International Development Studies"]).
+        if isinstance(v, list):
+            return " / ".join(str(x).strip() for x in v if str(x).strip()) or None
+        return v
 
 
 class ImportRequest(BaseModel):
