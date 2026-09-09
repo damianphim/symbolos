@@ -64,7 +64,7 @@
   color: var(--text-tertiary);
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-size: 20px;
   display: flex;

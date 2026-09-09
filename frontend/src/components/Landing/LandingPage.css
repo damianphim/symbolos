@@ -152,7 +152,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
   background: var(--land-fg);
   color: #fff;
   padding: 9px 18px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -742,7 +742,7 @@ html[data-theme="dark"] #root:has(.landing-root) {
 .landing-theme-btn {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -750,7 +750,12 @@ html[data-theme="dark"] #root:has(.landing-root) {
   padding: 0;
 }
 .landing-lang-btn {
-  padding: 8px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
   border-radius: var(--radius-control);
   font-size: 0.85rem;
   font-weight: 600;

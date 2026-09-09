@@ -149,7 +149,7 @@
   gap: 5px;
   padding: 4px 12px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -458,7 +458,7 @@
   gap: 1px;
   padding: 5px 7px;
   border-left: 3px solid;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: filter 0.15s;
 }
@@ -719,7 +719,7 @@
   color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   transition: color 0.15s;
@@ -865,7 +865,7 @@
   color: var(--text-tertiary);
   cursor: pointer;
   padding: 5px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   font-size: 1rem;
@@ -1132,7 +1132,7 @@
 .cal-notif-toggle {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1147,7 +1147,7 @@
   gap: 5px;
   padding: 5px 12px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -1321,7 +1321,7 @@
   height: 30px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.9rem;
@@ -1632,7 +1632,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 4px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   transition: background 0.12s;
 }
@@ -1708,7 +1708,7 @@
 .cal-guide-tab {
   padding: 0.4rem 0.85rem;
   border: 1.5px solid transparent;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 0.8rem;
@@ -1780,7 +1780,7 @@
   cursor: pointer;
   font-size: 1rem;
   padding: 4px 6px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
 }
 .cal-bulk-modal__close:hover { background: var(--bg-secondary); }
 
@@ -2079,7 +2079,7 @@
 .cal-bulk-edit-sep { color: var(--text-muted); font-size: 0.85rem; }
 .cal-bulk-edit-save, .cal-bulk-edit-cancel {
   padding: 4px 8px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: none;
   cursor: pointer;
   font-size: 0.8rem;
@@ -2185,7 +2185,7 @@
   gap: 0.3rem;
   padding: 0.6rem 0.25rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   cursor: pointer;
@@ -2272,7 +2272,7 @@
   flex-shrink: 0;
   padding: 0.5rem 0.75rem;
   border: none;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--accent-primary);
   color: #fff;
   font-size: 0.78rem;
@@ -2367,7 +2367,7 @@
   position: relative;
   width: 36px;
   height: 20px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: none;
   cursor: pointer;
   transition: background 0.2s;
@@ -2404,7 +2404,7 @@
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 0.76rem;
@@ -2633,7 +2633,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -2742,7 +2742,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0.65rem;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-secondary);
@@ -2929,7 +2929,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.8rem;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: none;
   background: #059669;
   color: white;
@@ -2947,7 +2947,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: transparent;
   color: var(--text-muted);
@@ -3047,7 +3047,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -3117,7 +3117,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -3193,7 +3193,7 @@
   min-height: 40px;
   padding: 0 18px;
   border: none;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--accent-primary);
   color: #fff;
   font-family: inherit;
@@ -3289,7 +3289,7 @@
   width: 34px;
   height: 34px;
   border: 1px dashed var(--border-secondary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: none;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -3323,7 +3323,7 @@
   padding: 9px 10px;
   border: 1px solid var(--border-primary);
   border-left: 4px solid var(--accent-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -3396,7 +3396,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--accent-primary);
   color: #fff;
   font-size: 0.65rem;

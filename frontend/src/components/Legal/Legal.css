@@ -101,7 +101,7 @@
   align-items: center;
   justify-content: center;
   padding: 6px 10px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: background 0.15s;
   line-height: 1;
   flex-shrink: 0;

@@ -345,7 +345,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: opacity 0.15s, background 0.15s;
 }
 .info-note-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }
