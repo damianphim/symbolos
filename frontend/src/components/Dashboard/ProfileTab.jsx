@@ -1,4 +1,3 @@
-import { useDashboardData } from '../../contexts/DashboardDataContext'
 import { useState } from 'react'
 import FeedbackModal from './FeedbackModal'
 import { FaCamera, FaSignOutAlt, FaChevronRight } from 'react-icons/fa'
@@ -20,7 +19,6 @@ export default function ProfileTab({
   handleImageUpload,
   handleAvatarClick,
 }) {
-  const { handleToggleCompleted } = useDashboardData()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { t } = useLanguage()
   const { isMobile } = useViewport()
@@ -73,20 +71,6 @@ export default function ProfileTab({
         </div>
       </div>
 
-      {profile?.advanced_standing?.some(c => /^[A-Z]+\s*\d{3}[A-Z0-9]*$/i.test(c.course_code || '')) && (
-        <section className="profile-content">
-          <h2>{t('courses.correctTransfer')}</h2>
-          <p>{t('courses.correctTransferHint')}</p>
-          {profile.advanced_standing.map((course, index) => {
-            const parts = (course.course_code || '').match(/^([A-Z]+)\s*(\d{3}[A-Z0-9]*)$/i)
-            if (!parts) return null
-            return <button key={index} className="btn-secondary" onClick={() => handleToggleCompleted({
-              subject: parts[1].toUpperCase(), catalog: parts[2].toUpperCase(), title: course.course_title,
-              credits: course.credits, transferCode: course.course_code,
-            })}>{course.course_code}: {t('courses.takenAtMcGill')}</button>
-          })}
-        </section>
-      )}
       <div className="profile-content">
         <div className="profile-grid">
           {/* Personal Information Card */}
