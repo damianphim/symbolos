@@ -218,7 +218,7 @@
 .ar-bm {
   width: 26px; height: 26px;
   border: 1px solid var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: none; color: var(--text-muted, #9ca3af);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 0.72rem;
@@ -391,7 +391,7 @@
     padding: 6px 10px;
     border: none;
     border-bottom: none;
-    border-radius: var(--radius-container);
+    border-radius: var(--radius-control);
     background: transparent;
     font-size: 13px;
     font-weight: 500;

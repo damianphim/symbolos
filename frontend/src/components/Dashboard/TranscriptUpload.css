@@ -246,7 +246,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 0.3rem;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   transition: color 0.15s;
   flex-shrink: 0;
@@ -690,7 +690,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 0.2rem;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   font-size: 0.75rem;
   display: flex;
   align-items: center;

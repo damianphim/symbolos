@@ -35,7 +35,7 @@
 .progress-bar-container {
   height: 10px;
   background: var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   overflow: hidden;
   position: relative;
 }
@@ -43,7 +43,7 @@
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-active));
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: width 0.8s ease;
   position: relative;
   overflow: hidden;
@@ -345,7 +345,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: opacity 0.15s, background 0.15s;
 }
 .info-note-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }

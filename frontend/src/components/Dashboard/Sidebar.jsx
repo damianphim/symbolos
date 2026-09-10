@@ -227,6 +227,26 @@ export default function Sidebar({
                   </button>
                 )
               })}
+              {/* Language + dark mode stay reachable while the sidebar is
+                  collapsed — desktop only, hidden on mobile via CSS since
+                  the mobile bottom bar has its own space constraints. */}
+              <div className="mini-capsule-divider mini-capsule-divider--utility" />
+              <button
+                className="mini-pill mini-pill--utility"
+                onClick={handleLanguageToggle}
+                title={language === 'en' ? 'Français' : language === 'fr' ? '中文' : 'English'}
+                style={{ '--pill-index': navItems.length }}
+              >
+                <MdLanguage />
+              </button>
+              <button
+                className="mini-pill mini-pill--utility"
+                onClick={cycleTheme}
+                title={`${t('sidebar.colorTheme')}: ${themeLabel}`}
+                style={{ '--pill-index': navItems.length + 1 }}
+              >
+                <FaPalette />
+              </button>
             </div>
             <button
               className="mini-expand-btn"
