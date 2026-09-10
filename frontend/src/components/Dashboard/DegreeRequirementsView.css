@@ -677,6 +677,14 @@
   color: var(--text-secondary);
 }
 
+/* Transfer-exempt badge: same purple used in DegreePlanningView's row tag,
+   flags that this row is satisfied by a transfer/AP credit that does NOT
+   count toward the major/minor's credit total (see the overview note). */
+.drv-badge--transfer {
+  background: #fae8ff;
+  color: #6b21a8;
+}
+
 .drv-rec-reason {
   font-size: 11.5px;
   color: var(--warning-text);

@@ -865,6 +865,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                                     <div className="drv-course-badges">
                                       {course.is_required && <span className="drv-badge drv-badge--required">{t('dp.badgeRequired')}</span>}
                                       {course.recommended && <span className="drv-badge drv-badge--rec"><FaStar /> {t('dp.badgeRec')}</span>}
+                                      {isTransfer && <span className="drv-badge drv-badge--transfer">{t('dp.statusTransfer')} · {t('dp.transferExempt')}</span>}
                                     </div>
                                   </div>
                                   {course.recommended && course.recommendation_reason && (
