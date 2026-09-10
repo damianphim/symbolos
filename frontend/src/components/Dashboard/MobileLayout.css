@@ -388,7 +388,7 @@
   min-height: 76px;
   padding: 12px 6px;
   border: 1px solid var(--border-primary, #e5e7eb);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-family: inherit;
@@ -413,7 +413,7 @@
   min-height: 46px;
   padding: 10px 8px;
   border: none;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: none;
   color: var(--text-primary);
   font-family: inherit;

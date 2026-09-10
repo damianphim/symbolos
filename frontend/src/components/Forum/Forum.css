@@ -164,7 +164,7 @@
   padding: 3px;
   display: flex;
   align-items: center;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: color 0.15s;
 }
 
@@ -176,7 +176,7 @@
 .forum-subject-filter {
   padding: 9px 32px 9px 12px;
   border: 1.5px solid var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.85rem;
@@ -711,7 +711,7 @@
   color: var(--text-secondary);
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
