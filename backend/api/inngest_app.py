@@ -62,6 +62,7 @@ async def process_transcript(ctx: inngest.Context) -> dict:
             _persist_transcript_data,
             normalize_course_code,
             _dedupe_extracted,
+            _expand_advanced_standing_groups,
         )
 
         # Download PDF from Supabase Storage
@@ -69,6 +70,12 @@ async def process_transcript(ctx: inngest.Context) -> dict:
 
         # Claude extraction
         extracted = await extract_transcript_data(pdf_bytes)
+
+        # Turn any aggregate-heading groups (e.g. "Advanced Placement Exams -
+        # 24 credits" with no per-course credit numbers) into concrete
+        # advanced_standing rows with a deterministically even split, before
+        # normalization/dedup so the new rows go through both.
+        _expand_advanced_standing_groups(extracted)
 
         # Normalize course codes
         for course in extracted.get("completed_courses", []):

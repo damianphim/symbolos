@@ -85,6 +85,60 @@ def _grade_rank(grade: str | None) -> int:
     return 1  # unknown / null
 
 
+def _expand_advanced_standing_groups(extracted: dict) -> None:
+    """
+    Turn each advanced_standing_groups entry into concrete advanced_standing
+    rows with a deterministically even credit split, instead of trusting the
+    LLM to divide a printed heading total across courses correctly.
+
+    Claude is unreliable at exact arithmetic compliance across many fields in
+    one extraction — asking it to also do the division reintroduces the same
+    "guessed per-course credits don't sum to the printed total" bug this is
+    meant to fix. So the prompt only asks Claude for the heading, the printed
+    total, and the ordered (duplicates included) list of course codes; the
+    actual division happens here in Python, which can't get 24 / 6 wrong.
+    """
+    student_info = extracted.get("student_info")
+    if not isinstance(student_info, dict):
+        return
+    groups = student_info.pop("advanced_standing_groups", None)
+    if not isinstance(groups, list):
+        return
+
+    standing = student_info.get("advanced_standing")
+    if not isinstance(standing, list):
+        standing = []
+
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        codes = group.get("course_codes")
+        if not isinstance(codes, list) or not codes:
+            continue
+        try:
+            total = round(float(group.get("total_credits")))
+        except (TypeError, ValueError):
+            continue
+        if not 0 < total <= 60:
+            continue
+        heading = str(group.get("heading") or "").strip()[:200]
+
+        n = len(codes)
+        base = total // n
+        remainder = total % n  # whole-credit remainder, distributed one-per-course
+        for i, code in enumerate(codes):
+            if not isinstance(code, str) or not code.strip():
+                continue
+            credits = base + 1 if i < remainder else base
+            standing.append({
+                "course_code": code.strip(),
+                "course_title": heading,
+                "credits": credits,
+            })
+
+    student_info["advanced_standing"] = standing
+
+
 def _dedupe_extracted(extracted: dict) -> None:
     """
     In-place dedup of the parsed transcript data so the preview matches what will
@@ -180,15 +234,18 @@ Extract student_info fields:
     Some sections print a heading total (e.g. "Advanced Placement Exams - 24
     credits") followed by a list of course codes with NO per-course credit
     number of their own (e.g. ECON 1XX, ECON 1XX, ENGL 1XX, FRSL 211, MATH 203,
-    PSYC 100). In that case the heading total is the ONLY correct number, not a
-    per-course guess — split it evenly across the listed courses so their
-    credits sum EXACTLY to the printed heading total (24 / 6 = 4 credits each;
-    if it doesn't divide evenly, put the remainder on the first course(s) so
-    the integers still sum exactly). Never default a course like this to 3
-    credits — that is a guess, not what the transcript says, and the total
-    stops matching. If only an aggregate award is printed with no course list
-    at all, use course_code "CEGEP" (or "TRANSFER" for other awards), its
-    actual heading as course_title, and the printed total.
+    PSYC 100). Do NOT try to divide the total yourself and do NOT put these
+    courses in advanced_standing — you are unreliable at exact arithmetic and
+    a wrong guess makes the total stop matching the transcript. Instead add ONE
+    entry to advanced_standing_groups with the heading text, the printed
+    total_credits number, and course_codes as the exact ordered list of codes
+    (repeat a code if it's printed twice, e.g. ECON 1XX appearing for two
+    different exams) — the backend divides total_credits across course_codes
+    evenly and exactly, so you only need to transcribe what's printed, not compute.
+    If only an aggregate award is printed with no course list at all (no
+    individual codes to divide the total across), use course_code "CEGEP" (or
+    "TRANSFER" for other awards) directly in advanced_standing, its actual
+    heading as course_title, and the printed total as credits.
     Do not divide an aggregate award among uncredited exemptions, invent course
     equivalents, or count the aggregate again alongside its component credits.
 == STEP 2: Completed courses ==
@@ -229,6 +286,13 @@ Return ONLY this JSON — no markdown, no explanation:
     "cum_gpa": 3.39,
     "advanced_standing": [
       {"course_code": "BIOL 111", "course_title": "Biology 1", "credits": 3}
+    ],
+    "advanced_standing_groups": [
+      {
+        "heading": "Advanced Placement Exams",
+        "total_credits": 24,
+        "course_codes": ["ECON 1XX", "ECON 1XX", "ENGL 1XX", "FRSL 211", "MATH 203", "PSYC 100"]
+      }
     ]
   },
   "completed_courses": [
@@ -258,6 +322,9 @@ Return ONLY this JSON — no markdown, no explanation:
   ]
 }
 Additional rules:
+  - advanced_standing_groups: omit entirely (or leave as an empty list) when the
+    transcript has no aggregate-heading section like the AP-exams example above —
+    most transcripts won't have one. Never invent one.
   - term must be exactly "Fall", "Winter", or "Summer"
   - year is the 4-digit calendar year the term occurred (e.g. 2024)
   - current_courses MUST also carry term and year — use the term heading the
