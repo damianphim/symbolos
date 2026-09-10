@@ -176,9 +176,19 @@ Extract student_info fields:
     "Transfer Credits", and "International Baccalaureate". Preserve the stated
     total, including a 30-credit CEGEP award. Do not infer transfer status from
     a course's subject, level, or the student's current year.
-    Keep each individually credited course with its printed credits. If only
-    an aggregate award is printed, use course_code "CEGEP" (or "TRANSFER" for
-    other awards), its actual heading as course_title, and the printed total.
+    Keep each individually credited course with its printed credits.
+    Some sections print a heading total (e.g. "Advanced Placement Exams - 24
+    credits") followed by a list of course codes with NO per-course credit
+    number of their own (e.g. ECON 1XX, ECON 1XX, ENGL 1XX, FRSL 211, MATH 203,
+    PSYC 100). In that case the heading total is the ONLY correct number, not a
+    per-course guess — split it evenly across the listed courses so their
+    credits sum EXACTLY to the printed heading total (24 / 6 = 4 credits each;
+    if it doesn't divide evenly, put the remainder on the first course(s) so
+    the integers still sum exactly). Never default a course like this to 3
+    credits — that is a guess, not what the transcript says, and the total
+    stops matching. If only an aggregate award is printed with no course list
+    at all, use course_code "CEGEP" (or "TRANSFER" for other awards), its
+    actual heading as course_title, and the printed total.
     Do not divide an aggregate award among uncredited exemptions, invent course
     equivalents, or count the aggregate again alongside its component credits.
 == STEP 2: Completed courses ==
