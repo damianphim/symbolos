@@ -300,6 +300,25 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // ── verifyPasswordResetCode ────────────────────────────────────────────────
+  // McGill inboxes (Microsoft 365 Safe Links) auto-fetch emailed links, which
+  // can consume a one-time recovery link before the user ever clicks it —
+  // the same failure mode that made signup verification switch to a typed
+  // code (see Login.jsx's verifyCode note). Password reset uses the same
+  // fix: verify the emailed 6-digit code (type 'recovery'), which establishes
+  // a session, then set the new password in that session.
+  const verifyPasswordResetCode = async (email, code, newPassword) => {
+    try {
+      const { error: otpError } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' })
+      if (otpError) throw otpError
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+      if (updateError) throw updateError
+      return { error: null }
+    } catch (err) {
+      return { error: { message: friendlyAuthError(err) } }
+    }
+  }
+
   // ── updatePassword ────────────────────────────────────────────────────────
   const updatePassword = async (newPassword) => {
     try {
@@ -404,7 +423,7 @@ export const AuthProvider = ({ children }) => {
     await loadProfile(user.id)
   }, [user?.id, loadProfile])
 
-  const value = { user, profile, loading, error, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, clearError, resetPasswordForEmail, resendVerificationEmail, updatePassword }
+  const value = { user, profile, loading, error, authFlags, signUp, signIn, signOut, deleteAccount, updateProfile, refreshProfile, clearError, resetPasswordForEmail, verifyPasswordResetCode, resendVerificationEmail, updatePassword }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
@@ -423,6 +442,8 @@ function friendlyAuthError(err) {
     return 'Password must be at least 8 characters long.'
   if (msg.includes('rate limit') || msg.includes('too many requests') || code === 'over_request_rate_limit')
     return 'Too many attempts. Please wait a few minutes and try again.'
+  if (msg.includes('Token has expired') || code === 'otp_expired')
+    return 'That code is invalid or has expired. Request a new one and try again.'
   if (code === 'NETWORK_ERROR' || msg.includes('Unable to connect') || msg.includes('Network'))
     return 'Unable to connect. Please check your internet connection.'
   if (msg.includes('timeout'))
