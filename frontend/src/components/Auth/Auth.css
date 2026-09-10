@@ -228,7 +228,7 @@
   font-weight: 600;
   color: var(--text-tertiary);
   cursor: pointer;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: color 0.2s ease;
   position: relative;
   z-index: 1;
@@ -249,7 +249,7 @@
   left: 3px;
   width: calc(50% - 3px);
   background: var(--bg-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -423,7 +423,7 @@
   padding: 0.25rem;
   display: flex;
   align-items: center;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   transition: color 0.2s ease;
   line-height: 0;
 }
@@ -679,7 +679,12 @@
 
 /* ── Individual corner button (lang / theme) ── */
 .auth-lang-btn {
-  padding: 6px 14px;
+  height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
   border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary, rgba(0,0,0,0.18));
   background: var(--bg-primary, #fff);

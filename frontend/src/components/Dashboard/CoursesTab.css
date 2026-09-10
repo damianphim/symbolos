@@ -257,7 +257,7 @@
   min-width: 36px; height: 36px; padding: 0 6px;
   display: flex; align-items: center; justify-content: center;
   border: 1.5px solid var(--border-primary);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   cursor: pointer; font-size: 0.875rem; font-weight: 600;

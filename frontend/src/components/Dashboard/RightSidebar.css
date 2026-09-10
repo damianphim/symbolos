@@ -159,7 +159,7 @@
   line-height: 1;
   background: var(--accent-primary, #ED1B2F);
   color: #fff;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   padding: 1px 4px;
   min-width: 14px;
   text-align: center;
@@ -319,7 +319,7 @@
   color: white;
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,7 +383,7 @@
 .rsb-suggestion-chip {
   background: var(--bg-secondary, #f3f4f6);
   border: 1px solid var(--border-primary, #e5e7eb);
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   padding: 0.45rem 0.75rem;
   font-size: 0.76rem;
   color: var(--text-secondary, #374151);

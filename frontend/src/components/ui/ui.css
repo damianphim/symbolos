@@ -275,7 +275,7 @@
   width: 30px;
   height: 30px;
   border: none;
-  border-radius: var(--radius-container);
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-tertiary);
   display: flex;
