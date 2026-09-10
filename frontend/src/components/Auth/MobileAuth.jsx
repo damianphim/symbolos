@@ -29,6 +29,7 @@ export default function MobileAuth({
   errors, loading, message, formError, strength,
   handleSubmit, switchMode, animating,
   verifyCode, setVerifyCode, handleVerifyCode, verifyingCode,
+  resetCode, setResetCode, newPassword, setNewPassword, handleResetPassword, resettingPassword,
   pendingEmail, resendCooldown, resendLoading, handleResend,
   legalModal, setLegalModal,
   onBack,
@@ -47,20 +48,23 @@ export default function MobileAuth({
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
   const isVerify = mode === 'verify'
+  const isReset  = mode === 'reset'
 
   // Leading chevron replaces the browser-style "← Back" link. forgot/verify
   // are pushed states within auth, so they pop back to sign-in; on the root
   // login/signup screen the only thing behind us is whatever opened Login.
-  const back = isForgot || isVerify
+  const back = isForgot || isVerify || isReset
     ? () => switchMode('login')
     : onBack
 
   const title = isVerify ? t('auth.titleVerify')
+    : isReset  ? t('auth.titleReset')
     : isForgot ? t('auth.titleForgot')
     : isLogin  ? t('auth.titleLogin')
     : t('auth.titleSignup')
 
-  const subtitle = isForgot ? t('auth.subForgot')
+  const subtitle = isReset ? t('auth.subReset')
+    : isForgot ? t('auth.subForgot')
     : isLogin ? t('auth.subLogin')
     : t('auth.subSignup')
 
@@ -174,6 +178,53 @@ export default function MobileAuth({
                       : tr('auth.resendBtn', 'Resend verification email')}
                 </button>
               </div>
+            </>
+          ) : isReset ? (
+            <>
+              <form className="ma-form" onSubmit={handleResetPassword}>
+                <div className="ma-field">
+                  <label className="ma-label" htmlFor="ma-reset-code">{t('auth.codeLabel')}</label>
+                  <input
+                    id="ma-reset-code"
+                    className="ma-input ma-code-input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
+                    disabled={resettingPassword}
+                  />
+                </div>
+                <div className="ma-field">
+                  <label className="ma-label" htmlFor="ma-new-password">{t('auth.labelNewPassword')}</label>
+                  <input
+                    id="ma-new-password"
+                    type="password"
+                    className={`ma-input ${errors.password ? 'ma-input--error' : ''}`}
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                    disabled={resettingPassword}
+                  />
+                  {errors.password && <p className="ma-error">{errors.password}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  className="ma-btn ma-btn--primary"
+                  disabled={resetCode.trim().length !== 6 || !newPassword || resettingPassword}
+                >
+                  {resettingPassword
+                    ? <span className="ma-spinner" aria-hidden="true" />
+                    : t('auth.btnReset')}
+                </button>
+              </form>
+
+              {errors.form && <p className="ma-alert ma-alert--error" role="alert">{errors.form}</p>}
+              {message && <p className="ma-alert ma-alert--success" role="status">{message}</p>}
             </>
           ) : (
             <>

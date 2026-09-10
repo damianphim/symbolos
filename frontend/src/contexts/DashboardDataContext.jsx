@@ -225,7 +225,14 @@ export function DashboardDataProvider({ children }) {
     loading: upcomingEventsLoading,
     urgentCount: upcomingUrgentCount,
     hasCourseEvents: hasUpcomingCourseEvents,
+    markUrgentSeen,
   } = useUpcomingEvents(user, currentCourses, { limit: 5 })
+
+  // Opening Calendar dismisses the sidebar badge for whatever's currently
+  // urgent — a new event entering the urgent window later still counts.
+  useEffect(() => {
+    if (activeTab === 'calendar') markUrgentSeen()
+  }, [activeTab, markUrgentSeen])
 
   // ── Mark Complete modal ────────────────────────────────
   const [showCompleteCourseModal, setShowCompleteCourseModal] = useState(false)

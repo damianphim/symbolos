@@ -47,10 +47,14 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   // so this is the reliable path; link-click and polling remain as fallbacks.
   const [verifyCode, setVerifyCode] = useState('')
   const [verifyingCode, setVerifyingCode] = useState(false)
+  // Password-reset code entry, same rationale as verifyCode above.
+  const [resetCode, setResetCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [resettingPassword, setResettingPassword] = useState(false)
   const [legalModal, setLegalModal] = useState(null) // 'privacy' | 'terms' | 'about'
   const pollRef = useRef(null)
 
-  const { signIn, signUp, resetPasswordForEmail, resendVerificationEmail, error: authError, clearError } = useAuth()
+  const { signIn, signUp, resetPasswordForEmail, verifyPasswordResetCode, resendVerificationEmail, error: authError, clearError } = useAuth()
   const { t, language, setLanguage } = useLanguage()
   const { resolvedTheme, setTheme } = useTheme()
   const cycleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
@@ -62,6 +66,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
   const isSignup = mode === 'signup'
   const isForgot = mode === 'forgot'
   const isVerify = mode === 'verify'
+  const isReset  = mode === 'reset'
 
   useEffect(() => {
     clearError()
@@ -192,6 +197,26 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
     }
   }
 
+  // Verify the emailed password-reset code and set the new password in one
+  // step — mirrors handleVerifyCode above (same Safe-Links rationale).
+  const handleResetPassword = async (e) => {
+    e?.preventDefault?.()
+    const code = resetCode.trim()
+    if (!/^\d{6}$/.test(code) || resettingPassword) return
+    const passwordError = validatePassword(newPassword, true)
+    if (passwordError) { setErrors({ password: passwordError }); return }
+    setResettingPassword(true)
+    setErrors({})
+    try {
+      const { error } = await verifyPasswordResetCode(pendingEmail || email, code, newPassword)
+      if (error) { setErrors({ form: error.message }); return }
+      setMessage(t('auth.passwordUpdated'))
+      // SIGNED_IN fires from verifyOtp's session → AuthContext advances the app.
+    } finally {
+      setResettingPassword(false)
+    }
+  }
+
   // Hoisted verbatim from the desktop verify screen's inline onClick so the
   // mobile screen can call the identical handler. Behaviour is unchanged.
   const handleResend = async () => {
@@ -212,7 +237,11 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
       if (isForgot) {
         const { error } = await resetPasswordForEmail(email)
         if (error) setErrors({ form: error.message })
-        else setMessage(t('auth.resetSent'))
+        else {
+          setPendingEmail(email)
+          pendingMsgRef.current = t('auth.resetSent')
+          switchMode('reset')
+        }
         return
       }
       if (isLogin) {
@@ -277,6 +306,10 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
         verifyCode={verifyCode} setVerifyCode={setVerifyCode}
         handleVerifyCode={handleVerifyCode}
         verifyingCode={verifyingCode}
+        resetCode={resetCode} setResetCode={setResetCode}
+        newPassword={newPassword} setNewPassword={setNewPassword}
+        handleResetPassword={handleResetPassword}
+        resettingPassword={resettingPassword}
         pendingEmail={pendingEmail}
         resendCooldown={resendCooldown}
         resendLoading={resendLoading}
@@ -411,8 +444,74 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             </div>
           )}
 
+          {/* Password-reset code + new password, same reasoning as the verify screen */}
+          {isReset && (
+            <div className="auth-verify-screen">
+              <div className="auth-verify-icon">✉</div>
+              <h2 className="auth-card-title">{t('auth.titleReset')}</h2>
+              <p className="auth-card-subtitle">{t('auth.subReset')}</p>
+
+              <form className="auth-form" onSubmit={handleResetPassword} noValidate>
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="reset-code">{t('auth.codeLabel')}</label>
+                  <input
+                    id="reset-code"
+                    className="auth-input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
+                    disabled={resettingPassword}
+                  />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="new-password">{t('auth.labelNewPassword')}</label>
+                  <input
+                    id="new-password"
+                    className={`auth-input ${errors.password ? 'auth-input--error' : ''}`}
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={resettingPassword}
+                  />
+                  {errors.password && <p className="auth-error-msg">{errors.password}</p>}
+                </div>
+
+                {errors.form && (
+                  <div className="auth-alert auth-alert--error" role="alert">
+                    <span className="auth-alert-icon">!</span>
+                    <span>{errors.form}</span>
+                  </div>
+                )}
+                {message && (
+                  <div className="auth-alert auth-alert--success" role="alert">
+                    <span className="auth-alert-icon">✓</span>
+                    <span>{message}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-full"
+                  disabled={resetCode.trim().length !== 6 || !newPassword || resettingPassword}
+                >
+                  {resettingPassword ? t('auth.loadingReset') : t('auth.btnReset')}
+                </button>
+              </form>
+
+              <button className="auth-back-btn" style={{ marginTop: '16px' }} onClick={() => switchMode('login')}>
+                {t('auth.backToLogin')}
+              </button>
+            </div>
+          )}
+
           {/* Tabs, only for login/signup */}
-          {!isForgot && !isVerify && (
+          {!isForgot && !isVerify && !isReset && (
             <div className="auth-tabs" role="tablist">
               <button
                 role="tab"
@@ -436,7 +535,7 @@ function Login({ forceVerify = false, email: propEmail = '', userId: propUserId 
             </div>
           )}
 
-          {!isVerify && (
+          {!isVerify && !isReset && (
             <>
               <div className="auth-card-header">
                 <h2 className="auth-card-title">
