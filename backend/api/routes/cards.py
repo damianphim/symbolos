@@ -25,7 +25,7 @@ import asyncio
 import logging
 import json
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from typing import List, Optional
 from postgrest.exceptions import APIError
 
@@ -155,7 +155,7 @@ def fetch_student_context(user_id: str, user_sb=None) -> dict:
 
     completed = (sb.table("completed_courses")
         .select("course_code, course_title, subject, catalog, term, year, grade, credits, professor")
-        .eq("user_id", user_id).order("year", desc=True).limit(50)
+        .eq("user_id", user_id).order("year", desc=True).limit(200)
         .execute().data or [])
 
     current = (sb.table("current_courses")
@@ -379,6 +379,15 @@ profile, courses, calendar, and clubs. Each card surfaces a deadline, gap, oppor
 or recommendation tailored to their situation. Do not invent facts; if something is
 uncertain, frame it as a suggestion to verify.
 
+EVIDENCE AND USEFULNESS
+Each card must cite a concrete fact from the provided student context (a course,
+grade, deadline, saved choice, or computed requirement gap), explain why it matters,
+and give one feasible next action. Do not invent a deadline, professor rating,
+requirement, eligibility, or program rule. Avoid generic study tips and repeated
+profile summaries. When evidence is sparse, name the missing information and ask
+one focused question rather than pretending to have an insight.
+Never use the em dash character in generated output. Use periods or commas.
+
 CARD SCHEMA — every card must include:
   "type"     : one of "urgent" | "warning" | "insight" | "progress"
   "icon"     : single relevant emoji
@@ -405,17 +414,10 @@ sequential semesters, not one block:
     2026 load" vs "your Winter 2027 load"), never lumped across the whole year.
 
 PROFESSOR RECOMMENDATIONS FOR OPPORTUNITY CARDS
-For "opportunities" cards, when relevant, recommend specific McGill professors the
-student could reach out to based on their major, completed courses, and interests.
-Include:
-  - Professor name and department
-  - Their research area that aligns with the student's profile
-  - A suggested approach for reaching out (e.g. "Attend their office hours for COMP 251"
-    or "Email about their ML research lab openings")
-  - Only recommend professors when you have high confidence they are real McGill faculty
-  - Add a disclaimer at the end of the card body: "Verify professor details on McGill's department website."
-At least 1 of the 8 cards should be an "opportunities" card with a professor
-recommendation if the student's profile has a declared major.
+Only name professors present in the provided course context. Do not infer their
+research interests, available positions, or office hours. A course instructor
+can be a useful contact for a specific question about that course; explain
+that connection. Do not force an opportunities card when no evidence supports it.
 
 PROACTIVE MILESTONES → "advice" CATEGORY
 The MILESTONES reference below lists situations with a stated trigger
@@ -581,7 +583,7 @@ STUDENT PROFILE
   Major(s)     : {safe_majors}
   Minor(s)     : {safe_minors}
   Concentration: {safe_concentration}
-  Year         : U{user.get('year') or '?'}
+  Year         : U{user.get('year') if user.get('year') is not None else '?'}
   Credits done : {total_credits} (+ {adv_credits} advanced standing: {adv_summary})
 {progress_section}
 COMPLETED COURSES
@@ -603,7 +605,9 @@ STUDENT CLUBS
   Joined: {', '.join(ctx.get('joined_clubs', [])) or 'None'}
   Created: {', '.join(c.get('name','') for c in ctx.get('created_clubs', [])) or 'None'}
 
-Generate exactly 8 cards based on the schema in the system prompt.
+Generate up to 8 distinct evidence-backed cards based on the schema in the system prompt.
+Use fewer cards when there are fewer useful observations. With no academic data,
+return one focused setup question. Do not pad the Brief with generic advice.
 Return ONLY the JSON array — no markdown, no commentary."""
 
 
@@ -784,7 +788,7 @@ async def _fetch_student_context_parallel(user_id: str, user_sb=None) -> dict:
     def q_completed():
         return (sb.table("completed_courses")
             .select("course_code, course_title, subject, catalog, term, year, grade, credits, professor")
-            .eq("user_id", user_id).order("year", desc=True).limit(50)
+            .eq("user_id", user_id).order("year", desc=True).limit(200)
             .execute().data or [])
 
     def q_current():
@@ -832,7 +836,7 @@ def _build_ndjson_context(ctx: dict, saved_cards: list = None, recent_titles: li
     # Replace the final return instruction with NDJSON variant
     return base.replace(
         "Return ONLY the JSON array — no markdown, no commentary.",
-        "Return exactly 8 cards as newline-delimited JSON (NDJSON): one complete JSON object per line, "
+        "Return up to 8 distinct evidence-backed cards as newline-delimited JSON (NDJSON): one complete JSON object per line, "
         "no surrounding array brackets, no markdown fences. Each line must be a valid standalone JSON object."
     )
 

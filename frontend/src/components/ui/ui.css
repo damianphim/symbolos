@@ -105,7 +105,7 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.15rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.4;
@@ -216,7 +216,7 @@
   flex-direction: column;
   background: var(--modal-bg);
   border: 1px solid var(--modal-border);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-2xl);
   overflow: hidden;
   outline: none;
@@ -275,7 +275,7 @@
   width: 30px;
   height: 30px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: transparent;
   color: var(--text-tertiary);
   display: flex;

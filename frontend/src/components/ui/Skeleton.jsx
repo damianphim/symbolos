@@ -20,7 +20,7 @@ export default function Skeleton({ width = '100%', height = '0.875rem', radius =
   )
 }
 
-/** Stack of shimmer lines, the last one shorter — quick text placeholder. */
+/** Stack of shimmer lines, the last one shorter, quick text placeholder. */
 export function SkeletonLines({ lines = 3, className = '' }) {
   return (
     <div className={`ui-skeleton-lines ${className}`} aria-hidden="true">

@@ -112,7 +112,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting, initialSection }) {
   const { t } = useLanguage()
   const [section, setSection] = useState(initialSection || 'general')
 
-  // Review-specific state — a review is always a course, professor optional.
+  // Review-specific state, a review is always a course, professor optional.
   const [courseCode, setCourseCode] = useState('')
   const [rating, setRating]         = useState(0)   // overall class rating
   const [difficulty, setDifficulty] = useState(0)   // independent difficulty rating
@@ -137,7 +137,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting, initialSection }) {
   }, [isReview, instructorsLoaded])
 
   const selectedCourse = instructors.courses?.find(c => c.course_code === courseCode)
-  // Professors this student actually had FOR this course, deduped — a much
+  // Professors this student actually had FOR this course, deduped, a much
   // tighter, more relevant list than "every professor across every course".
   const courseProfessors = [...new Set(
     (selectedCourse?.occurrences || []).map(o => o.professor).filter(Boolean)
@@ -177,7 +177,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting, initialSection }) {
   useEffect(() => {
     if (!isReview) return
     if (courseCode && !title.trim()) {
-      setTitle(selectedCourse?.course_title ? `${courseCode} — ${selectedCourse.course_title}` : `${courseCode} review`)
+      setTitle(selectedCourse?.course_title ? `${courseCode}, ${selectedCourse.course_title}` : `${courseCode} review`)
     }
   }, [courseCode, isReview, selectedCourse])  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -216,7 +216,7 @@ function NewPostModal({ onClose, onSubmit, isSubmitting, initialSection }) {
                   <option value="">{t('forum.reviewCoursePlaceholder')}</option>
                   {(instructors.courses || []).map(c => (
                     <option key={c.course_code} value={c.course_code}>
-                      {c.course_code}{c.course_title ? ` — ${c.course_title}` : ''}
+                      {c.course_code}{c.course_title ? `, ${c.course_title}` : ''}
                     </option>
                   ))}
                 </select>
@@ -554,7 +554,7 @@ export default function Forum() {
   const [isPosting, setIsPosting]     = useState(false)
   const debounceRef = useRef(null)
 
-  // Subject filter only applies to reviews — fetch the canonical list once.
+  // Subject filter only applies to reviews, fetch the canonical list once.
   useEffect(() => {
     coursesAPI.getSubjects().then(data => setSubjects(data.subjects || [])).catch(() => {})
   }, [])
@@ -588,14 +588,14 @@ export default function Forum() {
 
   // Which API category to request for the active section. "review" fetches
   // the merged reviews feed (unified posts + legacy course_review/
-  // professor_review posts) — see forum.py list_posts.
+  // professor_review posts), see forum.py list_posts.
   const apiCategory = activeSection === 'reviews' ? 'review' : activeSection
 
   const fetchPosts = useCallback(async () => {
     setLoading(true); setError(null)
     try {
       // No sort param: the backend's default ranking (semester-aware
-      // upvotes) is the only option now — there's no user-facing toggle.
+      // upvotes) is the only option now, there's no user-facing toggle.
       const data = await forumAPI.getPosts({
         category: apiCategory,
         subject: activeSection === 'reviews' ? (subjectFilter || undefined) : undefined,

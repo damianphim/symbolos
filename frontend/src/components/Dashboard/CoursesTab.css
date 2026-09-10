@@ -18,7 +18,7 @@
   flex: 1;
   padding: 1rem 1.25rem;
   border: 2px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 1rem;
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -32,7 +32,7 @@
   background: var(--accent-primary);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -49,7 +49,7 @@
   border: 1.5px solid var(--error-light);
   color: var(--error-primary);
   padding: 0.875rem 1.25rem;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   margin-bottom: 1.5rem;
   font-weight: 500;
   font-size: 0.9rem;
@@ -73,7 +73,7 @@
 .sort-select {
   padding: 0.45rem 2.1rem 0.45rem 0.75rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -105,7 +105,7 @@
 .course-card {
   background: var(--bg-tertiary);
   border: 1.5px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   padding: 20px;
   transition: all 0.2s;
   box-shadow: var(--shadow-xs);
@@ -135,7 +135,7 @@
   padding: 0.25rem 0.75rem;
   background: var(--success-light);
   color: var(--success-text);
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -197,7 +197,7 @@
   padding: 10px 14px;
   background: var(--info-light);
   color: var(--info-text);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 0.875rem;
 }
 .search-correction-banner svg { flex-shrink: 0; }
@@ -213,7 +213,7 @@
   display: flex; align-items: center; gap: 0.25rem;
   padding: 0.375rem 0.75rem;
   background: var(--bg-quaternary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
 }
 .rmp-label { font-weight: 500; display: flex; align-items: center; gap: 4px; }
@@ -227,7 +227,7 @@
   background: var(--bg-tertiary);
   border: 1.5px solid var(--border-primary);
   padding: 4rem 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   text-align: center;
   box-shadow: var(--shadow-sm);
 }
@@ -243,7 +243,7 @@
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
   border: 1.5px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   cursor: pointer; font-size: 13px;
@@ -257,7 +257,7 @@
   min-width: 36px; height: 36px; padding: 0 6px;
   display: flex; align-items: center; justify-content: center;
   border: 1.5px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   color: var(--text-secondary);
   cursor: pointer; font-size: 0.875rem; font-weight: 600;
@@ -278,7 +278,7 @@
   position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   background: rgba(17,24,39,0.92); color: #fff;
   font-size: 11px; font-weight: 500; white-space: nowrap;
-  padding: 4px 8px; border-radius: 5px;
+  padding: 4px 8px; border-radius: var(--radius-control);
   pointer-events: none; opacity: 0; transition: opacity 0.1s; z-index: 100;
 }
 .favorite-btn[data-tooltip]:hover::after, .completed-btn[data-tooltip]:hover::after,
@@ -337,7 +337,7 @@
   margin: 8px 0 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
   cursor: pointer;
@@ -566,3 +566,40 @@
     display: none;
   }
 }
+
+.course-comparison {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-container);
+  background: var(--card-bg);
+  min-width: 0;
+}
+.course-comparison h2 { margin: 0 0 0.5rem; }
+.course-comparison p { color: var(--text-secondary); }
+.course-comparison table { width: 100%; min-width: 480px; border-collapse: collapse; }
+.course-comparison th, .course-comparison td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-primary);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.course-comparison th button {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.course-compare-btn {
+  min-height: 36px;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-control);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.course-compare-btn[aria-pressed="true"] { border-color: var(--accent-primary); }
+.course-compare-btn:disabled { opacity: 0.5; cursor: default; }

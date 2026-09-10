@@ -46,6 +46,25 @@ _SUBJECTS_CACHE_KEY = "all_subjects"
 _TERM_OFFERINGS_KEY = "section_term_offerings"
 
 
+# Department names supplement the live catalogue subject-code index.
+_SUBJECT_NAMES = {
+    "MIMM": "Microbiology and Immunology",
+    "COMP": "Computer Science", "MATH": "Mathematics",
+    "BIOL": "Biology", "BIOC": "Biochemistry", "CHEM": "Chemistry",
+    "PHYS": "Physics", "PHGY": "Physiology", "PSYC": "Psychology",
+    "ECON": "Economics", "HIST": "History", "ENGL": "English",
+    "POLI": "Political Science", "SOCI": "Sociology", "PHIL": "Philosophy",
+}
+
+
+def matching_subjects(query: str, subjects: list[str]) -> list[str]:
+    text = " ".join(query.casefold().replace("&", "and").split())
+    if len(text) < 2:
+        return []
+    return [code for code in subjects if code.casefold().startswith(text)
+            or text in _SUBJECT_NAMES.get(code, "").casefold()]
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _norm_code(subject: str, catalog: str) -> str:
@@ -287,16 +306,25 @@ async def search(
         rpc_limit = min(limit * 5, settings.MAX_SEARCH_LIMIT) if clean_term else limit
 
         # ── Call the search_courses RPC ────────────────────────────────────────
-        rpc_result = supabase.rpc(
-            "search_courses",
-            {
-                "p_query":   clean_query,
-                "p_subject": clean_subject,
-                "p_limit":   rpc_limit,
-            },
-        ).execute()
-
-        rows = rpc_result.data or []
+        matched_subjects = []
+        if clean_query and not clean_subject:
+            matched_subjects = matching_subjects(clean_query, (await get_subjects())["subjects"])
+        searches = [(clean_query, clean_subject)]
+        # Preserve title matches and add bounded department searches.
+        searches.extend((None, code) for code in matched_subjects[:12])
+        rows = []
+        seen = set()
+        for search_text, search_subject in searches:
+            result = supabase.rpc("search_courses", {
+                "p_query": search_text, "p_subject": search_subject,
+                "p_limit": rpc_limit,
+            }).execute()
+            for row in result.data or []:
+                key = (row.get("subject"), row.get("catalog"))
+                if key not in seen:
+                    rows.append(row)
+                    seen.add(key)
+        rows = rows[:rpc_limit]
 
         # Map RPC rows → response shape expected by the frontend
         result_courses = []

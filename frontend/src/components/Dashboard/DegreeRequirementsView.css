@@ -43,7 +43,7 @@
   width: 26px;
   height: 26px;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   cursor: pointer;
@@ -105,7 +105,7 @@
   width: 100%;
   padding: 8px 12px 8px 32px;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -128,7 +128,7 @@
 
 .drv-type-chip {
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   background: none;
   font-size: 11px;
@@ -214,7 +214,7 @@
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-active));
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -239,7 +239,7 @@
   gap: 8px;
   padding: 9px 16px;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   font-size: 13px;
   font-weight: 500;
@@ -252,7 +252,7 @@
   padding: 12px 16px;
   background: var(--error-light);
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   color: var(--error-primary);
   font-size: 13px;
   margin-bottom: 16px;
@@ -318,7 +318,7 @@
 .drv-detail-type-badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -388,7 +388,7 @@
   text-decoration: none;
   padding: 4px 10px;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   transition: all 0.15s;
 }
@@ -418,14 +418,14 @@
   flex: 1;
   height: 7px;
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
 .drv-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-active));
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   transition: width 0.4s ease;
 }
 
@@ -457,7 +457,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   background: var(--bg-secondary);
   font-size: 13px;
@@ -481,7 +481,7 @@
 
 .drv-block {
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   background: var(--bg-primary);
 }
@@ -514,7 +514,7 @@
 .drv-block-count {
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   background: var(--bg-tertiary);
   color: var(--text-muted);
 }
@@ -526,7 +526,7 @@
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   white-space: nowrap;
 }
 
@@ -561,7 +561,7 @@
 .drv-block-progress {
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   background: var(--warning-light);
   color: var(--warning-text);
   font-weight: 500;
@@ -582,7 +582,7 @@
   color: var(--text-secondary);
   padding: 10px 12px;
   background: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   margin: 12px 0 8px;
   line-height: 1.5;
 }
@@ -595,7 +595,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px solid transparent;
   transition: background 0.12s;
 }
@@ -628,7 +628,7 @@
   color: var(--accent-primary);
   background: var(--accent-lighter);
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -654,7 +654,7 @@
   gap: 3px;
   font-size: 10px;
   padding: 2px 7px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   letter-spacing: 0.2px;
 }
@@ -686,7 +686,7 @@
   margin: 4px 0 0;
   padding: 4px 8px;
   background: var(--warning-light);
-  border-radius: 5px;
+  border-radius: var(--radius-container);
 }
 
 .drv-rec-icon { font-size: 10px; flex-shrink: 0; color: var(--warning-primary); }
@@ -720,7 +720,7 @@
   color: var(--success-text);
   background: var(--success-light);
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 /* Currently taking: use accent red (on-brand) */
@@ -731,7 +731,7 @@
   color: var(--accent-text);
   background: var(--accent-light);
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 /* Transfer credit: keep a distinct neutral purple-ish via bg-tertiary */
@@ -741,7 +741,7 @@
   color: var(--text-secondary);
   background: var(--bg-quaternary);
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 /* ─── Show more ───────────────────────────────────────────── */
@@ -753,7 +753,7 @@
   width: 100%;
   background: none;
   border: 1px dashed var(--border-primary);
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   font-size: 12px;
   color: var(--accent-primary);
   cursor: pointer;
@@ -782,7 +782,7 @@
 .drv-faculty-select {
   width: 100%;
   padding: 8px 28px 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -927,7 +927,7 @@
   background: var(--accent-lighter);
   border: 1px solid var(--accent-light);
   border-left: 3px solid var(--accent-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 10px 12px 10px 14px;
   margin: 0 0 12px 0;
   font-size: 13px;
@@ -967,7 +967,7 @@
   color: var(--text-muted);
   font-size: 12px;
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   flex-shrink: 0;
   display: flex;
   align-items: center;

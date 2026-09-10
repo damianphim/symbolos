@@ -12,7 +12,7 @@ import './DegreeProgressTracker.css'
 export default function DegreeProgressTracker({ completedCourses = [], profile = {}, compact = false }) {
   const { t } = useLanguage()
 
-  // Dismissible "head start" tip — remembers the choice across visits.
+  // Dismissible "head start" tip, remembers the choice across visits.
   const [headStartDismissed, setHeadStartDismissed] = useState(
     () => { try { return localStorage.getItem('dp_dismiss_headstart') === '1' } catch { return false } }
   )
@@ -21,7 +21,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
     try { localStorage.setItem('dp_dismiss_headstart', '1') } catch { /* ignore */ }
   }
 
-  // Breakdown + milestones are secondary detail — collapsed by default so
+  // Breakdown + milestones are secondary detail, collapsed by default so
   // the card leads with just the bar and totals.
   const [detailsOpen, setDetailsOpen] = useState(false)
 
@@ -112,7 +112,7 @@ export default function DegreeProgressTracker({ completedCourses = [], profile =
         <>
       {/* Credit Breakdown. On mobile the four tinted boxes collapse into one
           grouped list (`m-group` / `m-row`, scoped to `.mobile-shell` so the
-          desktop grid of cards is untouched) — four separate coloured cards
+          desktop grid of cards is untouched), four separate coloured cards
           stacked in a single column is the "web page on a phone" tell. */}
       <div className="credits-breakdown m-group">
         <div className="credit-item m-row">

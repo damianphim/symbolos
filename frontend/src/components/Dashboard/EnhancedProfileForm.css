@@ -33,7 +33,7 @@
   max-width: 340px;
   padding: 8px 11px;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-family: inherit;
   font-size: 14px;
   background: var(--input-bg);
@@ -100,7 +100,7 @@ select.pef-control option {
   color: var(--text-secondary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 10px 12px;
   line-height: 1.55;
   max-width: 420px;
@@ -150,7 +150,7 @@ select.pef-control option {
   padding: 3px 11px;
   background: transparent;
   border: 1px dashed var(--border-secondary);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -169,7 +169,7 @@ select.pef-control option {
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   box-shadow: var(--shadow-lg);
   max-width: 340px;
@@ -209,7 +209,7 @@ select.pef-control option {
 .pef-as-item {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 9px 12px;
 }
 
@@ -325,10 +325,10 @@ select.pef-control option {
 
 .pef-add-btn {
   padding: 8px 16px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -361,7 +361,7 @@ select.pef-control option {
 
 .pef-btn {
   padding: 9px 22px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 600;
@@ -381,7 +381,7 @@ select.pef-control option {
 }
 
 .pef-btn--primary {
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
   border: none;
 }

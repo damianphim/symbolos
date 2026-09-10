@@ -25,7 +25,7 @@ const newslettersAPI = {
         headers: await authHeaders(),
       })
       if (res.ok) return res.json()
-    } catch (_) {}
+    } catch { /* Optional newsletter data falls back to an empty list below. */ }
     return []
   },
 
@@ -38,7 +38,7 @@ const newslettersAPI = {
         const data = await res.json()
         return data.categories || []
       }
-    } catch (_) {}
+    } catch { /* Optional newsletter data falls back to an empty list below. */ }
     return []
   },
 
@@ -53,7 +53,7 @@ const newslettersAPI = {
         const data = await res.json()
         return data.subscriptions || []
       }
-    } catch (_) {}
+    } catch { /* Optional newsletter data falls back to an empty list below. */ }
     return []
   },
 
@@ -100,7 +100,7 @@ const newslettersAPI = {
         const data = await res.json()
         return data.events || []
       }
-    } catch (_) {}
+    } catch { /* Optional newsletter data falls back to an empty list below. */ }
     return []
   },
 }

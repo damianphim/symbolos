@@ -9,29 +9,38 @@ import './TargetGPACalculator.css'
 export default function TargetGPACalculator({ currentGPA, completedCredits, totalCreditsRequired = 120, compact = false }) {
   const { t } = useLanguage()
   const [targetGPA, setTargetGPA] = useState('')
+  const [horizon, setHorizon] = useState('degree')
+  const [scopeCredits, setScopeCredits] = useState('15')
+  const [scopeCompleted, setScopeCompleted] = useState('0')
+  const [scopeGPA, setScopeGPA] = useState('0')
+  const scoped = horizon !== 'degree'
+  const baselineGPA = scoped ? scopeGPA : currentGPA
+  const baselineCredits = scoped ? scopeCompleted : completedCredits
+  const horizonCredits = scoped ? Number(scopeCredits) : totalCreditsRequired
+
   const [showResult, setShowResult] = useState(false)
 
   const calculation = useMemo(() => {
-    if (!currentGPA || !targetGPA || !completedCredits) return null
+    if (baselineGPA == null || baselineGPA === '' || targetGPA === '' || baselineCredits == null || baselineCredits === '') return null
 
-    const current = parseFloat(currentGPA)
+    const current = parseFloat(baselineGPA)
     const target = parseFloat(targetGPA)
-    const completed = Math.round(parseFloat(completedCredits))
-    const remaining = Math.max(0, totalCreditsRequired - completed)
+    const completed = parseFloat(baselineCredits)
+    const remaining = Math.max(0, horizonCredits - completed)
 
-    if (isNaN(current) || isNaN(target) || isNaN(completed)) return null
+    if (![current, target, completed, horizonCredits].every(Number.isFinite)) return null
     if (target < 0 || target > 4.0) return { error: 'Target GPA must be between 0.0 and 4.0' }
     if (current < 0 || current > 4.0) return { error: 'Current GPA must be between 0.0 and 4.0' }
     if (completed < 0) return { error: 'Completed credits cannot be negative' }
     if (remaining <= 0) return { error: 'You have already completed all required credits' }
 
-    const requiredGPA = (target * totalCreditsRequired - current * completed) / remaining
+    const requiredGPA = (target * horizonCredits - current * completed) / remaining
 
     if (requiredGPA > 4.0) {
       return {
         isAchievable: false,
         requiredGPA: requiredGPA.toFixed(2),
-        message: `${t('gpa.impossibleMessage')} ${((current * completed + 4.0 * remaining) / totalCreditsRequired).toFixed(2)}`
+        message: `${t('gpa.impossibleMessage')} ${((current * completed + 4.0 * remaining) / horizonCredits).toFixed(2)}`
       }
     }
 
@@ -39,14 +48,15 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
       return {
         isAchievable: true,
         requiredGPA: '0.00',
+        targetGPA: target.toFixed(2), remainingCredits: remaining, scenarios: [],
         message: t('gpa.alreadyExceeded').replace('{current}', current.toFixed(2)).replace('{target}', target.toFixed(2))
       }
     }
 
     const scenarios = [
-      { label: t('gpa.scenarioConservative'), gpa: 3.0, finalGPA: ((current * completed + 3.0 * remaining) / totalCreditsRequired).toFixed(2) },
-      { label: t('gpa.scenarioStrong'),       gpa: 3.7, finalGPA: ((current * completed + 3.7 * remaining) / totalCreditsRequired).toFixed(2) },
-      { label: t('gpa.scenarioPerfect'),      gpa: 4.0, finalGPA: ((current * completed + 4.0 * remaining) / totalCreditsRequired).toFixed(2) }
+      { label: t('gpa.scenarioConservative'), gpa: 3.0, finalGPA: ((current * completed + 3.0 * remaining) / horizonCredits).toFixed(2) },
+      { label: t('gpa.scenarioStrong'),       gpa: 3.7, finalGPA: ((current * completed + 3.7 * remaining) / horizonCredits).toFixed(2) },
+      { label: t('gpa.scenarioPerfect'),      gpa: 4.0, finalGPA: ((current * completed + 4.0 * remaining) / horizonCredits).toFixed(2) }
     ]
 
     return {
@@ -59,7 +69,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
       scenarios,
       difficulty: getDifficulty(requiredGPA)
     }
-  }, [currentGPA, targetGPA, completedCredits, totalCreditsRequired, t])
+  }, [baselineGPA, targetGPA, baselineCredits, horizonCredits, t])
 
   function getDifficulty(requiredGPA) {
     if (requiredGPA <= 2.5) return { level: t('gpa.difficultyEasy'),           color: '#10b981', emoji: <FaSmile    className="difficulty-emoji" /> }
@@ -70,7 +80,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
   }
 
   const handleCalculate = () => {
-    if (targetGPA && currentGPA && completedCredits) setShowResult(true)
+    if (calculation) setShowResult(true)
   }
 
   const handleReset = () => {
@@ -126,13 +136,13 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
       </div>
 
       <div className="calculator-body">
-        {/* Current Stats — hidden in compact mode, where the surrounding
+        {/* Current Stats, hidden in compact mode, where the surrounding
             Academic Performance card already shows GPA and credit totals */}
         {!compact && (
           <div className="current-stats">
             <div className="stat-box">
               <span className="stat-label">{t('gpa.currentGpa')}</span>
-              <span className="stat-value">{currentGPA || '--'}</span>
+              <span className="stat-value">{currentGPA ?? '--'}</span>
             </div>
             <div className="stat-box">
               <span className="stat-label">{t('gpa.creditsCompleted')}</span>
@@ -145,6 +155,28 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
           </div>
         )}
 
+        <label className="input-label">
+          <span>{t('gpa.horizon')}</span>
+          <select value={horizon} onChange={e => {
+            const next = e.target.value
+            setHorizon(next)
+            setScopeCredits(next === 'year' ? '30' : '15')
+            setShowResult(false)
+          }}>
+            {['degree', 'term', 'year', 'custom'].map(scope => <option key={scope} value={scope}>{t(`gpa.horizon.${scope}`)}</option>)}
+          </select>
+        </label>
+        {scoped && <fieldset>
+          <legend>{t('gpa.scopeHint')}</legend>
+          {[
+            ['gpa.scopeTotal', scopeCredits, setScopeCredits, 300, 0.5],
+            ['gpa.scopeCompleted', scopeCompleted, setScopeCompleted, 300, 0.5],
+            ['gpa.scopeGpa', scopeGPA, setScopeGPA, 4, 0.01],
+          ].map(([key, value, setter, max, step]) => <label className="input-label" key={key}>
+            <span>{t(key)}</span>
+            <input type="number" min="0" max={max} step={step} value={value} onChange={e => { setter(e.target.value); setShowResult(false) }} />
+          </label>)}
+        </fieldset>}
         {/* Input Section */}
         <div className="input-section">
           <label className="input-label">
@@ -162,7 +194,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
           </label>
           <button
             onClick={handleCalculate}
-            disabled={!targetGPA || !currentGPA || !completedCredits}
+            disabled={!calculation}
             className="calculate-btn"
           >
             {t('gpa.calculateRequired')}
@@ -189,6 +221,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
                     )}
                   </div>
                   <div className="result-value">{calculation.requiredGPA}</div>
+                  {calculation.message && <p>{calculation.message}</p>}
                   <div className="result-details">
                     {t('gpa.toReach')} <strong>{calculation.targetGPA}</strong> {t('gpa.withRemaining')} <strong>{calculation.remainingCredits}</strong> {t('gpa.creditsRemaining')}
                   </div>
@@ -204,7 +237,7 @@ export default function TargetGPACalculator({ currentGPA, completedCredits, tota
                     <HiMiniSparkles className="scenarios-icon" /> {t('gpa.whatIfScenarios')}
                   </h4>
                   <div className="scenarios-list">
-                    {calculation.scenarios.map((scenario, idx) => (
+                    {(calculation.scenarios || []).map((scenario, idx) => (
                       <div key={idx} className="scenario-item">
                         <div className="scenario-header">
                           <span className="scenario-label">{scenario.label}</span>

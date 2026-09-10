@@ -130,7 +130,7 @@ function CardChatBar({ onSend, isThinking, onFocus }) {
  * Inline form for the student's own registration start time.
  *
  * McGill staggers those times per student, so the card cannot know when a given
- * student's slot opens — they read it off Minerva and enter it here. Saving
+ * student's slot opens, they read it off Minerva and enter it here. Saving
  * puts it on their calendar and queues a reminder the day before.
  *
  * Deliberately inline rather than a modal: it is two fields, and the mobile
@@ -140,7 +140,7 @@ function CardChatBar({ onSend, isThinking, onFocus }) {
 function RegistrationTimeForm({ onCancel }) {
   const { t } = useLanguage()
   const { user } = useAuth()
-  // Reminders honour the student's notification settings — if they've turned
+  // Reminders honour the student's notification settings, if they've turned
   // reminders off, the event is still saved to the calendar and simply doesn't
   // notify, rather than us quietly overriding their preference.
   const [notifPrefs] = useNotificationPrefs(user?.id, user?.email)
@@ -307,7 +307,7 @@ function AdvisorCard({
   const chips = card.actions || []
 
   // Sync with parent expanded state (two-way): the parent can both open this
-  // card and collapse it — so opening one card from Home closes the others,
+  // card and collapse it, so opening one card from Home closes the others,
   // and click-outside actually closes the panel.
   useEffect(() => { setPanelOpen(isExpanded) }, [isExpanded])
 
@@ -330,7 +330,7 @@ function AdvisorCard({
   }
 
   // `onPinToggle` is undefined in shells with no right sidebar to pin into
-  // (MobileLayout), so the button is not rendered at all there — this guard is
+  // (MobileLayout), so the button is not rendered at all there, this guard is
   // belt-and-braces for any other shell that omits the prop.
   const canPin = typeof onPinToggle === 'function'
 
@@ -387,7 +387,7 @@ function AdvisorCard({
 
       {/* ── Header: icon | meta | save | trash ── */}
       <div className="advisor-card__header">
-        <span className="advisor-card__icon"><CardIcon /></span>
+        {['urgent', 'warning'].includes(card.card_type || card.type) && <span className="advisor-card__icon"><CardIcon /></span>}
 
         <div className="advisor-card__meta">
           <div className="advisor-card__meta-top">
@@ -446,7 +446,7 @@ function AdvisorCard({
         <p className="advisor-card__question">{card.user_question}</p>
       )}
 
-      {/* ── Body — always visible ── */}
+      {/* ── Body, always visible ── */}
       <p className="advisor-card__body">{card.body}</p>
 
       {/* ── Collapsible panel: chips + thread + chat bar + close toggle ── */}
@@ -474,7 +474,7 @@ function AdvisorCard({
             </div>
           )}
 
-          {/* Chat bar — always shown in open panel */}
+          {/* Chat bar, always shown in open panel */}
           <div className="advisor-card__chat-bar-wrapper">
             <CardChatBar
               onSend={handleSend}
@@ -499,7 +499,7 @@ function AdvisorCard({
         </div>
       </div>
 
-      {/* ── Open chevron — always visible below the body when closed ── */}
+      {/* ── Open chevron, always visible below the body when closed ── */}
       {!panelOpen && (
         <div className="advisor-card__toggle-row">
           <button
@@ -553,7 +553,7 @@ function CardSkeleton() {
 //
 // The desktop card is a self-contained inline chat: it expands in place, can
 // be dragged to reorder, and can be pinned into the right sidebar. None of
-// those three metaphors survive a phone — there is no sidebar to pin into,
+// those three metaphors survive a phone, there is no sidebar to pin into,
 // HTML5 drag events never fire from touch, and an inline expanding thread
 // fights the page scroller for the small amount of vertical space there is.
 //
@@ -611,7 +611,7 @@ function MobileAdvisorCard({ card, thread = [], isThinking = false, onOpen, onSa
       }}
     >
       <div className="advisor-card__header">
-        <span className="advisor-card__icon"><CardIcon /></span>
+        {['urgent', 'warning'].includes(card.card_type || card.type) && <span className="advisor-card__icon"><CardIcon /></span>}
 
         <div className="advisor-card__meta">
           <div className="advisor-card__meta-top">
@@ -754,7 +754,7 @@ function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveTog
           <>
             {/* The question that produced this card, rendered as the first
                 message so the conversation reads in order. It only used to
-                exist as the card's title while the answer was pending — once
+                exist as the card's title while the answer was pending, once
                 the real card arrived the title became the model's paraphrase
                 and the student's own words disappeared, including on reopen. */}
             {card.user_question && (
@@ -763,7 +763,7 @@ function MobileCardThread({ card, thread, isThinking, onSend, onClose, onSaveTog
               </div>
             )}
             <div className="mobile-card-thread__intro">
-              <span className="advisor-card__icon"><CardIcon /></span>
+              {['urgent', 'warning'].includes(card.card_type || card.type) && <span className="advisor-card__icon"><CardIcon /></span>}
               <p className="advisor-card__body">{card.body}</p>
               <CardChips chips={chips} isThinking={isThinking} onSend={onSend} />
             </div>
@@ -788,7 +788,7 @@ function MobileFeed({ cards, threadMap, thinkingCards, onOpen, onSaveToggle, onD
           card={card}
           thread={threadMap[card.id] || []}
           // A placeholder card is waiting on its first answer, so it reads as
-          // thinking — which also stops CardChatBar accepting a follow-up for
+          // thinking, which also stops CardChatBar accepting a follow-up for
           // a card that has no row server-side yet.
           isThinking={thinkingCards.has(card.id) || !!card._pending}
           onOpen={onOpen}
@@ -974,7 +974,7 @@ export default function AdvisorCards({
   const [expandedCards, setExpanded] = useState(new Set())
 
   // Synchronous mirror of threadMap. handleSend has to read the thread as it
-  // stood BEFORE the new message so it can ship it as conversation history —
+  // stood BEFORE the new message so it can ship it as conversation history ,
   // a state value closed over by useCallback would be stale, and reading it
   // after setThreadMap would already include the new message.
   const threadMapRef = useRef(threadMap)
@@ -1071,7 +1071,7 @@ export default function AdvisorCards({
   }, [generatedAt, t])
 
   const handleSend = useCallback(async (cardId, message, cardTitle, cardBody) => {
-    // Snapshot the thread before appending — this is the conversation history
+    // Snapshot the thread before appending, this is the conversation history
     // the advisor needs to make sense of a terse follow-up like "A".
     const priorThread = threadMapRef.current[cardId] || []
 
@@ -1124,7 +1124,7 @@ export default function AdvisorCards({
   const showSkeletons = isLoading || isGenerating
 
   // Auto-open the top card's chat panel so it's immediately obvious that
-  // cards are chats, not static tips. Fires once per tab visit — this
+  // cards are chats, not static tips. Fires once per tab visit, this
   // component remounts every time the user switches to the Brief tab
   // (Dashboard conditionally renders it), so the guard just prevents it
   // from re-firing on every re-render within a single visit.
@@ -1133,7 +1133,7 @@ export default function AdvisorCards({
   const autoExpandedRef = useRef(false)
   useEffect(() => {
     if (isMobile || autoExpandedRef.current || showSkeletons) return
-    // If Home deep-linked a specific card, let that effect own the expansion —
+    // If Home deep-linked a specific card, let that effect own the expansion ,
     // don't also open the top card (which would leave two cards open).
     if (openCardId) { autoExpandedRef.current = true; return }
     const topCard = visibleCards[0]
@@ -1205,7 +1205,7 @@ export default function AdvisorCards({
             <span className="category-tab__count">{visibleCards.length}</span>
           </button>
 
-          {/* Per-category tabs — only shown if that category has cards */}
+          {/* Per-category tabs, only shown if that category has cards */}
           {activeCats.map(cat => {
             const CatIcon = CATEGORY_ICON_COMPONENTS[cat] || FaComments
             return (
@@ -1260,7 +1260,7 @@ export default function AdvisorCards({
             <p>{t('brief.noCards').replace('{category}', catLabel(activeCategory, t))}</p>
           </div>
         ) : isMobile ? (
-          /* Reordering is intentionally absent here — see MobileFeed's note. */
+          /* Reordering is intentionally absent here, see MobileFeed's note. */
           <MobileFeed
             cards={filteredCards}
             threadMap={threadMap}

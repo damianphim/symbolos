@@ -35,7 +35,7 @@
 .legal-modal {
   background: var(--bg-primary, #fff);
   border: 1px solid var(--border-primary, #e5e7eb);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   width: 100%;
   max-width: 680px;
   max-height: 88vh;
@@ -68,7 +68,7 @@
   height: 40px;
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,7 +101,7 @@
   align-items: center;
   justify-content: center;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   transition: background 0.15s;
   line-height: 1;
   flex-shrink: 0;
@@ -119,7 +119,7 @@
 .legal-disclaimer-banner {
   background: #fff7ed;
   border: 1.5px solid #f97316;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 12px 16px;
   font-size: 0.85rem;
   color: #9a3412;
@@ -135,7 +135,7 @@
 .legal-translation-banner {
   background: #eff6ff;
   border: 1.5px solid #93c5fd;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 12px 16px;
   font-size: 0.82rem;
   color: #1e40af;
@@ -152,7 +152,7 @@
 .legal-warning-box {
   background: #fef2f2;
   border: 1.5px solid #fca5a5;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 12px 16px;
   font-size: 0.85rem;
   color: #991b1b;
@@ -234,7 +234,7 @@
   padding: 14px;
   background: var(--bg-secondary, #f9fafb);
   border: 1px solid var(--border-primary, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
 }
 .about-feature-icon {
   font-size: 1.4rem;

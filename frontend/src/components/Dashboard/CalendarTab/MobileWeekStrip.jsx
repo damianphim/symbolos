@@ -2,7 +2,7 @@ import React from 'react'
 import { toDateStr } from './calendarConstants'
 
 /**
- * Horizontal week selector for phones — the week-granularity counterpart to
+ * Horizontal week selector for phones, the week-granularity counterpart to
  * MobileMonthGrid. Seven day cells (weekday letter, date, event dots), today
  * ringed and the selected day filled. Tapping a day selects it; the caller
  * renders that day's events in the agenda below (strip + agenda, mirroring the

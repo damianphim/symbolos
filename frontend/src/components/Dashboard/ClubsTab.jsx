@@ -16,7 +16,7 @@ import { readCache, writeCache } from '../../lib/userDataCache'
 import Breadcrumb from '../ui/Breadcrumb'
 import './ClubsTab.css'
 
-// Every category uses the same neutral gray — no per-category color, and no
+// Every category uses the same neutral gray, no per-category color, and no
 // red (red is reserved for active/hover states elsewhere in the UI). The
 // category is still distinguished by its icon + label.
 const catVars = () => ({
@@ -85,7 +85,7 @@ function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = 
   const swallow = (e) => {
     e.stopPropagation()
     // The native stopImmediatePropagation blocks any other listeners on the
-    // same DOM element from also firing (defensive — useful if any portal
+    // same DOM element from also firing (defensive, useful if any portal
     // attaches its own native click listener).
     e.nativeEvent?.stopImmediatePropagation?.()
   }
@@ -132,7 +132,7 @@ function ClubAvatar({ name, category, size = 'md', calSynced = false, logoUrl = 
   )
 }
 
-// Skeleton placeholder used while the club grid is loading — visually matches a real card
+// Skeleton placeholder used while the club grid is loading, visually matches a real card
 function ClubCardSkeleton() {
   return (
     <div className="club-card club-card--skeleton" aria-hidden>
@@ -244,7 +244,7 @@ function MembersSection({ clubId, refreshKey }) {
 
   const canManage = callerRole === 'owner' || callerRole === 'admin'
   const roleOrder = { owner: 0, admin: 1, member: 2 }
-  // Discovery-only site — clubs have an owner and execs (admins), no regular
+  // Discovery-only site, clubs have an owner and execs (admins), no regular
   // members. Hide any stray role='member' rows from older data.
   const filteredMembers = members
     .filter(m => m.role === 'owner' || m.role === 'admin')
@@ -325,7 +325,7 @@ function MembersSection({ clubId, refreshKey }) {
 
 function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar, onClose, clubLoading, t, isAdmin, userId, isSubscribed, onToggleSubscribe, onLogoChanged, isMcGill, onManage }) {
   const [memberRefreshKey, setMemberRefreshKey] = useState(0)
-  const [activity, setActivity] = useState(null)        // #11 — recent announcements/events
+  const [activity, setActivity] = useState(null)        // #11, recent announcements/events
   const [logoOptimistic, setLogoOptimistic] = useState(null)
   const [logoBusy, setLogoBusy] = useState(false)
   const drawerLogoInputRef = useRef(null)
@@ -335,7 +335,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
 
   // On mobile this drawer is a full-screen detail view pushed on top of the
   // browse list, so it should slide in from the trailing edge and back out
-  // the same way — direction is what makes "deeper" and "back" legible
+  // the same way, direction is what makes "deeper" and "back" legible
   // without a breadcrumb. Popping needs the exit animation to finish before
   // the parent unmounts us, hence the local closing state; desktop keeps its
   // existing instant close and its own drawer-slide animation.
@@ -370,14 +370,14 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
   }, [club?.id, language])
 
   if (!club) return null
-  // `display` is the real (English) club record — used for onManage/editing
+  // `display` is the real (English) club record, used for onManage/editing
   // and everything else. It must NEVER be overwritten with translated text:
   // the drawer's own "Manage" button hands this exact object to the edit
   // form, and if description/meeting_schedule/join_instructions were
   // translated in place, an owner viewing in French/Chinese could silently
   // save the translation back over their own English original.
   const display = { ...club, ...(liveClub || {}) }
-  // Text actually rendered below — English source, with any cached AI
+  // Text actually rendered below, English source, with any cached AI
   // translation preferred for FR/ZH viewers. Empty-string guards keep a
   // blank translation from hiding real English text.
   const displayText = {
@@ -423,7 +423,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
           borderBottom: `3px solid ${meta.color}`
         }}>
           {/* On mobile the drawer becomes a full-screen sheet, so no overlay
-              is left to tap — the close button beside the breadcrumb is the
+              is left to tap, the close button beside the breadcrumb is the
               way out. On desktop the wrapper is `display: contents` and the
               button `display: none`, so the breadcrumb stays the direct flex
               child it has always been and nothing about the layout changes. */}
@@ -453,7 +453,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
               name={display.name}
               category={display.category}
               size="lg"
-              // Hide "in your calendar" badge for owners — redundant alongside
+              // Hide "in your calendar" badge for owners, redundant alongside
               // the owner crown / Manage controls. Still useful for joined-but-
               // not-owned clubs.
               calSynced={calSynced && !(userId && display.created_by === userId)}
@@ -487,7 +487,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
             </div>
           </div>
           <div className="club-drawer__strip-actions" style={{ display: 'flex', gap: '8px' }}>
-            {/* Subscribe and Join buttons — hidden for owners/managers */}
+            {/* Subscribe and Join buttons, hidden for owners/managers */}
             {canManage ? (
               onManage ? (
                 <button className="club-action-btn club-action-btn--subscribed" onClick={() => onManage(display)}>
@@ -508,7 +508,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
                 >
                   {isSubscribed ? t('clubs.subscribed') : t('clubs.subscribe')}
                 </button>
-                {/* Join button — application_url first, then join_instructions */}
+                {/* Join button, application_url first, then join_instructions */}
                 {display.application_url ? (
                   <a
                     href={display.application_url}
@@ -614,7 +614,7 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
             )}
           </div>
 
-          {/* #11 Recent activity — shows the club is alive */}
+          {/* #11 Recent activity, shows the club is alive */}
           {activity && activity.items && activity.items.length > 0 && (
             <section className="club-drawer__section">
               <h3 className="club-drawer__section-title">
@@ -729,12 +729,12 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
 function ClubCard({ club, joined, calSynced, isSubscribed, onLeave, onToggleCalendar, onToggleSubscribe, onOpen, onDelete, onEdit, onManage, onLogoChanged, isAdmin, clubLoading, t, userId, isFeatured = false, isMcGill = false }) {
   const meta = getCat(club.category)
   const isLoading = clubLoading[club.id] ?? false
-  // Owner or admin both get full manage privileges — invited managers are
+  // Owner or admin both get full manage privileges, invited managers are
   // surfaced via the _manage_role flag the /created endpoint now returns.
   const isOwner   = userId && club.created_by === userId
   const isManager = isOwner || club._manage_role === 'admin'
 
-  // Logo quick-upload (owners only) — click the avatar to swap the picture
+  // Logo quick-upload (owners only), click the avatar to swap the picture
   const [logoOptimistic, setLogoOptimistic] = useState(null)
   const [logoBusy, setLogoBusy] = useState(false)
   const logoInputRef = useRef(null)
@@ -783,7 +783,7 @@ function ClubCard({ club, joined, calSynced, isSubscribed, onLeave, onToggleCale
             name={club.name}
             category={club.category}
             size="md"
-            // Hide the "in your calendar" badge on clubs you MANAGE — managers
+            // Hide the "in your calendar" badge on clubs you MANAGE, managers
             // already get the crown / Manage controls, so the cal dot is
             // redundant noise on those cards.
             calSynced={calSynced && !isManager}
@@ -1214,7 +1214,7 @@ function ClubManageDashboard({ club, onClose, onSave, onDelete, isAdmin, t }) {
   const sections = [
     { key: 'overview', icon: <FaStar size={13} />, label: t('clubs.manage.overview') },
     { key: 'edit', icon: <FaEdit size={13} />, label: t('clubs.manage.editInfo') },
-    // Execs tab — clubs have an owner and admins (no regular members on this
+    // Execs tab, clubs have an owner and admins (no regular members on this
     // site, which is discovery-only).
     { key: 'members', icon: <FaUsers size={13} />, label: t('clubs.manage.execs') },
     { key: 'announcements', icon: <FaBullhorn size={13} />, label: t('clubs.manage.announcements') },
@@ -1427,7 +1427,7 @@ function ClubManageDashboard({ club, onClose, onSave, onDelete, isAdmin, t }) {
           {/* ── Members (replaces the old separate Managers tab) ── */}
           {activeSection === 'members' && (
             <div className="club-manage__members">
-              {/* Promote a McGill email straight to admin — kept from old
+              {/* Promote a McGill email straight to admin, kept from old
                   Managers tab. Owner/admin can still demote later from the list. */}
               <div className="club-manage__add-manager">
                 <label>{t('clubs.manage.addManagerLabel')}</label>
@@ -1447,7 +1447,7 @@ function ClubManageDashboard({ club, onClose, onSave, onDelete, isAdmin, t }) {
                 {managerSuccess && <p className="club-manage__success-text">{managerSuccess}</p>}
               </div>
 
-              {/* Unified member list — MembersSection already sorts owners
+              {/* Unified member list, MembersSection already sorts owners
                   first, then admins, then members; and renders promote /
                   demote / remove inline for callers with the right role. */}
               <MembersSection
@@ -1965,7 +1965,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     } catch { /* silent */ }
   }, [user?.id])
 
-  // Manager-invite inbox — invitations sent to me, awaiting my response
+  // Manager-invite inbox, invitations sent to me, awaiting my response
   const [managerInvites, setManagerInvites] = useState([])
   const fetchManagerInvites = useCallback(async () => {
     try {
@@ -2111,7 +2111,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     await fetchCreatedClubs()
   }
 
-  // Fired after a successful logo upload from a card or the drawer — patch
+  // Fired after a successful logo upload from a card or the drawer, patch
   // the loaded clubs in place so other parts of the UI reflect the new URL
   // without a full refetch.
   const handleLogoChanged = useCallback((clubId, newLogoUrl) => {
@@ -2131,7 +2131,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     return list
   }, [clubs, sortMode])
 
-  // #2/#3 — Curated rows computed from the loaded page of clubs.
+  // #2/#3, Curated rows computed from the loaded page of clubs.
   // Trending = top 5 by subscriber_count; For You = clubs in categories that
   // loosely match the user's major/faculty keywords.
   const trendingClubs = useMemo(() => {
@@ -2174,7 +2174,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
     return t('clubs.pickedForYou') || 'Picked for you'
   }, [profile?.major, profile?.faculty, t])
 
-  // #4 — Clubs the user subscribes to but hasn't joined or created
+  // #4, Clubs the user subscribes to but hasn't joined or created
   const watchingClubs = useMemo(() => {
     const joined = new Set([...joinedIds])
     const created = new Set(createdClubs.map(c => c.id))
@@ -2197,6 +2197,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
   return (
     <div className="clubs-tab">
+      {!loading && !debouncedSearch && clubs.length < 4 && <p role="status">{t('clubs.directoryGrowing')}</p>}
       {joinToast && <div className="clubs-toast"><FaCheck size={12} /> {joinToast}</div>}
       {joinRequestClub && (
         <JoinRequestModal
@@ -2233,7 +2234,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
       {activeView === 'explore' && (
         <div className="clubs-explore">
-          {/* #1 — Search + sort on one row, more compact */}
+          {/* #1, Search + sort on one row, more compact */}
           <div className="clubs-toolbar">
             <div className="clubs-search-wrap">
               <FaSearch className="clubs-search-icon" size={13} />
@@ -2267,7 +2268,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
           {error && <div className="clubs-error">{error}<button onClick={() => setError(null)}><FaTimes size={11} /></button></div>}
 
-          {/* #2/#3 — Curated rows visible only when not actively searching */}
+          {/* #2/#3, Curated rows visible only when not actively searching */}
           {!loading && !debouncedSearch && trendingClubs.length > 0 && (
             <div className="clubs-curated-row">
               <div className="clubs-curated-row__header">
@@ -2420,7 +2421,7 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
 
       {activeView === 'my-clubs' && (
         <div className="clubs-mine">
-          {/* Manager-invite inbox — pinned at the top so users see it instantly */}
+          {/* Manager-invite inbox, pinned at the top so users see it instantly */}
           {managerInvites.length > 0 && (
             <div className="clubs-mine__section clubs-invite-inbox">
               <h3 className="clubs-mine__section-title">
@@ -2497,11 +2498,11 @@ export default function ClubsTab({ user, authFlags, onClubEventsChange }) {
                 </div>
               )}
 
-              {/* Joined Clubs section removed — discovery-only site, no
+              {/* Joined Clubs section removed, discovery-only site, no
                   "joining" concept. Subscriptions live in the Watching section
                   below. */}
 
-              {/* #4 — Subscribed / Watching section (clubs you follow but haven't joined) */}
+              {/* #4, Subscribed / Watching section (clubs you follow but haven't joined) */}
               {watchingClubs.length > 0 && (
                 <div className="clubs-mine__section">
                   <h3 className="clubs-mine__section-title">

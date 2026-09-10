@@ -19,7 +19,7 @@ const OnboardingTutorial = lazy(() => import('./OnboardingTutorial'))
  *
  * Owns only what is specific to *this* shell: the collapsible left sidebar,
  * the pinned-card right sidebar, and the onboarding tour (which anchors its
- * stops to Sidebar nav buttons via data-tour attributes — mobile ships its
+ * stops to Sidebar nav buttons via data-tour attributes, mobile ships its
  * own tutorial rather than reusing these anchors).
  *
  * All data and business logic comes from DashboardDataContext; the eight
@@ -36,14 +36,14 @@ function DesktopDashboard() {
     handleToggleFavorite, handleToggleCompleted, handleToggleCurrent,
     degreeProgressRef,
     upcomingUrgentCount,
-    showCompleteCourseModal, courseToComplete, handleConfirmComplete, cancelCompleteCourse,
+    showCompleteCourseModal, courseToComplete, handleConfirmComplete, handleRemoveCompleted, cancelCompleteCourse,
     showTranscriptUpload, transcriptUploadTab, setShowTranscriptUpload,
     handleTranscriptImportComplete,
     handleSignOut,
   } = useDashboardData()
 
   // ── Layout ─────────────────────────────────────────────
-  // Sidebar open/closed state — persisted across reloads but defaults to OPEN
+  // Sidebar open/closed state, persisted across reloads but defaults to OPEN
   // on first visit so new users see the navigation rail.
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
@@ -83,7 +83,7 @@ function DesktopDashboard() {
 
   const tourKey = `symbolos_tour_done_${user?.id}`
   // Only auto-show the walkthrough for genuinely new accounts (≤3 days old and
-  // not yet completed) or returning users who've been away ≥30 days — never on
+  // not yet completed) or returning users who've been away ≥30 days, never on
   // every login.
   const [showTutorial, setShowTutorial] = useState(() => {
     if (!user?.id) return false
@@ -108,7 +108,7 @@ function DesktopDashboard() {
   }, [showTutorial])
 
   // Listen for `restart-tour` (fired by the "Replay tour" button in Settings)
-  // — clear the completion flag and start the walkthrough over from Home.
+  //, clear the completion flag and start the walkthrough over from Home.
   useEffect(() => {
     const handler = () => {
       try { localStorage.removeItem(tourKey) } catch { /* ignore */ }
@@ -128,7 +128,7 @@ function DesktopDashboard() {
   // ── Sync right sidebar width as CSS var ──────────────────
   // On phones the right sidebar overlays the content as a drawer
   // (see RightSidebar.css mobile rules), so it doesn't push layout
-  // and --rsb-width should stay 0 — otherwise the FeedbackModal
+  // and --rsb-width should stay 0, otherwise the FeedbackModal
   // trigger button hides off-screen.
   useEffect(() => {
     const apply = () => {
@@ -159,7 +159,7 @@ function DesktopDashboard() {
 
   const handlePinnedSend = async (message) => {
     if (!user?.id || !pinnedCard) return
-    // Snapshot before appending — the advisor needs the conversation so far to
+    // Snapshot before appending, the advisor needs the conversation so far to
     // resolve a short follow-up ("A") against what it just offered.
     const priorThread = pinnedThread
     setPinnedThread(prev => [...prev, { role: 'user', content: message }])
@@ -215,6 +215,7 @@ function DesktopDashboard() {
           <MarkCompleteModal
             course={courseToComplete}
             onConfirm={handleConfirmComplete}
+            onRemove={handleRemoveCompleted}
             onCancel={cancelCompleteCourse}
           />
         </Suspense>
@@ -275,7 +276,7 @@ function DesktopDashboard() {
 /**
  * Picks the layout shell by viewport width. Both shells sit inside the same
  * providers, so switching between them (rotating a tablet, dragging a desktop
- * window narrow) preserves all loaded data and the current tab — only the
+ * window narrow) preserves all loaded data and the current tab, only the
  * presentation swaps.
  */
 function DashboardShell() {

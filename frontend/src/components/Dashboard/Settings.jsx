@@ -71,7 +71,7 @@ export default function Settings({ user, onUpdateSettings }) {
   // CASL one-click unsubscribe: the footer link on reminder emails points
   // to /settings?unsubscribe=1. Honour it by switching notifications off
   // and confirming to the user. Required to take effect within 10 business
-  // days under CASL — we do it instantly.
+  // days under CASL, we do it instantly.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('unsubscribe') === '1') {
@@ -126,7 +126,7 @@ export default function Settings({ user, onUpdateSettings }) {
     setTimeout(() => setAutoSaveFlash(false), 1800)
   }
 
-  // Dashboard listens for this and re-shows the onboarding walkthrough —
+  // Dashboard listens for this and re-shows the onboarding walkthrough ,
   // same window-event pattern as open-transcript-upload / open-degree-planning.
   const handleReplayTour = () => window.dispatchEvent(new CustomEvent('restart-tour'))
 
@@ -157,7 +157,7 @@ export default function Settings({ user, onUpdateSettings }) {
   const toggleTiming    = (k) => { setNotifPrefs(p => ({ ...p, timing: { ...p.timing, [k]: !p.timing[k] } })); flash() }
   const toggleEventType = (k) => { setNotifPrefs(p => ({ ...p, eventTypes: { ...p.eventTypes, [k]: !p.eventTypes[k] } })); flash() }
 
-  // Quebec Law 25 § 27 / GDPR Art. 20 — full personal-data dump.
+  // Quebec Law 25 § 27 / GDPR Art. 20, full personal-data dump.
   // Hits the backend GET /api/users/{id}/export which gathers every
   // table that holds user-tied data (profile, courses, chat history,
   // AI cards, forum posts, club memberships, calendar events, etc.).

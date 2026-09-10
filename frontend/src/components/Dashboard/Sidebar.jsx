@@ -3,7 +3,7 @@ import {
   FaChevronRight, FaComments, FaBook, FaHome, FaRegLightbulb,
   FaUser, FaCog, FaPalette, FaSignOutAlt, FaCalendarAlt,
   FaGraduationCap, FaUsers, FaExpandAlt, FaInfoCircle, FaShieldAlt, FaFileAlt,
-  FaSun, FaMoon, FaFlag
+  FaFlag
 } from 'react-icons/fa'
 import { MdLanguage } from 'react-icons/md'
 import { useTheme, useLanguage } from '../../contexts/PreferencesContext'
@@ -24,7 +24,7 @@ const NAV_ITEMS = (t) => [
   { key: 'profile',   icon: <FaUser />,          label: t('nav.profile') },
 ]
 
-// Every tab highlights in brand red — the active styles in Sidebar.css
+// Every tab highlights in brand red, the active styles in Sidebar.css
 // use the --accent-* tokens directly.
 
 export default function Sidebar({
@@ -227,30 +227,6 @@ export default function Sidebar({
                   </button>
                 )
               })}
-              <div className="mini-capsule-divider" />
-              <button
-                className="mini-pill mini-pill--theme"
-                onClick={cycleTheme}
-                title={theme === 'light' ? 'Switch to dark mode' : theme === 'dark' ? 'Switch to auto mode' : 'Switch to light mode'}
-              >
-                {theme === 'dark' ? <FaMoon size={13} /> : theme === 'auto' ? <FaPalette size={13} /> : <FaSun size={13} />}
-              </button>
-              <button
-                className="mini-pill mini-pill--lang"
-                onClick={handleLanguageToggle}
-                title={language === 'en' ? 'Passer en français' : language === 'fr' ? '切换到中文' : 'Switch to English'}
-              >
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '-0.5px' }}>
-                  {language === 'en' ? 'FR' : language === 'fr' ? '中' : 'EN'}
-                </span>
-              </button>
-              <button
-                className="mini-pill mini-pill--feedback"
-                onClick={onOpenFeedback}
-                title={t('fb.button')}
-              >
-                <FaFlag size={13} />
-              </button>
             </div>
             <button
               className="mini-expand-btn"

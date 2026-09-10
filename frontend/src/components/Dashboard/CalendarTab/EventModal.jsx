@@ -86,7 +86,7 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
   }
 
   // Lock the page behind the modal so the mobile shell's scroll container
-  // (.mobile-content) can't scroll under it — that background scroll is what
+  // (.mobile-content) can't scroll under it, that background scroll is what
   // makes touches feel frozen while the modal is open.
   useEffect(() => {
     const prev = document.body.style.overflow

@@ -67,7 +67,7 @@ export default function EnhancedProfileForm({ profile, user, onSave, onCancel })
         interests: profile.interests || '',
         current_gpa: profile.current_gpa || '',
         is_honours: profile.is_honours || false,
-        // Null means the student never answered — a U0 is one by definition.
+        // Null means the student never answered, a U0 is one by definition.
         foundation_year: profile.foundation_year ?? (Number(profile.year) === 0),
         advanced_standing: (profile.advanced_standing || []).map(c => ({
           counts_toward_degree: true,

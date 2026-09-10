@@ -42,7 +42,7 @@ export function writeCache(prefix, userId, data) {
 
 export function clearCache(prefix, userId) {
   if (!userId) return
-  try { localStorage.removeItem(_key(prefix, userId)) } catch {}
+  try { localStorage.removeItem(_key(prefix, userId)) } catch { /* Cache removal is best effort when browser storage is unavailable. */ }
 }
 
 /**
@@ -58,5 +58,5 @@ export function clearAllForUser(userId) {
       if (k && k.startsWith('udc_') && k.endsWith(suffix)) toRemove.push(k)
     }
     toRemove.forEach(k => localStorage.removeItem(k))
-  } catch {}
+  } catch { /* Cache removal is best effort when browser storage is unavailable. */ }
 }

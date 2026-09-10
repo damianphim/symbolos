@@ -13,7 +13,7 @@ import {
 import Breadcrumb from '../ui/Breadcrumb'
 import './DegreeRequirementsView.css'
 
-// Fix double /api/api bug — strip trailing /api from env var
+// Fix double /api/api bug, strip trailing /api from env var
 const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_BASE = rawBase.replace(/\/api\/?$/, '')
 
@@ -81,7 +81,7 @@ function normalizeFaculty(f) {
   return FACULTY_MAP[f] || f || ''
 }
 
-// Wildcard-aware matcher — handles "Any 200-level X course" placeholder
+// Wildcard-aware matcher, handles "Any 200-level X course" placeholder
 // requirements as well as exact codes. See utils/requirementMatch.js.
 const matchCourse = matchCourseWildcard
 
@@ -135,8 +135,8 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   // push and back out the same way on pop, so "deeper" and "back" read
   // without a breadcrumb.
   //
-  // During the animation BOTH screens are on screen — the list underneath,
-  // the detail sliding over it — which is what makes the motion read as one
+  // During the animation BOTH screens are on screen, the list underneath,
+  // the detail sliding over it, which is what makes the motion read as one
   // screen moving rather than two states swapping. `.drv-root--animating`
   // (CSS) suspends the usual "one or the other" display rule for that window
   // only; the state flips when the animation lands.
@@ -200,7 +200,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     }
   }, [profile?.faculty])
 
-  // ── Cache helpers — degree requirements are essentially static (only
+  // ── Cache helpers, degree requirements are essentially static (only
   // change when admin reseeds), so 24h TTL is generous. Cache keys are
   // global (not per-user) since these are public program data.
   const DR_CACHE_TTL_MS = 24 * 60 * 60 * 1000
@@ -225,7 +225,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
     const cached = _drCacheRead(cacheKey)
     if (Array.isArray(cached)) setPrograms(cached)
 
-    // Skip background revalidate if cache is fresh (< 1h — programs change
+    // Skip background revalidate if cache is fresh (< 1h, programs change
     // very rarely, but we still re-check periodically in case admin reseeded)
     let cachedTs = null
     try { const raw = localStorage.getItem(`dr_${cacheKey}`); if (raw) cachedTs = JSON.parse(raw).ts } catch { /* ignore */ }
@@ -389,7 +389,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
   }), [programs, search, typeFilter])
 
   // Course codes explicitly named by some requirement row anywhere in this
-  // program — stops a wildcard/complementary block (e.g. "any COMP 300+
+  // program, stops a wildcard/complementary block (e.g. "any COMP 300+
   // course") from also claiming a course a more specific block (e.g. Group
   // D) already counts by name.
   const explicitClaims = useMemo(
@@ -606,7 +606,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
           never animates. */}
       <main className={`drv-main ${pushPhase === 'enter' ? 'm-push-enter' : ''} ${pushPhase === 'exit' ? 'm-push-exit' : ''}`}>
         {/* Desktop: re-opens the collapsed sidebar. Mobile: the back control
-            of the push navigation — pops the detail screen and returns to
+            of the push navigation, pops the detail screen and returns to
             the program list. */}
         <button
           className={`drv-open-sidebar ${isMobile ? 'drv-open-sidebar--back' : ''}`}
@@ -732,7 +732,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
               </div>
             </div>
 
-            {/* Full-width description — nothing sits to its right, so let it
+            {/* Full-width description, nothing sits to its right, so let it
                 use the entire content area for readability. */}
             {programDetail.description && (
               <p className="drv-detail-desc">{programDetail.description}</p>
@@ -763,7 +763,7 @@ export default function DegreeRequirementsView({ completedCourses = [], currentC
                 // excludeKeys (explicitClaims) stops a wildcard row here from
                 // counting a course another block already claims by name.
                 // A requirement is only "done" (green) when met by COMPLETED
-                // work — transfer or a final grade. Registered ("Taking")
+                // work, transfer or a final grade. Registered ("Taking")
                 // courses count only toward the in-progress (blue) state.
                 const completedReq   = required.filter(c => matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding))
                 const inProgressReq  = required.filter(c => !(matchCourse(c, completedCourses, explicitClaims) || matchTransfer(c, advStanding)) && matchCourse(c, currentCourses, explicitClaims))

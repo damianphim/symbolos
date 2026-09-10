@@ -56,7 +56,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       const data = await res.json()
       let parsedData = data.parsed
       if (res.status === 202 && data.job_id) {
-        // Async path — poll until the Inngest job completes
+        // Async path, poll until the Inngest job completes
         const job = await pollJob(data.job_id)
         parsedData = job.result?.parsed
       }
@@ -103,8 +103,8 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       if (f.size > 15 * 1024 * 1024) continue
       valid.push(f)
     }
-    if (!valid.length) { setSylError('PDF files only, max 15 MB each.'); return }
-    setSylError('')
+    if (!valid.length) { setSylError(t('upload.syllabusPdfHelp')); return }
+    setSylError(valid.length < fileList.length ? t('upload.syllabusPdfHelp') : '')
     setSylFiles(prev => {
       const existing = new Set(prev.map(f => f.name))
       return [...prev, ...valid.filter(f => !existing.has(f.name))]
@@ -122,7 +122,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Upload failed') }
       let data = await res.json()
       if (res.status === 202 && data.job_id) {
-        // Async path — poll until the Inngest job completes
+        // Async path, poll until the Inngest job completes
         const job = await pollJob(data.job_id)
         data = job.result || {}
       }
@@ -431,7 +431,7 @@ export default function TranscriptUpload({ userId, onImportComplete, onClose, de
                   <input ref={sylFileRef} type="file" accept=".pdf" multiple hidden
                     onChange={e => addSylFiles(Array.from(e.target.files))} />
                   <FaCloudUploadAlt className="tu-dropzone-icon" />
-                  <p className="tu-dropzone-main">Drop syllabus PDFs here</p>
+                  <p className="tu-dropzone-main">{t('upload.syllabusPdfHelp')}</p>
                   <p className="tu-dropzone-sub">Multiple files · PDF only · max 15 MB each</p>
                 </div>
 

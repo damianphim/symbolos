@@ -174,7 +174,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
   }, [current.target])
 
   // Several stops target elements inside lazily-loaded tabs (ClubsTab,
-  // CalendarTab, Forum, ...) — a single 120ms re-check isn't always enough
+  // CalendarTab, Forum, ...), a single 120ms re-check isn't always enough
   // to catch the chunk fetch + mount on a slow connection, so poll a few
   // times with backoff instead of just once.
   useLayoutEffect(() => {
@@ -201,7 +201,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
   // Compute where the tooltip card docks relative to the target, and
   // clamp it inside the viewport. Prefers docking to the right of the
   // target (matches the original design), falls back to the left, and
-  // finally to below/above — the fallback (and the only option on
+  // finally to below/above, the fallback (and the only option on
   // mobile, where most targets span close to the full width) keeps the
   // card fully on-screen instead of overflowing past the viewport edge.
   useEffect(() => {
@@ -310,7 +310,7 @@ export default function OnboardingTutorial({ onComplete, onTabChange }) {
           boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
         }}
       >
-        {/* Arrow — points back toward the target from whichever edge the card docked to */}
+        {/* Arrow, points back toward the target from whichever edge the card docked to */}
         {layout.side === 'right' && (
           <>
             <div style={{ position: 'absolute', left: -8, top: layout.arrowOffset, width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderRight: '8px solid rgba(237,27,47,0.22)', transform: 'translateY(-50%)' }} />

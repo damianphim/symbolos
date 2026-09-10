@@ -14,8 +14,8 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
-  border-radius: 10px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-control);
   color: #fff;
 }
 
@@ -48,7 +48,7 @@
   margin-top: 14px;
   padding: 3px;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
 }
 
 .apc-toggle-btn {
@@ -59,7 +59,7 @@
   gap: 6px;
   padding: 7px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-tertiary);
   font-size: 0.8125rem;

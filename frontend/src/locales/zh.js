@@ -1,7 +1,40 @@
-// McGill AI Advisor — ZH translations
+// McGill AI Advisor, ZH translations
 // Auto-split from LanguageContext.jsx
 
 const ZH_TRANSLATIONS = {
+    "gpa.enteredGrades": "根据已录入成绩计算的GPA",
+
+    "courses.correctTransfer": "更正转学分分类",
+    "courses.correctTransferHint": "如果你在麦吉尔修读了以下课程，请填写学期和成绩。保存后，该转学分豁免将被替换为麦吉尔已完成课程。",
+    "courses.takenAtMcGill": "在麦吉尔修读",
+
+    "common.save": "保存",
+    "common.remove": "移除",
+
+    "courses.compare": "对比",
+    "courses.compareHint": "最多对比3门课程。历史均分和学生评分仅供参考，不能预测你的成绩。",
+    "courses.noComparisonData": "暂无数据",
+    "dp.chooseProgram": "选择或编辑专业",
+    "dp.addCoursesManually": "搜索并手动添加课程",
+
+    "clubs.directoryGrowing": "此目录刚刚起步，并非麦吉尔所有社团的完整列表。随着组织者添加社团，目录将逐步扩充。",
+
+    "gpa.horizon": "计算范围",
+    "gpa.horizon.degree": "剩余学位课程",
+    "gpa.horizon.term": "本学期",
+    "gpa.horizon.year": "本学年",
+    "gpa.horizon.custom": "自定义范围",
+    "gpa.scopeHint": "仅填写此范围内计入GPA的学分和成绩。请按实际选课量调整建议的总学分。",
+    "gpa.scopeTotal": "范围内总学分",
+    "gpa.scopeCompleted": "范围内已评分学分",
+    "gpa.scopeGpa": "这些已评分学分的GPA",
+
+    "common.saving": "保存中…",
+    "upload.syllabusPdfHelp": "课程大纲仅支持每个不超过15 MB的PDF文件。请先在Word或Google Docs中导出或下载为PDF。",
+
+    "courses.editCompleted": "编辑已完成课程",
+    "courses.saveFailed": "无法保存更改，请重试。",
+
     // ── Sidebar Nav ───────────────────────────────────────
     'nav.home': '主页',
     'nav.chat': '简报',
@@ -29,8 +62,8 @@ const ZH_TRANSLATIONS = {
     'home.currentCourses': '当前课程',
     'home.exploreCourses': '浏览课程',
     'home.coursesEmptyTitle': '暂无当前课程',
-    'home.coursesEmptySub': '导入成绩单即可在此查看您的课程。',
-    'home.coursesEmptyCta': '上传成绩单',
+    'home.coursesEmptySub': "搜索并手动添加课程，也可导入成绩单以快速添加。",
+    'home.coursesEmptyCta': "查找课程",
     'home.coursesNoneThisTerm': '本学期暂无课程',
     'home.coursesUpcomingSub': '{count} 门课程已注册未来学期',
     'home.coursesUpcomingCta': '查看未来课程',
@@ -543,7 +576,7 @@ const ZH_TRANSLATIONS = {
     'clubs.calOff': '日历已关',
     'clubs.leave': '退出',
 
-    // 2026-04 redesign — new keys
+    // 2026-04 redesign, new keys
     'clubs.manageClub':         '管理俱乐部',
     'clubs.manageBtnShort':     '管理',
     'clubs.manage.members':     '成员',
@@ -645,7 +678,7 @@ const ZH_TRANSLATIONS = {
     'clubs.manage.removeManager': '移除管理员',
     'clubs.manage.removeManagerConfirm': '确定移除 {name} 的管理员身份？',
     'clubs.manage.noManagers': '暂无其他管理员。',
-    // Clubs — join modal, members, admin
+    // Clubs, join modal, members, admin
     'clubs.requestToJoin': '申请加入',
     'clubs.joinName': '姓名',
     'clubs.joinEmail': '邮箱',
@@ -1125,12 +1158,12 @@ const ZH_TRANSLATIONS = {
     'forum.retry': '重试',
     'forum.noPostsFiltered': '没有符合筛选条件的帖子。',
     'forum.noPostsYet': '暂无帖子，第一个发帖吧！',
-    'forum.noReviewsYet': '暂无评价——快来发表第一篇吧！',
+    'forum.noReviewsYet': '暂无评价,,快来发表第一篇吧！',
     'forum.optional': '可选',
     'forum.reviewCourseLabel': '课程',
-    'forum.reviewCoursePlaceholder': '— 选择课程 —',
+    'forum.reviewCoursePlaceholder': ', 选择课程 ,',
     'forum.reviewLoadingCourses': '正在加载您的课程…',
-    'forum.reviewNoCourses': '暂无课程——导入成绩单以启用课程评价。',
+    'forum.reviewNoCourses': '暂无课程,,导入成绩单以启用课程评价。',
     'forum.reviewProfessorLabel': '教授',
     'forum.reviewProfessorNone': '未指定教授',
     'forum.reviewProfessorCustom': '+ 输入其他姓名…',
@@ -1220,7 +1253,7 @@ const ZH_TRANSLATIONS = {
     'dp.countedTowardFoundation': '已计入你的基础年（U0）',
     'dp.sharedCoursesTitle': '被多个专业同时认领的课程',
     'dp.sharedCoursesSub': '一门课只能计入一次。请选择每门课应计入哪个专业，否则我们会将其计入第一个需要它的专业。',
-    'dp.decisionsNeededHint': '两个专业都需要的课程 — 请选择每门课应计入哪个专业。',
+    'dp.decisionsNeededHint': '两个专业都需要的课程, 请选择每门课应计入哪个专业。',
     'dp.sharedCoursesBadge': '{n} 个专业',
     'dp.tabFoundationLabel': '基础年（U0）',
     'dp.ringFoundation': '基础年（U0）',
@@ -1373,7 +1406,7 @@ const ZH_TRANSLATIONS = {
     'brief.noSaved': '暂无已保存的卡片。给卡片添加书签以保存。',
     'brief.noCards': '目前没有{category}卡片。',
     'brief.placeholder': '询问任何关于您学业的问题，创建新的对话卡片',
-    'brief.regHint': '请在 Minerva 查看你的选课开放时间——每位学生的时间各不相同。',
+    'brief.regHint': '请在 Minerva 查看你的选课开放时间,,每位学生的时间各不相同。',
     'brief.regDate': '日期',
     'brief.regTime': '时间（可选）',
     'brief.regSave': '加入日历',
@@ -1443,12 +1476,12 @@ const ZH_TRANSLATIONS = {
     'privacy.s3Text': '我们不会出于营销目的向第三方出售、出租或交换您的个人信息。',
     'privacy.s4Title': '4. 第三方服务',
     'privacy.s4Intro': '我们使用以下第三方服务来运营Symbolos。其中部分服务（包括Anthropic和Vercel）在美国处理数据；在使用它们之前，我们已按第25号法律的要求评估了这种跨境处理，并尽量减少所共享的数据：',
-    'privacy.s4Items': 'Supabase：数据库与身份验证（数据存储于加拿大/美国；数据库备份按7天滚动保留）|Anthropic Claude API：AI聊天、顾问卡片、成绩单解析、选修建议|Resend：交易邮件（验证、日历提醒）|Vercel：托管与无服务器函数（日志保留约30天）|Sentry：错误与崩溃遥测（不含消息内容，仅记录用户ID；事件保留90天）|PostHog：匿名产品分析（遵守Do-Not-Track，可在浏览器禁用；事件按PostHog当时生效的平台默认保留期保留——具体期限请参阅其隐私政策）|dmarcian：邮件域名身份监控（仅聚合统计，从不查看邮件内容）',
+    'privacy.s4Items': 'Supabase：数据库与身份验证（数据存储于加拿大/美国；数据库备份按7天滚动保留）|Anthropic Claude API：AI聊天、顾问卡片、成绩单解析、选修建议|Resend：交易邮件（验证、日历提醒）|Vercel：托管与无服务器函数（日志保留约30天）|Sentry：错误与崩溃遥测（不含消息内容，仅记录用户ID；事件保留90天）|PostHog：匿名产品分析（遵守Do-Not-Track，可在浏览器禁用；事件按PostHog当时生效的平台默认保留期保留,,具体期限请参阅其隐私政策）|dmarcian：邮件域名身份监控（仅聚合统计，从不查看邮件内容）',
     'privacy.s4Text': '这些服务各有其自己的隐私政策来管理数据处理方式。我们不使用任何第三方广告网络、营销追踪像素或跨站追踪。',
     'privacy.s5Title': '5. 数据保留与删除',
     'privacy.s5Text1': '只要您的账户处于活跃状态，您的账户及所有相关数据（课程、成绩、日历事件、偏好、聊天记录、AI卡片）都会被保留。您可以随时从「设置」中删除账户；删除是即时且永久的。',
     'privacy.s5Text2': '您也可以在删除前从「设置 → 下载我的数据」将账户完整内容导出为一个JSON文件。导出包含您的个人资料、课程、成绩单历史、聊天消息、AI卡片、论坛帖子、日历事件以及我们与您账户关联的所有其他数据表。',
-    'privacy.s5Text3': '删除账户会立即从我们的应用数据库中移除您的数据，但不会追溯清除删除之前已在各分包服务商处生成的基础设施日志——这些日志会按第4节列出的各服务商自身保留期限自动过期（例如：Vercel请求日志约30天后、Supabase数据库备份7天后、Sentry错误事件90天后）。',
+    'privacy.s5Text3': '删除账户会立即从我们的应用数据库中移除您的数据，但不会追溯清除删除之前已在各分包服务商处生成的基础设施日志,,这些日志会按第4节列出的各服务商自身保留期限自动过期（例如：Vercel请求日志约30天后、Supabase数据库备份7天后、Sentry错误事件90天后）。',
     'privacy.s6Title': '6. 安全与数据泄露',
     'privacy.s6Text': '我们实施行业标准的安全措施，包括HTTPS加密及HSTS预加载、外发邮件的SPF/DKIM/DMARC、JWT身份验证、Supabase行级安全(RLS)、按用户的速率限制、按用户的每日AI使用上限、社区内容服务端清洗，以及在/.well-known/security.txt公布的安全披露地址。任何系统都不可能完全安全，请使用强而独特的密码，不要分享凭据。',
     'privacy.s7Title': '7. 儿童隐私',
@@ -1474,7 +1507,7 @@ const ZH_TRANSLATIONS = {
     'tos.s5Items': '违反任何适用的法律或法规|骚扰、欺凌或伤害其他用户|在社区论坛或社团中发布虚假、误导性或诽谤性内容|试图未经授权访问我们的系统或其他用户的账户|上传恶意文件、病毒或有害代码|抓取、爬取或系统性地从服务中提取数据|冒充麦吉尔大学、其工作人员或其他用户|向其他用户发送垃圾邮件或未经请求的消息|使用AI顾问生成您打算作为自己作品提交的学术作业（学术诚信是您的责任）',
     'tos.s6Title': '6. AI顾问：免责声明和限制',
     'tos.s6Warning': '重要提示：AI顾问仅用于信息和规划目的。它不能替代麦吉尔官方的学术咨询。',
-    'tos.s6Items': 'AI生成的建议可能包含错误、过时的信息或不准确之处。|请务必直接通过麦吉尔的官方资源（eCalendar、Minerva、您的院系顾问）验证课程要求、先修课程和截止日期。|Symbolos不对基于AI生成内容做出的学术决定负责。|课程成绩数据是众包的，可能不准确或不是最新的。|RateMyProfessors评分是第三方数据，反映个人意见。|为方便查看，社团简介、活动详情和加入说明可能会由AI自动翻译成法语或中文；这些翻译可能并不完全准确——以社团提交的原始文本为准。',
+    'tos.s6Items': 'AI生成的建议可能包含错误、过时的信息或不准确之处。|请务必直接通过麦吉尔的官方资源（eCalendar、Minerva、您的院系顾问）验证课程要求、先修课程和截止日期。|Symbolos不对基于AI生成内容做出的学术决定负责。|课程成绩数据是众包的，可能不准确或不是最新的。|RateMyProfessors评分是第三方数据，反映个人意见。|为方便查看，社团简介、活动详情和加入说明可能会由AI自动翻译成法语或中文；这些翻译可能并不完全准确,,以社团提交的原始文本为准。',
     'tos.s7Title': '7. 用户生成内容',
     'tos.s7Text1': '在Symbolos上发布内容（论坛帖子、社团提交等），即表示您授予我们非独占、免版税的许可，以在服务中展示和分发该内容。您保留对内容的所有权。',
     'tos.s7Text2': '您对所发布的内容承担全部责任。我们保留在不通知的情况下删除任何违反这些条款或社区准则的内容的权利。',

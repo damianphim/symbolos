@@ -60,7 +60,7 @@
 .cal-view-toggle {
   display: flex;
   background: var(--bg-tertiary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 3px;
   gap: 2px;
 }
@@ -75,7 +75,7 @@
   color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -92,7 +92,7 @@
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
-  border-radius: 9999px;
+  border-radius: var(--radius-control);
   padding: 1px 5px;
   min-width: 16px;
   text-align: center;
@@ -106,7 +106,7 @@
   background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -122,7 +122,7 @@
   padding: 6px 12px;
   background: var(--success-light);
   color: var(--success-text);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   font-size: 0.8rem;
   font-weight: 500;
   animation: fadeInSlide 0.3s ease;
@@ -149,7 +149,7 @@
   gap: 5px;
   padding: 4px 12px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -181,7 +181,7 @@
   display: flex;
   align-self: flex-start;
   background: var(--bg-tertiary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 3px;
   gap: 2px;
 }
@@ -193,7 +193,7 @@
   color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -209,7 +209,7 @@
   align-items: center;
   justify-content: space-between;
   background: var(--bg-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 10px 16px;
   border: 1px solid var(--border-primary);
 }
@@ -220,7 +220,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   transition: background 0.15s, color 0.15s;
@@ -251,13 +251,13 @@
   color: var(--tab-calendar-accent);
   background: var(--tab-calendar-accent-light);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   padding: 2px 8px;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.cal-today-btn:hover { background: var(--tab-calendar-accent-light); filter: brightness(0.95); }
+.cal-today-btn:hover { background: var(--tab-calendar-accent-light); background-color: var(--accent-hover); }
 
 /* ── Grid ────────────────────────────────────────────────────────── */
 .cal-grid-header {
@@ -286,7 +286,7 @@
   min-height: 90px;
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   padding: 5px 4px 4px;
   cursor: pointer;
   transition: all 0.12s;
@@ -350,7 +350,7 @@
   font-size: 0.6rem;
   font-weight: 700;
   padding: 2px 4px;
-  border-radius: 3px;
+  border-radius: var(--radius-container);
   line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
@@ -399,7 +399,7 @@
 .cal-week-col {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 10px 8px;
   min-height: 160px;
   display: flex;
@@ -458,12 +458,12 @@
   gap: 1px;
   padding: 5px 7px;
   border-left: 3px solid;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   cursor: pointer;
   transition: filter 0.15s;
 }
 
-.cal-week-event:hover { filter: brightness(0.96); }
+.cal-week-event:hover { background-color: var(--accent-hover); }
 
 /* Event backgrounds are always a light tint (set inline from typeConfig), so
    text must stay dark in BOTH themes — theme-variable colours go light in dark
@@ -488,7 +488,7 @@
   width: 100%;
   padding: 8px;
   border: 1px dashed var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: none;
   color: var(--text-muted);
   cursor: pointer;
@@ -523,7 +523,7 @@
   background: #fff7ed;
   border: 1.5px solid #fed7aa;
   color: #9a3412;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 0.85rem;
 }
 
@@ -545,7 +545,7 @@
   margin-top: 10px;
   padding: 10px;
   border: 1.5px dashed var(--border-secondary);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-tertiary);
   font-size: 0.85rem;
@@ -567,7 +567,7 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-left: 4px solid var(--accent-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.1s;
 }
@@ -602,7 +602,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   width: fit-content;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -677,7 +677,7 @@
 .cal-event-popup {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-xl);
   min-width: 300px;
   max-width: 420px;
@@ -708,7 +708,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -719,7 +719,7 @@
   color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-container);
   display: flex;
   align-items: center;
   transition: color 0.15s;
@@ -781,7 +781,7 @@
   color: var(--text-tertiary);
   padding: 4px 8px;
   background: var(--bg-tertiary);
-  border-radius: 5px;
+  border-radius: var(--radius-container);
   width: fit-content;
 }
 
@@ -830,7 +830,7 @@
 
 .cal-modal {
   background: var(--bg-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-2xl);
   width: 100%;
   max-width: 500px;
@@ -865,7 +865,7 @@
   color: var(--text-tertiary);
   cursor: pointer;
   padding: 5px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   display: flex;
   align-items: center;
   font-size: 1rem;
@@ -900,7 +900,7 @@
 .cal-field textarea {
   padding: 8px 12px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.85rem;
@@ -934,7 +934,7 @@
   gap: 5px;
   padding: 7px 8px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 0.75rem;
@@ -1007,7 +1007,7 @@
   background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
@@ -1018,7 +1018,7 @@
 .cal-btn-secondary {
   padding: 8px 16px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.84rem;
@@ -1036,7 +1036,7 @@
   background: transparent;
   color: var(--error-primary);
   border: 1.5px solid var(--error-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
@@ -1086,7 +1086,7 @@
   .cal-cell {
     min-height: 52px;
     padding: 3px 2px;
-    border-radius: 5px;
+    border-radius: var(--radius-container);
     gap: 1px;
   }
   .cal-cell-number { font-size: 0.68rem; }
@@ -1132,7 +1132,7 @@
 .cal-notif-toggle {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1147,7 +1147,7 @@
   gap: 5px;
   padding: 5px 12px;
   border: 1.5px solid var(--border-secondary);
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -1174,7 +1174,7 @@
   background: #0a0c10;
   color: #fff;
   padding: 11px 20px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 13.5px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
@@ -1214,7 +1214,7 @@
   color: var(--text-tertiary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   padding: 7px 12px;
   margin-top: 2px;
 }
@@ -1304,7 +1304,7 @@
   background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -1321,7 +1321,7 @@
   height: 30px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.9rem;
@@ -1341,7 +1341,7 @@
 .cal-day-drawer__item {
   border: 1px solid var(--border-primary);
   border-left: 4px solid;
-  border-radius: 9px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   background: var(--card-bg);
 }
@@ -1372,7 +1372,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -1410,7 +1410,7 @@
   height: 24px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: 5px;
+  border-radius: var(--radius-control);
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.13s;
@@ -1467,7 +1467,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-secondary);
@@ -1498,7 +1498,7 @@
   min-width: 220px;
   background: var(--bg-primary);
   border: 1.5px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   box-shadow: 0 6px 24px rgba(0,0,0,0.12);
   overflow: hidden;
   animation: calMenuIn 0.12s ease;
@@ -1560,7 +1560,7 @@
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: #e8f0fe;
   color: #1a73e8;
   font-size: 0.78rem;
@@ -1580,7 +1580,7 @@
 
 .cal-gcal-modal {
   background: var(--bg-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   box-shadow: 0 20px 60px rgba(0,0,0,0.18);
   width: 100%;
   max-width: 440px;
@@ -1604,7 +1604,7 @@
 .cal-gcal-modal__icon {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: #1a73e8;
   display: flex;
   align-items: center;
@@ -1632,7 +1632,7 @@
   cursor: pointer;
   color: var(--text-muted);
   padding: 4px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   font-size: 0.9rem;
   transition: background 0.12s;
 }
@@ -1690,14 +1690,14 @@
   align-items: center;
   gap: 6px;
   padding: 0.55rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   transition: filter 0.12s;
 }
-.cal-gcal-modal__open-btn:hover { filter: brightness(0.88); }
+.cal-gcal-modal__open-btn:hover { background-color: var(--accent-hover); }
 
 .cal-guide-tabs {
   display: flex;
@@ -1708,7 +1708,7 @@
 .cal-guide-tab {
   padding: 0.4rem 0.85rem;
   border: 1.5px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 0.8rem;
@@ -1723,7 +1723,7 @@
 
 .cal-gcal-modal__done-btn {
   padding: 0.55rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: none;
   color: var(--text-secondary);
@@ -1747,7 +1747,7 @@
 .cal-bulk-modal {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   width: min(600px, 100%);
   height: calc(100vh - 40px);
   height: calc(100dvh - 40px);
@@ -1780,7 +1780,7 @@
   cursor: pointer;
   font-size: 1rem;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
 }
 .cal-bulk-modal__close:hover { background: var(--bg-secondary); }
 
@@ -1834,7 +1834,7 @@
 
 .cal-bulk-course {
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
@@ -1909,7 +1909,7 @@
 }
 .cal-bulk-cancel-btn {
   padding: 7px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -1923,7 +1923,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: none;
   background: var(--accent-primary, #ED1B2F);
   color: #fff;
@@ -1946,7 +1946,7 @@
   background: var(--bg-tertiary);
   color: var(--text-muted);
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1958,7 +1958,7 @@
   color: var(--text-secondary);
   font-size: 0.78rem;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
 }
@@ -1976,7 +1976,7 @@
   padding: 10px 14px;
   background: #fef9ec;
   border: 1.5px solid #f59e0b;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 0.83rem;
   color: #92400e;
 }
@@ -1995,7 +1995,7 @@
 .cal-missing-fix-btn {
   white-space: nowrap;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   border: 1.5px solid #f59e0b;
   background: transparent;
   color: #92400e;
@@ -2016,7 +2016,7 @@
   color: var(--accent-primary, #ED1B2F);
   cursor: pointer;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   transition: background 0.12s, color 0.12s;
   display: flex;
   align-items: center;
@@ -2061,7 +2061,7 @@
   flex: 1;
   min-width: 110px;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -2070,7 +2070,7 @@
 .cal-bulk-edit-time {
   width: 95px;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -2079,7 +2079,7 @@
 .cal-bulk-edit-sep { color: var(--text-muted); font-size: 0.85rem; }
 .cal-bulk-edit-save, .cal-bulk-edit-cancel {
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   border: none;
   cursor: pointer;
   font-size: 0.8rem;
@@ -2116,7 +2116,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
   border: 1px solid var(--border-primary);
@@ -2185,7 +2185,7 @@
   gap: 0.3rem;
   padding: 0.6rem 0.25rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   cursor: pointer;
@@ -2238,7 +2238,7 @@
   gap: 0.5rem;
   padding: 0.6rem 0.65rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   margin-top: -0.15rem;
 }
@@ -2272,7 +2272,7 @@
   flex-shrink: 0;
   padding: 0.5rem 0.75rem;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--accent-primary);
   color: #fff;
   font-size: 0.78rem;
@@ -2310,7 +2310,7 @@
   width: 100%;
   padding: 0.55rem 0.75rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.9rem;
@@ -2344,7 +2344,7 @@
 .cal-v2-notif-section {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
@@ -2367,7 +2367,7 @@
   position: relative;
   width: 36px;
   height: 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   border: none;
   cursor: pointer;
   transition: background 0.2s;
@@ -2404,7 +2404,7 @@
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 0.76rem;
@@ -2445,7 +2445,7 @@
 
 .cal-v2-btn-ghost {
   padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: transparent;
   color: var(--text-secondary);
@@ -2461,7 +2461,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: none;
   color: white;
   font-size: 0.85rem;
@@ -2477,7 +2477,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0.8rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid transparent;
   background: #fef2f2;
   color: #dc2626;
@@ -2563,7 +2563,7 @@
   max-height: calc(100vh - 40px);
   max-height: calc(100dvh - 40px);
   background: var(--bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   box-shadow: 0 24px 60px rgba(0,0,0,0.2);
   display: flex;
@@ -2613,7 +2613,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.35rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid #059669;
   background: #ecfdf5;
   color: #059669;
@@ -2633,7 +2633,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -2702,7 +2702,7 @@
 /* Course group */
 .mgr-course {
   border: 1.5px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
@@ -2742,7 +2742,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1.5px solid var(--border-primary);
   background: var(--bg-primary);
   color: var(--text-secondary);
@@ -2800,7 +2800,7 @@
   justify-content: center;
   width: 36px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
   font-size: 0.7rem;
@@ -2851,7 +2851,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: transparent;
   cursor: pointer;
@@ -2889,7 +2889,7 @@
 .slot-edit-select {
   padding: 0.35rem 0.6rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.82rem;
@@ -2908,7 +2908,7 @@
 .slot-edit-time {
   padding: 0.35rem 0.5rem;
   border: 1.5px solid var(--border-primary);
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.82rem;
@@ -2929,7 +2929,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.8rem;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   border: none;
   background: #059669;
   color: white;
@@ -2947,7 +2947,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 7px;
+  border-radius: var(--radius-container);
   border: 1.5px solid var(--border-primary);
   background: transparent;
   color: var(--text-muted);
@@ -2969,7 +2969,7 @@
 
 .mgr-done-btn {
   padding: 0.5rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: none;
   background: #ed1b2f;
   color: white;
@@ -3047,7 +3047,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -3117,7 +3117,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -3176,7 +3176,7 @@
   gap: 12px;
   padding: 28px 16px;
   border: 1.5px dashed var(--border-secondary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   text-align: center;
 }
 
@@ -3193,7 +3193,7 @@
   min-height: 40px;
   padding: 0 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--accent-primary);
   color: #fff;
   font-family: inherit;
@@ -3267,7 +3267,7 @@
 
 .cal-agenda-day__today {
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--accent-primary);
   color: #fff;
   font-size: 0.62rem;
@@ -3289,7 +3289,7 @@
   width: 34px;
   height: 34px;
   border: 1px dashed var(--border-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: none;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -3299,7 +3299,7 @@
   margin: 0;
   padding: 10px 12px;
   border: 1px dashed var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-size: 0.8rem;
   color: var(--text-tertiary);
 }
@@ -3323,7 +3323,7 @@
   padding: 9px 10px;
   border: 1px solid var(--border-primary);
   border-left: 4px solid var(--accent-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -3396,7 +3396,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--accent-primary);
   color: #fff;
   font-size: 0.65rem;
@@ -3435,7 +3435,7 @@
     height: auto;
     min-height: 0;
     max-width: 100%;
-    border-radius: 12px;
+    border-radius: var(--radius-container);
   }
 
   .cal-body,
@@ -3605,7 +3605,7 @@
     width: 34px;
     height: 34px;
     border: none;
-    border-radius: 999px;
+    border-radius: var(--radius-container);
     color: var(--accent-primary);
   }
   .mobile-shell .cal-agenda-day__add:active {

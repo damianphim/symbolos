@@ -27,7 +27,7 @@
   margin: 0 auto;
   background: var(--card-bg, var(--bg-primary));
   border: 1px solid var(--card-border, var(--border-primary));
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -73,7 +73,7 @@
 .advisor-cards-refresh {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px solid var(--border-primary);
   background: var(--btn-secondary-bg, transparent);
   color: var(--text-secondary);
@@ -158,7 +158,7 @@
   font-size: 0.68rem;
   background: var(--bg-secondary);
   color: var(--text-muted, var(--text-tertiary));
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 1px 6px;
   font-weight: 600;
 }
@@ -201,7 +201,7 @@
 .advisor-cards-feed::-webkit-scrollbar-track { background: transparent; }
 .advisor-cards-feed::-webkit-scrollbar-thumb {
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-container);
 }
 
 /* ── Card ── */
@@ -209,7 +209,7 @@
   position: relative;
   background: var(--bg-primary);
   border: 1px solid var(--card-border, var(--border-primary));
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   padding: 16px 18px 14px;
   display: flex;
   flex-direction: column;
@@ -262,7 +262,7 @@
 .advisor-card__icon {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   color: var(--accent-primary);
@@ -298,7 +298,7 @@
   color: var(--text-muted, var(--text-tertiary));
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   padding: 1px 6px;
 }
 
@@ -323,7 +323,7 @@
   margin-top: 10px;
   padding: 12px;
   border: 1px solid var(--card-border, var(--border-primary));
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
 }
 
@@ -353,7 +353,7 @@
   font-size: 16px;
   padding: 8px 10px;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: inherit;
@@ -370,7 +370,7 @@
 .advisor-card__reg-actions button {
   min-height: 44px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -398,7 +398,7 @@
   width: 100%;
   margin: 10px 0 0;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--accent-light);
   color: var(--accent-text);
   font-size: 0.85rem;
@@ -441,7 +441,7 @@
   border: none;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   color: var(--text-muted, var(--text-tertiary));
   font-size: 0.85rem;
   display: flex;
@@ -470,7 +470,7 @@
   border: none;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   color: var(--text-muted, var(--text-tertiary));
   font-size: 0.75rem;
   display: flex;
@@ -494,7 +494,7 @@
   color: var(--accent-primary);
   background: rgba(237, 27, 47, 0.08);
   border: 1px solid rgba(237, 27, 47, 0.25);
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   padding: 1px 6px;
 }
 
@@ -517,7 +517,7 @@
   cursor: pointer;
   color: var(--text-secondary, #9ca3af);
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,7 +553,7 @@
   color: var(--accent-primary, #ED1B2F);
   background: rgba(237, 27, 47, 0.08);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   letter-spacing: 0.02em;
 }
 
@@ -613,7 +613,7 @@
   gap: 5px;
   padding: 5px 12px;
   border: 1px solid var(--border-primary);
-  border-radius: 50px;
+  border-radius: var(--radius-container);
   background: var(--btn-secondary-bg, transparent);
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -671,7 +671,7 @@
 .thread-messages::-webkit-scrollbar { width: 3px; }
 .thread-messages::-webkit-scrollbar-thumb {
   background: var(--border-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-container);
 }
 
 /* Override for expanded inline thread */
@@ -715,7 +715,7 @@
   line-height: 1.6;
   margin: 0;
   padding: 8px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   max-width: 86%;
   word-break: break-word;
 }
@@ -892,7 +892,7 @@
   align-items: baseline;
   gap: 5px;
   padding: 5px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   border: 1px dashed var(--border-primary);
   background: var(--bg-secondary);
   font-family: inherit;
@@ -937,7 +937,7 @@
   max-width: 100%;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: var(--card-summary-lines, 3);
   -webkit-box-orient: vertical;
 }
 
@@ -953,7 +953,7 @@
 
 .skeleton-circle {
   width: 34px; height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   animation: shimmer 1.4s ease-in-out infinite;
   flex-shrink: 0;
@@ -961,7 +961,7 @@
 
 .skeleton-line {
   height: 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -972,7 +972,7 @@
 
 .skeleton-chip {
   height: 28px; width: 88px;
-  border-radius: 50px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -1152,7 +1152,7 @@
     width: 40px;
     height: 40px;
     flex-shrink: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-container);
   }
 
   /* ── Category filter ──
@@ -1173,7 +1173,7 @@
     padding: 0 14px;
     border: none;
     border-bottom: none;
-    border-radius: 999px;
+    border-radius: var(--radius-container);
     background: var(--m-bg-surface, var(--bg-primary));
     color: var(--text-secondary);
     font-size: 0.82rem;
@@ -1306,7 +1306,7 @@
   content: '';
   display: block;
   height: 3px;
-  border-radius: 3px;
+  border-radius: var(--radius-container);
   background: var(--accent-primary);
   margin-bottom: 4px;
   animation: dropIndicator 0.2s ease;
@@ -1325,7 +1325,7 @@
   justify-content: center;
   padding: 6px 10px;
   border: none;
-  border-radius: 20px;
+  border-radius: var(--radius-container);
   background: transparent;
   cursor: pointer;
   transition: background 0.15s;
@@ -1357,7 +1357,7 @@
   text-align: left;
   background: var(--card-bg, #fff);
   border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   padding: 12px 14px;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -1526,7 +1526,7 @@
 /* Body is a summary here; the full text lives in the thread view. */
 .advisor-card--mobile .advisor-card__body {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: var(--card-summary-lines, 3);
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1566,7 +1566,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
@@ -1633,7 +1633,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: none;
   color: var(--text-primary);
   font-size: 1rem;
@@ -1656,7 +1656,7 @@
   letter-spacing: -0.01em;
   color: var(--text-primary);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: var(--card-summary-lines, 3);
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -6,7 +6,7 @@
   width: 280px;
   background: var(--bg-primary, #fff);
   border: 1.5px solid #d1d5db;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 14px;
   animation: popoverIn 0.15s ease;
@@ -85,7 +85,7 @@
   margin-bottom: 10px;
   padding: 6px 8px;
   background: #f3f4f6;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
 }
 
 [data-theme="dark"] .prof-popover-current {
@@ -101,7 +101,7 @@
   width: 100%;
   padding: 7px 10px;
   border: 1.5px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   font-size: 0.85rem;
   background: var(--bg-primary, #fff);
   color: var(--text-primary);
@@ -138,7 +138,7 @@
 .prof-popover-cancel {
   padding: 5px 12px;
   border: 1.5px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: none;
   color: var(--text-secondary, #6b7280);
   font-size: 0.8rem;
@@ -156,7 +156,7 @@
 .prof-popover-submit {
   padding: 5px 14px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: #ED1B2F;
   color: white;
   font-size: 0.8rem;
@@ -190,7 +190,7 @@
   margin-top: 8px;
   padding: 4px 12px;
   border: 1.5px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   background: none;
   color: var(--text-secondary);
   font-size: 0.8rem;

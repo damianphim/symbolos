@@ -21,7 +21,7 @@ const MarkCompleteModal = lazy(() => import('./MarkCompleteModal'))
 
 // Five primary destinations. The desktop sidebar carries all eight, but a
 // bottom bar has roughly five thumb-width slots before targets get too small
-// to hit reliably — so the long tail moves into the More sheet rather than
+// to hit reliably, so the long tail moves into the More sheet rather than
 // making the bar scroll horizontally (scrolled-off tabs are effectively
 // undiscoverable).
 const PRIMARY_TABS = (t) => [
@@ -46,7 +46,7 @@ const MORE_TABS = (t) => [
  *
  * Intentionally does NOT render the desktop Sidebar or the pinned-card
  * RightSidebar: pinning is a two-column metaphor with nowhere to go on a
- * phone. The onboarding tour is also omitted — its stops anchor to Sidebar
+ * phone. The onboarding tour is also omitted, its stops anchor to Sidebar
  * nav buttons, so mobile ships its own tutorial instead.
  */
 export default function MobileLayout() {
@@ -55,7 +55,7 @@ export default function MobileLayout() {
     activeTab, handleTabChange,
     setCoursesDeepLink, setBriefOpenCardId,
     upcomingUrgentCount,
-    showCompleteCourseModal, courseToComplete, handleConfirmComplete, cancelCompleteCourse,
+    showCompleteCourseModal, courseToComplete, handleConfirmComplete, handleRemoveCompleted, cancelCompleteCourse,
     showTranscriptUpload, transcriptUploadTab, setShowTranscriptUpload,
     handleTranscriptImportComplete,
     isFavorited, isCompleted, isCurrent,
@@ -119,7 +119,7 @@ export default function MobileLayout() {
       {legalModal === 'about'   && <AboutUs onClose={() => setLegalModal(null)} />}
 
       {/* No top bar. A persistent header that only repeats the active tab's
-          name is web chrome, not app chrome — the tab bar already says where
+          name is web chrome, not app chrome, the tab bar already says where
           you are, and the header cost ~52px of vertical space on every
           screen. Screens that need a title render their own, in content,
           where it can scroll away. */}
@@ -254,6 +254,7 @@ export default function MobileLayout() {
           <MarkCompleteModal
             course={courseToComplete}
             onConfirm={handleConfirmComplete}
+            onRemove={handleRemoveCompleted}
             onCancel={cancelCompleteCourse}
           />
         </Suspense>

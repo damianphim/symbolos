@@ -163,7 +163,7 @@
 
 .badge {
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   font-weight: 600;
   display: inline-block;
@@ -201,7 +201,7 @@
 
 .profile-section-card {
   background: var(--bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -259,7 +259,7 @@
   padding: 0.625rem 1.25rem;
   background: linear-gradient(135deg, var(--accent-primary) 0%, #B01B2E 100%);
   color: white;
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   font-size: 0.95rem;
   font-weight: 600;
   display: inline-block;
@@ -279,7 +279,7 @@
   gap: 1rem;
   padding: 2rem;
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   color: var(--text-secondary);
   border: 2px dashed var(--border-secondary);
   text-align: center;
@@ -379,7 +379,7 @@
   background: linear-gradient(135deg, #ED1B2F 0%, #B01B2E 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;

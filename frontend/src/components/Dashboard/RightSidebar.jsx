@@ -32,7 +32,7 @@ function loadPinnedMessages() {
 function savePinnedMessages(pins) {
   try {
     localStorage.setItem('rsb_pinned_messages', JSON.stringify(pins))
-  } catch { /* quota exceeded — silently fail */ }
+  } catch { /* quota exceeded, silently fail */ }
 }
 
 // ── Shared chat input bar ─────────────────────────────────────────────────────
@@ -345,7 +345,7 @@ export default function RightSidebar({
 
   return (
     <>
-      {/* Mobile backdrop — tap to close the drawer (CSS only shows on small screens) */}
+      {/* Mobile backdrop, tap to close the drawer (CSS only shows on small screens) */}
       {isOpen && showSidebar && (
         <div
           className="rsb-backdrop"
@@ -354,7 +354,7 @@ export default function RightSidebar({
         />
       )}
 
-      {/* Draggable tab — clean minimal strip */}
+      {/* Draggable tab, clean minimal strip */}
       {!isOpen && showSidebar && (
         <button
           className={`rsb-toggle ${isDragging ? 'rsb-toggle--dragging' : ''}`}

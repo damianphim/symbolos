@@ -7,7 +7,7 @@
 .pic-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -37,7 +37,7 @@
 .pic-header-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   background: var(--accent-lighter);
   color: var(--accent-primary);
   display: flex;
@@ -66,10 +66,10 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, var(--accent-primary), #B01B2E);
+  background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -108,13 +108,13 @@
   flex: 1;
   height: 6px;
   background: var(--bg-quaternary);
-  border-radius: 3px;
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
 .pic-progress-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: var(--radius-container);
   transition: width 0.3s ease;
 }
 
@@ -209,7 +209,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   font-size: 12.5px;
   font-weight: 600;
 }
@@ -239,7 +239,7 @@
   padding: 3px 10px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   font-size: 12.5px;
   color: var(--text-secondary);
 }
@@ -255,7 +255,7 @@
   padding: 2px 10px;
   background: var(--accent-primary);
   color: #fff;
-  border-radius: 6px;
+  border-radius: var(--radius-container);
   font-size: 13px;
   font-weight: 700;
 }
@@ -267,7 +267,7 @@
   padding: 2px 9px;
   background: var(--success-light);
   color: var(--success-text);
-  border-radius: 12px;
+  border-radius: var(--radius-container);
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -277,7 +277,7 @@
   padding: 1px 7px;
   background: var(--accent-primary);
   color: #fff;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   font-size: 10.5px;
   font-weight: 700;
 }
@@ -289,7 +289,7 @@
   color: #d97706;
   background: #fef3c7;
   padding: 1px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-container);
   vertical-align: middle;
 }
 
@@ -316,7 +316,7 @@
 
 .pic-error--inline {
   border-bottom: none;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   margin: 16px 24px 0;
   padding: 10px 14px;
 }

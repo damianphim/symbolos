@@ -51,7 +51,7 @@
 .settings-section {
   background: var(--card-bg);
   border: 1.5px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s;
   width: 100%;
@@ -90,7 +90,7 @@
   width: 32px;
   height: 32px;
   min-width: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-container);
   background: var(--accent-lighter);
   color: var(--accent-primary);
   display: flex;
@@ -178,14 +178,14 @@
   gap: 6px;
   background: var(--bg-tertiary);
   padding: 3px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 .theme-btn {
   padding: 7px 14px;
   border: none;
   background: transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-tertiary);
@@ -228,7 +228,7 @@
   position: absolute;
   inset: 0;
   background: var(--border-secondary);
-  border-radius: 26px;
+  border-radius: var(--radius-container);
   cursor: pointer;
   transition: 0.25s;
 }
@@ -260,7 +260,7 @@
   background: var(--input-bg);
   color: var(--input-text);
   border: 1.5px solid var(--input-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -285,7 +285,7 @@
   background: var(--input-bg);
   color: var(--input-text);
   border: 1.5px solid var(--input-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13.5px;
   transition: border-color 0.15s;
   outline: none;
@@ -321,7 +321,7 @@
   gap: 6px;
   padding: 12px 8px;
   border: 1.5px solid var(--card-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 12.5px;
@@ -371,7 +371,7 @@
   gap: 5px;
   padding: 6px 14px;
   border: 1.5px solid var(--card-border);
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 12.5px;
@@ -410,7 +410,7 @@
   gap: 6px;
   padding: 6px 14px;
   border: 1.5px solid var(--card-border);
-  border-radius: 999px;
+  border-radius: var(--radius-container);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 12.5px;
@@ -424,7 +424,7 @@
 
 @media (hover: hover) {
   .notif-type-chip:hover {
-    filter: brightness(0.95);
+    background-color: var(--accent-hover);
   }
 }
 
@@ -444,7 +444,7 @@
   background: var(--accent-primary);
   color: #fff;
   border: none;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -468,7 +468,7 @@
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   border: 1.5px solid var(--card-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -506,7 +506,7 @@
 .modal-content {
   background: var(--card-bg);
   border: 1.5px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: var(--radius-container);
   padding: 28px;
   max-width: 440px;
   width: 90%;
@@ -536,7 +536,7 @@
 
 .modal-btn {
   padding: 9px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
@@ -614,7 +614,7 @@
   background: #ecfdf5;
   color: #059669;
   border: 1.5px solid #a7f3d0;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -647,7 +647,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid #dc2626;
   background: transparent;
   color: #dc2626;
@@ -713,7 +713,7 @@
 
 .modal-confirm-input {
   padding: 0.6rem 0.875rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: 1.5px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -755,7 +755,7 @@
   display: flex;
   gap: 0;
   border: 1.5px solid var(--border-secondary, #e5e7eb);
-  border-radius: 9px;
+  border-radius: var(--radius-container);
   overflow: hidden;
   width: fit-content;
 }

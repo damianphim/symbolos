@@ -1,10 +1,10 @@
 /**
- * HomeTab — Canvas-LMS-style landing dashboard.
+ * HomeTab, Canvas-LMS-style landing dashboard.
  *
  * Glanceable overview that ties the app together: a setup checklist for
  * new users (the empty states double as onboarding), the top advisor
  * cards, current courses, an "Up Next" deadline feed, and compact degree
- * progress. All data arrives via props from Dashboard — upcoming events
+ * progress. All data arrives via props from Dashboard, upcoming events
  * are computed once in Dashboard (via useUpcomingEvents) since the
  * Sidebar's Calendar badge needs the same feed.
  */
@@ -25,7 +25,7 @@ import SectionHeader from '../ui/SectionHeader'
 import Badge from '../ui/Badge'
 import './HomeTab.css'
 
-// Invariant: no raw emojis in the UI — react-icons only.
+// Invariant: no raw emojis in the UI, react-icons only.
 const EVENT_ICONS = {
   exam: <FaPenAlt />, midterm: <FaPenAlt />, assignment: <FaFileAlt />,
   quiz: <FaClipboardList />, academic: <FaGraduationCap />, personal: <FaCalendarAlt />,
@@ -67,7 +67,7 @@ export default function HomeTab({
   const openBriefCard = (id) => (onOpenBriefCard ? onOpenBriefCard(id) : onTabChange('chat'))
   const { t, language } = useLanguage()
   // Mobile swaps the whole body for native grouped lists (see the mobile
-  // return below). Switching on viewport, never on platform — mobile web gets
+  // return below). Switching on viewport, never on platform, mobile web gets
   // the same treatment as the native shell.
   const { isMobile } = useViewport()
 
@@ -137,7 +137,7 @@ export default function HomeTab({
   const topCards = advisorCards.slice(0, 3)
   const greetName = profile?.username || profile?.full_name || ''
 
-  // Identical markup on both shells — only the surrounding body differs.
+  // Identical markup on both shells, only the surrounding body differs.
   const header = (
     <header className="home-header">
       <div>
@@ -163,14 +163,14 @@ export default function HomeTab({
   //
   // Home is the landing screen, so it sets the expectation for the whole app.
   // The desktop version is a grid of bordered cards floating on the page
-  // background — the single most "website on a phone" shape there is. Here the
+  // background, the single most "website on a phone" shape there is. Here the
   // page is recessed (--m-bg-grouped, from the shell) and each section becomes
   // ONE raised .m-group whose rows are divided by hairlines, introduced by a
   // quiet .m-group-label sitting outside it.
   //
   // The exception is the Brief preview: an advisor card is a title + a
   // paragraph of prose, which is card-shaped content, not a list row. Those
-  // stay cards — just flattened to native proportions (no border, softer
+  // stay cards, just flattened to native proportions (no border, softer
   // surface, roomier padding) rather than crammed into a row.
   //
   // `data-tour` anchors are deliberately absent: the tour only runs on the
@@ -276,7 +276,7 @@ export default function HomeTab({
           </div>
         </section>
 
-        {/* ── From your Brief — genuinely card-shaped, so it stays cards ── */}
+        {/* ── From your Brief, genuinely card-shaped, so it stays cards ── */}
         <section className="home-m-section">
           <div className="m-group-label">{t('home.fromYourBrief')}</div>
           {(cardsLoading && topCards.length === 0) || cardsGenerating ? (
@@ -378,8 +378,8 @@ export default function HomeTab({
                   title={t('home.coursesEmptyTitle')}
                   subtitle={t('home.coursesEmptySub')}
                   action={
-                    <button className="btn btn-secondary" onClick={onImportTranscript}>
-                      <FaFileUpload /> {t('home.coursesEmptyCta')}
+                    <button className="btn btn-secondary" onClick={() => onTabChange('courses')}>
+                      {t('home.coursesEmptyCta')}
                     </button>
                   }
                 />
@@ -436,37 +436,6 @@ export default function HomeTab({
       <div className="home-grid">
         {/* ── Main column ── */}
         <div className="home-main">
-          {showSetup && (
-            <section className="home-card home-setup" data-tour="home-setup">
-              <SectionHeader
-                title={t('setup.title')}
-                action={
-                  <button className="home-setup__dismiss" onClick={dismissSetup} aria-label={t('setup.dismiss')} title={t('setup.dismiss')}>
-                    <FaTimes />
-                  </button>
-                }
-              />
-              <ul className="home-setup__list">
-                {steps.map(step => (
-                  <li key={step.key} className={`home-setup__step ${step.done ? 'is-done' : ''}`}>
-                    <span className="home-setup__check">
-                      {step.done ? <FaCheckCircle /> : <FaRegCircle />}
-                    </span>
-                    <div className="home-setup__text">
-                      <span className="home-setup__step-title">{step.title}</span>
-                      <span className="home-setup__step-sub">{step.sub}</span>
-                    </div>
-                    {!step.done && (
-                      <button className="home-setup__cta" onClick={step.onClick}>
-                        {step.icon} {t('setup.start')}
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           {/* Up Next */}
           <section className="home-card">
             <SectionHeader
@@ -513,6 +482,37 @@ export default function HomeTab({
               />
             )}
           </section>
+
+          {showSetup && (
+            <section className="home-card home-setup" data-tour="home-setup">
+              <SectionHeader
+                title={t('setup.title')}
+                action={
+                  <button className="home-setup__dismiss" onClick={dismissSetup} aria-label={t('setup.dismiss')} title={t('setup.dismiss')}>
+                    <FaTimes />
+                  </button>
+                }
+              />
+              <ul className="home-setup__list">
+                {steps.map(step => (
+                  <li key={step.key} className={`home-setup__step ${step.done ? 'is-done' : ''}`}>
+                    <span className="home-setup__check">
+                      {step.done ? <FaCheckCircle /> : <FaRegCircle />}
+                    </span>
+                    <div className="home-setup__text">
+                      <span className="home-setup__step-title">{step.title}</span>
+                      <span className="home-setup__step-sub">{step.sub}</span>
+                    </div>
+                    {!step.done && (
+                      <button className="home-setup__cta" onClick={step.onClick}>
+                        {t('setup.start')}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* From your Brief */}
           <section className="home-card">
@@ -608,8 +608,8 @@ export default function HomeTab({
                 title={t('home.coursesEmptyTitle')}
                 subtitle={t('home.coursesEmptySub')}
                 action={
-                  <button className="btn btn-secondary" onClick={onImportTranscript}>
-                    <FaFileUpload /> {t('home.coursesEmptyCta')}
+                  <button className="btn btn-secondary" onClick={() => onTabChange('courses')}>
+                    {t('home.coursesEmptyCta')}
                   </button>
                 }
               />

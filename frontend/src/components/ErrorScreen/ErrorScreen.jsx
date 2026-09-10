@@ -1,5 +1,5 @@
 /**
- * ErrorScreen — single source of truth for fatal / blocking error UIs.
+ * ErrorScreen, single source of truth for fatal / blocking error UIs.
  *
  * Used by:
  *   - ErrorBoundary: caught React render errors
@@ -11,7 +11,7 @@
  * land with the actionable info.
  *
  * Falls back gracefully if i18n / Sentry / logo asset aren't available
- * — this is the screen users see when *the app is broken*, so it
+ *, this is the screen users see when *the app is broken*, so it
  * must not itself throw.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -47,7 +47,7 @@ const VARIANTS = {
   },
 }
 
-/** Lazy-imported i18n hook — guarded so this component still renders if
+/** Lazy-imported i18n hook, guarded so this component still renders if
  * the LanguageContext isn't mounted (e.g. the error happened inside the
  * provider itself). */
 function useSafeTranslate() {
@@ -58,7 +58,7 @@ function useSafeTranslate() {
       try {
         const ctxT = mod?.useLanguage?.()?.t
         if (alive && typeof ctxT === 'function') setT(() => ctxT)
-      } catch { /* outside provider — keep fallback */ }
+      } catch { /* outside provider, keep fallback */ }
     }).catch(() => {})
     return () => { alive = false }
   }, [])

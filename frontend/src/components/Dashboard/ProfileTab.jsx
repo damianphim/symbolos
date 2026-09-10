@@ -1,3 +1,6 @@
+import { useDashboardData } from '../../contexts/DashboardDataContext'
+import { useState } from 'react'
+import FeedbackModal from './FeedbackModal'
 import { FaCamera, FaSignOutAlt, FaChevronRight } from 'react-icons/fa'
 import { useLanguage } from '../../contexts/PreferencesContext'
 import useViewport from '../../hooks/useViewport'
@@ -17,11 +20,15 @@ export default function ProfileTab({
   handleImageUpload,
   handleAvatarClick,
 }) {
+  const { handleToggleCompleted } = useDashboardData()
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { t } = useLanguage()
   const { isMobile } = useViewport()
 
   return (
     <div className="profile-page">
+      <button className="btn-secondary" onClick={() => setFeedbackOpen(true)}>{t('fb.button')}</button>
+      <FeedbackModal userId={user?.id} userEmail={user?.email} open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <div className="profile-page-header">
         <div className="profile-hero">
           <div className="profile-avatar-section">
@@ -66,6 +73,20 @@ export default function ProfileTab({
         </div>
       </div>
 
+      {profile?.advanced_standing?.some(c => /^[A-Z]+\s*\d{3}[A-Z0-9]*$/i.test(c.course_code || '')) && (
+        <section className="profile-content">
+          <h2>{t('courses.correctTransfer')}</h2>
+          <p>{t('courses.correctTransferHint')}</p>
+          {profile.advanced_standing.map((course, index) => {
+            const parts = (course.course_code || '').match(/^([A-Z]+)\s*(\d{3}[A-Z0-9]*)$/i)
+            if (!parts) return null
+            return <button key={index} className="btn-secondary" onClick={() => handleToggleCompleted({
+              subject: parts[1].toUpperCase(), catalog: parts[2].toUpperCase(), title: course.course_title,
+              credits: course.credits, transferCode: course.course_code,
+            })}>{course.course_code}: {t('courses.takenAtMcGill')}</button>
+          })}
+        </section>
+      )}
       <div className="profile-content">
         <div className="profile-grid">
           {/* Personal Information Card */}
@@ -88,7 +109,7 @@ export default function ProfileTab({
 
           {/* Sign Out.
               On mobile this is a single destructive action, which is exactly
-              what a one-row grouped list is for — a title/description/button
+              what a one-row grouped list is for, a title/description/button
               card here would be the last piece of web chrome on the screen. */}
           {isMobile ? (
             <div className="card-full-width">

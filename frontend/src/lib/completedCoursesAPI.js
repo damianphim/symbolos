@@ -10,11 +10,27 @@ async function authHeaders() {
 
 export const completedCoursesAPI = {
   async getCompleted(userId) {
-    const response = await fetch(`${BASE_URL}/api/completed/${userId}`, {
-      headers: await authHeaders(),
-    })
-    if (!response.ok) throw new Error('Failed to fetch completed courses')
-    return response.json()
+    const headers = await authHeaders()
+    const courses = []
+    let cursor = null
+    const seen = new Set()
+    do {
+      const params = new URLSearchParams({ limit: '200' })
+      if (cursor) params.set('cursor', cursor)
+      const response = await fetch(`${BASE_URL}/api/completed/${userId}?${params}`, { headers })
+      if (!response.ok) throw new Error('Failed to fetch completed courses')
+      const data = await response.json()
+      courses.push(...(data.completed_courses || []).map(course => {
+        const code = (course.course_code || `${course.subject} ${course.catalog}`).trim().toUpperCase().replace(/^([A-Z]+)(\d)/, '$1 $2')
+        const [subject, catalog] = code.split(/\s+/)
+        return { ...course, course_code: code, subject: course.subject || subject, catalog: course.catalog || catalog }
+      }))
+      cursor = data.next_cursor
+      if (!data.completed_courses?.length || !cursor || seen.has(cursor)) break
+      seen.add(cursor)
+    } while (cursor)
+    return { completed_courses: courses, count: courses.length }
+
   },
 
   async addCompleted(userId, courseData) {
