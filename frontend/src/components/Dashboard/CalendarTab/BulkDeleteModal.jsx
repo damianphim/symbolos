@@ -1,5 +1,5 @@
 import React from 'react'
-import { FaTimes, FaCheck, FaEdit, FaClock, FaCalendarAlt, FaLayerGroup } from 'react-icons/fa'
+import { FaTimes, FaCheck, FaEdit, FaClock, FaCalendarAlt, FaLayerGroup, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { L } from './calendarConstants'
 import Modal from '../../ui/Modal'
 
@@ -16,21 +16,11 @@ const DAY_LABELS = {
 }
 
 export function EyeIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  )
+  return <FaEye size={14} />
 }
 
 export function EyeOffIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  )
+  return <FaEyeSlash size={14} />
 }
 
 function SlotRow({ ev, isHidden, onToggleHide, onSave, language }) {
@@ -184,7 +174,9 @@ export default function BulkDeleteModal({ userEvents, allEvents = [], onHide, hi
           <span className="mgr-legend-item mgr-legend-visible"><EyeIcon /> {L(language, 'Visible', 'Visible', '可见')}</span>
           <span className="mgr-legend-item mgr-legend-hidden"><EyeOffIcon /> {L(language, 'Hidden', 'Masqué', '已隐藏')}</span>
           <span className="mgr-legend-sep" />
-          <span className="mgr-legend-hint">{L(language, 'Click 👁 to toggle visibility', 'Cliquez 👁 pour basculer', '点击👁切换可见性')}</span>
+          <span className="mgr-legend-hint">
+            {L(language, 'Click', 'Cliquez', '点击')} <EyeIcon /> {L(language, 'to toggle visibility', 'pour basculer', '切换可见性')}
+          </span>
         </div>
 
         <div className="mgr-list" style={{ maxHeight: '60vh', overflowY: 'auto' }}>

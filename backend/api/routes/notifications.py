@@ -14,15 +14,17 @@ SEC-007: Added E.164 pattern validation to notify_phone field.
 """
 
 import hmac
+import secrets
 from fastapi import APIRouter, HTTPException, Header, Depends, Request
+from fastapi.responses import Response
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 import logging
 from html import escape
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 import resend
 from ..config import settings
-from ..utils.supabase_client import get_supabase
+from ..utils.supabase_client import get_supabase, get_user_by_id, update_user
 from ..utils.email_footer import casl_footer_html
 from ..auth import get_current_user_id, require_self
 
@@ -347,6 +349,117 @@ async def list_events(user_id: str, current_user_id: str = Depends(get_current_u
     supabase = get_supabase()
     result = supabase.table("calendar_events").select("*").eq("user_id", user_id).order("date").execute()
     return {"events": result.data or []}
+
+
+# ── Calendar feed (Apple/Google/Outlook "subscribe by URL") ──────────────────
+#
+# External calendar apps fetch this over plain HTTP(S) with no custom headers,
+# so they can't carry our normal Bearer-JWT auth — the token embedded in the
+# URL IS the auth, resolved back to a user server-side. Revocable: hitting
+# /feed-token/regenerate immediately invalidates any previously-shared URL.
+
+def _ics_escape(text: str) -> str:
+    return (text or "").replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+
+
+def _ics_datetime(date_str: str, time_str: str | None) -> str:
+    y, m, d = date_str.split("-")
+    if time_str:
+        h, mi = time_str.split(":")
+        return f"{y}{m.zfill(2)}{d.zfill(2)}T{h.zfill(2)}{mi.zfill(2)}00"
+    return f"{y}{m.zfill(2)}{d.zfill(2)}"
+
+
+def _generate_ics(events: list[dict]) -> str:
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Symbolos//McGill Advisor//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:McGill Academic Calendar",
+        "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
+        "X-PUBLISHED-TTL:PT6H",
+    ]
+    now_stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    for i, ev in enumerate(events):
+        ev_date = ev.get("date")
+        if not ev_date:
+            continue
+        ev_time = ev.get("time")
+        lines.append("BEGIN:VEVENT")
+        lines.append(f"UID:symbolos-{ev.get('id', i)}-{ev_date}@mcgill.symbolos.ca")
+        lines.append(f"DTSTAMP:{now_stamp}")
+        if ev_time:
+            lines.append(f"DTSTART:{_ics_datetime(ev_date, ev_time)}Z")
+            end_time = ev.get("end_time")
+            if not end_time:
+                h, mi = ev_time.split(":")
+                end_time = f"{int(h) + 1:02d}:{mi}"
+            lines.append(f"DTEND:{_ics_datetime(ev_date, end_time)}Z")
+        else:
+            lines.append(f"DTSTART;VALUE=DATE:{_ics_datetime(ev_date, None)}")
+            lines.append(f"DTEND;VALUE=DATE:{_ics_datetime(ev_date, None)}")
+        lines.append(f"SUMMARY:{_ics_escape(ev.get('title'))}")
+        if ev.get("description"):
+            lines.append(f"DESCRIPTION:{_ics_escape(ev['description'])}")
+        if ev.get("location"):
+            lines.append(f"LOCATION:{_ics_escape(ev['location'])}")
+        if ev.get("category"):
+            lines.append(f"CATEGORIES:{_ics_escape(ev['category'])}")
+        lines.append("END:VEVENT")
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines)
+
+
+@router.get("/feed-token")
+async def get_feed_token(current_user_id: str = Depends(get_current_user_id)):
+    """Return the caller's calendar feed token, generating one on first use."""
+    user = get_user_by_id(current_user_id)
+    token = user.get("calendar_feed_token")
+    if not token:
+        token = secrets.token_urlsafe(32)
+        update_user(current_user_id, {"calendar_feed_token": token})
+    return {"token": token}
+
+
+@router.post("/feed-token/regenerate")
+async def regenerate_feed_token(current_user_id: str = Depends(get_current_user_id)):
+    """Issue a fresh token, invalidating any previously-shared feed URL."""
+    token = secrets.token_urlsafe(32)
+    update_user(current_user_id, {"calendar_feed_token": token})
+    return {"token": token}
+
+
+@router.get("/feed/{token}.ics")
+async def calendar_feed(token: str):
+    """Public (token-authenticated) live .ics feed for subscribing calendar apps."""
+    if not token or len(token) < 20:
+        raise HTTPException(status_code=404, detail="Not found")
+    supabase = get_supabase()
+    result = (
+        supabase.table("users")
+        .select("id")
+        .eq("calendar_feed_token", token)
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Not found")
+    user_id = result.data[0]["id"]
+    events_result = (
+        supabase.table("calendar_events")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("date")
+        .execute()
+    )
+    ics = _generate_ics(events_result.data or [])
+    return Response(
+        content=ics,
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": "inline; filename=mcgill-calendar.ics"},
+    )
 
 
 @router.post("/cron")

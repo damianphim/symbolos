@@ -833,7 +833,6 @@ const FR_TRANSLATIONS = {
     'calendar.addEvent': 'Ajouter un événement',
     'calendar.announcements': 'Annonces',
     'calendar.exportBtn': 'Exporter',
-    'calendar.exportICS': 'Télécharger le fichier .ics',
     'calendar.exportGoogleHelp': 'Importer dans Google Agenda',
     'calendar.exportAppleHelp': 'Ajouter à Calendrier Apple',
     'calendar.exportOutlookHelp': 'Ajouter à Outlook',

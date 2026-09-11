@@ -834,7 +834,6 @@ const EN_TRANSLATIONS = {
     'calendar.addEvent': 'Add Event',
     'calendar.announcements': 'Announcements',
     'calendar.exportBtn': 'Export',
-    'calendar.exportICS': 'Download .ics file',
     'calendar.exportGoogleHelp': 'Import into Google Calendar',
     'calendar.exportAppleHelp': 'Add to Apple Calendar',
     'calendar.exportOutlookHelp': 'Add to Outlook',
