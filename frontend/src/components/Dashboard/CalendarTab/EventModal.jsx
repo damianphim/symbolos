@@ -11,6 +11,37 @@ const EVENT_TYPE_OPTIONS_WITH_ICONS = [
   { ...EVENT_TYPE_OPTIONS[3], icon: <FaClipboardList /> },
 ]
 
+const DAYS_OF_WEEK = [
+  { key: 'monday',    labelEn: 'Mon', labelFr: 'Lun', labelZh: '一' },
+  { key: 'tuesday',   labelEn: 'Tue', labelFr: 'Mar', labelZh: '二' },
+  { key: 'wednesday', labelEn: 'Wed', labelFr: 'Mer', labelZh: '三' },
+  { key: 'thursday',  labelEn: 'Thu', labelFr: 'Jeu', labelZh: '四' },
+  { key: 'friday',    labelEn: 'Fri', labelFr: 'Ven', labelZh: '五' },
+  { key: 'saturday',  labelEn: 'Sat', labelFr: 'Sam', labelZh: '六' },
+  { key: 'sunday',    labelEn: 'Sun', labelFr: 'Dim', labelZh: '日' },
+]
+
+// recurrence is one text column. One day: "weekly_monday" (legacy format,
+// still written by the course-sync/BulkDeleteModal path — left untouched).
+// Multiple days checked here: "weekly:monday,wednesday,friday". A stray
+// legacy "biweekly_<day>" row (from before this was day-checkboxes) still
+// parses to its one day so editing it doesn't wipe the selection, but
+// saving converts it to plain weekly since biweekly isn't offered here.
+function parseRecurrenceDays(recurrence) {
+  if (!recurrence) return []
+  if (recurrence.startsWith('weekly:')) return recurrence.slice(7).split(',').filter(Boolean)
+  if (recurrence.startsWith('weekly_')) return [recurrence.slice(7)]
+  if (recurrence.startsWith('biweekly_')) return [recurrence.slice(9)]
+  return []
+}
+
+function serializeRecurrenceDays(days) {
+  if (!days.length) return ''
+  if (days.length === 1) return `weekly_${days[0]}`
+  const ordered = DAYS_OF_WEEK.map(d => d.key).filter(k => days.includes(k))
+  return `weekly:${ordered.join(',')}`
+}
+
 export default function EventModal({ event, onSave, onDelete, onClose, notifPrefs, language, managedClubs = [], customTypes = [], onAddCustomType }) {
   const today = new Date().toLocaleDateString('en-CA', {
     timeZone: localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -73,6 +104,14 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
 
   const f = (key) => (val) => setForm(p => ({ ...p, [key]: val }))
   const toggle = (key) => setForm(p => ({ ...p, [key]: !p[key] }))
+
+  const recurrenceDays = parseRecurrenceDays(form.recurrence)
+  const toggleRecurrenceDay = (dayKey) => {
+    const next = recurrenceDays.includes(dayKey)
+      ? recurrenceDays.filter(d => d !== dayKey)
+      : [...recurrenceDays, dayKey]
+    f('recurrence')(serializeRecurrenceDays(next))
+  }
 
   const handleCreateType = () => {
     const label = newTypeLabel.trim()
@@ -219,26 +258,22 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
             </div>
           )}
 
-          {form.type === 'club' && (
-            <div className="cal-v2-field">
-              <label className="cal-v2-label">{L(language, 'Recurrence', 'Récurrence', '重复')}</label>
-              <select className="cal-v2-input" value={form.recurrence} onChange={e => f('recurrence')(e.target.value)}>
-                <option value="">{L(language, 'One-time event', 'Événement unique', '一次性事件')}</option>
-                <option value="weekly_monday">Weekly Monday</option>
-                <option value="weekly_tuesday">Weekly Tuesday</option>
-                <option value="weekly_wednesday">Weekly Wednesday</option>
-                <option value="weekly_thursday">Weekly Thursday</option>
-                <option value="weekly_friday">Weekly Friday</option>
-                <option value="weekly_saturday">Weekly Saturday</option>
-                <option value="weekly_sunday">Weekly Sunday</option>
-                <option value="biweekly_monday">Bi-weekly Monday</option>
-                <option value="biweekly_tuesday">Bi-weekly Tuesday</option>
-                <option value="biweekly_wednesday">Bi-weekly Wednesday</option>
-                <option value="biweekly_thursday">Bi-weekly Thursday</option>
-                <option value="biweekly_friday">Bi-weekly Friday</option>
-              </select>
+          <div className="cal-v2-field">
+            <label className="cal-v2-label">{L(language, 'Repeats weekly on', 'Se répète chaque semaine le', '每周重复于')}</label>
+            <div className="cal-v2-timing-chips">
+              {DAYS_OF_WEEK.map(({ key, labelEn, labelFr, labelZh }) => {
+                const checked = recurrenceDays.includes(key)
+                return (
+                  <label key={key} className={`cal-v2-chip ${checked ? 'active' : ''}`}
+                    style={checked ? { borderColor: selectedType.color, background: selectedType.bg, color: selectedType.color } : {}}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleRecurrenceDay(key)} />
+                    {checked && <FaCheck size={8} />}
+                    {L(language, labelEn, labelFr, labelZh)}
+                  </label>
+                )
+              })}
             </div>
-          )}
+          </div>
 
           <div className="cal-v2-field">
             <label className="cal-v2-label">{L(language, 'Notes', 'Notes', '备注')}</label>
