@@ -90,11 +90,11 @@ function fromDb(row) {
 
 /**
  * Given an array of raw calendar events (already fromDb-mapped),
- * expand any weekly recurring events across their term.
+ * expand any weekly/biweekly recurring events across their term.
  *
- * For each event with recurrence like "weekly_tuesday":
+ * For each event with recurrence like "weekly_tuesday" or "biweekly_tuesday":
  *   - start from the stored anchor date
- *   - generate one occurrence every 7 days
+ *   - generate one occurrence every 7 (weekly) or 14 (biweekly) days
  *   - stop at the term-end date for the event's term (derived from category)
  *   - skip no-class holidays
  *   - give each occurrence a stable synthetic ID: `{id}_occ_{YYYY-MM-DD}`
@@ -108,13 +108,16 @@ export function expandRecurringEvents(events) {
   const result = []
 
   for (const ev of events) {
-    if (!ev.recurrence || !ev.recurrence.startsWith('weekly_')) {
+    const isWeekly = ev.recurrence && ev.recurrence.startsWith('weekly_')
+    const isBiweekly = ev.recurrence && ev.recurrence.startsWith('biweekly_')
+    if (!isWeekly && !isBiweekly) {
       result.push(ev)
       continue
     }
+    const stepDays = isBiweekly ? 14 : 7
 
     // Determine which day-of-week this recurs on
-    const dayName = ev.recurrence.replace('weekly_', '') // e.g. "tuesday"
+    const dayName = ev.recurrence.replace(isBiweekly ? 'biweekly_' : 'weekly_', '') // e.g. "tuesday"
     const targetDow = DAY_INDEX[dayName]
     if (targetDow === undefined) {
       result.push(ev)
@@ -151,7 +154,7 @@ export function expandRecurringEvents(events) {
           _anchorId: ev.id,
         })
       }
-      cur.setDate(cur.getDate() + 7)
+      cur.setDate(cur.getDate() + stepDays)
     }
   }
 

@@ -219,26 +219,24 @@ export default function EventModal({ event, onSave, onDelete, onClose, notifPref
             </div>
           )}
 
-          {form.type === 'club' && (
-            <div className="cal-v2-field">
-              <label className="cal-v2-label">{L(language, 'Recurrence', 'Récurrence', '重复')}</label>
-              <select className="cal-v2-input" value={form.recurrence} onChange={e => f('recurrence')(e.target.value)}>
-                <option value="">{L(language, 'One-time event', 'Événement unique', '一次性事件')}</option>
-                <option value="weekly_monday">Weekly Monday</option>
-                <option value="weekly_tuesday">Weekly Tuesday</option>
-                <option value="weekly_wednesday">Weekly Wednesday</option>
-                <option value="weekly_thursday">Weekly Thursday</option>
-                <option value="weekly_friday">Weekly Friday</option>
-                <option value="weekly_saturday">Weekly Saturday</option>
-                <option value="weekly_sunday">Weekly Sunday</option>
-                <option value="biweekly_monday">Bi-weekly Monday</option>
-                <option value="biweekly_tuesday">Bi-weekly Tuesday</option>
-                <option value="biweekly_wednesday">Bi-weekly Wednesday</option>
-                <option value="biweekly_thursday">Bi-weekly Thursday</option>
-                <option value="biweekly_friday">Bi-weekly Friday</option>
-              </select>
-            </div>
-          )}
+          <div className="cal-v2-field">
+            <label className="cal-v2-label">{L(language, 'Recurrence', 'Récurrence', '重复')}</label>
+            <select className="cal-v2-input" value={form.recurrence} onChange={e => f('recurrence')(e.target.value)}>
+              <option value="">{L(language, 'One-time event', 'Événement unique', '一次性事件')}</option>
+              <option value="weekly_monday">Weekly Monday</option>
+              <option value="weekly_tuesday">Weekly Tuesday</option>
+              <option value="weekly_wednesday">Weekly Wednesday</option>
+              <option value="weekly_thursday">Weekly Thursday</option>
+              <option value="weekly_friday">Weekly Friday</option>
+              <option value="weekly_saturday">Weekly Saturday</option>
+              <option value="weekly_sunday">Weekly Sunday</option>
+              <option value="biweekly_monday">Bi-weekly Monday</option>
+              <option value="biweekly_tuesday">Bi-weekly Tuesday</option>
+              <option value="biweekly_wednesday">Bi-weekly Wednesday</option>
+              <option value="biweekly_thursday">Bi-weekly Thursday</option>
+              <option value="biweekly_friday">Bi-weekly Friday</option>
+            </select>
+          </div>
 
           <div className="cal-v2-field">
             <label className="cal-v2-label">{L(language, 'Notes', 'Notes', '备注')}</label>
