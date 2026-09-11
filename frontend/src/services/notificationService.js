@@ -185,3 +185,28 @@ export async function deleteEvent(eventId, userId) {
   if (!res.ok) throw new Error('Failed to delete event')
   return res.json()
 }
+
+/**
+ * Fetch the caller's personal calendar feed token (created on first use),
+ * and build the full https:// feed URL — the source of the "subscribe by
+ * URL" links used by the Apple/Google/Outlook calendar-sync buttons.
+ */
+export async function getCalendarFeedUrl() {
+  const res = await fetch(`${BASE}/api/notifications/feed-token`, {
+    headers: await _authHeader(),
+  })
+  if (!res.ok) throw new Error('Failed to get calendar feed token')
+  const { token } = await res.json()
+  return `${BASE}/api/notifications/feed/${token}.ics`
+}
+
+/** Invalidate any previously-shared feed URL and issue a fresh one. */
+export async function regenerateCalendarFeedUrl() {
+  const res = await fetch(`${BASE}/api/notifications/feed-token/regenerate`, {
+    method: 'POST',
+    headers: await _authHeader(),
+  })
+  if (!res.ok) throw new Error('Failed to regenerate calendar feed token')
+  const { token } = await res.json()
+  return `${BASE}/api/notifications/feed/${token}.ics`
+}

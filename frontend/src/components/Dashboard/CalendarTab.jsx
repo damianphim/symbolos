@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   FaChevronLeft, FaChevronRight, FaPlus, FaTimes, FaBell,
-  FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser, FaExternalLinkAlt, FaDownload,
+  FaCalendarAlt, FaBullhorn, FaGraduationCap, FaUser,
   FaTrash, FaEdit, FaCheck, FaClipboardList, FaUsers, FaBook, FaLayerGroup, FaClock, FaExclamationTriangle,
   FaStar, FaBullseye, FaNewspaper, FaSearch, FaBellSlash, FaEllipsisH, FaTag,
   FaApple, FaWindows, FaFilter, FaChevronDown
@@ -9,7 +9,7 @@ import {
 import { useLanguage, useTimezone } from '../../contexts/PreferencesContext'
 import useViewport from '../../hooks/useViewport'
 import useNotificationPrefs from '../../hooks/useNotificationPrefs'
-import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI } from '../../services/notificationService'
+import { scheduleNotification, queueExamNotification, deleteEvent as deleteEventAPI, getCalendarFeedUrl } from '../../services/notificationService'
 import { lookupExams, formatExamTime } from '../../utils/examSchedule'
 import currentCoursesAPI from '../../lib/currentCoursesAPI'
 import completedCoursesAPI from '../../lib/completedCoursesAPI'
@@ -23,7 +23,6 @@ import {
   L, getDaysInMonth, getFirstDayOfMonth, toDateStr, daysUntil,
   getClubEventStyle, getCustomEventTypes, saveCustomEventTypes,
 } from './CalendarTab/calendarConstants'
-import { downloadICS } from './CalendarTab/calendarUtils'
 import EventModal from './CalendarTab/EventModal'
 import EventPopup from './CalendarTab/EventPopup'
 import DayDrawer from './CalendarTab/DayDrawer'
@@ -426,9 +425,9 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
       document.removeEventListener('keydown', onKey)
     }
   }, [showMoreMenu])
-  const [showGCalGuide, setShowGCalGuide] = useState(false)
-  const [guideProvider, setGuideProvider] = useState('google')
   const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [calendarFeedUrl, setCalendarFeedUrl] = useState(null)
+  const [feedSyncError, setFeedSyncError] = useState('')
   const [hiddenSlotKeys, setHiddenSlotKeys] = useState(() => {
     try {
       const stored = localStorage.getItem(`hiddenSlots_${user?.id}`)
@@ -768,6 +767,29 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
     return t('calendar.inXDays').replace('{n}', days)
   }
 
+  // One-click "subscribe by URL": Apple's webcal:// hands the feed straight
+  // to Calendar.app; Google and Outlook both support adding a calendar via
+  // a URL query param. All three point at the same personal, token-secured
+  // feed (see getCalendarFeedUrl), so the subscription stays live — no more
+  // downloading a static .ics and re-importing it by hand.
+  const openInCalendarApp = async (provider) => {
+    setShowMoreMenu(false)
+    setFeedSyncError('')
+    try {
+      const feedUrl = calendarFeedUrl || await getCalendarFeedUrl()
+      if (!calendarFeedUrl) setCalendarFeedUrl(feedUrl)
+      if (provider === 'apple') {
+        window.location.href = feedUrl.replace(/^https?:\/\//, 'webcal://')
+      } else if (provider === 'google') {
+        window.open(`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(feedUrl)}`, '_blank', 'noopener,noreferrer')
+      } else if (provider === 'outlook') {
+        window.open(`https://outlook.office.com/calendar/0/addcalendar?url=${encodeURIComponent(feedUrl)}&name=${encodeURIComponent('McGill Academic Calendar')}`, '_blank', 'noopener,noreferrer')
+      }
+    } catch {
+      setFeedSyncError(L(language, 'Could not connect to your calendar feed. Try again in a moment.', "Impossible de se connecter à votre calendrier. Réessayez dans un instant.", '无法连接到您的日历订阅，请稍后重试。'))
+    }
+  }
+
   return (
     <div className="cal-container">
       {/* Missing-time banner */}
@@ -806,9 +828,6 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
               <FaNewspaper /> <span>{L(language, 'Newsletters', 'Infolettres', '通讯')}</span>
             </button>
           </div>
-          <button className="cal-export-btn" onClick={() => downloadICS(filteredEvents, 'mcgill-calendar.ics')}>
-            {t('calendar.exportICS')}
-          </button>
           <div className="cal-export-wrap" ref={moreMenuRef}>
             <button
               className="cal-export-btn cal-more-btn"
@@ -822,18 +841,16 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
             </button>
             {showMoreMenu && (
               <div className="cal-export-menu">
-                <button className="cal-export-item" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setShowMoreMenu(false) }}>
-                  <FaDownload size={11} /> {t('calendar.exportICS')}
-                </button>
-                <button className="cal-export-item cal-export-item--google" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setGuideProvider('google'); setShowGCalGuide(true); setShowMoreMenu(false) }}>
+                {feedSyncError && <div className="cal-export-error">{feedSyncError}</div>}
+                <button className="cal-export-item cal-export-item--google" onClick={() => openInCalendarApp('google')}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                   {t('calendar.exportGoogleHelp')}
                 </button>
-                <button className="cal-export-item cal-export-item--apple" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setGuideProvider('apple'); setShowGCalGuide(true); setShowMoreMenu(false) }}>
+                <button className="cal-export-item cal-export-item--apple" onClick={() => openInCalendarApp('apple')}>
                   <FaApple size={13} />
                   {t('calendar.exportAppleHelp')}
                 </button>
-                <button className="cal-export-item cal-export-item--outlook" onClick={() => { downloadICS(filteredEvents, 'mcgill-calendar.ics'); setGuideProvider('outlook'); setShowGCalGuide(true); setShowMoreMenu(false) }}>
+                <button className="cal-export-item cal-export-item--outlook" onClick={() => openInCalendarApp('outlook')}>
                   <FaWindows size={12} />
                   {t('calendar.exportOutlookHelp')}
                 </button>
@@ -1384,94 +1401,6 @@ export default function CalendarTab({ user, authFlags, clubEvents = [], managedC
           customTypes={customTypes} onAddCustomType={handleAddCustomType}
         />
       )}
-
-      {/* Calendar Import Guide (Google / Apple / Outlook) */}
-      {showGCalGuide && (() => {
-        const guides = {
-          google: {
-            accent: '#1a73e8',
-            icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>,
-            title: t('calendar.exportGoogleHelp'),
-            steps: [
-              <>{L(language, 'Open', 'Ouvrez', '打开')} <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">calendar.google.com</a></>,
-              L(language, 'Click the Settings icon → Settings', "Cliquez sur l'icône Paramètres → Paramètres", '点击设置图标 → 设置'),
-              L(language, 'Select "Import & export" from the sidebar', 'Sélectionnez "Importer et exporter" dans la barre latérale', '从侧边栏选择"导入与导出"'),
-              L(language, 'Click "Import" and choose the downloaded .ics file', "Cliquez sur \"Importer\" et choisissez le fichier .ics téléchargé", '点击"导入"并选择已下载的.ics文件'),
-              L(language, 'Select your calendar and click "Import"', "Sélectionnez votre calendrier et cliquez sur \"Importer\"", '选择您的日历并点击"导入"'),
-            ],
-            openHref: 'https://calendar.google.com/calendar/r/settings/export',
-            openLabel: L(language, 'Open Google Calendar', 'Ouvrir Google Agenda', '打开Google日历'),
-          },
-          apple: {
-            accent: '#000000',
-            icon: <FaApple size={22} color="white" />,
-            title: t('calendar.exportAppleHelp'),
-            steps: [
-              L(language, 'On a Mac: double-click the downloaded .ics file to open it in Calendar', 'Sur Mac : double-cliquez sur le fichier .ics téléchargé pour l\'ouvrir dans Calendrier', '在Mac上：双击下载的.ics文件以在日历中打开'),
-              L(language, 'On iPhone/iPad: open the file from Downloads and tap it', 'Sur iPhone/iPad : ouvrez le fichier depuis Téléchargements et appuyez dessus', '在iPhone/iPad上：从"下载"中打开该文件并点击'),
-              L(language, 'Choose which calendar to add the events to', 'Choisissez le calendrier où ajouter les événements', '选择要添加事件的日历'),
-              L(language, 'Tap or click "Add" / "OK" to finish importing', 'Appuyez ou cliquez sur "Ajouter" / "OK" pour terminer l\'importation', '点击"添加"/"好"以完成导入'),
-            ],
-          },
-          outlook: {
-            accent: '#0078d4',
-            icon: <FaWindows size={20} color="white" />,
-            title: t('calendar.exportOutlookHelp'),
-            steps: [
-              <>{L(language, 'On the web: go to', 'Sur le web : allez sur', '在网页上：访问')} <a href="https://outlook.live.com/calendar/0/addcalendar" target="_blank" rel="noopener noreferrer">outlook.live.com</a></>,
-              L(language, 'Click "Add calendar" → "Upload from file"', 'Cliquez sur "Ajouter un calendrier" → "Importer un fichier"', '点击"添加日历" → "从文件上传"'),
-              L(language, 'Desktop app: File → Open & Export → Import/Export instead', 'Application de bureau : Fichier → Ouvrir et exporter → Importer/Exporter', '桌面应用：文件 → 打开和导出 → 导入/导出'),
-              L(language, 'Select the downloaded .ics file and follow the prompts', 'Sélectionnez le fichier .ics téléchargé et suivez les instructions', '选择已下载的.ics文件并按照提示操作'),
-            ],
-            openHref: 'https://outlook.live.com/calendar/0/addcalendar',
-            openLabel: L(language, 'Open Outlook', 'Ouvrir Outlook', '打开Outlook'),
-          },
-        }
-        const current = guides[guideProvider]
-        return (
-          <div className="modal-overlay cal-gcal-overlay" onClick={() => setShowGCalGuide(false)}>
-            <div className="cal-gcal-modal" onClick={e => e.stopPropagation()}>
-              <div className="cal-guide-tabs">
-                {Object.keys(guides).map(key => (
-                  <button
-                    key={key}
-                    className={`cal-guide-tab ${guideProvider === key ? 'active' : ''}`}
-                    style={guideProvider === key ? { color: guides[key].accent, borderColor: guides[key].accent } : {}}
-                    onClick={() => setGuideProvider(key)}
-                  >
-                    {key === 'google' ? 'Google' : key === 'apple' ? 'Apple' : 'Outlook'}
-                  </button>
-                ))}
-              </div>
-              <div className="cal-gcal-modal__header">
-                <div className="cal-gcal-modal__icon" style={{ background: current.accent }}>
-                  {current.icon}
-                </div>
-                <div>
-                  <h3 className="cal-gcal-modal__title">{current.title}</h3>
-                  <p className="cal-gcal-modal__subtitle">{L(language, 'Your .ics file has been downloaded', 'Votre fichier .ics a été téléchargé', '您的.ics文件已下载')}</p>
-                </div>
-                <button className="cal-gcal-modal__close" onClick={() => setShowGCalGuide(false)}><FaTimes /></button>
-              </div>
-              <ol className="cal-gcal-steps">
-                {current.steps.map((step, i) => (
-                  <li key={i}><span className="cal-gcal-step-num">{i + 1}</span>{step}</li>
-                ))}
-              </ol>
-              <div className="cal-gcal-modal__actions">
-                {current.openHref && (
-                  <a className="cal-gcal-modal__open-btn" style={{ background: current.accent }} href={current.openHref} target="_blank" rel="noopener noreferrer">
-                    <FaExternalLinkAlt size={12} /> {current.openLabel}
-                  </a>
-                )}
-                <button className="cal-gcal-modal__done-btn" onClick={() => setShowGCalGuide(false)}>
-                  {L(language, 'Done', 'Terminé', '完成')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Bulk Delete Modal */}
       {showBulkDelete && (

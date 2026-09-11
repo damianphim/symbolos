@@ -816,7 +816,6 @@ const ZH_TRANSLATIONS = {
     'calendar.addEvent': '添加事件',
     'calendar.announcements': '公告',
     'calendar.exportBtn': '导出',
-    'calendar.exportICS': '下载.ics文件',
     'calendar.exportGoogleHelp': '导入Google日历',
     'calendar.exportAppleHelp': '添加到Apple日历',
     'calendar.exportOutlookHelp': '添加到Outlook',
