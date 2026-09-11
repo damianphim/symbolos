@@ -63,6 +63,7 @@ async def process_transcript(ctx: inngest.Context) -> dict:
             normalize_course_code,
             _dedupe_extracted,
             _expand_advanced_standing_groups,
+            _expand_ap_exams,
         )
 
         # Download PDF from Supabase Storage
@@ -71,10 +72,13 @@ async def process_transcript(ctx: inngest.Context) -> dict:
         # Claude extraction
         extracted = await extract_transcript_data(pdf_bytes)
 
-        # Turn any aggregate-heading groups (e.g. "Advanced Placement Exams -
-        # 24 credits" with no per-course credit numbers) into concrete
-        # advanced_standing rows with a deterministically even split, before
-        # normalization/dedup so the new rows go through both.
+        # AP exams resolve to their exact McGill course(s)/credits via
+        # McGill's official AP transfer-credit table (not a guess or split —
+        # per-subject values aren't uniform, e.g. Statistics=3cr vs English
+        # Literature=6cr in the same block). Any other aggregate-heading
+        # section (CEGEP, IB, etc.) still gets the even-split fallback.
+        # Both run before normalization/dedup so the new rows go through both.
+        _expand_ap_exams(extracted)
         _expand_advanced_standing_groups(extracted)
 
         # Normalize course codes
