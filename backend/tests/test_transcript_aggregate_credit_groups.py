@@ -1,14 +1,20 @@
 """
 _expand_advanced_standing_groups turns an aggregate-heading section (a
 printed total with no per-course credit numbers) into concrete
-advanced_standing rows with a deterministically even split — Python does the
-division so it can't get 24 / 6 wrong the way an LLM guessing per-course
-credits did (see Sentry SYMBOLOS-BACKEND-1C's underlying bug report).
+advanced_standing rows. Known codes (AP especially, via
+AP_COURSE_CREDIT_LOOKUP) get their exact McGill credit value; only the
+remainder is split evenly across codes with no known value — a plain even
+split gets individual AP courses wrong even when the total happens to match
+(see Sentry SYMBOLOS-BACKEND-1C's underlying bug report, and the live-test
+regression: an even split of this exact 24-credit block gave 4 credits to
+every course, but the real values are 3, 3, 6, 6, 3, 3).
 """
 from api.routes.transcript import _expand_advanced_standing_groups
 
 
-def test_even_split_matches_printed_total():
+def test_real_world_ap_block_matches_exact_per_course_values():
+    """The exact "Advanced Placement Exams - 24 credits" block from a real
+    Minerva transcript that exposed the even-split bug live."""
     extracted = {"student_info": {"advanced_standing_groups": [
         {"heading": "Advanced Placement Exams", "total_credits": 24,
          "course_codes": ["ECON 1XX", "ECON 1XX", "ENGL 1XX", "FRSL 211", "MATH 203", "PSYC 100"]},
@@ -17,13 +23,30 @@ def test_even_split_matches_printed_total():
     standing = extracted["student_info"]["advanced_standing"]
     assert len(standing) == 6
     assert sum(c["credits"] for c in standing) == 24
-    assert all(c["credits"] == 4 for c in standing)
-    assert [c["course_code"] for c in standing] == ["ECON 1XX", "ECON 1XX", "ENGL 1XX", "FRSL 211", "MATH 203", "PSYC 100"]
+    credits_by_code = [(c["course_code"], c["credits"]) for c in standing]
+    assert credits_by_code == [
+        ("ECON 1XX", 3), ("ECON 1XX", 3), ("ENGL 1XX", 6),
+        ("FRSL 211", 6), ("MATH 203", 3), ("PSYC 100", 3),
+    ]
     # groups key must not survive into the persisted shape
     assert "advanced_standing_groups" not in extracted["student_info"]
 
 
-def test_uneven_split_puts_remainder_on_first_courses_and_still_sums_exactly():
+def test_unknown_codes_split_only_the_remainder_after_known_codes_claim_theirs():
+    # ECON 1XX is known (3cr); the two made-up codes split whatever's left.
+    extracted = {"student_info": {"advanced_standing_groups": [
+        {"heading": "Mixed", "total_credits": 13,
+         "course_codes": ["ECON 1XX", "ZZZZ 1XX", "YYYY 1XX"]},
+    ]}}
+    _expand_advanced_standing_groups(extracted)
+    standing = extracted["student_info"]["advanced_standing"]
+    by_code = {c["course_code"]: c["credits"] for c in standing}
+    assert by_code["ECON 1XX"] == 3
+    assert by_code["ZZZZ 1XX"] + by_code["YYYY 1XX"] == 10
+    assert sum(c["credits"] for c in standing) == 13
+
+
+def test_all_unknown_codes_fall_back_to_even_split_of_full_total():
     extracted = {"student_info": {"advanced_standing_groups": [
         {"heading": "IB Credits", "total_credits": 25,
          "course_codes": ["A 1XX", "B 1XX", "C 1XX", "D 1XX", "E 1XX", "F 1XX"]},
@@ -35,6 +58,20 @@ def test_uneven_split_puts_remainder_on_first_courses_and_still_sums_exactly():
     credits = [c["credits"] for c in standing]
     assert credits.count(5) == 1
     assert credits.count(4) == 5
+
+
+def test_known_codes_total_exceeding_printed_total_leaves_unknowns_at_zero():
+    # If known-code credits alone already reach (or exceed) the printed
+    # total, remaining is clamped to 0 rather than going negative.
+    extracted = {"student_info": {"advanced_standing_groups": [
+        {"heading": "Odd", "total_credits": 3,
+         "course_codes": ["ENGL 1XX", "ZZZZ 1XX"]},  # ENGL 1XX alone is 6cr
+    ]}}
+    _expand_advanced_standing_groups(extracted)
+    standing = extracted["student_info"]["advanced_standing"]
+    by_code = {c["course_code"]: c["credits"] for c in standing}
+    assert by_code["ENGL 1XX"] == 6
+    assert by_code["ZZZZ 1XX"] == 0
 
 
 def test_preserves_existing_explicit_advanced_standing_entries():
