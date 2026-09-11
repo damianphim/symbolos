@@ -85,6 +85,112 @@ def _grade_rank(grade: str | None) -> int:
     return 1  # unknown / null
 
 
+# Official McGill AP transfer-credit table (mcgill.ca/transfercredit/prospective/ap,
+# scraped 2026-09, "page updated July 2026"), keyed by the McGill course CODE
+# rather than the AP subject name — a real Minerva transcript's "Advanced
+# Placement Exams" block prints only the already-resolved McGill course codes
+# (e.g. "ECON 1XX", "MATH 203"), never the AP subject name itself, so there is
+# nothing for Claude to look up an AP subject name FROM. Values are the
+# standard (non-B.Eng./B.Sc.Arch) faculty credit; those two faculties grant
+# reduced credit for several language/humanities subjects, not modeled here.
+# Two-course combined subjects (Biology, Chemistry, Physics 1&2) are split
+# using the per-course values the same source page states elsewhere for the
+# matching individual course (e.g. Calculus AB's standalone MATH 140 = 3
+# fixes Calculus BC's MATH 141 = 7-3 = 4); where no such breakdown exists
+# (PHYS 101/102) an even split is used.
+#
+# HIST 1XX is deliberately NOT in this table: European History and US History
+# are 6 credits, but African American Studies and World History are 3 — the
+# same code covers genuinely different credit values, so it can't be resolved
+# from the code alone. It falls back to the remainder-split below.
+AP_COURSE_CREDIT_LOOKUP: dict[str, float] = {
+    "BIOL 111": 3, "BIOL 112": 3,
+    "MATH 140": 3, "MATH 141": 4, "MATH 203": 3,
+    "CHEM 110": 4, "CHEM 120": 4,
+    "COMP 202": 3, "ENVR 200": 3,
+    "PHYS 101": 4, "PHYS 102": 4, "PHYS 131": 4, "PHYS 142": 4,
+    "EAST 1XX": 6, "ESLN 1XX": 6, "ENGL 1XX": 6, "FRSL 211": 6,
+    "GERM 1XX": 6, "ITAL 206": 6, "CLAS 1XX": 6, "HISP 210": 6, "HISP 1XX": 6,
+    "ARTH 1XX": 6, "TRNS 1XX": 3, "POLI 1XX": 3, "GEOG 1XX": 3,
+    "ECON 1XX": 3, "PSYC 100": 3, "EDEA 1XX": 6,
+}
+
+
+def _expand_advanced_standing_groups(extracted: dict) -> None:
+    """
+    Turn each advanced_standing_groups entry into concrete advanced_standing
+    rows, instead of trusting the LLM to divide a printed heading total
+    across courses correctly (it's unreliable at exact arithmetic compliance
+    across many extracted fields in one pass — the prompt only asks for the
+    heading, the printed total, and the ordered, duplicates-included list of
+    course codes; all the arithmetic happens here).
+
+    Per-course credit is looked up exactly for any code AP_COURSE_CREDIT_LOOKUP
+    recognizes (the real per-code values aren't uniform — e.g. the same "24
+    credits" AP block is MATH 203 = 3 and ENGL 1XX = 6 — so a plain even split
+    gets individual courses wrong even when the total happens to match). Only
+    the REMAINDER — whatever's left after known codes claim their exact
+    credit — is split evenly across codes this table doesn't recognize (e.g.
+    HIST 1XX, or a CEGEP/IB code with no equivalent lookup yet).
+    """
+    student_info = extracted.get("student_info")
+    if not isinstance(student_info, dict):
+        return
+    groups = student_info.pop("advanced_standing_groups", None)
+    if not isinstance(groups, list):
+        return
+
+    standing = student_info.get("advanced_standing")
+    if not isinstance(standing, list):
+        standing = []
+
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        codes = group.get("course_codes")
+        if not isinstance(codes, list) or not codes:
+            continue
+        try:
+            total = round(float(group.get("total_credits")))
+        except (TypeError, ValueError):
+            continue
+        if not 0 < total <= 60:
+            continue
+        heading = str(group.get("heading") or "").strip()[:200]
+
+        resolved: list[float | None] = [None] * len(codes)
+        known_total = 0.0
+        unknown_indices = []
+        for i, code in enumerate(codes):
+            if not isinstance(code, str) or not code.strip():
+                continue
+            known = AP_COURSE_CREDIT_LOOKUP.get(normalize_course_code(code))
+            if known is not None:
+                resolved[i] = known
+                known_total += known
+            else:
+                unknown_indices.append(i)
+
+        remaining = max(0, total - known_total)
+        n_unknown = len(unknown_indices)
+        if n_unknown:
+            base = remaining // n_unknown
+            rem = remaining % n_unknown
+            for j, idx in enumerate(unknown_indices):
+                resolved[idx] = base + 1 if j < rem else base
+
+        for i, code in enumerate(codes):
+            if resolved[i] is None:
+                continue
+            standing.append({
+                "course_code": code.strip(),
+                "course_title": heading,
+                "credits": resolved[i],
+            })
+
+    student_info["advanced_standing"] = standing
+
+
 def _dedupe_extracted(extracted: dict) -> None:
     """
     In-place dedup of the parsed transcript data so the preview matches what will
@@ -176,9 +282,28 @@ Extract student_info fields:
     "Transfer Credits", and "International Baccalaureate". Preserve the stated
     total, including a 30-credit CEGEP award. Do not infer transfer status from
     a course's subject, level, or the student's current year.
-    Keep each individually credited course with its printed credits. If only
-    an aggregate award is printed, use course_code "CEGEP" (or "TRANSFER" for
-    other awards), its actual heading as course_title, and the printed total.
+    Keep each individually credited course with its printed credits.
+
+    Some sections print a heading total (e.g. "Advanced Placement Exams - 24
+    credits", "CEGEP - 24 credits", "International Baccalaureate - 30
+    credits") followed by a list of course codes with NO per-course credit
+    number of their own — this is the normal, expected format for an AP
+    block; do not expect a credit number next to each AP code. In that case
+    do NOT try to divide the total yourself and do NOT put these courses in
+    advanced_standing — you are unreliable at exact arithmetic and a wrong
+    guess makes the total stop matching the transcript. Instead add ONE entry
+    to advanced_standing_groups with the heading text, the printed
+    total_credits number, and course_codes as the EXACT ordered list of codes
+    as printed (repeat a code if it's printed twice, e.g. ECON 1XX appearing
+    for two different AP exams) — the backend resolves each known code (AP
+    codes especially) to its exact McGill credit value and evenly splits only
+    what's left across any it doesn't recognize, so you only need to transcribe
+    what's printed, not compute.
+
+    If only an aggregate award is printed with no course list at all (no
+    individual codes to divide the total across), use course_code "CEGEP" (or
+    "TRANSFER" for other awards) directly in advanced_standing, its actual
+    heading as course_title, and the printed total as credits.
     Do not divide an aggregate award among uncredited exemptions, invent course
     equivalents, or count the aggregate again alongside its component credits.
 == STEP 2: Completed courses ==
@@ -219,6 +344,13 @@ Return ONLY this JSON — no markdown, no explanation:
     "cum_gpa": 3.39,
     "advanced_standing": [
       {"course_code": "BIOL 111", "course_title": "Biology 1", "credits": 3}
+    ],
+    "advanced_standing_groups": [
+      {
+        "heading": "Advanced Placement Exams",
+        "total_credits": 24,
+        "course_codes": ["ECON 1XX", "ECON 1XX", "ENGL 1XX", "FRSL 211", "MATH 203", "PSYC 100"]
+      }
     ]
   },
   "completed_courses": [
@@ -248,6 +380,9 @@ Return ONLY this JSON — no markdown, no explanation:
   ]
 }
 Additional rules:
+  - advanced_standing_groups: omit entirely (or leave as an empty list) when the
+    transcript has no aggregate-heading section like the AP-exams example
+    above — most transcripts won't have one. Never invent one.
   - term must be exactly "Fall", "Winter", or "Summer"
   - year is the 4-digit calendar year the term occurred (e.g. 2024)
   - current_courses MUST also carry term and year — use the term heading the
