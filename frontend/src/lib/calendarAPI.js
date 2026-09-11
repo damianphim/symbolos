@@ -89,12 +89,27 @@ function fromDb(row) {
 // ── Recurring event expansion ──────────────────────────────────────────────────
 
 /**
+ * Given a recurrence value, return the day names it recurs on.
+ * "weekly_tuesday" / "biweekly_tuesday" (single day, legacy or still
+ * written by the course-sync path) -> ["tuesday"].
+ * "weekly:monday,wednesday,friday" (multi-day, from the event-modal
+ * day checkboxes) -> ["monday", "wednesday", "friday"].
+ */
+function _recurrenceDayNames(recurrence) {
+  if (!recurrence) return []
+  if (recurrence.startsWith('weekly:')) return recurrence.slice(7).split(',').filter(Boolean)
+  if (recurrence.startsWith('weekly_')) return [recurrence.slice(7)]
+  if (recurrence.startsWith('biweekly_')) return [recurrence.slice(9)]
+  return []
+}
+
+/**
  * Given an array of raw calendar events (already fromDb-mapped),
  * expand any weekly/biweekly recurring events across their term.
  *
- * For each event with recurrence like "weekly_tuesday" or "biweekly_tuesday":
+ * For each event with a recurrence value (see _recurrenceDayNames):
  *   - start from the stored anchor date
- *   - generate one occurrence every 7 (weekly) or 14 (biweekly) days
+ *   - generate one occurrence every 7 (weekly) or 14 (biweekly) days, per selected day
  *   - stop at the term-end date for the event's term (derived from category)
  *   - skip no-class holidays
  *   - give each occurrence a stable synthetic ID: `{id}_occ_{YYYY-MM-DD}`
@@ -108,21 +123,12 @@ export function expandRecurringEvents(events) {
   const result = []
 
   for (const ev of events) {
-    const isWeekly = ev.recurrence && ev.recurrence.startsWith('weekly_')
-    const isBiweekly = ev.recurrence && ev.recurrence.startsWith('biweekly_')
-    if (!isWeekly && !isBiweekly) {
+    const dayNames = _recurrenceDayNames(ev.recurrence)
+    if (!dayNames.length) {
       result.push(ev)
       continue
     }
-    const stepDays = isBiweekly ? 14 : 7
-
-    // Determine which day-of-week this recurs on
-    const dayName = ev.recurrence.replace(isBiweekly ? 'biweekly_' : 'weekly_', '') // e.g. "tuesday"
-    const targetDow = DAY_INDEX[dayName]
-    if (targetDow === undefined) {
-      result.push(ev)
-      continue
-    }
+    const stepDays = ev.recurrence.startsWith('biweekly_') ? 14 : 7
 
     // Pick term end based on category (course_code stored in category column)
     // and anchor date
@@ -134,27 +140,32 @@ export function expandRecurringEvents(events) {
     }
     const endDate = new Date(termEnd + 'T00:00:00')
 
-    // Generate occurrences
-    let cur = new Date(anchor)
-    // Ensure we start on the correct day of week
-    while (cur.getDay() !== targetDow) {
-      cur.setDate(cur.getDate() + 1)
-    }
+    for (const dayName of dayNames) {
+      const targetDow = DAY_INDEX[dayName]
+      if (targetDow === undefined) continue
 
-    while (cur <= endDate) {
-      const dateStr = _toIso(cur)
-      if (!NO_CLASS_DATES.has(dateStr)) {
-        const isAnchor = dateStr === ev.date
-        result.push({
-          ...ev,
-          id:   isAnchor ? ev.id : `${ev.id}_occ_${dateStr}`,
-          date: dateStr,
-          // Mark non-anchor occurrences so they can't be individually edited/deleted
-          _isRecurringOccurrence: !isAnchor,
-          _anchorId: ev.id,
-        })
+      // Generate occurrences for this day
+      let cur = new Date(anchor)
+      // Ensure we start on the correct day of week
+      while (cur.getDay() !== targetDow) {
+        cur.setDate(cur.getDate() + 1)
       }
-      cur.setDate(cur.getDate() + stepDays)
+
+      while (cur <= endDate) {
+        const dateStr = _toIso(cur)
+        if (!NO_CLASS_DATES.has(dateStr)) {
+          const isAnchor = dateStr === ev.date
+          result.push({
+            ...ev,
+            id:   isAnchor ? ev.id : `${ev.id}_occ_${dateStr}`,
+            date: dateStr,
+            // Mark non-anchor occurrences so they can't be individually edited/deleted
+            _isRecurringOccurrence: !isAnchor,
+            _anchorId: ev.id,
+          })
+        }
+        cur.setDate(cur.getDate() + stepDays)
+      }
     }
   }
 
