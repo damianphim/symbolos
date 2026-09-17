@@ -541,54 +541,20 @@ function ClubDetailDrawer({ club, liveClub, joined, calSynced, onToggleCalendar,
         </div>
 
         <div className="club-drawer__body">
-          {/* #10 Four-chip quick-action row at the top of the body */}
-          <div className="club-drawer__quick-actions">
-            {canManage ? null : isMcGill ? (
-              <>
-                {display.application_url ? (
-                  <a
-                    href={display.application_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="club-drawer__chip club-drawer__chip--primary"
-                    style={{ background: meta.color }}
-                  >
-                    <FaUserPlus size={11} /> {joined ? t('clubs.joined') || 'Joined' : t('clubs.joinClub')}
-                  </a>
-                ) : (
-                  <button
-                    className="club-drawer__chip club-drawer__chip--primary"
-                    style={{ background: meta.color }}
-                    onClick={() => display.join_instructions && instructionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
-                    disabled={!display.join_instructions}
-                  >
-                    <FaUserPlus size={11} /> {joined ? t('clubs.joined') || 'Joined' : t('clubs.joinClub')}
-                  </button>
-                )}
-                {joined && (
-                  <button
-                    className={`club-drawer__chip ${calSynced ? 'club-drawer__chip--active' : ''}`}
-                    onClick={() => onToggleCalendar(club.id, !calSynced)}
-                    style={calSynced ? { borderColor: meta.color, color: meta.color } : {}}
-                  >
-                    <FaCalendarAlt size={11} /> {calSynced ? t('clubs.calOn') : t('clubs.calOff')}
-                  </button>
-                )}
-                <button
-                  className={`club-drawer__chip ${isSubscribed ? 'club-drawer__chip--active' : ''}`}
-                  onClick={() => onToggleSubscribe(club.id)}
-                  style={isSubscribed ? { borderColor: meta.color, color: meta.color } : {}}
-                  title={isSubscribed ? t('clubs.unsubscribeTooltip') : t('clubs.subscribeTooltip')}
-                >
-                  <FaBell size={11} /> {isSubscribed ? t('clubs.subscribed') : t('clubs.notifyMe') || 'Notify me'}
-                </button>
-              </>
-            ) : (
-              <span className="club-drawer__chip" style={{ opacity: 0.6, cursor: 'default', pointerEvents: 'none' }} title="McGill email required">
-                <FaLock size={11} /> McGill email required to join or subscribe
-              </span>
-            )}
-          </div>
+          {/* Calendar-sync toggle only, once joined. Join Club and the
+              subscribe/notify toggle already live in the header strip above
+              (club-drawer__strip-actions) — this row used to duplicate both. */}
+          {!canManage && isMcGill && joined && (
+            <div className="club-drawer__quick-actions">
+              <button
+                className={`club-drawer__chip ${calSynced ? 'club-drawer__chip--active' : ''}`}
+                onClick={() => onToggleCalendar(club.id, !calSynced)}
+                style={calSynced ? { borderColor: meta.color, color: meta.color } : {}}
+              >
+                <FaCalendarAlt size={11} /> {calSynced ? t('clubs.calOn') : t('clubs.calOff')}
+              </button>
+            </div>
+          )}
 
           <div className="club-drawer__stats">
             {display.subscriber_count != null && (
