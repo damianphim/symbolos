@@ -17,4 +17,4 @@ langfuse>=4.15.4,<5
 inngest>=0.5.19
 
 # PDF text extraction for local transcript redaction before sending to Claude
-pypdf>=6.18.1
+pypdf>=6.19.0
