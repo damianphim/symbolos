@@ -13,7 +13,7 @@ email-validator==2.3.0
 python-dotenv==1.2.3
 sentry-sdk[fastapi]==2.69.2
 posthog>=7.58.0
-langfuse>=4.15.4,<5
+langfuse>=4.15.6,<5
 inngest>=0.5.19
 
 # PDF text extraction for local transcript redaction before sending to Claude
