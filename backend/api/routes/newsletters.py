@@ -214,7 +214,11 @@ def _notify_newsletter_subscribers(source_id: str, source_name: str, events: lis
         resp = httpx.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
-            json={"from": "Symbolos <notifications@symbolos.ca>", "to": emails, "subject": subject, "html": html},
+            # Real recipients go in bcc, not to — a shared `to` list puts every
+            # subscriber's email address in every other subscriber's inbox headers.
+            json={"from": "Symbolos <notifications@symbolos.ca>",
+                  "to": ["Symbolos <notifications@symbolos.ca>"], "bcc": emails,
+                  "subject": subject, "html": html},
             timeout=10,
         )
         if resp.status_code >= 400:
