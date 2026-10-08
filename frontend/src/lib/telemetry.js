@@ -91,8 +91,23 @@ async function _initSentry() {
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.0,   // off by default; record only on error
       replaysOnErrorSampleRate: 1.0,
-      // The auth tokens in URLs would otherwise leak into Sentry.
-      sendDefaultPii: false,
+      // Sentry 11 removed `sendDefaultPii` and, when `dataCollection` is left
+      // unset, collects user info, cookies, headers and bodies by default.
+      // Pin the restrictive v10 baseline explicitly (Quebec Law 25).
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpHeaders: {
+          request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+          response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+        },
+        httpBodies: [],
+        urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+        genAI: { inputs: false, outputs: false },
+        databaseQueryData: false,
+        queues: false,
+        graphQL: { document: false, variables: false },
+      },
       beforeSend(event) {
         try {
           // Strip Authorization headers and verify tokens from breadcrumbs.
