@@ -167,7 +167,11 @@ def _notify_club_members_new_event(supabase, club_id: str, club_name: str, title
         resp = httpx.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
-            json={"from": "Symbolos <notifications@symbolos.ca>", "to": emails, "subject": subject, "html": html},
+            # Real recipients go in bcc, not to — a shared `to` list puts every
+            # member's email address in every other member's inbox headers.
+            json={"from": "Symbolos <notifications@symbolos.ca>",
+                  "to": ["Symbolos <notifications@symbolos.ca>"], "bcc": emails,
+                  "subject": subject, "html": html},
             timeout=10,
         )
         if resp.status_code >= 400:
@@ -260,7 +264,10 @@ def _notify_club_members_announcement(supabase, club_id: str, club_name: str, ti
         resp = httpx.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}", "Content-Type": "application/json"},
-            json={"from": "Symbolos <notifications@symbolos.ca>", "to": emails, "subject": subject, "html": html},
+            # Real recipients go in bcc, not to — see _notify_club_members_new_event.
+            json={"from": "Symbolos <notifications@symbolos.ca>",
+                  "to": ["Symbolos <notifications@symbolos.ca>"], "bcc": emails,
+                  "subject": subject, "html": html},
             timeout=10,
         )
         if resp.status_code >= 400:

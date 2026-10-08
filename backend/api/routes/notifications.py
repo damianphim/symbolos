@@ -554,21 +554,51 @@ async def calendar_feed(token: str):
     )
 
 
-@router.post("/cron")
-async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)):
+def _days_until_event(event_date: Optional[str]) -> Optional[int]:
+    """Whole days from today until event_date; None if missing/unparsable."""
+    try:
+        return (date.fromisoformat(event_date) - date.today()).days
+    except (TypeError, ValueError):
+        return None
+
+
+def _cron_secret_ok(x_cron_secret: Optional[str], authorization: Optional[str]) -> bool:
+    """True if either header carries the configured CRON_SECRET.
+
+    Vercel's native cron (vercel.json "crons") can't set custom headers — it
+    only ever sends `Authorization: Bearer <CRON_SECRET>` — so that header
+    must be accepted alongside the X-Cron-Secret one manual/external callers
+    use. Both go through the same constant-time compare.
+    """
+    expected = settings.CRON_SECRET
+    if not expected:
+        return False
+    ok = False
+    for raw in (x_cron_secret, authorization):
+        candidate = (raw or "").removeprefix("Bearer ").strip()
+        if candidate and hmac.compare_digest(candidate, expected):
+            ok = True
+    return ok
+
+
+# GET as well as POST: Vercel cron invokes its target with an HTTP GET, and
+# this route was POST-only, so every scheduled run got a 405 and the cron
+# (queue backfill + all reminder emails) never executed at all.
+@router.api_route("/cron", methods=["GET", "POST"])
+async def run_cron(
+    request: Request,
+    x_cron_secret: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None),
+):
     """
     Daily cron job — send all due notifications.
-    Protected by CRON_SECRET header.
-    FIX: Accept both 'Bearer <secret>' and raw '<secret>' formats.
+    Protected by CRON_SECRET, accepted via X-Cron-Secret or
+    `Authorization: Bearer <secret>` (what Vercel cron sends).
     """
     if not settings.CRON_SECRET:
         raise HTTPException(status_code=500, detail="CRON_SECRET not configured")
 
-    # Normalise: strip "Bearer " prefix if present
-    raw_secret = x_cron_secret or ""
-    secret = raw_secret.removeprefix("Bearer ").strip()
-
-    if not hmac.compare_digest(secret, settings.CRON_SECRET):
+    if not _cron_secret_ok(x_cron_secret, authorization):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     # Heartbeat START ping — tells Healthchecks.io the cron actually began
@@ -600,11 +630,19 @@ async def run_cron(request: Request, x_cron_secret: Optional[str] = Header(None)
         method = row.get("method", "email")
         ok = False
         try:
-            if method == "email" and row.get("email"):
+            days_until = _days_until_event(row.get("event_date"))
+            if days_until is None or days_until < 0:
+                # The event already happened (or has no usable date): a
+                # reminder now would be noise — and with the cron dormant for
+                # months there are stale rows like this. Retire them silently
+                # instead of emailing "-170 days away".
+                logger.info(f"Retiring stale notification {row.get('id')} (event_date={row.get('event_date')!r})")
+                ok = True
+            elif method == "email" and row.get("email"):
                 ok = _send_email(
                     row["email"], row["event_title"], row["event_date"],
                     row.get("event_type", "personal"),
-                    (date.fromisoformat(row["event_date"]) - date.today()).days
+                    days_until,
                 )
             else:
                 # method == "sms" (legacy rows) or no email — mark sent so the
