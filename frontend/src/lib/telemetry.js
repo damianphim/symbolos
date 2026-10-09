@@ -105,7 +105,6 @@ async function _initSentry() {
         urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
         genAI: { inputs: false, outputs: false },
         databaseQueryData: false,
-        queues: false,
         graphQL: { document: false, variables: false },
       },
       beforeSend(event) {
