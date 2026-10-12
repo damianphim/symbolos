@@ -7,9 +7,8 @@ Handles:
   GET  /api/notifications/events    – list user's calendar events
   POST /api/notifications/cron      – daily cron: send due notifications (service key protected)
 
-FIX: Updated _build_html_email() to use Symbolos brand color (#ED1B2F)
-     consistently instead of the generic blue/grey palette.
-     Also fixes the cron guard to accept both secret formats.
+FIX: Reminder emails are intentionally plain (one box + link, no emojis or
+     em dashes). The cron guard accepts both secret formats.
 SEC-007: Added E.164 pattern validation to notify_phone field.
 """
 
@@ -82,91 +81,41 @@ class EventDeleteRequest(BaseModel):
 
 # ── Email templates ──────────────────────────────────────────────────────────
 
-def _type_meta(event_type: str) -> dict:
-    meta = {
-        "exam":       {"emoji": "📝", "label": "Exam",       "color": "#DC2626"},
-        "quiz":       {"emoji": "📋", "label": "Quiz",       "color": "#D97706"},
-        "assignment": {"emoji": "📄", "label": "Assignment", "color": "#2563EB"},
-        "midterm":    {"emoji": "📝", "label": "Midterm",    "color": "#DC2626"},
-        "personal":   {"emoji": "📅", "label": "Event",      "color": "#6B7280"},
-        "academic":   {"emoji": "🎓", "label": "Academic",   "color": "#ED1B2F"},
-    }
-    return meta.get(event_type, meta["personal"])
-
-
 def _build_html_email(event_title: str, event_date: str, event_type: str, days_before: int) -> tuple[str, str]:
-    """Build a branded HTML email for a calendar reminder. Returns (subject, html)."""
-    m = _type_meta(event_type)
+    """Build a plain-text-style HTML reminder email. Returns (subject, html).
+
+    Deliberately minimal: a single bordered box with the reminder and a link
+    to the site. No emojis, no em dashes, no decoration. event_type is kept in
+    the signature for the caller but does not change the layout.
+    """
     safe_title = escape(event_title)
-    safe_date  = escape(event_date)
+    safe_date = escape(event_date)
 
     if days_before == 0:
-        subject = f"{m['emoji']} Today: {event_title}"
-        timing_text = "is <strong>TODAY</strong>"
-        urgency_color = "#DC2626"
+        subject = f"Today: {event_title}"
+        timing = f"Today, {safe_date}."
     elif days_before == 1:
-        subject = f"{m['emoji']} Tomorrow: {event_title}"
-        timing_text = "is <strong>TOMORROW</strong>"
-        urgency_color = "#D97706"
+        subject = f"Tomorrow: {event_title}"
+        timing = f"Tomorrow, {safe_date}."
     else:
-        subject = f"{m['emoji']} Reminder: {event_title} — {days_before} days away"
-        timing_text = f"is in <strong>{days_before} days</strong>"
-        urgency_color = "#ED1B2F"
+        subject = f"{event_title} in {days_before} days"
+        timing = f"In {days_before} days, {safe_date}."
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
     <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-        <!-- Header -->
-        <tr><td style="background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);border-radius:12px 12px 0 0;padding:20px 28px;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td><span style="color:#fff;font-size:18px;font-weight:800;">Symbolos</span></td>
-              <td align="right"><span style="color:rgba(255,255,255,0.75);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Academic Reminder</span></td>
-            </tr>
-          </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+        <tr><td style="border:1px solid #d4d4d8;border-radius:6px;padding:20px 24px;">
+          <p style="margin:0 0 6px;font-size:16px;font-weight:600;color:#111827;">{safe_title}</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;">{timing}</p>
+          <p style="margin:0;font-size:15px;"><a href="https://symbolos.ca" style="color:#ED1B2F;">symbolos.ca</a></p>
         </td></tr>
-        <!-- Body -->
-        <tr><td style="background:#ffffff;padding:32px 28px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
-          <!-- Event type badge -->
-          <div style="margin-bottom:20px;">
-            <span style="display:inline-block;background:{m['color']}18;color:{m['color']};
-                         font-size:11px;font-weight:700;text-transform:uppercase;
-                         letter-spacing:0.08em;padding:4px 12px;border-radius:20px;">
-              {m['emoji']} {m['label']}
-            </span>
-          </div>
-          <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;line-height:1.3;">
-            {safe_title}
-          </h1>
-          <p style="font-size:16px;color:{urgency_color};font-weight:600;margin:0 0 20px;">
-            {timing_text} — {safe_date}
-          </p>
-          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-left:4px solid {m['color']};
-                      border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;">
-            <p style="font-size:14px;color:#374151;margin:0;line-height:1.6;">
-              This is your scheduled reminder from Symbolos. Good luck! 🍀
-            </p>
-          </div>
-          <div style="text-align:center;">
-            <a href="https://symbolos.ca"
-               style="display:inline-block;background:linear-gradient(135deg,#ED1B2F 0%,#B01B2E 100%);
-                      color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;
-                      font-weight:600;font-size:14px;">
-              Open Symbolos →
-            </a>
-          </div>
-        </td></tr>
-        <!-- Footer -->
-        <tr><td style="background:#f9fafb;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.7;">
-            Symbolos · Not affiliated with McGill University<br>
-            You're receiving this because you set a reminder in your Symbolos calendar.
-            {casl_footer_html("https://symbolos.ca", transactional=False)}
-          </p>
+        <tr><td style="padding:14px 4px 0;font-size:11px;color:#9ca3af;line-height:1.7;">
+          You're receiving this because you set a reminder in your Symbolos calendar.
+          {casl_footer_html("https://symbolos.ca", transactional=False)}
         </td></tr>
       </table>
     </td></tr>
