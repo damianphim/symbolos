@@ -9,6 +9,7 @@
  * forever so past exams remain in users' calendar history.
  */
 import { APRIL_2026_EXAMS } from './examSchedule2026'
+import { DEC_2026_EXAMS } from './examSchedule_dec2026'
 
 // ── Term registry ──────────────────────────────────────────────────
 // term:  one of 'Winter' | 'Summer' | 'Fall' (must match the value stored
@@ -19,8 +20,7 @@ import { APRIL_2026_EXAMS } from './examSchedule2026'
 // exams: the array of exam entries (one per course-section).
 const TERMS = [
   { term: 'Winter', year: 2026, label: 'Winter 2026 Finals', exams: APRIL_2026_EXAMS },
-  // Add future terms here, e.g.:
-  // { term: 'Fall',   year: 2026, label: 'Fall 2026 Finals',   exams: DEC_2026_EXAMS },
+  { term: 'Fall',   year: 2026, label: 'Fall 2026 Finals',   exams: DEC_2026_EXAMS },
 ]
 
 // Build a multimap: normalized course code → list of exam entries
