@@ -87,6 +87,10 @@ async function _initSentry() {
           blockAllMedia: true,
         }),
       ],
+      // Thrown by a native-bridge script injected into the page by some
+      // browsers, bots and in-app webviews. It never comes from our code and
+      // has no stack trace, so it only adds noise.
+      ignoreErrors: [/Object Not Found Matching Id:\d+, MethodName:\w+, ParamCount:\d+/],
       // Slim quotas — bump once we know what's noisy.
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.0,   // off by default; record only on error
